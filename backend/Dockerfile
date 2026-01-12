@@ -13,7 +13,7 @@ COPY pyproject.toml uv.lock ./
 # Install dependencies
 # --frozen ensures we stick to the lockfile
 # --no-dev saves space by excluding dev dependencies
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-dev
 
 # Copy the rest of the application
 COPY . .
@@ -25,4 +25,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000
 
 # Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/.venv/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

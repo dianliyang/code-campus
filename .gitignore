@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend build output
+frontend/dist/
+frontend/dist-ssr/
+
+# Local env files
+*.local
+.env
+
+# Project specific: Generated data
+data/*.json
+backend/data/*.json
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo

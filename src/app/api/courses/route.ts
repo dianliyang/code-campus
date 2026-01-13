@@ -10,6 +10,9 @@ export async function GET(request: Request) {
   const universitiesParam = searchParams.get('universities');
   const universities = universitiesParam ? universitiesParam.split(',').filter(Boolean) : [];
 
+  const fieldsParam = searchParams.get('fields');
+  const fields = fieldsParam ? fieldsParam.split(',').filter(Boolean) : [];
+
   try {
     let whereClause = 'WHERE is_hidden = 0';
     const queryParams: (string | number)[] = [];
@@ -20,8 +23,19 @@ export async function GET(request: Request) {
       queryParams.push(...universities);
     }
 
+    if (fields.length > 0) {
+      const placeholders = fields.map(() => '?').join(',');
+      whereClause += ` AND c.id IN (
+        SELECT cf.course_id 
+        FROM course_fields cf 
+        JOIN fields f ON cf.field_id = f.id 
+        WHERE f.name IN (${placeholders})
+      )`;
+      queryParams.push(...fields);
+    }
+
     // Get total count
-    const countSql = `SELECT count(*) as count FROM courses ${whereClause}`;
+    const countSql = `SELECT count(*) as count FROM courses c ${whereClause}`;
     const countResult = await queryD1<{ count: number }>(countSql, queryParams);
     const total = Number(countResult[0]?.count || 0);
     const pages = Math.max(1, Math.ceil(total / size));

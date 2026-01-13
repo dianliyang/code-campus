@@ -28,6 +28,8 @@ export default function Home() {
   const [selectedUniversities, setSelectedUniversities] = useState<string[]>(
     []
   );
+  const [availableFields, setAvailableFields] = useState<{name: string, count: number}[]>([]);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -40,6 +42,9 @@ export default function Home() {
     params.append("size", "10");
     if (selectedUniversities.length > 0) {
       params.append("universities", selectedUniversities.join(","));
+    }
+    if (selectedFields.length > 0) {
+      params.append("fields", selectedFields.join(","));
     }
 
     fetch(`/api/courses?${params.toString()}`)
@@ -54,7 +59,7 @@ export default function Home() {
         console.error("Error fetching courses:", err);
         setLoading(false);
       });
-  }, [page, selectedUniversities]);
+  }, [page, selectedUniversities, selectedFields]);
 
   useEffect(() => {
     fetch("/api/universities")
@@ -65,6 +70,15 @@ export default function Home() {
       .catch((err) => {
         console.error("Error fetching universities:", err);
       });
+
+    fetch("/api/fields")
+      .then((res) => res.json())
+      .then((data) => {
+        setAvailableFields(data);
+      })
+      .catch((err) => {
+        console.error("Error fetching fields:", err);
+      });
   }, []);
 
   const handleUniversityChange = (uni: string) => {
@@ -74,6 +88,18 @@ export default function Home() {
         return prev.filter((u) => u !== uni);
       } else {
         return [...prev, uni];
+      }
+    });
+    setPage(1);
+  };
+
+  const handleFieldChange = (fieldName: string) => {
+    setLoading(true);
+    setSelectedFields((prev) => {
+      if (prev.includes(fieldName)) {
+        return prev.filter((f) => f !== fieldName);
+      } else {
+        return [...prev, fieldName];
       }
     });
     setPage(1);
@@ -193,34 +219,36 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Focus Area (Kept) */}
+            {/* Focus Area */}
             <div>
               <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">
                 Focus Area
               </h3>
-              <div className="space-y-2">
-                <label className="flex items-center text-sm text-gray-600">
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="mr-2 rounded text-brand-blue"
-                  />{" "}
-                  Distributed Systems
-                </label>
-                <label className="flex items-center text-sm text-gray-600">
-                  <input
-                    type="checkbox"
-                    className="mr-2 rounded text-brand-blue"
-                  />{" "}
-                  AI / Machine Learning
-                </label>
-                <label className="flex items-center text-sm text-gray-600">
-                  <input
-                    type="checkbox"
-                    className="mr-2 rounded text-brand-blue"
-                  />{" "}
-                  Embedded / IoT
-                </label>
+              <div className="space-y-1 max-h-64 overflow-y-auto custom-scroll pr-2">
+                {availableFields.map((field) => (
+                  <label
+                    key={field.name}
+                    className="flex items-center text-sm text-gray-600 hover:text-brand-blue cursor-pointer group py-0.5"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mr-2 rounded text-brand-blue focus:ring-brand-blue"
+                      checked={selectedFields.includes(field.name)}
+                      onChange={() => handleFieldChange(field.name)}
+                    />
+                    <span className="truncate flex-grow" title={field.name}>
+                      {field.name}
+                    </span>
+                    <span className="ml-2 text-gray-400 text-xs flex-shrink-0">
+                      ({field.count})
+                    </span>
+                  </label>
+                ))}
+                {availableFields.length === 0 && (
+                  <span className="text-xs text-gray-400">
+                    Loading fields...
+                  </span>
+                )}
               </div>
             </div>
 
@@ -328,15 +356,11 @@ export default function Home() {
                                                       {course.title}
                                                     </a>
                                                   </h2>                          <div className="flex gap-2 mt-2 flex-wrap">
-                            {/* Mock Tags - Since we don't have this data yet */}
-                            <span className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded font-mono border border-blue-100">
-                              Course
-                            </span>
-                            <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded font-mono border border-gray-200">
-                              Online
-                            </span>
-                            {course.fields?.map(field => (
-                              <span key={field} className="bg-brand-green/10 text-brand-green text-xs px-2 py-1 rounded font-mono border border-brand-green/20">
+                            {course.fields?.map((field) => (
+                              <span
+                                key={field}
+                                className="bg-brand-blue/5 text-brand-blue text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-brand-blue/10"
+                              >
                                 {field}
                               </span>
                             ))}

@@ -5,6 +5,7 @@ export interface Course {
   units?: string;
   description?: string;
   department?: string;
+  corequisites?: string;
   details?: Record<string, unknown>;
   popularity?: number;
   field?: string;

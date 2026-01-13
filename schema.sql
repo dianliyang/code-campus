@@ -9,6 +9,7 @@ CREATE TABLE courses (
   description TEXT,
   details TEXT, -- JSON string
   department TEXT,
+  corequisites TEXT,
   popularity INTEGER DEFAULT 0,
   field TEXT,
   time_commitment TEXT,

@@ -19,13 +19,24 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Frontend build output
+# Build outputs
+.next/
+dist/
+build/
 frontend/dist/
 frontend/dist-ssr/
+.turbo/
 
 # Local env files
 *.local
 .env
+.env.*.local
+
+# Databases and temporary files
+*.db
+*.sqlite
+.wrangler/
+.tmp_insert_*.sql
 
 # Project specific: Generated data
 data/*.json

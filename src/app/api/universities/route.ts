@@ -7,7 +7,7 @@ export async function GET() {
     
     const universities = rows.map(r => ({
       name: r.university,
-      count: r.count
+      count: Number(r.count || 0)
     })).filter(u => u.name);
     
     return NextResponse.json(universities, {

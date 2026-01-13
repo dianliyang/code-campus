@@ -23,8 +23,8 @@ export async function GET(request: Request) {
     // Get total count
     const countSql = `SELECT count(*) as count FROM courses ${whereClause}`;
     const countResult = await queryD1<{ count: number }>(countSql, queryParams);
-    const total = countResult[0]?.count || 0;
-    const pages = Math.ceil(total / size);
+    const total = Number(countResult[0]?.count || 0);
+    const pages = Math.max(1, Math.ceil(total / size));
 
     // Get paginated items
     const selectSql = `SELECT * FROM courses ${whereClause} LIMIT ? OFFSET ?`;

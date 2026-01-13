@@ -78,20 +78,14 @@ export async function queryD1<T = unknown>(sql: string, params: unknown[] = []):
 }
 
 // Helper to parse the JSON 'details' column and map other fields
-export function mapCourseFromRow(row: Record<string, unknown>): Course & { url: string } {
-  const course = {
-    ...row,
-    details: typeof row.details === 'string' ? JSON.parse(row.details) : undefined,
-    popularity: row.popularity as number,
-    field: row.field as string,
-    timeCommitment: row.time_commitment as string,
-    isHidden: Boolean(row.is_hidden)
-  } as unknown as Course;
-
+export function mapCourseFromRow(row: Record<string, unknown>): Course & { id: number; url: string } {
+  const university = (row.university as string || "").toLowerCase();
+  const courseCode = row.course_code as string || "";
+  
+  // URL generation
   let url = "#";
-  const code = encodeURIComponent(course.course_code || "");
-
-  switch (course.university) {
+  const code = encodeURIComponent(courseCode);
+  switch (university) {
     case 'mit':
       url = `https://student.mit.edu/catalog/search.cgi?search=${code}`;
       break;
@@ -106,5 +100,18 @@ export function mapCourseFromRow(row: Record<string, unknown>): Course & { url: 
       break;
   }
 
-  return { ...course, url };
+  return {
+    id: row.id as number,
+    university: university,
+    course_code: courseCode,
+    title: row.title as string || "",
+    units: row.units as string || "",
+    description: row.description as string || "",
+    details: typeof row.details === 'string' ? JSON.parse(row.details) : (row.details || {}),
+    popularity: (row.popularity as number) || 0,
+    field: (row.field as string) || "",
+    timeCommitment: (row.time_commitment as string) || "",
+    isHidden: Boolean(row.is_hidden),
+    url
+  };
 }

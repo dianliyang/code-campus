@@ -379,17 +379,20 @@ export default function Home() {
                           `Explore this course on ${course.university}. Click to view details and enrollment options.`}
                       </p>
 
-                      <div className="space-y-2 text-[11px] font-mono text-gray-500 uppercase tracking-tight">
+                      <div className="flex flex-wrap gap-2 mt-4">
                         {course.level && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-400 w-24">Level:</span>
-                            <span className="text-gray-700 font-bold">{course.level}</span>
+                          <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 text-gray-600 rounded text-[10px] font-bold uppercase tracking-wider border border-gray-100">
+                            <i className="fa-solid fa-graduation-cap text-gray-400 text-xs"></i>
+                            {course.level}
                           </div>
                         )}
                         {course.corequisites && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-gray-400 w-24 flex-shrink-0">Corequisites:</span>
-                            <span className="text-gray-700 line-clamp-1">{course.corequisites}</span>
+                          <div 
+                            className="flex items-center gap-1.5 px-2 py-1 bg-blue-50/50 text-blue-700 rounded text-[10px] font-bold uppercase tracking-wider border border-blue-100/50"
+                            title={course.corequisites}
+                          >
+                            <i className="fa-solid fa-layer-group text-blue-400 text-xs"></i>
+                            Coreq: <span className="max-w-[150px] truncate">{course.corequisites}</span>
                           </div>
                         )}
                       </div>

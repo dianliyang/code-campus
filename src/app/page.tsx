@@ -6,6 +6,7 @@ import Image from "next/image";
 interface Course {
   id: number;
   title: string;
+  course_code: string;
   university: string;
   url: string;
   description: string;
@@ -308,25 +309,20 @@ export default function Home() {
                           </div>
                         )}
 
-                        <div className="min-w-0">
-                          <h4
-                            className="text-sm text-gray-500 font-medium truncate uppercase tracking-tight"
-                            title={course.university}
-                          >
-                            {course.university}
-                          </h4>
-                          <h2 className="text-xl font-bold text-gray-900 mt-1 group-hover:text-brand-blue transition-colors truncate">
-                            <a
-                              href={course.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block"
-                              title={course.title}
-                            >
-                              {course.title}
-                            </a>
-                          </h2>
-                          <div className="flex gap-2 mt-2 flex-wrap">
+                                                <div className="min-w-0">
+                                                  <div className="flex items-center gap-2">
+                                                    <h4 className="text-sm text-gray-500 font-medium truncate uppercase tracking-tight" title={course.university}>
+                                                      {course.university}
+                                                    </h4>
+                                                    <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap">
+                                                      {course.course_code}
+                                                    </span>
+                                                  </div>
+                                                  <h2 className="text-xl font-bold text-gray-900 mt-1 group-hover:text-brand-blue transition-colors line-clamp-2">
+                                                    <a href={course.url} target="_blank" rel="noopener noreferrer" className="block" title={course.title}>
+                                                      {course.title}
+                                                    </a>
+                                                  </h2>                          <div className="flex gap-2 mt-2 flex-wrap">
                             {/* Mock Tags - Since we don't have this data yet */}
                             <span className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded font-mono border border-blue-100">
                               Course

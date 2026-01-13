@@ -67,14 +67,26 @@ export async function queryD1<T = unknown>(sql: string, params: unknown[] = []):
     // Dynamically require better-sqlite3
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Database = require('better-sqlite3');
-    const db = new Database(dbPath, { readonly: true });
+    const db = new Database(dbPath, { readonly: false }); // Changed to false to allow writes
     try {
       const stmt = db.prepare(sql);
-      return stmt.all(...params) as T[];
+      if (sql.trim().toLowerCase().startsWith('select')) {
+        return stmt.all(...params) as T[];
+      } else {
+        const info = stmt.run(...params);
+        return [info] as unknown as T[];
+      }
     } finally {
       db.close();
     }
   }
+}
+
+/**
+ * Specifically for non-returning statements (INSERT, UPDATE, DELETE)
+ */
+export async function runD1(sql: string, params: unknown[] = []): Promise<unknown> {
+  return queryD1(sql, params);
 }
 
 // Helper to parse the JSON 'details' column and map other fields
@@ -113,7 +125,6 @@ export function mapCourseFromRow(row: Record<string, unknown>): Course & { id: n
     difficulty: (row.difficulty as number) || 0,
     details: typeof row.details === 'string' ? JSON.parse(row.details) : (row.details || {}),
     popularity: (row.popularity as number) || 0,
-    field: (row.field as string) || "",
     timeCommitment: (row.time_commitment as string) || "",
     isHidden: Boolean(row.is_hidden),
     url

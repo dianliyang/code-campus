@@ -10,7 +10,7 @@ export interface Course {
   difficulty?: number;
   details?: Record<string, unknown>;
   popularity?: number;
-  field?: string;
   timeCommitment?: string;
   isHidden?: boolean;
+  fields?: string[];
 }

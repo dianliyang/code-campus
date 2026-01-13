@@ -14,6 +14,7 @@ interface Course {
   field: string;
   timeCommitment: string;
   isHidden: boolean;
+  fields: string[];
 }
 
 interface University {
@@ -334,6 +335,11 @@ export default function Home() {
                             <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded font-mono border border-gray-200">
                               Online
                             </span>
+                            {course.fields?.map(field => (
+                              <span key={field} className="bg-brand-green/10 text-brand-green text-xs px-2 py-1 rounded font-mono border border-brand-green/20">
+                                {field}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       </div>

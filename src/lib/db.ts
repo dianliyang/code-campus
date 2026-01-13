@@ -61,14 +61,13 @@ export class D1Database {
       const level = course.level ? this.escapeSQL(course.level) : "NULL";
       const difficulty = course.difficulty !== undefined ? course.difficulty : "NULL";
       const popularity = course.popularity !== undefined ? course.popularity : 0;
-      const field = course.field ? this.escapeSQL(course.field) : "NULL";
       const timeCommitment = course.timeCommitment ? this.escapeSQL(course.timeCommitment) : "NULL";
       const isHidden = course.isHidden ? 1 : 0;
       
-      values.push(`(${university}, ${courseCode}, ${title}, ${units}, ${description}, ${details}, ${department}, ${corequisites}, ${level}, ${difficulty}, ${popularity}, ${field}, ${timeCommitment}, ${isHidden})`);
+      values.push(`(${university}, ${courseCode}, ${title}, ${units}, ${description}, ${details}, ${department}, ${corequisites}, ${level}, ${difficulty}, ${popularity}, ${timeCommitment}, ${isHidden})`);
     }
 
-    const sql = `INSERT INTO courses (university, course_code, title, units, description, details, department, corequisites, level, difficulty, popularity, field, time_commitment, is_hidden) VALUES ${values.join(", ")};`;
+    const sql = `INSERT INTO courses (university, course_code, title, units, description, details, department, corequisites, level, difficulty, popularity, time_commitment, is_hidden) VALUES ${values.join(", ")};`;
 
     // Write SQL to a temporary file to avoid command line argument limits
     const tmpFileName = path.join(process.cwd(), `.tmp_insert_${Date.now()}.sql`);

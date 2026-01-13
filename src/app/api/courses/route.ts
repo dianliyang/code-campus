@@ -27,12 +27,24 @@ export async function GET(request: Request) {
     const pages = Math.max(1, Math.ceil(total / size));
 
     // Get paginated items
-    const selectSql = `SELECT * FROM courses ${whereClause} LIMIT ? OFFSET ?`;
+    const selectSql = `
+      SELECT c.*, GROUP_CONCAT(f.name) as field_names
+      FROM courses c
+      LEFT JOIN course_fields cf ON c.id = cf.course_id
+      LEFT JOIN fields f ON cf.field_id = f.id
+      ${whereClause}
+      GROUP BY c.id
+      LIMIT ? OFFSET ?
+    `;
     const selectParams = [...queryParams, size, offset];
     
     const rows = await queryD1<Record<string, unknown>>(selectSql, selectParams);
 
-    const items = rows.map(mapCourseFromRow);
+    const items = rows.map(row => {
+      const course = mapCourseFromRow(row);
+      const fields = row.field_names ? (row.field_names as string).split(',') : [];
+      return { ...course, fields };
+    });
 
     return NextResponse.json({
       items,

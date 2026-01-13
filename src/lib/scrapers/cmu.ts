@@ -12,7 +12,7 @@ export class CMU extends BaseScraper {
     const url = "https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/search";
     
     const params = new URLSearchParams();
-    params.append("SEMESTER", "S25");
+    params.append("SEMESTER", "F25"); // Updated to Fall 2025 to match sample
     params.append("MINI", "NO");
     params.append("GRAD_UNDER", "All");
     params.append("PRG_LOCATION", "All");
@@ -59,8 +59,8 @@ export class CMU extends BaseScraper {
     }
   }
 
-  async fetchDetail(courseCode: string, semester: string): Promise<{ description: string; prerequisites: string }> {
-    const cleanCode = courseCode.replace("-", "");
+  async fetchDetail(courseCode: string, semester: string): Promise<{ description: string; corequisites: string }> {
+    const cleanCode = courseCode.replace(/-/g, "");
     const url = `https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/courseDetails?COURSE=${cleanCode}&SEMESTER=${semester}`;
     
     // Small delay to be polite
@@ -68,23 +68,29 @@ export class CMU extends BaseScraper {
 
     try {
       const html = await this.fetchPage(url);
-      if (!html) return { description: "", prerequisites: "" };
+      if (!html) return { description: "", corequisites: "" };
       
       const $ = cheerio.load(html);
       const description = $("#course-detail-description p").text().trim();
-      const prerequisites = $("dt:contains('Prerequisites')").next("dd").text().trim();
       
-      return { description, prerequisites };
+      const prereq = $("dt:contains('Prerequisites')").next("dd").text().trim();
+      const coreq = $("dt:contains('Corequisites')").next("dd").text().trim();
+      
+      let combined = "";
+      if (prereq && prereq !== "None") combined += `Prereq: ${prereq}`;
+      if (coreq && coreq !== "None") combined += (combined ? "; " : "") + `Coreq: ${coreq}`;
+      
+      return { description, corequisites: combined };
     } catch (error) {
       console.error(`[${this.name}] Error fetching details for ${courseCode}:`, error);
-      return { description: "", prerequisites: "" };
+      return { description: "", corequisites: "" };
     }
   }
 
   async parser(html: string): Promise<Course[]> {
     const $ = cheerio.load(html);
     const courses: Course[] = [];
-    const semester = "S25";
+    const semester = "F25";
 
     const ALLOWED_DEPTS = [
       "ELECTRICAL & COMPUTER ENGINEERING",
@@ -92,12 +98,12 @@ export class CMU extends BaseScraper {
     ];
 
     const tables = $("table#search-results-table");
-    const results = [];
-
+    
+    // LAZY UPDATE: Only fetch details for the first 5 courses by default
+    // Increase this or use env var for full scrape
+    const FETCH_LIMIT = process.env.FULL_SCRAPE ? 9999 : 5;
     let fetchCount = 0;
-    const FETCH_LIMIT = 5;
 
-    // Process tables sequentially to respect delay
     for (const tableElement of tables.toArray()) {
       const table = $(tableElement);
       const prevH4 = table.prevAll("h4.department-title").first();
@@ -116,39 +122,50 @@ export class CMU extends BaseScraper {
         const cols = $(trElement).find("td");
         if (cols.length < 10) continue;
 
-        const getText = (idx: number) => $(cols[idx]).text().trim();
-        const courseIdText = getText(0);
+        const getText = (idx: number) => $(cols[idx]).text().trim().replace(/\u00a0/g, " ");
+        const rawId = getText(0);
 
-        if (courseIdText) {
+        // CMU course IDs usually look like "15-112" or "15112"
+        if (rawId && (/\d{2}-\d{3}/.test(rawId) || /^\d{5}$/.test(rawId))) {
           if (currentCourse) {
             courses.push(currentCourse);
           }
 
           let description = "";
-          let prerequisites = "";
+          let corequisites = "";
 
           if (fetchCount < FETCH_LIMIT) {
-            const details = await this.fetchDetail(courseIdText, semester);
+            const details = await this.fetchDetail(rawId, semester);
             description = details.description;
-            prerequisites = details.prerequisites;
+            corequisites = details.corequisites;
             fetchCount++;
+          }
+
+          // Determine Level: CMU levels are like 15-112. 
+          // 100-500 are Undergraduate, 600+ are Graduate.
+          let level = "undergraduate";
+          const numMatch = rawId.match(/-(\d+)/);
+          if (numMatch) {
+            const num = parseInt(numMatch[1]);
+            if (num >= 600) level = "graduate";
           }
 
           currentCourse = {
             university: this.name,
-            courseCode: courseIdText,
+            courseCode: rawId,
             title: getText(1),
             units: getText(2),
             description: description,
+            corequisites: corequisites,
+            level: level,
             details: {
               sections: [],
-              prerequisites: prerequisites
             },
           };
         }
 
         if (currentCourse) {
-          const secText = getText(3);
+          const secId = getText(3);
           const meeting = {
             days: getText(5),
             begin: getText(6),
@@ -156,9 +173,9 @@ export class CMU extends BaseScraper {
             location: getText(8),
           };
 
-          if (courseIdText || secText) {
+          if (rawId || secId) {
             const section = {
-              id: secText,
+              id: secId,
               meetings: [meeting],
             };
             (currentCourse.details as any).sections.push(section);
@@ -170,6 +187,7 @@ export class CMU extends BaseScraper {
           }
         }
       }
+      
       if (currentCourse) {
         courses.push(currentCourse);
       }

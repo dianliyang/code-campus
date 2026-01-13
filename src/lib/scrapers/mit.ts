@@ -44,6 +44,7 @@ export class MIT extends BaseScraper {
 
       // Access the raw node from cheerio element
       let curr: AnyNode | null = h3Element.next;
+      let level = "";
 
       while (curr) {
         // Stop conditions
@@ -71,7 +72,7 @@ export class MIT extends BaseScraper {
             if (text.startsWith('Prereq:')) {
               const parts = [text.replace('Prereq:', '').trim()];
               let temp = curr.next;
-              while (temp && (temp.type !== 'tag' || (temp.name !== 'br' && temp.name !== 'h3'))) {
+              while (temp && (temp.type !== 'tag' || (temp.name !== 'br' && temp.name !== 'h3' && temp.name !== 'img'))) {
                 parts.push($(temp).text().trim());
                 consumedNodes.add(temp);
                 temp = temp.next;
@@ -105,6 +106,14 @@ export class MIT extends BaseScraper {
           const element = curr as Element;
           if (element.name === 'img') {
             const alt = $(element).attr('alt') || '';
+            const title = $(element).attr('title') || '';
+            
+            if (alt === 'Undergrad' || title === 'Undergrad') {
+              level = 'undergraduate';
+            } else if (alt === 'Graduate' || title === 'Graduate') {
+              level = 'graduate';
+            }
+
             if (['Fall', 'Spring', 'Summer', 'IAP'].includes(alt)) {
               if (!details['terms']) details['terms'] = [];
               if (Array.isArray(details['terms']) && !details['terms'].includes(alt)) {
@@ -136,8 +145,9 @@ export class MIT extends BaseScraper {
         title: courseTitle,
         units: details.units as string | undefined,
         description: descriptionParts.join(" ").trim(),
+        level: level,
+        corequisites: details.prerequisites as string | undefined,
         details: {
-          prerequisites: details.prerequisites,
           terms: details.terms,
           instructors: instructors
         }

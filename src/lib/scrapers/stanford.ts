@@ -96,14 +96,7 @@ export class Stanford extends BaseScraper {
           const prereqMatch = description.match(/(?:Prerequisites?|Prereq):\s*(.*?)(?=\.\s|[A-Z][a-z]+:|\n|$)/i);
           if (prereqMatch) {
             const prereqText = prereqMatch[1].trim();
-            (course.details as any).prerequisites = prereqText;
-
-            // If the prerequisite text contains "concurrently" or "corequisite", 
-            // it's likely also a corequisite
-            if (prereqText.toLowerCase().includes("concurrently") || 
-                prereqText.toLowerCase().includes("corequisite")) {
-              course.corequisites = prereqText;
-            }
+            course.corequisites = prereqText;
           }
 
           // Also look for explicit Corequisite field

@@ -65,8 +65,10 @@ export async function GET(request: Request) {
 
     const items = rows.map(row => {
       const course = mapCourseFromRow(row);
+      // Remove details to keep response light
+      const { details, ...lightCourse } = course;
       const fields = row.field_names ? (row.field_names as string).split(',') : [];
-      return { ...course, fields };
+      return { ...lightCourse, fields };
     });
 
     return NextResponse.json({

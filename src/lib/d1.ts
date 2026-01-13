@@ -19,11 +19,11 @@ function getLocalDbPath(): string | null {
 
 export interface D1Result<T = unknown> {
   success: boolean;
-  meta: any;
+  meta: unknown;
   results: T[];
 }
 
-export async function queryD1<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+export async function queryD1<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
   if (REMOTE_DB) {
     if (!ACCOUNT_ID || !DATABASE_ID || !API_TOKEN) {
       throw new Error("Missing Cloudflare credentials for remote D1 access");
@@ -65,6 +65,7 @@ export async function queryD1<T = any>(sql: string, params: any[] = []): Promise
     }
 
     // Dynamically require better-sqlite3
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Database = require('better-sqlite3');
     const db = new Database(dbPath, { readonly: true });
     try {
@@ -77,11 +78,11 @@ export async function queryD1<T = any>(sql: string, params: any[] = []): Promise
 }
 
 // Helper to parse the JSON 'details' column
-export function mapCourseFromRow(row: any): Course & { url: string } {
+export function mapCourseFromRow(row: Record<string, unknown>): Course & { url: string } {
   const course = {
     ...row,
-    details: row.details ? JSON.parse(row.details) : undefined
-  };
+    details: typeof row.details === 'string' ? JSON.parse(row.details) : undefined
+  } as unknown as Course;
 
   let url = "#";
   const code = encodeURIComponent(course.course_code || "");

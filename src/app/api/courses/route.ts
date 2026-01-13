@@ -12,7 +12,7 @@ export async function GET(request: Request) {
 
   try {
     let whereClause = '';
-    const queryParams: any[] = [];
+    const queryParams: (string | number)[] = [];
 
     if (universities.length > 0) {
       const placeholders = universities.map(() => '?').join(',');
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     const selectSql = `SELECT * FROM courses ${whereClause} LIMIT ? OFFSET ?`;
     const selectParams = [...queryParams, size, offset];
     
-    const rows = await queryD1(selectSql, selectParams);
+    const rows = await queryD1<Record<string, unknown>>(selectSql, selectParams);
 
     const items = rows.map(mapCourseFromRow);
 

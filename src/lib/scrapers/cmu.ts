@@ -118,10 +118,10 @@ export class CMU extends BaseScraper {
                         id: secText,
                         meetings: [meeting]
                     };
-                    currentCourse.details!.sections.push(section);
+                    (currentCourse.details as any).sections.push(section);
                 } else {
                     // Continuation
-                    const sections = currentCourse.details!.sections;
+                    const sections = (currentCourse.details as any).sections;
                     if (sections.length > 0) {
                         sections[sections.length - 1].meetings.push(meeting);
                     }

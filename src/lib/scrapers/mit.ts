@@ -36,7 +36,7 @@ export class MIT extends BaseScraper {
       const courseId = match[1];
       const courseTitle = match[2];
 
-      const details: Record<string, any> = {};
+      const details: Record<string, string | string[] | undefined> = {};
       const descriptionParts: string[] = [];
       const instructors: string[] = [];
       let descriptionStarted = false;
@@ -107,7 +107,9 @@ export class MIT extends BaseScraper {
             const alt = $(element).attr('alt') || '';
             if (['Fall', 'Spring', 'Summer', 'IAP'].includes(alt)) {
               if (!details['terms']) details['terms'] = [];
-              if (!details['terms'].includes(alt)) details['terms'].push(alt);
+              if (Array.isArray(details['terms']) && !details['terms'].includes(alt)) {
+                 (details['terms'] as string[]).push(alt);
+              }
             } else if (alt === '______') {
               descriptionStarted = true;
             }
@@ -132,7 +134,7 @@ export class MIT extends BaseScraper {
         university: this.name,
         course_code: courseId,
         title: courseTitle,
-        units: details.units,
+        units: details.units as string | undefined,
         description: descriptionParts.join(" ").trim(),
         details: {
           prerequisites: details.prerequisites,

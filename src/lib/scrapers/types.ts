@@ -4,5 +4,5 @@ export interface Course {
   title: string;
   units?: string;
   description?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }

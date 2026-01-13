@@ -40,7 +40,7 @@ export class D1Database {
     const flag = isRemote ? '--remote' : '--local';
     
     try {
-      const { stdout, stderr } = await execAsync(`npx wrangler d1 execute ${this.dbName} --command="${sql}" ${flag}`);
+      await execAsync(`npx wrangler d1 execute ${this.dbName} --command="${sql}" ${flag}`);
     } catch (error) {
       console.error(`Error clearing university ${university}:`, error);
     }
@@ -73,7 +73,7 @@ export class D1Database {
       const command = `npx wrangler d1 execute ${this.dbName} --file="${tmpFileName}" ${flag}`; 
       
       console.log(`Executing batch ${offset + 1}-${Math.min(offset + courses.length, total)} of ${total}...`);
-      const { stdout, stderr } = await execAsync(command);
+      const { stderr } = await execAsync(command);
       
       if (stderr && !stderr.includes("Compiling")) { // wrangler often outputs to stderr for info
          // console.warn("Wrangler stderr:", stderr); 

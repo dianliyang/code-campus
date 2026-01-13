@@ -30,7 +30,6 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   useEffect(() => {
-    setLoading(true);
     const params = new URLSearchParams();
     params.append("page", page.toString());
     params.append("size", "10");
@@ -64,6 +63,7 @@ export default function Home() {
   }, []);
 
   const handleUniversityChange = (uni: string) => {
+    setLoading(true);
     setSelectedUniversities((prev) => {
       if (prev.includes(uni)) {
         return prev.filter((u) => u !== uni);
@@ -381,7 +381,10 @@ export default function Home() {
               {courses.length > 0 && (
                 <div className="flex justify-center items-center gap-4 mt-8">
                   <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    onClick={() => {
+                      setLoading(true);
+                      setPage((p) => Math.max(1, p - 1));
+                    }}
                     disabled={page === 1}
                     className="px-4 py-2 border border-gray-300 rounded bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                   >
@@ -391,7 +394,10 @@ export default function Home() {
                     Page {page} of {totalPages}
                   </span>
                   <button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() => {
+                      setLoading(true);
+                      setPage((p) => Math.min(totalPages, p + 1));
+                    }}
                     disabled={page === totalPages}
                     className="px-4 py-2 border border-gray-300 rounded bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                   >

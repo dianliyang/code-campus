@@ -87,7 +87,7 @@ export class Stanford extends BaseScraper {
             const p = part.trim();
             if (p.startsWith('Terms:')) {
               const termsStr = p.replace('Terms:', '').trim();
-              course.details!.terms = termsStr.split(',').map(t => t.trim()).filter(t => t);
+              (course.details as any).terms = termsStr.split(',').map(t => t.trim()).filter(t => t);
             } else if (p.startsWith('Units:')) {
               course.units = p.replace('Units:', '').trim();
             }
@@ -103,9 +103,9 @@ export class Stanford extends BaseScraper {
           if (instructorsText) {
             const links = $(attrDiv).find('a');
             if (links.length > 0) {
-                course.details!.instructors = links.map((_, a) => $(a).text().trim()).get();
+                (course.details as any).instructors = links.map((_, a) => $(a).text().trim()).get();
             } else {
-                course.details!.instructors = [instructorsText];
+                (course.details as any).instructors = [instructorsText];
             }
           }
         }

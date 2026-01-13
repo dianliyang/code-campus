@@ -11,10 +11,11 @@ interface Course {
   url: string;
   description: string;
   popularity: number;
-  field: string;
   timeCommitment: string;
   isHidden: boolean;
   fields: string[];
+  level?: string;
+  corequisites?: string;
 }
 
 interface University {
@@ -378,16 +379,19 @@ export default function Home() {
                           `Explore this course on ${course.university}. Click to view details and enrollment options.`}
                       </p>
 
-                      <div className="flex items-center gap-4 text-sm text-gray-500 font-mono">
-                        <span className="text-xs text-gray-400 uppercase tracking-widest">
-                          Type:
-                        </span>
-                        <div className="flex gap-3 text-lg">
-                          <i
-                            className="fa-solid fa-laptop-code hover:text-brand-blue cursor-help"
-                            title="Online Course"
-                          ></i>
-                        </div>
+                      <div className="space-y-2 text-[11px] font-mono text-gray-500 uppercase tracking-tight">
+                        {course.level && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-400 w-24">Level:</span>
+                            <span className="text-gray-700 font-bold">{course.level}</span>
+                          </div>
+                        )}
+                        {course.corequisites && (
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-400 w-24 flex-shrink-0">Corequisites:</span>
+                            <span className="text-gray-700 line-clamp-1">{course.corequisites}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 

@@ -64,7 +64,22 @@ export class Stanford extends BaseScraper {
       if (courseInfo.length > 0) {
         const numberSpan = courseInfo.find('.courseNumber');
         if (numberSpan.length > 0) {
-          course.courseCode = numberSpan.text().trim().replace(/:$/, '');
+          const rawCode = numberSpan.text().trim().replace(/:$/, '');
+          course.courseCode = rawCode;
+          
+          // Determine level from course number
+          const match = rawCode.match(/\d+/);
+          if (match) {
+            const num = parseInt(match[0]);
+            if (num >= 200) {
+              course.level = "graduate";
+            } else if (num >= 100) {
+              course.level = "undergraduate";
+            } else {
+              // Numbers like CS 7 are also undergrad
+              course.level = "undergraduate";
+            }
+          }
         }
 
         const titleSpan = courseInfo.find('.courseTitle');
@@ -74,7 +89,28 @@ export class Stanford extends BaseScraper {
 
         const descDiv = courseInfo.find('.courseDescription');
         if (descDiv.length > 0) {
-          course.description = descDiv.text().trim();
+          const description = descDiv.text().trim();
+          course.description = description;
+
+          // Extract Prereq and Coreq from description if present
+          const prereqMatch = description.match(/(?:Prerequisites?|Prereq):\s*(.*?)(?=\.\s|[A-Z][a-z]+:|\n|$)/i);
+          if (prereqMatch) {
+            const prereqText = prereqMatch[1].trim();
+            (course.details as any).prerequisites = prereqText;
+
+            // If the prerequisite text contains "concurrently" or "corequisite", 
+            // it's likely also a corequisite
+            if (prereqText.toLowerCase().includes("concurrently") || 
+                prereqText.toLowerCase().includes("corequisite")) {
+              course.corequisites = prereqText;
+            }
+          }
+
+          // Also look for explicit Corequisite field
+          const coreqMatch = description.match(/(?:Corequisites?|Coreq):\s*(.*?)(?=\.\s|[A-Z][a-z]+:|\n|$)/i);
+          if (coreqMatch) {
+            course.corequisites = coreqMatch[1].trim();
+          }
         }
       }
 

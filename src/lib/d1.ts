@@ -26,7 +26,35 @@ export interface D1Result<T = unknown> {
 export async function queryD1<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
   if (REMOTE_DB) {
     if (!ACCOUNT_ID || !DATABASE_ID || !API_TOKEN) {
-      throw new Error("Missing Cloudflare credentials for remote D1 access");
+      // Fallback to wrangler CLI if credentials aren't in env
+      // This is slower but works in this environment
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(exec);
+      
+      const tmpFileName = path.join(process.cwd(), `.tmp_query_${Date.now()}.sql`);
+      try {
+        // Simple parameter replacement for CLI (since wrangler doesn't support params in --command easily)
+        let processedSql = sql;
+        params.forEach(param => {
+          const escaped = typeof param === 'string' ? `'${param.replace(/'/g, "''")}'` : param;
+          processedSql = processedSql.replace('?', String(escaped));
+        });
+
+        fs.writeFileSync(tmpFileName, processedSql);
+        const { stdout } = await execAsync(`npx wrangler d1 execute course-spider-db --remote --file="${tmpFileName}" --json`);
+        
+        if (processedSql.trim().toLowerCase().startsWith('select')) {
+          const result = JSON.parse(stdout);
+          return (result[result.length - 1]?.results || []) as T[];
+        }
+        return [] as T[];
+      } catch (e) {
+        console.error("Wrangler fallback failed:", e);
+        throw new Error("Missing Cloudflare credentials and wrangler fallback failed");
+      } finally {
+        if (fs.existsSync(tmpFileName)) fs.unlinkSync(tmpFileName);
+      }
     }
 
     const url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${DATABASE_ID}/query`;

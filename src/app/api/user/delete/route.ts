@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { runD1, queryD1 } from '@/lib/d1';
+import { auth } from '@/auth';
 
 export async function POST() {
+  const session = await auth();
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    // Mock user for now
-    const mockUserEmail = "test@example.com";
-    const user = await queryD1<{ id: number }>('SELECT id FROM users WHERE email = ? LIMIT 1', [mockUserEmail]);
+    const user = await queryD1<{ id: number }>('SELECT id FROM users WHERE email = ? LIMIT 1', [session.user.email]);
     
     if (user.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

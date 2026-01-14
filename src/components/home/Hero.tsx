@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 export default function Hero() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   
   // Initialize from URL
   const initialQuery = searchParams.get("q") || "";
@@ -18,9 +19,11 @@ export default function Hero() {
   useEffect(() => {
     const urlQuery = searchParams.get("q") || "";
     if (urlQuery !== query) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery(urlQuery);
       lastPushedQuery.current = urlQuery;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   // 2. Debounced URL update
@@ -36,13 +39,14 @@ export default function Hero() {
       
       params.set("page", "1");
       
-      const newUrl = `?${params.toString()}`;
+      const newUrl = `/courses?${params.toString()}`;
       lastPushedQuery.current = query;
-      router.push(newUrl, { scroll: false });
+      // Avoid scroll jump if already on courses page
+      router.push(newUrl, { scroll: pathname !== '/courses' });
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [query, router, searchParams]);
+  }, [query, router, searchParams, pathname]);
 
   const handleSuggestion = (tag: string) => {
     setQuery(tag);

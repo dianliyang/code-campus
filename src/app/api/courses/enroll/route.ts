@@ -1,22 +1,22 @@
 import { NextResponse } from 'next/server';
 import { runD1, queryD1 } from '@/lib/d1';
+import { auth } from '@/auth';
 
 export async function POST(request: Request) {
+  const session = await auth();
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { courseId, action } = body; // action: 'enroll' | 'unenroll' | 'update_progress'
     const progress = body.progress ?? 0;
 
-    // TODO: Get actual user ID from session/OAuth
-    // For now, using a mock user ID for testing
-    const mockUserEmail = "test@example.com";
-    let user = await queryD1<{ id: number }>('SELECT id FROM users WHERE email = ?', [mockUserEmail]);
+    const user = await queryD1<{ id: number }>('SELECT id FROM users WHERE email = ?', [session.user.email]);
     
     if (user.length === 0) {
-      // Create mock user if doesn't exist for dev purposes
-      await runD1('INSERT INTO users (email, name, provider, provider_id) VALUES (?, ?, ?, ?)', 
-        [mockUserEmail, "Test User", "mock", "mock_id"]);
-      user = await queryD1<{ id: number }>('SELECT id FROM users WHERE email = ?', [mockUserEmail]);
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const userId = user[0].id;

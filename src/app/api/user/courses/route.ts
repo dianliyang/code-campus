@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 import { queryD1 } from '@/lib/d1';
+import { auth } from '@/auth';
 
 export async function GET() {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    // Mock user for now
-    const mockUserEmail = "test@example.com";
-    
     const rows = await queryD1<{ course_id: number }>(
       'SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1)',
-      [mockUserEmail]
+      [session.user?.email || ""]
     );
 
     const enrolledIds = rows.map(r => r.course_id);

@@ -1,142 +1,80 @@
-import { Suspense } from "react";
-import Navbar from "@/components/layout/Navbar";
-import Hero from "@/components/home/Hero";
-import Sidebar from "@/components/home/Sidebar";
-import CourseList from "@/components/home/CourseList";
-import { queryD1, mapCourseFromRow } from "@/lib/d1";
-import { University, Field, Course } from "@/types";
-
-interface PageProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
+import LandingNavbar from "@/components/layout/LandingNavbar";
+import UniversityLogos from "@/components/home/UniversityLogos";
+import Features from "@/components/home/Features";
+import Mission from "@/components/home/Mission";
+import Link from "next/link";
 
 export const revalidate = 60;
 
-export default async function Home({ searchParams }: PageProps) {
-  const params = await searchParams;
-
+export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <Navbar />
-      <Hero />
+    <div className="flex flex-col bg-white">
+      <LandingNavbar />
       
-      <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col md:flex-row gap-8">
-        <Suspense fallback={<SidebarSkeleton />}>
-          <SidebarData />
-        </Suspense>
+      {/* SECTION 1: HERO */}
+      <div id="hero" className="min-h-screen flex flex-col justify-center relative overflow-hidden bg-white">
+        {/* Decorative Background Element */}
+        <div className="absolute top-0 right-0 p-20 opacity-[0.03] pointer-events-none select-none hidden lg:block">
+          <div className="text-[15rem] font-black italic tracking-tighter leading-none">0xFC</div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 pt-20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 border border-gray-100 mb-8">
+            <span className="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
+            <span className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">System Initialized // v1.0.4</span>
+          </div>
+
+          <h1 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase mb-8 leading-[0.95]">
+            The Global <br />
+            <span className="text-brand-blue">CS</span> Catalog<span className="text-brand-blue">.</span>
+          </h1>
+
+          <p className="text-xl md:text-2xl text-gray-500 font-medium max-w-3xl mx-auto mb-12 leading-relaxed">
+            Analyze and explore computer science curricula from the world&apos;s leading universities through a unified, high-performance interface.
+          </p>
+
+          <div className="flex justify-center">
+            <Link 
+              href="/courses" 
+              className="inline-flex items-center justify-center gap-4 px-8 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-[0.3em] rounded-full hover:bg-brand-blue hover:scale-105 transition-all duration-300 group shadow-2xl shadow-brand-blue/20"
+            >
+              Explore the Catalog
+              <i className="fa-solid fa-chevron-right text-[10px] transition-transform group-hover:translate-x-2"></i>
+            </Link>
+          </div>
+        </div>
         
-        <Suspense fallback={<CourseListSkeleton />}>
-          <CourseListData params={params} />
-        </Suspense>
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-gray-300">
+          <i className="fa-solid fa-arrow-down"></i>
+        </div>
+      </div>
+
+      {/* SECTION 2: MISSION */}
+      <Mission />
+
+      {/* SECTION 3: ECOSYSTEM & FOOTER */}
+      <div id="ecosystem" className="min-h-screen flex flex-col justify-center bg-gray-50 border-t border-gray-200">
+        <div className="flex-grow flex flex-col justify-center">
+           <div id="universities">
+             <UniversityLogos />
+           </div>
+           
+           <div id="features">
+             <Features />
+           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="py-12 bg-gray-50 border-t border-gray-200/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div className="w-16 h-1 bg-gray-200 mx-auto mb-8"></div>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">
+              &copy; 2026 CodeCampus Global Network. Initialized 0xFC.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
-}
-
-async function SidebarData() {
-  const [dbUniversities, dbFields] = await Promise.all([
-    queryD1<University>('SELECT university as name, COUNT(*) as count FROM courses WHERE is_hidden = 0 GROUP BY university ORDER BY count DESC'),
-    queryD1<Field>('SELECT f.name, COUNT(cf.course_id) as count FROM fields f JOIN course_fields cf ON f.id = cf.field_id GROUP BY f.id ORDER BY count DESC'),
-  ]);
-
-  return <Sidebar universities={dbUniversities} fields={dbFields} enrolledCount={0} />;
-}
-
-async function CourseListData({ params }: { params: any }) {
-  const page = parseInt((params.page as string) || "1");
-  const size = 10;
-  const offset = (page - 1) * size;
-  const query = (params.q as string) || "";
-  const sort = (params.sort as string) || "relevance";
-  const enrolledOnly = params.enrolled === "true";
-  
-  const universities = ((params.universities as string) || "").split(",").filter(Boolean);
-  const fields = ((params.fields as string) || "").split(",").filter(Boolean);
-  const levels = ((params.levels as string) || "").split(",").filter(Boolean);
-
-  const dbCourses = await fetchCourses(page, size, offset, query, sort, enrolledOnly, universities, fields, levels);
-
-  return (
-    <CourseList 
-      initialCourses={dbCourses.items}
-      totalItems={dbCourses.total}
-      totalPages={dbCourses.pages}
-      currentPage={page}
-      initialEnrolledIds={[]}
-    />
-  );
-}
-
-async function fetchCourses(page: number, size: number, offset: number, query: string, sort: string, enrolledOnly: boolean, universities: string[], fields: string[], levels: string[]) {
-  const mockEmail = "test@example.com";
-  let whereClause = 'WHERE is_hidden = 0';
-  whereClause += ' AND c.id IN (SELECT MIN(id) FROM courses GROUP BY course_code)';
-  const queryParams: (string | number)[] = [];
-
-  if (enrolledOnly) {
-    whereClause += ` AND c.id IN (SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1))`;
-    queryParams.push(mockEmail);
-  }
-
-  if (query) {
-    whereClause += ` AND (c.title LIKE ? OR c.description LIKE ? OR c.course_code LIKE ?)`;
-    const searchPattern = `%${query}%`;
-    queryParams.push(searchPattern, searchPattern, searchPattern);
-  }
-
-  if (universities.length > 0) {
-    const placeholders = universities.map(() => '?').join(',');
-    whereClause += ` AND university IN (${placeholders})`;
-    queryParams.push(...universities);
-  }
-
-  if (fields.length > 0) {
-    const placeholders = fields.map(() => '?').join(',');
-    whereClause += ` AND c.id IN (SELECT cf.course_id FROM course_fields cf JOIN fields f ON cf.field_id = f.id WHERE f.name IN (${placeholders}))`;
-    queryParams.push(...fields);
-  }
-
-  if (levels.length > 0) {
-    const placeholders = levels.map(() => '?').join(',');
-    whereClause += ` AND level IN (${placeholders})`;
-    queryParams.push(...levels);
-  }
-
-  let orderBy = 'ORDER BY c.id DESC';
-  if (sort === 'popularity') orderBy = 'ORDER BY c.popularity DESC, c.id DESC';
-  else if (sort === 'newest') orderBy = 'ORDER BY c.created_at DESC';
-  else if (sort === 'title') orderBy = 'ORDER BY c.title ASC';
-
-  const countResult = await queryD1<{ count: number }>(`SELECT count(*) as count FROM courses c ${whereClause}`, queryParams);
-  const total = Number(countResult[0]?.count || 0);
-  const pages = Math.max(1, Math.ceil(total / size));
-
-  const selectSql = `
-    SELECT c.id, c.university, c.course_code, c.title, c.units, c.description, c.url, c.department, c.corequisites, c.level, c.difficulty, c.popularity, c.workload, c.created_at,
-           (SELECT GROUP_CONCAT(f.name) FROM course_fields cf JOIN fields f ON cf.field_id = f.id WHERE cf.course_id = c.id) as field_names,
-           (SELECT GROUP_CONCAT(s.term || ' ' || s.year) FROM course_semesters cs JOIN semesters s ON cs.semester_id = s.id WHERE cs.course_id = c.id) as semester_names
-    FROM courses c
-    ${whereClause}
-    ${orderBy}
-    LIMIT ? OFFSET ?
-  `;
-  const rows = await queryD1<Record<string, unknown>>(selectSql, [...queryParams, size, offset]);
-
-  const items = rows.map(row => {
-    const course = mapCourseFromRow(row);
-    const { ...lightCourse } = course;
-    const fields = row.field_names ? (row.field_names as string).split(',') : [];
-    const semesters = row.semester_names ? (row.semester_names as string).split(',') : [];
-    return { ...lightCourse, fields, semesters, level: row.level as string, corequisites: row.corequisites as string } as Course;
-  });
-
-  return { items, total, pages };
-}
-
-function SidebarSkeleton() {
-  return <div className="w-64 space-y-8 animate-pulse"><div className="h-4 bg-gray-100 rounded w-1/2"></div><div className="space-y-4"><div className="h-8 bg-gray-50 rounded"></div><div className="h-8 bg-gray-50 rounded"></div></div></div>;
-}
-
-function CourseListSkeleton() {
-  return <div className="flex-grow space-y-4 animate-pulse"><div className="h-10 bg-gray-50 rounded w-full"></div><div className="h-40 bg-gray-50 rounded w-full"></div><div className="h-40 bg-gray-50 rounded w-full"></div></div>;
 }

@@ -6,6 +6,8 @@ import AchievementCard from "@/components/home/AchievementCard";
 import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
 import Link from "next/link";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 interface EnrolledCourse extends Course {
   status: string;
@@ -18,11 +20,15 @@ interface PageProps {
 }
 
 export default async function StudyPlanPage({ searchParams }: PageProps) {
+  const session = await auth();
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
+
   const params = await searchParams;
   const focusView = (params.focusView as string) || "track";
-  const mockEmail = "test@example.com";
   
-  const enrolledRows = await queryD1<any>(`
+  const enrolledRows = await queryD1<Record<string, unknown>>(`
     SELECT c.*, uc.status, uc.progress, uc.updated_at,
            GROUP_CONCAT(DISTINCT f.name) as field_names,
            GROUP_CONCAT(DISTINCT s.term || ' ' || s.year) as semester_names
@@ -35,7 +41,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
     WHERE uc.user_id = (SELECT id FROM users WHERE email = ? LIMIT 1)
     GROUP BY c.id, uc.status, uc.progress, uc.updated_at
     ORDER BY uc.updated_at DESC
-  `, [mockEmail]);
+  `, [session.user.email]);
 
   const enrolledCourses: EnrolledCourse[] = enrolledRows.map(row => {
     const course = mapCourseFromRow(row);

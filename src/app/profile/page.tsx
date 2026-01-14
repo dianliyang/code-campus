@@ -1,12 +1,17 @@
 import { queryD1 } from "@/lib/d1";
 import Navbar from "@/components/layout/Navbar";
 import DeleteAccount from "@/components/profile/DeleteAccount";
+import { auth, signOut } from "@/auth";
+import { redirect } from "next/navigation";
 
 export default async function ProfilePage() {
-  const mockEmail = "test@example.com";
+  const session = await auth();
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
   
   const user = await queryD1<{ id: number; name: string; email: string; image: string; provider: string; created_at: string }>(
-    'SELECT * FROM users WHERE email = ? LIMIT 1', [mockEmail]
+    'SELECT * FROM users WHERE email = ? LIMIT 1', [session.user.email]
   );
 
   const profile = user[0];
@@ -72,10 +77,15 @@ export default async function ProfilePage() {
               <i className="fa-solid fa-gear text-sm group-hover:rotate-90 transition-transform duration-500"></i>
               <span className="text-xs font-bold uppercase tracking-widest">Account Settings</span>
             </button>
-            <button className="flex items-center gap-2 px-3 py-1.5 -ml-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all group cursor-pointer">
-              <i className="fa-solid fa-arrow-right-from-bracket text-sm"></i>
-              <span className="text-xs font-bold uppercase tracking-widest">Sign Out</span>
-            </button>
+            <form action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/login" });
+            }}>
+              <button className="flex items-center gap-2 px-3 py-1.5 -ml-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all group cursor-pointer w-full">
+                <i className="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                <span className="text-xs font-bold uppercase tracking-widest">Sign Out</span>
+              </button>
+            </form>
           </div>
         </div>
 

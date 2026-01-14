@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { queryD1, mapCourseFromRow } from '@/lib/d1';
+import { auth } from '@/auth';
 
 export async function GET(request: Request) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page') || '1');
   const size = parseInt(searchParams.get('size') || '10');
@@ -28,7 +34,8 @@ export async function GET(request: Request) {
     const queryParams: (string | number)[] = [];
 
     if (enrolledOnly) {
-      whereClause += ` AND c.id IN (SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = 'test@example.com' LIMIT 1))`;
+      whereClause += ` AND c.id IN (SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1))`;
+      queryParams.push(session.user?.email || "");
     }
 
     if (query) {

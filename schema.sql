@@ -38,6 +38,7 @@ CREATE INDEX IF NOT EXISTS idx_course_fields_field ON course_fields(field_id);
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT NOT NULL UNIQUE,
+  password TEXT, -- Hashed password for credentials provider
   name TEXT,
   image TEXT, -- Profile picture from OAuth provider
   provider TEXT NOT NULL, -- e.g., 'github', 'google'

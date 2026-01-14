@@ -9,7 +9,7 @@ const execAsync = promisify(exec);
 export class D1Database {
   private dbName: string;
 
-  constructor(dbName: string = "course-spider-db") {
+  constructor(dbName: string = "code-campus-db") {
     this.dbName = dbName;
   }
 

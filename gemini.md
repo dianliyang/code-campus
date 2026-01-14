@@ -3,7 +3,7 @@
 This file provides project-specific context and instructions for AI agents (like Gemini) working on the CourseSpider codebase.
 
 ## Project Overview
-CourseSpider is a Next.js-based course aggregator that scrapes data from top universities and stores it in a Cloudflare D1 database.
+CodeCampus is a Next.js-based course aggregator that scrapes data from top universities and stores it in a Cloudflare D1 database.
 
 ## Technical Stack
 - **Framework**: Next.js 16 (App Router)
@@ -20,8 +20,8 @@ CourseSpider is a Next.js-based course aggregator that scrapes data from top uni
 
 ## Database Workflow
 The project uses Cloudflare D1. For local development, wrangler uses a local SQLite file.
-- **Initialize Local DB**: `npx wrangler d1 execute course-spider-db --local --file=./schema.sql`
-- **Query Local DB**: `npx wrangler d1 execute course-spider-db --local --command "..."`
+- **Initialize Local DB**: `npx wrangler d1 execute code-campus-db --local --file=./schema.sql`
+- **Query Local DB**: `npx wrangler d1 execute code-campus-db --local --command "..."`
 
 ## Coding Conventions
 - **TypeScript**: Use strict typing. Avoid `any`.

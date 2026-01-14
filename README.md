@@ -1,6 +1,6 @@
-# CourseSpider
+# CodeCampus
 
-CourseSpider is a modern web application designed to scrape, aggregate, and browse university course data from top institutions like CMU, MIT, Stanford, and UC Berkeley.
+CodeCampus is a modern web application designed to scrape, aggregate, and browse university course data from top institutions like CMU, MIT, Stanford, and UC Berkeley.
 
 ## Tech Stack
 
@@ -31,7 +31,7 @@ npm install
 ### 3. Database Setup
 Initialize your local D1 database:
 ```bash
-npx wrangler d1 execute course-spider-db --local --file=./schema.sql
+npx wrangler d1 execute code-campus-db --local --file=./schema.sql
 ```
 
 ## Running Scrapers
@@ -58,17 +58,35 @@ npm run dev
 ```
 The application will be available at `http://localhost:3000`.
 
+## Authentication
+
+The project uses [NextAuth.js](https://next-auth.js.org/) for authentication, supporting both OAuth (GitHub, Google) and Credentials (Email/Password) providers.
+
+### Default Admin User
+For local development, an admin user can be created manually in the database. The system expects passwords to be hashed using `bcryptjs`.
+
 ## Database Management
+
+### User Management
+You can manage users via Wrangler:
+
+```bash
+# List all users
+npx wrangler d1 execute code-campus-db --local --command "SELECT id, email, name, provider FROM users;"
+
+# Manually insert a user (Password must be bcrypt hashed)
+npx wrangler d1 execute code-campus-db --local --command "INSERT INTO users (email, password, provider, provider_id, name) VALUES ('admin@codecampus.com', 'HASHED_PASSWORD', 'credentials', 'admin@codecampus.com', 'Admin');"
+```
 
 ### Searching the Local DB
 You can query your local database directly using Wrangler:
 
 ```bash
 # Search for a specific course
-npx wrangler d1 execute course-spider-db --local --command "SELECT * FROM courses WHERE course_code LIKE '%CS106%';"
+npx wrangler d1 execute code-campus-db --local --command "SELECT * FROM courses WHERE course_code LIKE '%CS106%';"
 
 # Count courses by university
-npx wrangler d1 execute course-spider-db --local --command "SELECT university, COUNT(*) FROM courses GROUP BY university;"
+npx wrangler d1 execute code-campus-db --local --command "SELECT university, COUNT(*) FROM courses GROUP BY university;"
 ```
 
 ### Debugging Script

@@ -44,7 +44,7 @@ export async function queryD1<T = unknown>(sql: string, params: unknown[] = []):
         });
 
         console.log(`[D1 Remote] Executing: ${processedSql.substring(0, 100)}...`);
-        const { stdout } = await execAsync(`npx wrangler d1 execute course-spider-db --remote --command="${processedSql.replace(/"/g, '\\"')}" --json`);
+        const { stdout } = await execAsync(`npx wrangler d1 execute code-campus-db --remote --command="${processedSql.replace(/"/g, '\\"')}" --json`);
         
         if (processedSql.trim().toLowerCase().startsWith('select')) {
           // Extract only the JSON part from wrangler output

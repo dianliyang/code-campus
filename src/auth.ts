@@ -4,6 +4,7 @@ import { queryD1, runD1 } from "@/lib/d1";
 import bcrypt from "bcryptjs";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   providers: [
     /*
     Google({
@@ -23,11 +24,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const email = credentials.email as string;
+        const email = (credentials.email as string).toLowerCase();
         const password = credentials.password as string;
 
         try {
-          const users = await queryD1<{ id: number, email: string, name: string, password?: string }>(
+          const users = await queryD1<{ id: number, email: string, name: string, password?: string, provider: string }>(
             "SELECT * FROM users WHERE email = ? LIMIT 1", 
             [email]
           );
@@ -36,8 +37,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             const u = users[0];
             if (u.password) {
               const isValid = await bcrypt.compare(password, u.password);
-              if (!isValid) return null;
+              if (!isValid) {
+                console.log(`[Auth] Invalid password for user: ${email}`);
+                return null;
+              }
             } else {
+              console.log(`[Auth] User exists but has no password (provider: ${u.provider}): ${email}`);
+              // In NextAuth v5, returning null always results in CredentialsSignin
+              // We could throw a custom error but NextAuth usually wraps it
               return null;
             }
             return {
@@ -47,6 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             };
           }
 
+          console.log(`[Auth] Creating new user: ${email}`);
           const hashedPassword = await bcrypt.hash(password, 10);
           await runD1(
             "INSERT INTO users (email, password, provider, provider_id, name) VALUES (?, ?, 'credentials', ?, ?)",
@@ -69,6 +77,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         } catch (e) {
           console.error("Auth error:", e);
+          // Re-throw if it's a critical error, or return null
           return null;
         }
       },

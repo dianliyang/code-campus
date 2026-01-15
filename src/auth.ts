@@ -4,10 +4,33 @@ import { D1Adapter } from "@auth/d1-adapter";
 import { queryD1 } from "@/lib/d1";
 import { authConfig } from "./auth.config";
 
+// A shim to allow the D1Adapter to work in local dev by routing queries through our queryD1 utility
+const unifiedDb = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  prepare: (sql: string) => {
+    return {
+      bind: (...params: any[]) => ({
+        all: async () => {
+          const results = await queryD1(sql, params);
+          return { results, success: true, meta: {} };
+        },
+        run: async () => {
+          const results = await queryD1(sql, params);
+          return { results, success: true, meta: {} };
+        },
+        first: async () => {
+          const results = await queryD1(sql, params);
+          return results[0] || null;
+        }
+      })
+    };
+  }
+};
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adapter: D1Adapter((process.env.DB || (globalThis as any).DB)),
+  // We use our unifiedDb shim which handles Binding vs Local automatically
+  adapter: D1Adapter(unifiedDb as any),
   secret: process.env.AUTH_SECRET,
   session: {
     strategy: "jwt",

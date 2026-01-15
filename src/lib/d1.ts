@@ -12,6 +12,7 @@ export async function queryD1<T = unknown>(sql: string, params: unknown[] = []):
   
   if (bindingDB && typeof bindingDB.prepare === 'function') {
     try {
+      // console.log("[D1 Binding] Executing query");
       const stmt = bindingDB.prepare(sql).bind(...params);
       if (sql.trim().toLowerCase().startsWith('select')) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,20 +32,23 @@ export async function queryD1<T = unknown>(sql: string, params: unknown[] = []):
   // 2. Remote HTTP API Fallback
   if (REMOTE_DB && ACCOUNT_ID && DATABASE_ID && API_TOKEN) {
     const url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${DATABASE_ID}/query`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${API_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sql, params })
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${API_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sql, params })
+      });
 
-    if (response.ok) {
-      const json = await response.json();
-      if (json.success) return json.result[0].results as T[];
+      if (response.ok) {
+        const json = await response.json();
+        if (json.success) return json.result[0].results as T[];
+      }
+    } catch (err) {
+      console.error("[D1 Remote Error]", err);
     }
   } 
 
   // 3. Local Mode (better-sqlite3)
-  // We only try this if NOT in a binding environment and process exists (Node)
   if (typeof process !== 'undefined' && process.versions && process.versions.node) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -76,7 +80,7 @@ export async function queryD1<T = unknown>(sql: string, params: unknown[] = []):
         }
       }
     } catch (e) {
-      // Silent fail for local mode
+      // Silent fail
     }
   }
 

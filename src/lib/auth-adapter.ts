@@ -45,11 +45,12 @@ export function CodeCampusAdapter(): Adapter {
   return {
     async createUser(user) {
       const { email, emailVerified, name, image } = user;
+      console.log(`[Adapter] Creating user: ${email}`);
       await runD1(
         "INSERT INTO users (email, emailVerified, name, image) VALUES (?, ?, ?, ?)",
-        [email, emailVerified?.toISOString(), name, image]
+        [email.toLowerCase(), emailVerified?.toISOString(), name, image]
       );
-      const row = await queryD1<DbUser>("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
+      const row = await queryD1<DbUser>("SELECT * FROM users WHERE email = ? LIMIT 1", [email.toLowerCase()]);
       return mapUser(row[0])!;
     },
     async getUser(id) {
@@ -57,7 +58,7 @@ export function CodeCampusAdapter(): Adapter {
       return mapUser(rows[0]);
     },
     async getUserByEmail(email) {
-      const rows = await queryD1<DbUser>("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
+      const rows = await queryD1<DbUser>("SELECT * FROM users WHERE email = ? LIMIT 1", [email.toLowerCase()]);
       return mapUser(rows[0]);
     },
     async getUserByAccount({ provider, providerAccountId }) {
@@ -69,9 +70,10 @@ export function CodeCampusAdapter(): Adapter {
     },
     async updateUser(user) {
       const id = parseInt(user.id!);
+      const email = user.email?.toLowerCase();
       await runD1(
         "UPDATE users SET email = ?, emailVerified = ?, name = ?, image = ? WHERE id = ?",
-        [user.email, user.emailVerified?.toISOString(), user.name, user.image, id]
+        [email, user.emailVerified?.toISOString(), user.name, user.image, id]
       );
       const row = await queryD1<DbUser>("SELECT * FROM users WHERE id = ? LIMIT 1", [id]);
       return mapUser(row[0])!;
@@ -143,29 +145,35 @@ export function CodeCampusAdapter(): Adapter {
       await runD1("DELETE FROM sessions WHERE sessionToken = ?", [sessionToken]);
     },
     async createVerificationToken(verificationToken) {
-      console.log(`[Adapter] Creating token for ${verificationToken.identifier}`);
+      const { identifier, token, expires } = verificationToken;
+      console.log(`[Adapter] Creating verification token for ${identifier}`);
       await runD1(
         "INSERT INTO verification_tokens (identifier, token, expires) VALUES (?, ?, ?)",
-        [verificationToken.identifier, verificationToken.token, verificationToken.expires.toISOString()]
+        [identifier.toLowerCase(), token, expires.toISOString()]
       );
       return verificationToken;
     },
     async useVerificationToken({ identifier, token }) {
-      console.log(`[Adapter] Attempting to use token for ${identifier}`);
+      const id = identifier.toLowerCase();
+      console.log(`[Adapter] useVerificationToken check for ${id}`);
+      
       const rows = await queryD1<DbVerificationToken>(
         "SELECT * FROM verification_tokens WHERE identifier = ? AND token = ? LIMIT 1",
-        [identifier, token]
+        [id, token]
       );
       
-      if (!rows.length) {
-        console.log(`[Adapter] Token NOT found for ${identifier}`);
+      if (rows.length === 0) {
+        console.warn(`[Adapter] No token found for ${id}`);
+        // Diagnostic query: see if token exists for this identifier regardless of exact token match
+        const countRows = await queryD1<{count: number}>("SELECT count(*) as count FROM verification_tokens WHERE identifier = ?", [id]);
+        console.log(`[Adapter] Tokens currently in DB for this email: ${countRows[0]?.count || 0}`);
         return null;
       }
       
       console.log(`[Adapter] Token found, consuming...`);
       await runD1(
         "DELETE FROM verification_tokens WHERE identifier = ? AND token = ?",
-        [identifier, token]
+        [id, token]
       );
       
       const t = rows[0];

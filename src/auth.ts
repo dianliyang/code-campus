@@ -14,16 +14,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Resend({
       apiKey: process.env.AUTH_RESEND_KEY || "re_123456789",
-      from: process.env.EMAIL_FROM || "CodeCampus <no-reply@codecampus.example.com>",
+      from:
+        process.env.EMAIL_FROM ||
+        "CodeCampus <no-reply@codecampus.example.com>",
       maxAge: 24 * 60 * 60, // 24 hours
       async sendVerificationRequest({ identifier: email, url }) {
-        console.log(`
+        console.log(`[Auth] 🪄 Magic Link for ${email}: ${url}`);
 
-[Auth] 🪄 Magic Link for ${email}: ${url}
-
-`);
-        
-        if (process.env.AUTH_RESEND_KEY && process.env.AUTH_RESEND_KEY !== "re_123456789") {
+        if (
+          process.env.AUTH_RESEND_KEY &&
+          process.env.AUTH_RESEND_KEY !== "re_123456789"
+        ) {
           const res = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
@@ -86,19 +87,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async signIn({ account }) {
-      if (account?.provider === "resend" || account?.provider === "email") return true;
+      if (account?.provider === "resend" || account?.provider === "email")
+        return true;
       return true;
     },
     async session({ session }) {
       if (session.user && session.user.email) {
-         try {
-           const dbUser = await queryD1<{ id: number }>(
-             "SELECT id FROM users WHERE email = ? LIMIT 1",
-             [session.user.email]
-           );
-           if (dbUser.length > 0) {
-             (session.user as { id: string }).id = dbUser[0].id.toString();
-           }
+        try {
+          const dbUser = await queryD1<{ id: number }>(
+            "SELECT id FROM users WHERE email = ? LIMIT 1",
+            [session.user.email]
+          );
+          if (dbUser.length > 0) {
+            (session.user as { id: string }).id = dbUser[0].id.toString();
+          }
         } catch (e) {
           console.error("Session lookup error:", e);
         }
@@ -107,6 +109,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async authorized({ auth }) {
       return !!auth;
-    }
-  }
+    },
+  },
 });

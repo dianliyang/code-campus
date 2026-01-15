@@ -8,7 +8,8 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const isLoginPage = req.nextUrl.pathname === "/login";
   const isVerifyPage = req.nextUrl.pathname === "/auth/verify-request";
-  const isPublicPage = req.nextUrl.pathname === "/" || isLoginPage || isVerifyPage;
+  const isConfirmPage = req.nextUrl.pathname === "/auth/confirm";
+  const isPublicPage = req.nextUrl.pathname === "/" || isLoginPage || isVerifyPage || isConfirmPage;
 
   // console.log(`[Middleware] Path: ${req.nextUrl.pathname}, LoggedIn: ${isLoggedIn}`);
 

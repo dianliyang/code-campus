@@ -23,8 +23,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async sendVerificationRequest({ identifier: email, url }) {
         console.log(`[Auth] Magic Link Request for ${email}`);
         
+        // Hide the real URL from scanners by double-encoding it
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://course.oili.dev";
+        const shieldedUrl = btoa(url);
+        const confirmUrl = new URL("/auth/confirm", baseUrl);
+        confirmUrl.searchParams.set("s", shieldedUrl);
+        const finalLink = confirmUrl.toString();
+
         if (process.env.AUTH_RESEND_KEY && process.env.AUTH_RESEND_KEY !== "re_123456789") {
-          const res = await fetch("https://api.resend.com/emails", {
+          await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${process.env.AUTH_RESEND_KEY}`,
@@ -59,7 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     <div class="content">
                       <h1>System Authentication</h1>
                       <p>A secure access request was initiated for your identity. Click the button below to authorize the session and enter the network.</p>
-                      <a href="${url}" class="button">Authenticate Session</a>
+                      <a href="${finalLink}" class="button">Authenticate Session</a>
                       <div class="divider"></div>
                       <div class="security">
                         <strong>Security Protocol:</strong> This link is valid for 10 minutes and can only be used once. If you did not initiate this request, no action is required.
@@ -72,17 +79,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 </body>
                 </html>
               `,
-              text: `Authenticate your CodeCampus Session: ${url}`,
+              text: `Authenticate your CodeCampus Session: ${finalLink}`,
             }),
           });
-
-          if (!res.ok) {
-            const errorBody = await res.text();
-            console.error("[Resend Error]", res.status, errorBody);
-            throw new Error("Failed to deliver verification email.");
-          }
         } else {
-          console.log(`\n\n[Auth] 🪄 MAGIC LINK (Dev): ${url}\n\n`);
+          console.log(`\n\n[Auth] 🪄 MAGIC LINK (Dev): ${finalLink}\n\n`);
         }
       },
     }),

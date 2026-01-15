@@ -143,6 +143,7 @@ export function CodeCampusAdapter(): Adapter {
       await runD1("DELETE FROM sessions WHERE sessionToken = ?", [sessionToken]);
     },
     async createVerificationToken(verificationToken) {
+      console.log(`[Adapter] Creating token for ${verificationToken.identifier}`);
       await runD1(
         "INSERT INTO verification_tokens (identifier, token, expires) VALUES (?, ?, ?)",
         [verificationToken.identifier, verificationToken.token, verificationToken.expires.toISOString()]
@@ -150,12 +151,18 @@ export function CodeCampusAdapter(): Adapter {
       return verificationToken;
     },
     async useVerificationToken({ identifier, token }) {
+      console.log(`[Adapter] Attempting to use token for ${identifier}`);
       const rows = await queryD1<DbVerificationToken>(
         "SELECT * FROM verification_tokens WHERE identifier = ? AND token = ? LIMIT 1",
         [identifier, token]
       );
-      if (!rows.length) return null;
       
+      if (!rows.length) {
+        console.log(`[Adapter] Token NOT found for ${identifier}`);
+        return null;
+      }
+      
+      console.log(`[Adapter] Token found, consuming...`);
       await runD1(
         "DELETE FROM verification_tokens WHERE identifier = ? AND token = ?",
         [identifier, token]

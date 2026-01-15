@@ -4,7 +4,7 @@ import { queryD1, runD1 } from "./d1"
 interface DbUser {
   id: string;
   email: string;
-  emailVerified?: number | null;
+  emailVerified?: string | null;
   name?: string | null;
   image?: string | null;
 }
@@ -13,13 +13,13 @@ interface DbSession {
   id: string;
   sessionToken: string;
   userId: string;
-  expires: number;
+  expires: string;
 }
 
 interface DbVerificationToken {
   identifier: string;
   token: string;
-  expires: number;
+  expires: string;
 }
 
 function mapUser(user: DbUser): AdapterUser | null {
@@ -47,11 +47,17 @@ export function CodeCampusAdapter(): Adapter {
     async createUser(user) {
       const id = crypto.randomUUID();
       const { email, emailVerified, name, image } = user;
-      await runD1(
-        "INSERT INTO users (id, email, emailVerified, name, image) VALUES (?, ?, ?, ?, ?)",
-        [id, email.toLowerCase(), emailVerified?.getTime() ?? null, name, image]
-      );
-      return { ...user, id };
+      console.log(`[Adapter] createUser: ${email}`);
+      try {
+        await runD1(
+          "INSERT INTO users (id, email, emailVerified, name, image) VALUES (?, ?, ?, ?, ?)",
+          [id, email.toLowerCase(), emailVerified?.toISOString() ?? null, name, image]
+        );
+        return { ...user, id };
+      } catch (err) {
+        console.error("[Adapter] createUser Error:", err);
+        throw err;
+      }
     },
     async getUser(id) {
       const rows = await queryD1<DbUser>("SELECT * FROM users WHERE id = ? LIMIT 1", [id]);
@@ -72,7 +78,7 @@ export function CodeCampusAdapter(): Adapter {
       const { email, emailVerified, name, image, id } = user;
       await runD1(
         "UPDATE users SET email = ?, emailVerified = ?, name = ?, image = ? WHERE id = ?",
-        [email?.toLowerCase(), emailVerified?.getTime(), name, image, id]
+        [email?.toLowerCase(), emailVerified?.toISOString() ?? null, name, image, id]
       );
       const rows = await queryD1<DbUser>("SELECT * FROM users WHERE id = ? LIMIT 1", [id]);
       return mapUser(rows[0])!;
@@ -112,7 +118,7 @@ export function CodeCampusAdapter(): Adapter {
       const id = crypto.randomUUID();
       await runD1(
         "INSERT INTO sessions (id, sessionToken, userId, expires) VALUES (?, ?, ?, ?)",
-        [id, session.sessionToken, session.userId, session.expires.getTime()]
+        [id, session.sessionToken, session.userId, session.expires.toISOString()]
       );
       return session;
     },
@@ -138,7 +144,7 @@ export function CodeCampusAdapter(): Adapter {
     async updateSession(session) {
       await runD1(
         "UPDATE sessions SET expires = ? WHERE sessionToken = ?",
-        [session.expires?.getTime(), session.sessionToken]
+        [session.expires?.toISOString(), session.sessionToken]
       );
       const rows = await queryD1<DbSession>("SELECT * FROM sessions WHERE sessionToken = ? LIMIT 1", [session.sessionToken]);
       return mapSession(rows[0])!;
@@ -148,32 +154,50 @@ export function CodeCampusAdapter(): Adapter {
     },
     async createVerificationToken(verificationToken) {
       const { identifier, token, expires } = verificationToken;
-      await runD1(
-        "INSERT INTO verification_tokens (identifier, token, expires) VALUES (?, ?, ?)",
-        [identifier.toLowerCase(), token, expires.getTime()]
-      );
-      return verificationToken;
+      const id = identifier.toLowerCase();
+      console.log(`[Adapter] createVerificationToken: ${id}`);
+      try {
+        await runD1(
+          "INSERT INTO verification_tokens (identifier, token, expires) VALUES (?, ?, ?)",
+          [id, token, expires.toISOString()]
+        );
+        return verificationToken;
+      } catch (err) {
+        console.error("[Adapter] createVerificationToken Error:", err);
+        throw err;
+      }
     },
     async useVerificationToken({ identifier, token }) {
       const id = identifier.toLowerCase();
-      const rows = await queryD1<DbVerificationToken>(
-        "SELECT * FROM verification_tokens WHERE identifier = ? AND token = ? LIMIT 1",
-        [id, token]
-      );
-      
-      if (rows.length === 0) return null;
-      
-      await runD1(
-        "DELETE FROM verification_tokens WHERE identifier = ? AND token = ?",
-        [id, token]
-      );
-      
-      const t = rows[0];
-      return {
-        identifier: t.identifier,
-        token: t.token,
-        expires: new Date(t.expires)
-      };
+      console.log(`[Adapter] useVerificationToken check: ${id}`);
+      try {
+        const rows = await queryD1<DbVerificationToken>(
+          "SELECT * FROM verification_tokens WHERE identifier = ? AND token = ? LIMIT 1",
+          [id, token]
+        );
+        
+        if (rows.length === 0) {
+          console.warn("[Adapter] No token found in DB.");
+          return null;
+        }
+        
+        const t = rows[0];
+        console.log("[Adapter] Token found, consuming...");
+        
+        await runD1(
+          "DELETE FROM verification_tokens WHERE identifier = ? AND token = ?",
+          [id, token]
+        );
+        
+        return {
+          identifier: t.identifier,
+          token: t.token,
+          expires: new Date(t.expires)
+        };
+      } catch (err) {
+        console.error("[Adapter] useVerificationToken Error:", err);
+        return null;
+      }
     },
   }
 }

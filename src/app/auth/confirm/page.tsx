@@ -15,7 +15,13 @@ function ConfirmContent() {
     const s = searchParams.get("s");
     if (s) {
       try {
-        const decoded = atob(s);
+        // Revert URL-safe Base64 to standard Base64
+        let base64 = s.replace(/-/g, '+').replace(/_/g, '/');
+        // Add padding if missing
+        while (base64.length % 4) {
+          base64 += '=';
+        }
+        const decoded = atob(base64);
         setTargetUrl(decoded);
       } catch (e) {
         console.error("Shield decode failed", e);

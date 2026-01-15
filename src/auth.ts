@@ -6,21 +6,23 @@ import { authConfig } from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  trustHost: true,
   adapter: CodeCampusAdapter(),
+  secret: process.env.AUTH_SECRET,
   session: {
     strategy: "jwt",
   },
   providers: [
     Resend({
-      apiKey: process.env.AUTH_RESEND_KEY || "re_123456789", // Fallback to dummy key to prevent init failure
+      apiKey: process.env.AUTH_RESEND_KEY || "re_123456789",
       from: process.env.EMAIL_FROM || "CodeCampus <no-reply@codecampus.example.com>",
-      // Custom sendVerificationRequest to allow console logging in dev
       async sendVerificationRequest({ identifier: email, url }) {
-        console.log(`\n\n[Auth] 🪄 Magic Link for ${email}: ${url}\n\n`);
+        console.log(`
+
+[Auth] 🪄 Magic Link for ${email}: ${url}
+
+`);
         
-        // Only attempt Resend if key is present and not in local dev console-only mode
-        if (process.env.AUTH_RESEND_KEY) {
+        if (process.env.AUTH_RESEND_KEY && process.env.AUTH_RESEND_KEY !== "re_123456789") {
           const res = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
@@ -38,7 +40,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           if (!res.ok) {
             const error = await res.json();
-            throw new Error(JSON.stringify(error));
+            console.error("[Resend Error]", error);
           }
         }
       },
@@ -46,21 +48,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async signIn({ account }) {
-      // Allow Email provider
       if (account?.provider === "resend" || account?.provider === "email") return true;
       return true;
     },
     async session({ session }) {
-      // console.log("[Auth] Session Callback");
       if (session.user && session.user.email) {
-        // ... (existing logic) ...
          try {
            const dbUser = await queryD1<{ id: number }>(
-             "SELECT id FROM accounts WHERE email = ? LIMIT 1",
+             "SELECT id FROM users WHERE email = ? LIMIT 1",
              [session.user.email]
            );
            if (dbUser.length > 0) {
-             session.user.id = dbUser[0].id.toString();
+             (session.user as { id: string }).id = dbUser[0].id.toString();
            }
         } catch (e) {
           console.error("Session lookup error:", e);

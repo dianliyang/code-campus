@@ -43,7 +43,9 @@ export default function LoginForm({ onMagicLink }: LoginFormProps) {
               ? "This email is linked to another provider. Please use your social login."
               : error === "AccessDenied"
               ? "Access denied. Your account may be restricted."
-              : "Authentication failed. System error detected."}
+              : error === "Configuration"
+              ? "System configuration error. Please check environment variables."
+              : `Authentication error: ${error}. Please try again.`}
           </p>
         </div>
       )}

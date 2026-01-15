@@ -1,13 +1,12 @@
 import { Adapter, AdapterUser, AdapterSession } from "next-auth/adapters"
 import { queryD1, runD1 } from "./d1"
 
-interface DbAccount {
+interface DbUser {
   id: number;
   email: string;
   emailVerified?: string | null;
   name?: string | null;
   image?: string | null;
-  [key: string]: unknown;
 }
 
 interface DbSession {
@@ -22,15 +21,14 @@ interface DbVerificationToken {
   expires: string;
 }
 
-// Helper to cast DB account row to AdapterUser
-function mapUser(account: DbAccount): AdapterUser | null {
-  if (!account) return null;
+function mapUser(user: DbUser): AdapterUser | null {
+  if (!user) return null;
   return {
-    id: account.id.toString(),
-    email: account.email,
-    emailVerified: account.emailVerified ? new Date(account.emailVerified) : null,
-    name: account.name ?? null,
-    image: account.image ?? null
+    id: user.id.toString(),
+    email: user.email,
+    emailVerified: user.emailVerified ? new Date(user.emailVerified) : null,
+    name: user.name ?? null,
+    image: user.image ?? null
   }
 }
 
@@ -47,26 +45,24 @@ export function CodeCampusAdapter(): Adapter {
   return {
     async createUser(user) {
       const { email, emailVerified, name, image } = user;
-      // We assume 'email' provider for default creation.
       await runD1(
-        "INSERT INTO accounts (email, emailVerified, name, image, provider, providerAccountId, type) VALUES (?, ?, ?, ?, 'email', ?, 'email')",
-        [email, emailVerified?.toISOString(), name, image, email]
+        "INSERT INTO users (email, emailVerified, name, image) VALUES (?, ?, ?, ?)",
+        [email, emailVerified?.toISOString(), name, image]
       );
-      
-      const row = await queryD1<DbAccount>("SELECT * FROM accounts WHERE email = ? ORDER BY id DESC LIMIT 1", [email]);
+      const row = await queryD1<DbUser>("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
       return mapUser(row[0])!;
     },
     async getUser(id) {
-      const rows = await queryD1<DbAccount>("SELECT * FROM accounts WHERE id = ? LIMIT 1", [parseInt(id)]);
+      const rows = await queryD1<DbUser>("SELECT * FROM users WHERE id = ? LIMIT 1", [parseInt(id)]);
       return mapUser(rows[0]);
     },
     async getUserByEmail(email) {
-      const rows = await queryD1<DbAccount>("SELECT * FROM accounts WHERE email = ? LIMIT 1", [email]);
+      const rows = await queryD1<DbUser>("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
       return mapUser(rows[0]);
     },
     async getUserByAccount({ provider, providerAccountId }) {
-      const rows = await queryD1<DbAccount>(
-        `SELECT * FROM accounts WHERE provider = ? AND providerAccountId = ?`,
+      const rows = await queryD1<DbUser>(
+        `SELECT u.* FROM users u JOIN accounts a ON u.id = a.userId WHERE a.provider = ? AND a.providerAccountId = ?`,
         [provider, providerAccountId]
       );
       return mapUser(rows[0]);
@@ -74,39 +70,40 @@ export function CodeCampusAdapter(): Adapter {
     async updateUser(user) {
       const id = parseInt(user.id!);
       await runD1(
-        "UPDATE accounts SET email = ?, emailVerified = ?, name = ?, image = ? WHERE id = ?",
+        "UPDATE users SET email = ?, emailVerified = ?, name = ?, image = ? WHERE id = ?",
         [user.email, user.emailVerified?.toISOString(), user.name, user.image, id]
       );
-      return user as AdapterUser;
+      const row = await queryD1<DbUser>("SELECT * FROM users WHERE id = ? LIMIT 1", [id]);
+      return mapUser(row[0])!;
     },
     async deleteUser(userId) {
-      await runD1("DELETE FROM accounts WHERE id = ?", [parseInt(userId)]);
+      await runD1("DELETE FROM users WHERE id = ?", [parseInt(userId)]);
     },
     async linkAccount(account) {
-      // In a merged schema, the account info is stored on the user row.
       await runD1(
-        `UPDATE accounts SET provider = ?, providerAccountId = ?, type = ?, refresh_token = ?, access_token = ?, expires_at = ?, token_type = ?, scope = ?, id_token = ?, session_state = ? WHERE id = ?`,
+        `INSERT INTO accounts (userId, type, provider, providerAccountId, refresh_token, access_token, expires_at, token_type, scope, id_token, session_state) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
+          parseInt(account.userId),
+          account.type,
           account.provider,
           account.providerAccountId,
-          account.type,
           account.refresh_token,
           account.access_token,
           account.expires_at,
           account.token_type,
           account.scope,
           account.id_token,
-          account.session_state,
-          parseInt(account.userId)
+          account.session_state
         ]
       );
       return account;
     },
-    async unlinkAccount() {
-      // We can't really unlink in a merged schema without deleting the user or resetting columns.
-      // We'll reset the provider columns to default 'email' state?
-      // Or simply do nothing/throw.
-      // For now, we stub it as we don't expect to use it with Magic Link only.
+    async unlinkAccount({ provider, providerAccountId }) {
+      await runD1(
+        "DELETE FROM accounts WHERE provider = ? AND providerAccountId = ?",
+        [provider, providerAccountId]
+      );
     },
     async createSession(session) {
       await runD1(
@@ -123,8 +120,8 @@ export function CodeCampusAdapter(): Adapter {
       if (!sessionRows.length) return null;
       
       const session = sessionRows[0];
-      const userRows = await queryD1<DbAccount>(
-        "SELECT * FROM accounts WHERE id = ? LIMIT 1",
+      const userRows = await queryD1<DbUser>(
+        "SELECT * FROM users WHERE id = ? LIMIT 1",
         [session.userId]
       );
       if (!userRows.length) return null;
@@ -139,7 +136,8 @@ export function CodeCampusAdapter(): Adapter {
         "UPDATE sessions SET expires = ? WHERE sessionToken = ?",
         [session.expires?.toISOString(), session.sessionToken]
       );
-      return session as AdapterSession;
+      const row = await queryD1<DbSession>("SELECT * FROM sessions WHERE sessionToken = ? LIMIT 1", [session.sessionToken]);
+      return mapSession(row[0])!;
     },
     async deleteSession(sessionToken) {
       await runD1("DELETE FROM sessions WHERE sessionToken = ?", [sessionToken]);

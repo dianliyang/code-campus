@@ -7,7 +7,8 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const isLoginPage = req.nextUrl.pathname === "/login";
-  const isPublicPage = req.nextUrl.pathname === "/" || isLoginPage;
+  const isVerifyPage = req.nextUrl.pathname === "/auth/verify-request";
+  const isPublicPage = req.nextUrl.pathname === "/" || isLoginPage || isVerifyPage;
 
   // console.log(`[Middleware] Path: ${req.nextUrl.pathname}, LoggedIn: ${isLoggedIn}`);
 

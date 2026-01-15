@@ -5,5 +5,6 @@ export const authConfig = {
     signIn: "/login",
     verifyRequest: "/auth/verify-request",
   },
-  providers: [],
+  trustHost: true,
+  providers: [], // Providers are added in auth.ts to avoid MissingAdapter error in middleware
 } satisfies NextAuthConfig;

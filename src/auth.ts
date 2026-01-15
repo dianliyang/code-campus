@@ -18,17 +18,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Resend({
       apiKey: process.env.AUTH_RESEND_KEY || "re_123456789",
-      from: process.env.EMAIL_FROM || "CodeCampus <no-reply@codecampus.example.com>",
+      from:
+        process.env.EMAIL_FROM ||
+        "CodeCampus <no-reply@codecampus.example.com>",
       maxAge: 10 * 60, // 10 minutes
       async sendVerificationRequest({ identifier: email, url }) {
         console.log(`[Auth] Dispatching Link for ${email}`);
         
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://course.oili.dev";
-        // Shielded URL to deterrent bots
-        const s = btoa(url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        const confirmUrl = new URL("/auth/confirm", baseUrl);
-        confirmUrl.searchParams.set("s", s);
-        const link = confirmUrl.toString();
+        const link = url;
 
         if (process.env.AUTH_RESEND_KEY && process.env.AUTH_RESEND_KEY !== "re_123456789") {
           try {
@@ -102,8 +99,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ account }) {
       console.log("[Auth] signIn callback", account?.provider);
-      return !!(account?.provider === "resend" || account?.provider === "email");
+      return !!(
+        account?.provider === "resend" || account?.provider === "email"
+      );
     },
+
     async jwt({ token, user, account }) {
       console.log("[Auth] jwt callback");
       if (account && user) {
@@ -120,13 +120,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           // If we have token.id (from jwt), use it
           if (token?.id) {
-             return {
-               ...session,
-               user: {
-                 ...session.user,
-                 id: token.id as string,
-               },
-             };
+            return {
+              ...session,
+              user: {
+                ...session.user,
+                id: token.id as string,
+              },
+            };
           }
 
           // Fallback to DB lookup if needed (e.g. if jwt didn't populate it)

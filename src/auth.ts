@@ -101,11 +101,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async signIn({ account }) {
+      console.log("[Auth] signIn callback", account?.provider);
       return !!(account?.provider === "resend" || account?.provider === "email");
     },
-    async session({ session }) {
+    async jwt({ token, user, account }) {
+      console.log("[Auth] jwt callback");
+      if (account && user) {
+        return {
+          ...token,
+          id: user.id,
+        };
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      console.log("[Auth] session callback");
       if (session.user?.email) {
         try {
+          // If we have token.id (from jwt), use it
+          if (token?.id) {
+             return {
+               ...session,
+               user: {
+                 ...session.user,
+                 id: token.id as string,
+               },
+             };
+          }
+
+          // Fallback to DB lookup if needed (e.g. if jwt didn't populate it)
           const results = await queryD1(
             "SELECT id FROM users WHERE email = ? LIMIT 1",
             [session.user.email]

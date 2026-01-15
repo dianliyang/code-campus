@@ -6,6 +6,8 @@ import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import LoginForm from "@/components/auth/LoginForm";
 
+export const runtime = "edge";
+
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }

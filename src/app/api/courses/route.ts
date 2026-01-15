@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { queryD1, mapCourseFromRow } from '@/lib/d1';
 import { auth } from '@/auth';
 
+export const runtime = "edge";
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session) {

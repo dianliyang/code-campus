@@ -5,9 +5,10 @@ import { useSearchParams } from "next/navigation";
 
 interface LoginFormProps {
   onMagicLink: (formData: FormData) => Promise<void>;
+  sent?: boolean;
 }
 
-export default function LoginForm({ onMagicLink }: LoginFormProps) {
+export default function LoginForm({ onMagicLink, sent }: LoginFormProps) {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const [loading, setLoading] = useState(false);
@@ -23,10 +24,44 @@ export default function LoginForm({ onMagicLink }: LoginFormProps) {
     } catch (e) {
       console.error("Login submission error:", e);
     } finally {
-      // Keep loading state true if successful to prevent re-submission while redirecting
-      // or show a success message state (not implemented here, keeping it simple)
       setLoading(false); 
     }
+  }
+
+  if (sent) {
+    return (
+      <div className="max-w-md w-full">
+        <div className="mb-10">
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase mb-2">Check your email</h1>
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
+            A magic link has been sent to your identity vector.
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          <div className="p-6 bg-brand-blue/5 border border-brand-blue/10 rounded-xl">
+            <p className="text-xs font-bold text-brand-blue uppercase tracking-widest mb-2">Verification Sent</p>
+            <p className="text-sm text-gray-600 leading-relaxed italic">
+              Click the link in the inbox of your identity vector to establish a secure session. This link expires in 10 minutes.
+            </p>
+          </div>
+
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-brand-blue transition-colors"
+          >
+            ← Request a new link
+          </button>
+        </div>
+
+        <div className="mt-12 text-center">
+          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+            Protected by the CodeCampus Security Protocol. <br />
+            Authorized Access Only.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

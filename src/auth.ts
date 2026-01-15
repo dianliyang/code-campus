@@ -11,21 +11,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     strategy: "jwt",
   },
+  pages: {
+    signIn: "/login",
+    verifyRequest: "/login?sent=true",
+  },
   providers: [
-        Resend({
-          apiKey: process.env.AUTH_RESEND_KEY || "re_123456789",
-          from: process.env.EMAIL_FROM || "CodeCampus <no-reply@codecampus.example.com>",
-          maxAge: 10 * 60, // 10 minutes
-          async sendVerificationRequest({ identifier: email, url }) {
-        // More robust URL construction
-        let baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
-        if (!baseUrl && typeof window === 'undefined') {
-           // Fallback for production domain if env vars are missing
-           baseUrl = "https://course.oili.dev";
-        }
-        
-        const confirmUrl = new URL("/auth/confirm", baseUrl || url);
-        confirmUrl.searchParams.set("url", url);
+    Resend({
+      apiKey: process.env.AUTH_RESEND_KEY || "re_123456789",
+      from: process.env.EMAIL_FROM || "CodeCampus <no-reply@codecampus.example.com>",
+      maxAge: 10 * 60, // 10 minutes
+      async sendVerificationRequest({ identifier: email, url }) {
+        // Base64 encode the URL to hide it from automated scanners
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://course.oili.dev";
+        const tokenParam = Buffer.from(url).toString("base64");
+        const confirmUrl = new URL("/auth/confirm", baseUrl);
+        confirmUrl.searchParams.set("t", tokenParam);
         const displayUrl = confirmUrl.toString();
 
         console.log(`[Auth] Magic Link generated for ${email}`);
@@ -68,10 +68,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         <h1>System Authentication</h1>
                         <p>A secure access request was initiated for your identity. Click the button below to authorize the session and enter the network.</p>
                         <a href="${displayUrl}" class="button">Authenticate Session</a>
-                                              <div class="divider"></div>
-                                              <div class="security">
-                                                <strong>Security Protocol:</strong> This link is valid for 10 minutes and can only be used once. If you did not initiate this request, no action is required.
-                                              </div>                      </div>
+                        <div class="divider"></div>
+                        <div class="security">
+                          <strong>Security Protocol:</strong> This link is valid for 10 minutes and can only be used once. If you did not initiate this request, no action is required.
+                        </div>
+                      </div>
                       <div class="footer">
                         <p class="footer-text">© 2026 CodeCampus Global Network // 0xFC</p>
                       </div>
@@ -101,8 +102,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async signIn({ account }) {
-      if (account?.provider === "resend" || account?.provider === "email")
-        return true;
+      if (account?.provider === "resend" || account?.provider === "email") return true;
       return true;
     },
     async session({ session }) {

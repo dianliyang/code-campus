@@ -15,6 +15,7 @@ interface PageProps {
 export default async function LoginPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const callbackUrl = (params.callbackUrl as string) || "/courses";
+  const sent = params.sent === "true";
 
   async function handleMagicLink(formData: FormData) {
     "use server";
@@ -94,7 +95,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
             />
           </div>
 
-          <LoginForm onMagicLink={handleMagicLink} />
+          <LoginForm onMagicLink={handleMagicLink} sent={sent} />
         </div>
       </div>
     </div>

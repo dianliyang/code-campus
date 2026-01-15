@@ -4,17 +4,34 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Globe from "@/components/ui/Globe";
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 
 function ConfirmContent() {
   const searchParams = useSearchParams();
-  const nextAuthUrl = searchParams.get("url");
+  const [targetUrl, setTargetUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
-  if (!nextAuthUrl) {
+  useEffect(() => {
+    const t = searchParams.get("t");
+    if (t) {
+      try {
+        // Decode the base64 URL
+        const decoded = atob(t);
+        setTargetUrl(decoded);
+      } catch (e) {
+        console.error("Failed to decode token", e);
+        setError(true);
+      }
+    } else {
+      setError(true);
+    }
+  }, [searchParams]);
+
+  if (error) {
     return (
-      <div className="text-center">
+      <div className="max-w-md w-full text-center lg:text-left">
         <h1 className="text-2xl font-black text-red-600 uppercase mb-4">Invalid Link</h1>
-        <p className="text-gray-500 mb-8">This verification link is malformed or has expired.</p>
+        <p className="text-gray-500 mb-8 font-medium">This verification link is malformed or has expired.</p>
         <Link href="/login" className="bg-black text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest text-xs inline-block">
           Return to Login
         </Link>
@@ -40,12 +57,15 @@ function ConfirmContent() {
           To prevent automated access and protect your identity, please click the button below to complete the authentication process.
         </p>
 
-        <a 
-          href={nextAuthUrl}
-          className="w-full lg:w-auto bg-brand-blue text-white font-black text-xs uppercase tracking-[0.2em] px-12 py-5 rounded-xl hover:bg-blue-700 transition-all shadow-2xl shadow-brand-blue/30 active:scale-[0.98] inline-block text-center"
+        <button 
+          onClick={() => {
+            if (targetUrl) window.location.href = targetUrl;
+          }}
+          disabled={!targetUrl}
+          className="w-full lg:w-auto bg-brand-blue text-white font-black text-xs uppercase tracking-[0.2em] px-12 py-5 rounded-xl hover:bg-blue-700 transition-all shadow-2xl shadow-brand-blue/30 active:scale-[0.98] inline-block text-center disabled:opacity-50"
         >
           Confirm and Sign In
-        </a>
+        </button>
       </div>
 
       <div className="mt-12">

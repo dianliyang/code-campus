@@ -20,7 +20,7 @@ export default function FloatingNavWrapper({
   }, []);
 
   return (
-    <div className={`sticky top-0 z-50 transition-all duration-500 ease-out flex justify-center w-full pointer-events-none ${
+    <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out flex justify-center w-full pointer-events-none ${
       scrolled ? 'pt-4 pb-4' : 'pt-0 pb-0'
     }`}>
       <div className={`transition-all duration-500 ease-out pointer-events-auto ${

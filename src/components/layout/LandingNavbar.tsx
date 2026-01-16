@@ -4,10 +4,9 @@ import FloatingNavWrapper from "./FloatingNavWrapper";
 
 export default function LandingNavbar() {
   return (
-    <div className="absolute top-0 left-0 right-0 z-50">
-      <FloatingNavWrapper initialClassName="w-full bg-transparent translate-y-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-24">
+    <FloatingNavWrapper initialClassName="w-full bg-transparent translate-y-0 border-b border-transparent">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-24">
             
             {/* Logo Section */}
             <div className="flex items-center">
@@ -62,7 +61,7 @@ export default function LandingNavbar() {
 
           </div>
         </div>
-      </FloatingNavWrapper>
-    </div>
+      </div>
+    </FloatingNavWrapper>
   );
 }

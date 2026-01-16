@@ -19,14 +19,14 @@ export default function LandingNavbar() {
                   className="w-9 h-9 transition-transform group-hover:-rotate-6"
                 />
                 <div className="flex flex-col">
-                  <span className="text-2xl font-black tracking-tighter text-gray-900 uppercase leading-none">CodeCampus</span>
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] group-hover:text-brand-blue transition-colors">Global Network</span>
+                  <span className="text-xl md:text-2xl font-black tracking-tighter text-gray-900 uppercase leading-none">CodeCampus</span>
+                  <span className="hidden md:block text-xs font-bold text-gray-500 uppercase tracking-[0.3em] group-hover:text-brand-blue transition-colors">Global Network</span>
                 </div>
               </Link>
             </div>
 
             {/* Navigation Links - Hidden on Mobile */}
-            <div className="hidden md:flex items-center gap-8 bg-white/80 backdrop-blur-md px-8 py-3 rounded-full border border-gray-100 shadow-sm">
+            <div className="hidden lg:flex items-center gap-6 bg-white/80 backdrop-blur-md px-6 py-2.5 rounded-full border border-gray-100 shadow-sm">
               {[
                 { name: "Mission", href: "#mission" },
                 { name: "Universities", href: "#universities" },
@@ -35,7 +35,7 @@ export default function LandingNavbar() {
                 <Link 
                   key={item.name} 
                   href={item.href} 
-                  className="group relative flex items-center justify-center px-4 py-2"
+                  className="group relative flex items-center justify-center px-3 py-1.5"
                 >
                   <span className="absolute left-0 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 text-brand-blue font-mono font-bold text-xs">&lt;</span>
                   
@@ -52,9 +52,9 @@ export default function LandingNavbar() {
             <div className="flex items-center gap-6">
               <Link 
                 href="/courses" 
-                className="hidden sm:inline-flex items-center gap-4 btn-primary group"
+                className="flex items-center gap-4 btn-primary group px-6 py-3"
               >
-                Enter Network
+                Enter
                 <i className="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-1"></i>
               </Link>
             </div>

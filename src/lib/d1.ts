@@ -58,6 +58,10 @@ export async function queryD1<T = unknown>(
   // The previous implementation used Node.js APIs (fs, path, better-sqlite3) and process.versions
   // which caused build errors in the Edge Runtime.
   // For local development, rely on 'wrangler dev' or Remote D1 fallback.
+  
+  if (process.env.NODE_ENV === "development") {
+    console.warn("[D1] No database binding found and remote fallback inactive. Query returning empty.");
+  }
 
   return [];
 }

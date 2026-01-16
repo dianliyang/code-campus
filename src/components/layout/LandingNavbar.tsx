@@ -21,19 +21,19 @@ export default function LandingNavbar({ dict }: { dict: any }) {
                   alt="CodeCampus" 
                   width={scrolled ? 32 : 40} 
                   height={scrolled ? 32 : 40} 
-                  className={`transition-all duration-500 group-hover:-rotate-6 brightness-200 ${scrolled ? 'w-8 h-8' : 'w-10 h-10'}`}
+                  className={`transition-all duration-500 group-hover:-rotate-6 ${scrolled ? 'w-8 h-8' : 'w-10 h-10'}`}
                 />
                 {!scrolled && (
                   <div className="flex flex-col transition-opacity duration-300">
-                    <span className="text-2xl font-black tracking-tighter text-white uppercase leading-none">CodeCampus</span>
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] group-hover:text-brand-blue transition-colors">{dict?.global_network || "Open Catalog"}</span>
+                    <span className="text-2xl font-black tracking-tighter text-slate-900 uppercase leading-none">CodeCampus</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-[0.3em] group-hover:text-brand-blue transition-colors">{dict?.global_network || "Open Catalog"}</span>
                   </div>
                 )}
               </Link>
             </div>
 
             {/* Navigation Links */}
-            <NavLinks variant="dark" collapsed={scrolled} dict={dict} />
+            <NavLinks variant="light" collapsed={scrolled} dict={dict} />
 
             {/* CTA Section */}
             <div className="flex items-center gap-6">
@@ -41,8 +41,8 @@ export default function LandingNavbar({ dict }: { dict: any }) {
                 href="/courses" 
                 className={`flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] ${
                    scrolled 
-                    ? 'w-10 h-10 !rounded-full !px-0 !py-0 bg-white text-gray-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:bg-brand-blue hover:text-white' 
-                    : 'btn-primary !rounded-full gap-4 px-6 py-3 shadow-[0_0_20px_rgba(59,130,246,0.2)]'
+                    ? 'w-10 h-10 !rounded-full !px-0 !py-0 bg-slate-900 text-white shadow-xl hover:bg-brand-blue' 
+                    : 'btn-primary !rounded-full gap-4 px-6 py-3 shadow-xl shadow-slate-200'
                 }`}
               >
                 <span className={`transition-all duration-500 overflow-hidden whitespace-nowrap font-black text-[11px] uppercase tracking-[0.2em] ${

@@ -26,11 +26,11 @@ export default function CourseCard({
   const [loading, setLoading] = useState(false);
 
   const logos: Record<string, string> = {
-    mit: "/mit.svg",
-    stanford: "/stanford.jpg",
-    cmu: "/cmu.jpg",
-    ucb: "/ucb.png",
-    cau: "/cau.png",
+    "MIT": "/mit.svg", 
+    "Stanford": "/stanford.jpg", 
+    "CMU": "/cmu.jpg", 
+    "UC Berkeley": "/ucb.png", 
+    "CAU Kiel": "/cau.svg",
   };
 
   const handleEnroll = async () => {

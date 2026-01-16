@@ -7,10 +7,10 @@ export default function OrbitingCircles() {
 
   return (
     <div ref={containerRef} className="relative w-full h-full flex items-center justify-center">
-      {/* Orbits - Nearly Invisible */}
-      <div className="absolute w-[40%] h-[40%] border border-slate-200 rounded-full opacity-10"></div>
-      <div className="absolute w-[70%] h-[70%] border border-slate-200 rounded-full opacity-[0.05]"></div>
-      <div className="absolute w-[100%] h-[100%] border border-slate-100 rounded-full opacity-[0.03]"></div>
+      {/* Orbits - More Visible */}
+      <div className="absolute w-[40%] h-[40%] border border-slate-200 rounded-full opacity-40"></div>
+      <div className="absolute w-[70%] h-[70%] border border-slate-200 rounded-full opacity-25"></div>
+      <div className="absolute w-[100%] h-[100%] border border-slate-200 rounded-full opacity-15"></div>
 
       {/* Center Core */}
       <div className="absolute w-12 h-12 bg-white rounded-full border border-slate-100 shadow-sm flex items-center justify-center z-10">

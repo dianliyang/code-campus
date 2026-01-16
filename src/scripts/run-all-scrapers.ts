@@ -2,10 +2,10 @@ import { MIT } from '../lib/scrapers/mit';
 import { Stanford } from '../lib/scrapers/stanford';
 import { CMU } from '../lib/scrapers/cmu';
 import { UCB } from '../lib/scrapers/ucb';
-import { D1Database } from '../lib/db';
+import { SupabaseDatabase } from '../lib/supabase/server';
 import { BaseScraper } from '../lib/scrapers/BaseScraper';
 
-async function runScraper(scraper: BaseScraper, db: D1Database) {
+async function runScraper(scraper: BaseScraper, db: SupabaseDatabase) {
   try {
     console.log(`\n=== Running Scraper: ${scraper.name.toUpperCase()} ===`);
     const courses = await scraper.retrieve();
@@ -21,7 +21,7 @@ async function runScraper(scraper: BaseScraper, db: D1Database) {
 }
 
 async function main() {
-  const db = new D1Database();
+  const db = new SupabaseDatabase();
   const scrapers: BaseScraper[] = [
     new MIT(),
     new Stanford(),
@@ -30,7 +30,7 @@ async function main() {
   ];
 
   console.log("Starting full scrape for all universities...");
-  console.log(`Target: ${process.env.REMOTE_DB === 'true' ? 'REMOTE' : 'LOCAL'} D1 Database`);
+  console.log(`Target: Supabase Database`);
 
   for (const scraper of scrapers) {
     await runScraper(scraper, db);

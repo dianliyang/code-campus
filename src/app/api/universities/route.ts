@@ -1,20 +1,28 @@
 import { NextResponse } from 'next/server';
-import { queryD1 } from '@/lib/d1';
+import { createClient } from '@/lib/supabase/server';
+
+export const runtime = "edge";
 
 export async function GET() {
   try {
-    const rows = await queryD1<{ university: string; count: number }>('SELECT university, count(*) as count FROM courses GROUP BY university');
-    
-    const universities = rows.map(r => ({
-      name: r.university,
-      count: Number(r.count || 0)
-    })).filter(u => u.name);
-    
-    return NextResponse.json(universities, {
-      headers: {
-        'Cache-Control': 'no-store, max-age=0', // Disable caching to ensure fresh data
-      },
+    const supabase = await createClient();
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select('university');
+
+    if (error) throw error;
+
+    const counts: Record<string, number> = {};
+    courses?.forEach(c => {
+      counts[c.university] = (counts[c.university] || 0) + 1;
     });
+
+    const rows = Object.entries(counts).map(([university, count]) => ({
+      university,
+      count
+    })).sort((a, b) => b.count - a.count);
+
+    return NextResponse.json({ universities: rows });
   } catch (error) {
     console.error("Error fetching universities:", error);
     return NextResponse.json({ error: "Failed to fetch universities" }, { status: 500 });

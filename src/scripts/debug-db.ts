@@ -1,13 +1,35 @@
-import { queryD1 } from '../lib/d1';
+import { createAdminClient } from '../lib/supabase/server';
 
 async function main() {
-  console.log("Checking DB distribution...");
-  const counts = await queryD1('SELECT university, count(*) as count FROM courses GROUP BY university');
-  console.log(JSON.stringify(counts, null, 2));
+  const supabase = createAdminClient();
+  
+  console.log("--- DB DEBUG ---");
+  
+  const { data: counts, error: countError } = await supabase
+    .from('courses')
+    .select('university');
+    
+  if (countError) {
+    console.error("Error fetching counts:", countError);
+  } else {
+    const universityCounts: Record<string, number> = {};
+    counts?.forEach(c => {
+      universityCounts[c.university] = (universityCounts[c.university] || 0) + 1;
+    });
+    console.log("Course counts by university:", universityCounts);
+  }
 
-  console.log("Checking sample Stanford course...");
-  const stanford = await queryD1('SELECT * FROM courses WHERE university = ? LIMIT 1', ['stanford']);
-  console.log(JSON.stringify(stanford, null, 2));
+  const { data: stanford, error: stanfordError } = await supabase
+    .from('courses')
+    .select('*')
+    .eq('university', 'stanford')
+    .limit(1);
+    
+  if (stanfordError) {
+    console.error("Error fetching stanford:", stanfordError);
+  } else {
+    console.log("One Stanford course sample:", stanford?.[0]?.title);
+  }
 }
 
 main();

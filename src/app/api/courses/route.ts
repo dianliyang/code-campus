@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { queryD1, mapCourseFromRow } from '@/lib/d1';
-import { auth } from '@/auth';
+import { getUser, createClient, mapCourseFromRow } from '@/lib/supabase/server';
 
 export const runtime = "edge";
 
 export async function GET(request: Request) {
-  const session = await auth();
-  if (!session) {
+  const user = await getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -29,102 +28,14 @@ export async function GET(request: Request) {
   const query = searchParams.get('q') || '';
 
   try {
-    let whereClause = 'WHERE is_hidden = 0';
-    // Deduplication subquery: only keep the row with the minimum ID for each course_code
-    whereClause += ' AND c.id IN (SELECT MIN(id) FROM courses GROUP BY course_code)';
-    
-    const queryParams: (string | number)[] = [];
-
-    if (enrolledOnly) {
-      whereClause += ` AND c.id IN (SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1))`;
-      queryParams.push(session.user?.email || "");
-    }
-
-    if (query) {
-      whereClause += ` AND (c.title LIKE ? OR c.description LIKE ? OR c.course_code LIKE ?)`;
-      const searchPattern = `%${query}%`;
-      queryParams.push(searchPattern, searchPattern, searchPattern);
-    }
-
-    if (universities.length > 0) {
-      const placeholders = universities.map(() => '?').join(',');
-      whereClause += ` AND university IN (${placeholders})`;
-      queryParams.push(...universities);
-    }
-
-    if (fields.length > 0) {
-      const placeholders = fields.map(() => '?').join(',');
-      whereClause += ` AND c.id IN (
-        SELECT cf.course_id 
-        FROM course_fields cf 
-        JOIN fields f ON cf.field_id = f.id 
-        WHERE f.name IN (${placeholders})
-      )`;
-      queryParams.push(...fields);
-    }
-
-    if (levels.length > 0) {
-      const placeholders = levels.map(() => '?').join(',');
-      whereClause += ` AND level IN (${placeholders})`;
-      queryParams.push(...levels);
-    }
-
-    // Sorting logic
-    let orderBy = 'ORDER BY c.id DESC';
-    if (sort === 'popularity') {
-      orderBy = 'ORDER BY c.popularity DESC, c.id DESC';
-    } else if (sort === 'newest') {
-      orderBy = 'ORDER BY c.created_at DESC';
-    } else if (sort === 'title') {
-      orderBy = 'ORDER BY c.title ASC';
-    }
-
-    // Get total count
-    const countSql = `SELECT count(*) as count FROM courses c ${whereClause}`;
-    const countResult = await queryD1<{ count: number }>(countSql, queryParams);
-    const total = Number(countResult[0]?.count || 0);
-    const pages = Math.max(1, Math.ceil(total / size));
-
-    // Get paginated items
-    const selectSql = `
-      SELECT c.id, c.university, c.course_code, c.title, c.units, c.description, c.url, c.department, c.corequisites, c.level, c.difficulty, c.popularity, c.workload, c.created_at,
-             GROUP_CONCAT(DISTINCT f.name) as field_names,
-             GROUP_CONCAT(DISTINCT s.term || ' ' || s.year) as semester_names
-      FROM courses c
-      LEFT JOIN course_fields cf ON c.id = cf.course_id
-      LEFT JOIN fields f ON cf.field_id = f.id
-      LEFT JOIN course_semesters cs ON c.id = cs.course_id
-      LEFT JOIN semesters s ON cs.semester_id = s.id
-      ${whereClause}
-      GROUP BY c.id
-      ${orderBy}
-      LIMIT ? OFFSET ?
-    `;
-    const selectParams = [...queryParams, size, offset];
-    
-    const rows = await queryD1<Record<string, unknown>>(selectSql, selectParams);
-
-    const items = rows.map(row => {
-      const course = mapCourseFromRow(row);
-      // Remove details and isHidden to keep response light
-      const { ...lightCourse } = course;
-      const fields = row.field_names ? (row.field_names as string).split(',') : [];
-      const semesters = row.semester_names ? (row.semester_names as string).split(',') : [];
-      return { 
-        ...lightCourse, 
-        fields,
-        semesters,
-        level: row.level as string,
-        corequisites: row.corequisites as string
-      };
-    });
+    const dbCourses = await fetchCourses(page, size, offset, query, sort, enrolledOnly, universities, fields, levels, user.id);
 
     const response = NextResponse.json({
-      items,
-      total,
+      items: dbCourses.items,
+      total: dbCourses.total,
       page,
       size,
-      pages
+      pages: dbCourses.pages
     });
 
     // Add Cache-Control: s-maxage=60 (Cache on edge for 60s), stale-while-revalidate
@@ -135,4 +46,82 @@ export async function GET(request: Request) {
     console.error("Error fetching courses:", error);
     return NextResponse.json({ error: "Failed to fetch courses" }, { status: 500 });
   }
+}
+
+async function fetchCourses(
+  page: number, 
+  size: number, 
+  offset: number, 
+  query: string, 
+  sort: string, 
+  enrolledOnly: boolean, 
+  universities: string[], 
+  fields: string[], 
+  levels: string[],
+  userId?: string | null
+) {
+  const supabase = await createClient();
+  
+  let supabaseQuery = supabase
+    .from('courses')
+    .select(`
+      *,
+      fields:course_fields(fields(name)),
+      semesters:course_semesters(semesters(term, year))
+    `, { count: 'exact' })
+    .eq('is_hidden', false);
+
+  if (enrolledOnly) {
+    if (!userId) return { items: [], total: 0, pages: 0 };
+    const { data: enrolledIds } = await supabase
+      .from('user_courses')
+      .select('course_id')
+      .eq('user_id', userId);
+    
+    const ids = (enrolledIds || []).map(r => r.course_id);
+    supabaseQuery = supabaseQuery.in('id', ids);
+  }
+
+  if (query) {
+    supabaseQuery = supabaseQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%,course_code.ilike.%${query}%`);
+  }
+
+  if (universities.length > 0) {
+    supabaseQuery = supabaseQuery.in('university', universities);
+  }
+
+  if (levels.length > 0) {
+    supabaseQuery = supabaseQuery.in('level', levels);
+  }
+
+  // Sorting
+  if (sort === 'popularity') supabaseQuery = supabaseQuery.order('popularity', { ascending: false });
+  else if (sort === 'newest') supabaseQuery = supabaseQuery.order('created_at', { ascending: false });
+  else if (sort === 'title') supabaseQuery = supabaseQuery.order('title', { ascending: true });
+  else supabaseQuery = supabaseQuery.order('id', { ascending: false });
+
+  const { data, count, error } = await supabaseQuery
+    .range(offset, offset + size - 1);
+
+  if (error) {
+    console.error("[Supabase] Fetch error:", error);
+    return { items: [], total: 0, pages: 0 };
+  }
+
+  const items = (data || []).map((row: any) => {
+    const course = mapCourseFromRow(row);
+    const fieldNames = row.fields?.map((f: any) => f.fields.name) || [];
+    const semesterNames = row.semesters?.map((s: any) => `${s.semesters.term} ${s.semesters.year}`) || [];
+    
+    return { 
+      ...course, 
+      fields: fieldNames, 
+      semesters: semesterNames 
+    };
+  });
+
+  const total = count || 0;
+  const pages = Math.max(1, Math.ceil(total / size));
+
+  return { items, total, pages };
 }

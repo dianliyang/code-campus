@@ -1,7 +1,0 @@
-name = "code-campus"
-compatibility_date = "2024-05-24"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "code-campus-db"
-database_id = "86b926a3-e461-4526-a1f8-2ba50a8070e2" # Run 'npx wrangler d1 create code-campus-db' to get this ID

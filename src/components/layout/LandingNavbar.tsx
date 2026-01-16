@@ -6,7 +6,10 @@ import FloatingNavWrapper from "./FloatingNavWrapper";
 import NavLinks from "./NavLinks";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function LandingNavbar({ dict }: { dict: any }) {
+export default function LandingNavbar({ dict, user }: { dict: any, user?: any }) {
+  const enterLink = user ? "/courses" : "/courses"; // Both go to courses, but logic can differ
+  const enterText = user ? (dict?.dashboard_btn || "Dashboard") : (dict?.enter || "Enter");
+
   return (
     <FloatingNavWrapper initialClassName="w-full bg-transparent translate-y-0 border-b border-transparent">
       {(scrolled) => (
@@ -38,7 +41,7 @@ export default function LandingNavbar({ dict }: { dict: any }) {
             {/* CTA Section */}
             <div className="flex items-center gap-6">
               <Link 
-                href="/courses" 
+                href={enterLink} 
                 className={`flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] ${
                    scrolled 
                     ? 'w-10 h-10 !rounded-full !px-0 !py-0 bg-slate-900 text-white shadow-xl hover:bg-brand-blue' 
@@ -48,7 +51,7 @@ export default function LandingNavbar({ dict }: { dict: any }) {
                 <span className={`transition-all duration-500 overflow-hidden whitespace-nowrap font-black text-[11px] uppercase tracking-[0.2em] ${
                   scrolled ? 'max-w-0 opacity-0' : 'max-w-[100px] opacity-100'
                 }`}>
-                  {dict?.enter || "Enter"}
+                  {enterText}
                 </span>
                 
                 <i className={`fa-solid transition-all duration-500 ${

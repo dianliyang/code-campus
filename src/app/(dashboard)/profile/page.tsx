@@ -1,50 +1,71 @@
-import { queryD1 } from "@/lib/d1";
 import DeleteAccount from "@/components/profile/DeleteAccount";
-import { auth, signOut } from "@/auth";
+import { getUser, createClient } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
+import LogoutButton from "@/components/layout/LogoutButton";
 
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
 export default async function ProfilePage() {
-  const session = await auth();
+  const user = await getUser();
   const lang = await getLanguage();
   const dict = await getDictionary(lang);
-  const email = session?.user?.email || "guest@codecampus.example.com";
   
-  const user = await queryD1<{ id: number; name: string; email: string; image: string; provider: string; created_at: string }>(
-    'SELECT * FROM users WHERE email = ? LIMIT 1', [email]
-  );
+  if (!user) return <div className="p-10 text-center font-mono">{dict.dashboard.profile.user_not_found}</div>;
 
-  const profile = user[0];
-  if (!profile) return <div className="p-10 text-center font-mono">{dict.dashboard.profile.user_not_found}</div>;
+  const email = user.email;
+  const name = user.user_metadata?.full_name || email?.split('@')[0] || "User";
+  const supabase = await createClient();
 
-  // Enriched Queries
-  const [basicStats, uniStats, allFieldStats, lastActive] = await Promise.all([
-    queryD1<{ total: number; status: string }>(
-      'SELECT COUNT(*) as total, status FROM user_courses WHERE user_id = ? GROUP BY status', [profile.id]
-    ),
-    queryD1<{ count: number }>(
-      'SELECT COUNT(DISTINCT university) as count FROM courses c JOIN user_courses uc ON c.id = uc.course_id WHERE uc.user_id = ?', [profile.id]
-    ),
-    queryD1<{ name: string; count: number }>(
-      'SELECT f.name, COUNT(*) as count FROM fields f JOIN course_fields cf ON f.id = cf.field_id JOIN user_courses uc ON cf.course_id = uc.course_id WHERE uc.user_id = ? GROUP BY f.id ORDER BY count DESC', [profile.id]
-    ),
-    queryD1<{ updated_at: string }>(
-      'SELECT updated_at FROM user_courses WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1', [profile.id]
-    )
-  ]);
+  // Enriched Queries - using Supabase client
+  const { data: statsData } = await supabase
+    .from('user_courses')
+    .select('status')
+    .eq('user_id', user.id);
+    
+  const statusCounts: Record<string, number> = {};
+  statsData?.forEach(s => {
+    statusCounts[s.status] = (statusCounts[s.status] || 0) + 1;
+  });
 
-  const totalCourses = basicStats.reduce((acc, curr) => acc + curr.total, 0);
-  const completedCount = basicStats.find(s => s.status === 'completed')?.total || 0;
-  const universityCount = uniStats[0]?.count || 0;
+  const { data: uniData } = await supabase
+    .from('courses')
+    .select('university', { count: 'exact', head: false })
+    .in('id', (await supabase.from('user_courses').select('course_id').eq('user_id', user.id)).data?.map(r => r.course_id) || []);
+    
+  const universityCount = new Set(uniData?.map(r => r.university)).size;
+
+  const { data: fieldStats } = await supabase
+    .from('fields')
+    .select('name, course_fields!inner(course_id, user_courses!inner(user_id))')
+    .eq('course_fields.user_courses.user_id', user.id);
+    
+  const fieldCounts: Record<string, number> = {};
+  fieldStats?.forEach((f: any) => {
+    fieldCounts[f.name] = (fieldCounts[f.name] || 0) + 1;
+  });
+  
+  const allFieldStats = Object.entries(fieldCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const { data: lastActiveData } = await supabase
+    .from('user_courses')
+    .select('updated_at')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false })
+    .limit(1);
+
+  const totalCourses = statsData?.length || 0;
+  const completedCount = statusCounts['completed'] || 0;
   const topField = allFieldStats[0]?.name || dict.dashboard.profile.none;
-  const lastActiveDate = lastActive[0]?.updated_at ? new Date(lastActive[0].updated_at) : null;
+  const lastActiveDate = lastActiveData?.[0]?.updated_at ? new Date(lastActiveData[0].updated_at) : null;
 
   // Calculate Field Distribution
   const fieldTotal = allFieldStats.reduce((acc, curr) => acc + curr.count, 0);
   const fieldColors = ["bg-brand-blue", "bg-brand-green", "bg-orange-400", "bg-purple-500", "bg-pink-500"];
+
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -53,16 +74,16 @@ export default async function ProfilePage() {
         {/* Profile Header */}
         <div className="flex flex-col md:flex-row md:items-center gap-8 pb-16 border-b border-gray-100">
           <div className="w-32 h-32 bg-brand-dark rounded-full flex items-center justify-center text-white text-5xl font-black ring-8 ring-gray-50">
-            {profile.name?.substring(0, 1)}
+            {name.substring(0, 1).toUpperCase()}
           </div>
           <div className="flex-grow space-y-2">
             <div className="flex items-center gap-4">
-              <h1 className="text-4xl font-black text-gray-900 tracking-tighter">{profile.name}</h1>
+              <h1 className="text-4xl font-black text-gray-900 tracking-tighter">{name}</h1>
               <span className="bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-gray-200">
                 {dict.dashboard.profile.level_short} {Math.floor(completedCount / 2) + 1} {dict.dashboard.profile.user_level}
               </span>
             </div>
-            <p className="text-xl text-gray-400 font-medium tracking-tight">{profile.email}</p>
+            <p className="text-xl text-gray-400 font-medium tracking-tight">{email}</p>
             <div className="flex items-center gap-6 mt-4 pt-4">
               <div className="flex items-center gap-2 text-sm font-bold text-gray-600">
                 <i className="fa-regular fa-clock text-brand-blue"></i>
@@ -79,15 +100,7 @@ export default async function ProfilePage() {
               <i className="fa-solid fa-gear text-[10px]"></i>
               <span>{dict.dashboard.profile.settings}</span>
             </button>
-            <form action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}>
-              <button className="flex items-center gap-2 btn-secondary px-6 py-2.5 w-full hover:border-red-200 hover:text-red-500">
-                <i className="fa-solid fa-arrow-right-from-bracket text-[10px]"></i>
-                <span>{dict.dashboard.profile.sign_out}</span>
-              </button>
-            </form>
+            <LogoutButton showLabel={true} dict={dict} />
           </div>
         </div>
 
@@ -139,9 +152,10 @@ export default async function ProfilePage() {
               <h3 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">{dict.dashboard.profile.fingerprint}</h3>
             </div>
             <div className="text-right hidden md:block">
-              <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] border border-gray-100 px-3 py-1 rounded-lg">DATA_SIG: 0x{profile.id.toString().substring(0, 8).toUpperCase()}</span>
+              <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] border border-gray-100 px-3 py-1 rounded-lg">DATA_SIG: 0x{user.id.substring(0, 8).toUpperCase()}</span>
             </div>
           </div>
+
 
           {fieldTotal > 0 ? (
             <div className="space-y-24">
@@ -156,7 +170,9 @@ export default async function ProfilePage() {
                     <div key={f.name} className="flex items-end gap-[2px] h-full transition-opacity hover:opacity-100 opacity-80" style={{ width: `${percentage}%` }}>
                       {Array.from({ length: tickCount }).map((_, i) => {
                         // Deterministic height based on user ID, field, and tick index
-                        const seed = (profile.id * 10000) + (fieldIdx * 1000) + i;
+                        // Using char codes of UUID for deterministic seed
+                        const idSeed = user.id.split('-').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                        const seed = (idSeed * 10000) + (fieldIdx * 1000) + i;
                         const pseudoRandom = Math.abs(Math.sin(seed) * 10000) % 1;
                         const randomHeight = 15 + Math.sin(i * 0.4) * 20 + (pseudoRandom * 65);
                         const pseudoOpacity = 0.2 + (Math.abs(Math.cos(seed) * 10000) % 1 * 0.8);

@@ -1,40 +1,34 @@
 import { NextResponse } from 'next/server';
-import { runD1, queryD1 } from '@/lib/d1';
+import { createClient } from '@/lib/supabase/server';
 import { ImportRequest } from '@/types';
 
 export async function POST(request: Request) {
   try {
     const courses = await request.json() as ImportRequest[];
-    let imported = 0;
-    let skipped = 0;
+    const supabase = await createClient();
+    
+    // Prepare courses for bulk insert
+    const coursesToInsert = courses.map(course => ({
+      university: course.university,
+      course_code: course.courseCode,
+      title: course.title,
+      description: course.description || "",
+      url: course.url || "#",
+      level: course.level || "undergraduate",
+      popularity: 0
+    }));
 
-    for (const course of courses) {
-      const { university, courseCode, title, description, url, level } = course;
-      
-      if (!university || !courseCode || !title) {
-        skipped++;
-        continue;
-      }
+    // Perform bulk upsert (using course_code as unique identifier if configured, 
+    // otherwise just insert and handle errors)
+    const { data, error } = await supabase
+      .from('courses')
+      .upsert(coursesToInsert, { onConflict: 'course_code' });
 
-      // Check for duplicates
-      const existing = await queryD1('SELECT id FROM courses WHERE course_code = ? LIMIT 1', [courseCode]);
-      if (existing.length > 0) {
-        skipped++;
-        continue;
-      }
-
-      // Insert
-      await runD1(`
-        INSERT INTO courses (university, course_code, title, description, url, level, popularity)
-        VALUES (?, ?, ?, ?, ?, ?, 0)
-      `, [university, courseCode, title, description || "", url || "#", level || "undergraduate"]);
-      
-      imported++;
-    }
+    if (error) throw error;
 
     return NextResponse.json({ 
       success: true, 
-      message: `Bulk operation complete. ${imported} initialized, ${skipped} skipped.` 
+      message: `Bulk operation complete. Courses processed.` 
     });
   } catch (error) {
     console.error("Bulk import error:", error);

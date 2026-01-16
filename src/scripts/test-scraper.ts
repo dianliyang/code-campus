@@ -3,7 +3,7 @@ import { Stanford } from '../lib/scrapers/stanford';
 import { CMU } from '../lib/scrapers/cmu';
 import { UCB } from '../lib/scrapers/ucb';
 import { BaseScraper } from '../lib/scrapers/BaseScraper';
-import { D1Database } from '../lib/db';
+import { SupabaseDatabase } from '../lib/supabase/server';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -41,7 +41,7 @@ async function main() {
     console.log(JSON.stringify(courses.slice(0, 5), null, 2));
 
     if (shouldSave) {
-      const db = new D1Database();
+      const db = new SupabaseDatabase();
       await db.saveCourses(courses);
     }
   } catch (error) {

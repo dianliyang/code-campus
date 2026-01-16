@@ -7,40 +7,34 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "scrape": "tsx src/scripts/run-all-scrapers.ts",
-    "scrape:remote": "REMOTE_DB=true tsx src/scripts/run-all-scrapers.ts",
-    "categorize": "tsx src/scripts/categorize-courses.ts",
-    "categorize:remote": "REMOTE_DB=true tsx src/scripts/categorize-courses.ts",
-    "mock": "tsx src/scripts/mock-data.ts"
+    "scrape": "tsx -r dotenv/config src/scripts/run-all-scrapers.ts dotenv_config_path=.env.local",
+    "categorize": "tsx -r dotenv/config src/scripts/categorize-courses.ts dotenv_config_path=.env.local",
+    "mock": "tsx -r dotenv/config src/scripts/mock-data.ts dotenv_config_path=.env.local"
   },
   "dependencies": {
-    "@auth/d1-adapter": "^1.11.1",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.90.1",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.6.0",
     "cheerio": "^1.1.2",
     "next": "16.1.1",
-    "next-auth": "^5.0.0-beta.30",
     "nodemailer": "^7.0.12",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "resend": "^6.7.0",
     "undici": "^7.18.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260116.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^3.0.0",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5",
-    "wrangler": "^4.59.0"
+    "typescript": "^5"
   }
 }

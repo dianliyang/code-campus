@@ -1,12 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
-import { auth } from "@/auth";
+import { getUser } from "@/lib/supabase/server";
 import LogoutButton from "./LogoutButton";
 import NavLinks from "./NavLinks";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function Navbar({ dict }: { dict?: any }) {
-  const session = await auth();
+  const user = await getUser();
 
   return (
     <nav className="bg-white/95 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50">
@@ -37,7 +37,9 @@ export default async function Navbar({ dict }: { dict?: any }) {
             <div className="flex items-center pl-8 border-l border-slate-100 h-10">
                 <Link href="/profile" className="flex items-center gap-4 group">
                   <div className="hidden sm:flex flex-col items-end -space-y-0.5">
-                    <span className="text-[11px] font-bold text-slate-900 uppercase tracking-tight">{session?.user?.name || dict?.guest_user || "Guest User"}</span>
+                    <span className="text-[11px] font-bold text-slate-900 uppercase tracking-tight">
+                      {user?.user_metadata?.full_name || user?.email?.split('@')[0] || dict?.guest_user || "Guest User"}
+                    </span>
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 bg-brand-green rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
                       <span className="text-[9px] font-black text-brand-green uppercase tracking-[0.2em]">{dict?.status_active || "Active"}</span>
@@ -47,7 +49,7 @@ export default async function Navbar({ dict }: { dict?: any }) {
                     <i className="fa-solid fa-user text-sm"></i>
                   </div>
                 </Link>
-                {session && (
+                {user && (
                   <div className="ml-6">
                      <LogoutButton />
                   </div>

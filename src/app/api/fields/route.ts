@@ -1,22 +1,23 @@
 import { NextResponse } from 'next/server';
-import { queryD1 } from '@/lib/d1';
+import { createClient } from '@/lib/supabase/server';
+
+export const runtime = "edge";
 
 export async function GET() {
   try {
-    // Get fields and the count of courses in each
-    const sql = `
-      SELECT f.name, COUNT(cf.course_id) as count
-      FROM fields f
-      LEFT JOIN course_fields cf ON f.id = cf.field_id
-      GROUP BY f.id
-      ORDER BY count DESC
-    `;
-    const rows = await queryD1<{ name: string; count: number }>(sql);
-    
-    return NextResponse.json(rows.map(r => ({
-      name: r.name,
-      count: Number(r.count || 0)
-    })));
+    const supabase = await createClient();
+    const { data: fields, error } = await supabase
+      .from('fields')
+      .select('name, course_fields(count)');
+
+    if (error) throw error;
+
+    const formattedFields = (fields || []).map((f: any) => ({
+      name: f.name,
+      count: f.course_fields?.[0]?.count || 0
+    })).sort((a, b) => b.count - a.count);
+
+    return NextResponse.json({ fields: formattedFields });
   } catch (error) {
     console.error("Error fetching fields:", error);
     return NextResponse.json({ error: "Failed to fetch fields" }, { status: 500 });

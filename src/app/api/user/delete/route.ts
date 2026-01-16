@@ -1,28 +1,30 @@
 import { NextResponse } from 'next/server';
-import { runD1, queryD1 } from '@/lib/d1';
-import { auth } from '@/auth';
+import { getUser, createClient } from '@/lib/supabase/server';
 
 export async function POST() {
-  const session = await auth();
-  if (!session || !session.user?.email) {
+  const user = await getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const userId = user.id;
+
   try {
-    const user = await queryD1<{ id: number }>('SELECT id FROM users WHERE email = ? LIMIT 1', [session.user.email]);
+    const supabase = await createClient();
     
-    if (user.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    // Delete user data from user_courses
+    const { error: deleteError } = await supabase
+      .from('user_courses')
+      .delete()
+      .eq('user_id', userId);
+      
+    if (deleteError) throw deleteError;
+    
+    // Note: To delete the user from Supabase Auth, you would typically use 
+    // supabase.auth.admin.deleteUser(userId) which requires a service role key.
+    await supabase.auth.signOut();
 
-    const userId = user[0].id;
-
-    // Delete user data (Cascading delete in schema will handle user_courses if configured, 
-    // but we'll do it explicitly here for safety)
-    await runD1('DELETE FROM user_courses WHERE user_id = ?', [userId]);
-    await runD1('DELETE FROM users WHERE id = ?', [userId]);
-
-    return NextResponse.json({ success: true, message: "Account deleted successfully" });
+    return NextResponse.json({ success: true, message: "Account data cleared successfully" });
   } catch (error) {
     console.error("Account deletion error:", error);
     return NextResponse.json({ error: "Failed to delete account" }, { status: 500 });

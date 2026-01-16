@@ -1,39 +1,45 @@
 import { NextResponse } from 'next/server';
-import { runD1, queryD1 } from '@/lib/d1';
-import { auth } from '@/auth';
+import { getUser, createClient, incrementPopularity } from '@/lib/supabase/server';
 import { EnrollRequest } from '@/types';
 
 export async function POST(request: Request) {
-  const session = await auth();
-  const email = session?.user?.email || "guest@codecampus.example.com";
+  const user = await getUser();
+  
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = user.id;
 
   try {
     const body = await request.json() as EnrollRequest;
     const { courseId, action } = body; // action: 'enroll' | 'unenroll' | 'update_progress'
     const progress = body.progress ?? 0;
 
-    const user = await queryD1<{ id: string }>('SELECT id FROM users WHERE email = ?', [email]);
-    
-    if (user.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const userId = user[0].id;
+    const supabase = await createClient();
 
     if (action === 'enroll') {
-      await runD1(
-        `INSERT INTO user_courses (user_id, course_id, status, progress) 
-         VALUES (?, ?, 'in_progress', ?)
-         ON CONFLICT(user_id, course_id) DO UPDATE SET 
-         status = 'in_progress', 
-         updated_at = CURRENT_TIMESTAMP`,
-        [userId, courseId, progress]
-      );
+      const { error } = await supabase
+        .from('user_courses')
+        .upsert({ 
+          user_id: userId, 
+          course_id: courseId, 
+          status: 'in_progress', 
+          progress: progress,
+          updated_at: new Date().toISOString()
+        });
+        
+      if (error) throw error;
       return NextResponse.json({ success: true, message: "Enrolled successfully" });
     } 
     
     if (action === 'unenroll') {
-      await runD1('DELETE FROM user_courses WHERE user_id = ? AND course_id = ?', [userId, courseId]);
+      const { error } = await supabase
+        .from('user_courses')
+        .delete()
+        .match({ user_id: userId, course_id: courseId });
+        
+      if (error) throw error;
       return NextResponse.json({ success: true, message: "Unenrolled successfully" });
     }
 
@@ -41,15 +47,19 @@ export async function POST(request: Request) {
       const isCompleted = progress === 100;
       const status = isCompleted ? 'completed' : 'in_progress';
 
-      // Update enrollment progress and status
-      await runD1(
-        'UPDATE user_courses SET progress = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND course_id = ?',
-        [progress, status, userId, courseId]
-      );
+      const { error } = await supabase
+        .from('user_courses')
+        .update({ 
+          progress: progress, 
+          status: status, 
+          updated_at: new Date().toISOString() 
+        })
+        .match({ user_id: userId, course_id: courseId });
 
-      // If just completed, increment popularity
+      if (error) throw error;
+
       if (isCompleted) {
-        await runD1('UPDATE courses SET popularity = popularity + 1 WHERE id = ?', [courseId]);
+        await incrementPopularity(courseId);
       }
 
       return NextResponse.json({ success: true, message: "Progress updated" });

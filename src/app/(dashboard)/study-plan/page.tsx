@@ -1,11 +1,10 @@
-import { queryD1, mapCourseFromRow } from "@/lib/d1";
 import { Course } from "@/types";
 import CourseCard from "@/components/home/CourseCard";
 import AchievementCard from "@/components/home/AchievementCard";
 import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
 import Link from "next/link";
-import { auth } from "@/auth";
+import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 
@@ -23,43 +22,52 @@ interface PageProps {
 }
 
 export default async function StudyPlanPage({ searchParams }: PageProps) {
-  const session = await auth();
+  const user = await getUser();
   const lang = await getLanguage();
   const dict = await getDictionary(lang);
-  const email = session?.user?.email || "guest@codecampus.example.com";
+  
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <p className="text-gray-500 font-mono uppercase tracking-widest">{dict.dashboard.profile.user_not_found}</p>
+        <Link href="/login" className="mt-8 btn-primary">{dict.dashboard.login.title}</Link>
+      </div>
+    );
+  }
 
+  const userId = user.id;
   const params = await searchParams;
   const focusView = (params.focusView as string) || "track";
   
-  const enrolledRows = await queryD1<Record<string, unknown>>(`
-    SELECT c.*, uc.status, uc.progress, uc.updated_at,
-           GROUP_CONCAT(DISTINCT f.name) as field_names,
-           GROUP_CONCAT(DISTINCT s.term || ' ' || s.year) as semester_names
-    FROM courses c 
-    JOIN user_courses uc ON c.id = uc.course_id 
-    LEFT JOIN course_fields cf ON c.id = cf.course_id
-    LEFT JOIN fields f ON cf.field_id = f.id
-    LEFT JOIN course_semesters cs ON c.id = cs.course_id
-    LEFT JOIN semesters s ON cs.semester_id = s.id
-    WHERE uc.user_id = (SELECT id FROM users WHERE email = ? LIMIT 1)
-    GROUP BY c.id, uc.status, uc.progress, uc.updated_at
-    ORDER BY uc.updated_at DESC
-  `, [email]);
+  const supabase = await createClient();
+  const { data: enrolledRows, error } = await supabase
+    .from('courses')
+    .select(`
+      *,
+      uc:user_courses!inner(status, progress, updated_at),
+      fields:course_fields(fields(name)),
+      semesters:course_semesters(semesters(term, year))
+    `)
+    .eq('user_courses.user_id', userId)
+    .order('updated_at', { foreignTable: 'user_courses', ascending: false });
 
-  const enrolledCourses: EnrolledCourse[] = enrolledRows.map(row => {
+  if (error) {
+    console.error("[Supabase] Study plan fetch error:", error);
+  }
+
+  const enrolledCourses: EnrolledCourse[] = (enrolledRows || []).map((row: any) => {
     const course = mapCourseFromRow(row);
-    const { ...lightCourse } = course;
-    const fields = row.field_names ? (row.field_names as string).split(',') : [];
-    const semesters = row.semester_names ? (row.semester_names as string).split(',') : [];
+    const fieldNames = row.fields?.map((f: any) => f.fields.name) || [];
+    const semesterNames = row.semesters?.map((s: any) => `${s.semesters.term} ${s.semesters.year}`) || [];
+    const uc = row.uc?.[0] || row.user_courses?.[0]; // Supabase join structure can vary based on relation name
+
     return { 
-      ...lightCourse, 
-      fields, 
-      semesters,
-      status: row.status,
-      progress: row.progress,
-      updated_at: row.updated_at,
-      level: row.level as string,
-      corequisites: row.corequisites as string
+      ...course, 
+      fields: fieldNames, 
+      semesters: semesterNames,
+      status: uc?.status || 'pending',
+      progress: uc?.progress || 0,
+      updated_at: uc?.updated_at || new Date().toISOString(),
     } as EnrolledCourse;
   });
 

@@ -1,72 +1,52 @@
-import { runD1, queryD1 } from '../lib/d1';
+import { createAdminClient } from '../lib/supabase/server';
 
 async function main() {
-  console.log("Mocking data...");
+  const supabase = createAdminClient();
+  console.log("Seeding mock data to Supabase...");
 
-  // 1. Ensure mock user exists
-  await runD1(`
-    INSERT OR IGNORE INTO users (id, email, name) 
-    VALUES (?, ?, ?)
-  `, [1, "test@example.com", "Demo User"]);
-
-  const userId = 1;
-
-  // 2. Ensure some fields exist (if not already there)
-  const fields = ["AI / Machine Learning", "Systems & Networking", "Theory & Fundamentals"];
+  // Seed Fields
+  const fields = ['Machine Learning', 'Data Science', 'Web Development', 'Algorithms', 'Mobile Apps'];
   for (const field of fields) {
-    await runD1('INSERT OR IGNORE INTO fields (name) VALUES (?)', [field]);
+    await supabase.from('fields').upsert({ name: field }, { onConflict: 'name' });
   }
 
-  // 3. Get some course IDs
-  const courses = await queryD1<{ id: number }>('SELECT id FROM courses LIMIT 1');
-  
-  if (courses.length === 0) {
-    console.log("No courses found in remote DB. Please run a scraper first.");
+  // Seed Semesters
+  const semesters = [
+    { year: 2024, term: 'Fall' },
+    { year: 2025, term: 'Spring' },
+    { year: 2025, term: 'Fall' }
+  ];
+  for (const sem of semesters) {
+    await supabase.from('semesters').upsert(sem, { onConflict: 'year,term' });
+  }
+
+  // Links
+  const { data: allCourses } = await supabase.from('courses').select('id').limit(20);
+  const { data: allSemesters } = await supabase.from('semesters').select('id');
+  const { data: allFieldRows } = await supabase.from('fields').select('id');
+
+  if (!allCourses || !allSemesters || !allFieldRows) {
+    console.log("No courses/semesters/fields found to link. Run scrapers first.");
     return;
   }
 
-  // 4. Enroll the test user in some courses with different progress
-  console.log(`Enrolling user ${userId} in ${courses.length} courses...`);
-  
-  for (let i = 0; i < courses.length; i++) {
-    const courseId = courses[i].id;
-    const progress = Math.floor(Math.random() * 101);
-    const status = i === 0 ? 'completed' : (progress > 0 ? 'in_progress' : 'pending');
-    
-    await runD1(`
-      INSERT OR IGNORE INTO user_courses (user_id, course_id, progress, status)
-      VALUES (?, ?, ?, ?)
-    `, [userId, courseId, progress, status]);
-  }
-
-  // 5. Mock Semesters
-  console.log("Mocking semesters...");
-  const semesterData = [
-    { year: 2025, term: 'Spring' },
-    { year: 2025, term: 'Fall' },
-    { year: 2026, term: 'Spring' }
-  ];
-
-  for (const sem of semesterData) {
-    await runD1('INSERT OR IGNORE INTO semesters (year, term) VALUES (?, ?)', [sem.year, sem.term]);
-  }
-
-  const allSemesters = await queryD1<{ id: number }>('SELECT id FROM semesters');
-  const allCourses = await queryD1<{ id: number }>('SELECT id FROM courses LIMIT 20');
-
-  console.log(`Linking ${allCourses.length} courses to random semesters...`);
   for (const course of allCourses) {
-    // Link each course to 1 or 2 random semesters
+    // Link to random semester
     const randomSem = allSemesters[Math.floor(Math.random() * allSemesters.length)];
-    await runD1('INSERT OR IGNORE INTO course_semesters (course_id, semester_id) VALUES (?, ?)', [course.id, randomSem.id]);
-    
-    if (Math.random() > 0.7) {
-      const anotherSem = allSemesters[Math.floor(Math.random() * allSemesters.length)];
-      await runD1('INSERT OR IGNORE INTO course_semesters (course_id, semester_id) VALUES (?, ?)', [course.id, anotherSem.id]);
-    }
+    await supabase.from('course_semesters').upsert({
+      course_id: course.id,
+      semester_id: randomSem.id
+    }, { onConflict: 'course_id,semester_id' });
+
+    // Link to random field
+    const randomField = allFieldRows[Math.floor(Math.random() * allFieldRows.length)];
+    await supabase.from('course_fields').upsert({
+      course_id: course.id,
+      field_id: randomField.id
+    }, { onConflict: 'course_id,field_id' });
   }
 
-  console.log("Mock data created successfully.");
+  console.log("Mock data seeding complete.");
 }
 
-main().catch(console.error);
+main();

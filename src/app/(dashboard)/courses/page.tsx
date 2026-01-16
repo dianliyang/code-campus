@@ -2,9 +2,8 @@ import { Suspense } from "react";
 import Hero from "@/components/home/Hero";
 import Sidebar from "@/components/home/Sidebar";
 import CourseList from "@/components/home/CourseList";
-import { queryD1, mapCourseFromRow } from "@/lib/d1";
 import { University, Field, Course } from "@/types";
-import { auth } from "@/auth";
+import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 
@@ -16,7 +15,7 @@ interface PageProps {
 }
 
 export default async function CoursesPage({ searchParams }: PageProps) {
-  const session = await auth();
+  const user = await getUser();
   const lang = await getLanguage();
   const dict = await getDictionary(lang);
   const params = await searchParams;
@@ -39,16 +38,38 @@ export default async function CoursesPage({ searchParams }: PageProps) {
 }
 
 async function SidebarData({ dict }: { dict: any }) {
-  const [dbUniversities, dbFields] = await Promise.all([
-    queryD1<University>('SELECT university as name, COUNT(*) as count FROM courses WHERE is_hidden = 0 GROUP BY university ORDER BY count DESC'),
-    queryD1<Field>('SELECT f.name, COUNT(cf.course_id) as count FROM fields f JOIN course_fields cf ON f.id = cf.field_id GROUP BY f.id ORDER BY count DESC'),
-  ]);
+  const supabase = await createClient();
+  
+  // Use RPC or separate queries for aggregations in Supabase
+  const { data: universitiesData } = await supabase
+    .from('courses')
+    .select('university')
+    .eq('is_hidden', false);
+    
+  const universityCounts: Record<string, number> = {};
+  universitiesData?.forEach(c => {
+    universityCounts[c.university] = (universityCounts[c.university] || 0) + 1;
+  });
+  
+  const dbUniversities: University[] = Object.entries(universityCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const { data: fieldsData } = await supabase
+    .from('fields')
+    .select('name, course_fields(count)');
+    
+  // Simple mapping for fields
+  const dbFields: Field[] = (fieldsData || []).map((f: any) => ({
+    name: f.name,
+    count: f.course_fields?.[0]?.count || 0
+  })).sort((a, b) => b.count - a.count);
 
   return <Sidebar universities={dbUniversities} fields={dbFields} enrolledCount={0} dict={dict} />;
 }
 
 async function CourseListData({ params, dict }: { params: any, dict: any }) {
-  const session = await auth();
+  const user = await getUser();
   const page = parseInt((params.page as string) || "1");
   const size = 10;
   const offset = (page - 1) * size;
@@ -60,15 +81,18 @@ async function CourseListData({ params, dict }: { params: any, dict: any }) {
   const fields = ((params.fields as string) || "").split(",").filter(Boolean);
   const levels = ((params.levels as string) || "").split(",").filter(Boolean);
 
+  const supabase = await createClient();
   let initialEnrolledIds: number[] = [];
-  const email = session?.user?.email || "guest@codecampus.example.com";
-  const enrolledRows = await queryD1<{ course_id: number }>(
-    'SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1)',
-    [email]
-  );
-  initialEnrolledIds = enrolledRows.map(r => r.course_id);
+  
+  if (user) {
+    const { data: enrolledRows } = await supabase
+      .from('user_courses')
+      .select('course_id')
+      .eq('user_id', user.id);
+    initialEnrolledIds = (enrolledRows || []).map(r => Number(r.course_id));
+  }
 
-  const dbCourses = await fetchCourses(page, size, offset, query, sort, enrolledOnly, universities, fields, levels, email);
+  const dbCourses = await fetchCourses(page, size, offset, query, sort, enrolledOnly, universities, fields, levels, user?.id);
 
   return (
     <CourseList 
@@ -92,69 +116,71 @@ async function fetchCourses(
   universities: string[], 
   fields: string[], 
   levels: string[],
-  userEmail?: string | null
+  userId?: string | null
 ) {
-  let whereClause = 'WHERE is_hidden = 0';
-  whereClause += ' AND c.id IN (SELECT MIN(id) FROM courses GROUP BY course_code)';
-  const queryParams: (string | number)[] = [];
+  const supabase = await createClient();
+  
+  let supabaseQuery = supabase
+    .from('courses')
+    .select(`
+      *,
+      fields:course_fields(fields(name)),
+      semesters:course_semesters(semesters(term, year))
+    `, { count: 'exact' })
+    .eq('is_hidden', false);
 
   if (enrolledOnly) {
-    if (!userEmail) return { items: [], total: 0, pages: 0 };
-    whereClause += ` AND c.id IN (SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1))`;
-    queryParams.push(userEmail);
+    if (!userId) return { items: [], total: 0, pages: 0 };
+    // This requires a more complex join or subquery, usually handled via filtering on the join table
+    const { data: enrolledIds } = await supabase
+      .from('user_courses')
+      .select('course_id')
+      .eq('user_id', userId);
+    
+    const ids = (enrolledIds || []).map(r => r.course_id);
+    supabaseQuery = supabaseQuery.in('id', ids);
   }
 
   if (query) {
-    whereClause += ` AND (c.title LIKE ? OR c.description LIKE ? OR c.course_code LIKE ?)`;
-    const searchPattern = `%${query}%`;
-    queryParams.push(searchPattern, searchPattern, searchPattern);
+    supabaseQuery = supabaseQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%,course_code.ilike.%${query}%`);
   }
 
   if (universities.length > 0) {
-    const placeholders = universities.map(() => '?').join(',');
-    whereClause += ` AND university IN (${placeholders})`;
-    queryParams.push(...universities);
-  }
-
-  if (fields.length > 0) {
-    const placeholders = fields.map(() => '?').join(',');
-    whereClause += ` AND c.id IN (SELECT cf.course_id FROM course_fields cf JOIN fields f ON cf.field_id = f.id WHERE f.name IN (${placeholders}))`;
-    queryParams.push(...fields);
+    supabaseQuery = supabaseQuery.in('university', universities);
   }
 
   if (levels.length > 0) {
-    const placeholders = levels.map(() => '?').join(',');
-    whereClause += ` AND level IN (${placeholders})`;
-    queryParams.push(...levels);
+    supabaseQuery = supabaseQuery.in('level', levels);
   }
 
-  let orderBy = 'ORDER BY c.id DESC';
-  if (sort === 'popularity') orderBy = 'ORDER BY c.popularity DESC, c.id DESC';
-  else if (sort === 'newest') orderBy = 'ORDER BY c.created_at DESC';
-  else if (sort === 'title') orderBy = 'ORDER BY c.title ASC';
+  // Sorting
+  if (sort === 'popularity') supabaseQuery = supabaseQuery.order('popularity', { ascending: false });
+  else if (sort === 'newest') supabaseQuery = supabaseQuery.order('created_at', { ascending: false });
+  else if (sort === 'title') supabaseQuery = supabaseQuery.order('title', { ascending: true });
+  else supabaseQuery = supabaseQuery.order('id', { ascending: false });
 
-  const countResult = await queryD1<{ count: number }>(`SELECT count(*) as count FROM courses c ${whereClause}`, queryParams);
-  const total = Number(countResult[0]?.count || 0);
-  const pages = Math.max(1, Math.ceil(total / size));
+  const { data, count, error } = await supabaseQuery
+    .range(offset, offset + size - 1);
 
-  const selectSql = `
-    SELECT c.id, c.university, c.course_code, c.title, c.units, c.description, c.url, c.department, c.corequisites, c.level, c.difficulty, c.popularity, c.workload, c.created_at,
-           (SELECT GROUP_CONCAT(f.name) FROM course_fields cf JOIN fields f ON cf.field_id = f.id WHERE cf.course_id = c.id) as field_names,
-           (SELECT GROUP_CONCAT(s.term || ' ' || s.year) FROM course_semesters cs JOIN semesters s ON cs.semester_id = s.id WHERE cs.course_id = c.id) as semester_names
-    FROM courses c
-    ${whereClause}
-    ${orderBy}
-    LIMIT ? OFFSET ?
-  `;
-  const rows = await queryD1<Record<string, unknown>>(selectSql, [...queryParams, size, offset]);
+  if (error) {
+    console.error("[Supabase] Fetch error:", error);
+    return { items: [], total: 0, pages: 0 };
+  }
 
-  const items = rows.map(row => {
+  const items = (data || []).map((row: any) => {
     const course = mapCourseFromRow(row);
-    const { ...lightCourse } = course;
-    const fields = row.field_names ? (row.field_names as string).split(',') : [];
-    const semesters = row.semester_names ? (row.semester_names as string).split(',') : [];
-    return { ...lightCourse, fields, semesters, level: row.level as string, corequisites: row.corequisites as string } as Course;
+    const fieldNames = row.fields?.map((f: any) => f.fields.name) || [];
+    const semesterNames = row.semesters?.map((s: any) => `${s.semesters.term} ${s.semesters.year}`) || [];
+    
+    return { 
+      ...course, 
+      fields: fieldNames, 
+      semesters: semesterNames 
+    } as Course;
   });
+
+  const total = count || 0;
+  const pages = Math.max(1, Math.ceil(total / size));
 
   return { items, total, pages };
 }

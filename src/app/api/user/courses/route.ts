@@ -1,18 +1,25 @@
 import { NextResponse } from 'next/server';
-import { queryD1 } from '@/lib/d1';
-import { auth } from '@/auth';
+import { getUser, createClient } from '@/lib/supabase/server';
 
 export async function GET() {
-  const session = await auth();
-  const email = session?.user?.email || "guest@codecampus.example.com";
+  const user = await getUser();
+  
+  if (!user) {
+    return NextResponse.json({ enrolledIds: [] });
+  }
+
+  const userId = user.id;
 
   try {
-    const rows = await queryD1<{ course_id: number }>(
-      'SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1)',
-      [email]
-    );
+    const supabase = await createClient();
+    const { data: rows, error } = await supabase
+      .from('user_courses')
+      .select('course_id')
+      .eq('user_id', userId);
 
-    const enrolledIds = rows.map(r => r.course_id);
+    if (error) throw error;
+
+    const enrolledIds = rows.map(r => Number(r.course_id));
     return NextResponse.json({ enrolledIds });
   } catch (error) {
     console.error("Error fetching user courses:", error);

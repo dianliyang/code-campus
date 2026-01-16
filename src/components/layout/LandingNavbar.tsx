@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import FloatingNavWrapper from "./FloatingNavWrapper";
@@ -5,45 +7,61 @@ import FloatingNavWrapper from "./FloatingNavWrapper";
 export default function LandingNavbar() {
   return (
     <FloatingNavWrapper initialClassName="w-full bg-transparent translate-y-0 border-b border-transparent">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-full min-h-[4rem] transition-all duration-500 py-3 md:py-4">
+      {(scrolled) => (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={`flex justify-between items-center transition-all duration-500 ${scrolled ? 'h-14' : 'h-24'}`}>
             
             {/* Logo Section */}
             <div className="flex items-center">
-              <Link href="/" className="group flex items-center gap-3">
+              <Link href="/" className="group flex items-center gap-4">
                 <Image 
                   src="/code-campus-logo.svg" 
                   alt="CodeCampus" 
-                  width={36} 
-                  height={36} 
-                  className="w-9 h-9 transition-transform group-hover:-rotate-6"
+                  width={scrolled ? 32 : 40} 
+                  height={scrolled ? 32 : 40} 
+                  className={`transition-all duration-500 group-hover:-rotate-6 ${scrolled ? 'w-8 h-8' : 'w-10 h-10'}`}
                 />
-                <div className="flex flex-col">
-                  <span className="text-xl md:text-2xl font-black tracking-tighter text-gray-900 uppercase leading-none">CodeCampus</span>
-                  <span className="hidden md:block text-xs font-bold text-gray-500 uppercase tracking-[0.3em] group-hover:text-brand-blue transition-colors">Global Network</span>
-                </div>
+                {!scrolled && (
+                  <div className="flex flex-col transition-opacity duration-300">
+                    <span className="text-2xl font-black tracking-tighter text-gray-900 uppercase leading-none">CodeCampus</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] group-hover:text-brand-blue transition-colors">Global Network</span>
+                  </div>
+                )}
               </Link>
             </div>
 
-            {/* Navigation Links - Hidden on Mobile */}
-            <div className="hidden lg:flex items-center gap-6 bg-white/80 backdrop-blur-md px-6 py-2.5 rounded-full border border-gray-100 shadow-sm">
+            {/* Navigation Links */}
+            <div className={`hidden md:flex items-center transition-all duration-500 ${
+              scrolled 
+                ? 'gap-2 bg-transparent' 
+                : 'gap-8 bg-white/80 backdrop-blur-md px-8 py-3 rounded-full border border-gray-100 shadow-sm'
+            }`}>
               {[
-                { name: "Mission", href: "#mission" },
-                { name: "Universities", href: "#universities" },
-                { name: "Curriculum", href: "#features" }
+                { name: "Mission", href: "#mission", icon: "fa-solid fa-shuttle-space" },
+                { name: "Universities", href: "#universities", icon: "fa-solid fa-building-columns" },
+                { name: "Curriculum", href: "#features", icon: "fa-solid fa-layer-group" }
               ].map((item) => (
                 <Link 
                   key={item.name} 
                   href={item.href} 
-                  className="group relative flex items-center justify-center px-3 py-1.5"
+                  className={`group relative flex items-center justify-center transition-all duration-300 ${
+                    scrolled 
+                      ? 'w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 hover:text-brand-blue' 
+                      : 'px-4 py-2'
+                  }`}
+                  title={scrolled ? item.name : undefined}
                 >
-                  <span className="absolute left-0 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 text-brand-blue font-mono font-bold text-xs">&lt;</span>
-                  
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-gray-900 transition-colors mx-2">
-                    {item.name}
-                  </span>
-                  
-                  <span className="absolute right-0 opacity-0 translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 text-brand-blue font-mono font-bold text-xs">&gt;</span>
+                  {scrolled ? (
+                     <i className={`${item.icon} text-sm transition-transform group-hover:scale-110`}></i>
+                  ) : (
+                    <>
+                      <span className="absolute left-0 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 text-brand-blue font-mono font-bold text-xs">&lt;</span>
+                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-gray-900 transition-colors mx-2">
+                        {item.name}
+                      </span>
+                      <span className="absolute right-0 opacity-0 translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 text-brand-blue font-mono font-bold text-xs">&gt;</span>
+                    </>
+                  )}
                 </Link>
               ))}
             </div>
@@ -52,15 +70,24 @@ export default function LandingNavbar() {
             <div className="flex items-center gap-6">
               <Link 
                 href="/courses" 
-                className="flex items-center gap-4 btn-primary group px-6 py-3"
+                className={`flex items-center justify-center btn-primary group transition-all duration-500 ${
+                   scrolled ? 'w-10 h-10 rounded-full !px-0 !py-0' : 'gap-4 px-6 py-3'
+                }`}
               >
-                Enter
-                <i className="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-1"></i>
+                {scrolled ? (
+                  <i className="fa-solid fa-arrow-right text-sm"></i>
+                ) : (
+                  <>
+                    Enter
+                    <i className="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-1"></i>
+                  </>
+                )}
               </Link>
             </div>
 
           </div>
         </div>
+      )}
     </FloatingNavWrapper>
   );
 }

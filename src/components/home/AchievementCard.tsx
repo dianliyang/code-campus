@@ -149,10 +149,17 @@ export default function AchievementCard({ course, masteredLabel }: AchievementCa
           </div>
         )}
         <div className="flex flex-col">
-          <span className="text-[10px] font-black text-brand-green uppercase tracking-[0.2em] leading-none mb-1">
-            {course.university}
-          </span>
-          <span className="text-[9px] font-bold text-gray-400 font-mono">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-brand-green uppercase tracking-[0.2em] leading-none">
+              {course.university}
+            </span>
+            {course.semesters && course.semesters.length > 0 && (
+              <span className="text-[9px] font-bold text-brand-blue/60 uppercase tracking-tighter">
+                • {course.semesters[0]}
+              </span>
+            )}
+          </div>
+          <span className="text-[9px] font-bold text-gray-400 font-mono mt-1">
             {course.courseCode}
           </span>
         </div>

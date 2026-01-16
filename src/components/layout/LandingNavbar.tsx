@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import FloatingNavWrapper from "./FloatingNavWrapper";
+import NavLinks from "./NavLinks";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function LandingNavbar({ dict }: { dict: any }) {

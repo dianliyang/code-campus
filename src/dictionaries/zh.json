@@ -127,7 +127,9 @@
       "peak_ahead": "巅峰尚在前方，继续努力。",
       "go_to_course": "前往课程官网",
       "view_tracking": "进度追踪",
-      "view_visual": "视觉卡片"
+      "view_visual": "视觉卡片",
+      "learning_sequence": "学习序列",
+      "efficiency_desc": "活跃课程的课程吸收率。"
     },
     "profile": {
       "user_level": "专业度",

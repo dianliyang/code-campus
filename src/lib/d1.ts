@@ -58,6 +58,9 @@ export async function queryD1<T = unknown>(
   if (!bindingDB && !REMOTE_DB && process.env.NODE_ENV === "development" && process.env.NEXT_RUNTIME !== "edge") {
     try {
       // Dynamic import/require to avoid bundle issues in non-node environments
+      const nodeProcess = process;
+      const cwd = nodeProcess.cwd();
+      
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Database = require("better-sqlite3");
       // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -69,7 +72,7 @@ export async function queryD1<T = unknown>(
 
       if (!dbPath) {
         const wranglerDir = path.join(
-          process.cwd(),
+          cwd,
           ".wrangler/state/v3/d1/miniflare-D1DatabaseObject"
         );
         if (fs.existsSync(wranglerDir)) {

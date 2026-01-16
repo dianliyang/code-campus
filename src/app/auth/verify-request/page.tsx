@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import Globe from "@/components/ui/Globe";
+import OrbitingCircles from "@/components/home/OrbitingCircles";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 
@@ -35,16 +35,16 @@ export default async function VerifyRequestPage() {
         {/* Globe Container */}
         <div className="absolute inset-0 flex items-center justify-center opacity-40">
            <div className="w-[120%] h-[120%]">
-             <Globe />
+             <OrbitingCircles />
            </div>
         </div>
 
         <div className="relative z-10 max-w-md">
            <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-6 leading-none">
-             {dict.login.verify_title.split(' ')[0]} <br /> {dict.login.verify_title.split(' ').slice(1).join(' ')}.
+             {dict.dashboard.login.verify_title.split(' ')[0]} <br /> {dict.dashboard.login.verify_title.split(' ').slice(1).join(' ')}.
            </h2>
            <p className="text-gray-400 font-medium leading-relaxed">
-             {dict.login.verify_desc}
+             {dict.dashboard.login.verify_desc}
            </p>
         </div>
 
@@ -70,17 +70,17 @@ export default async function VerifyRequestPage() {
           </div>
 
           <div className="mb-10">
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase mb-2">{dict.login.check_email}</h1>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase mb-2">{dict.dashboard.login.check_email}</h1>
             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
-              {dict.login.check_email_desc}
+              {dict.dashboard.login.check_email_desc}
             </p>
           </div>
 
           <div className="space-y-6">
             <div className="p-6 bg-brand-blue/5 border border-brand-blue/10 rounded-xl">
-              <p className="text-xs font-bold text-brand-blue uppercase tracking-widest mb-2">{dict.login.security_protocol}</p>
+              <p className="text-xs font-bold text-brand-blue uppercase tracking-widest mb-2">{dict.dashboard.login.security_protocol}</p>
               <p className="text-sm text-gray-600 leading-relaxed italic">
-                &quot;{dict.login.spam_notice}&quot;
+                &quot;{dict.dashboard.login.spam_notice}&quot;
               </p>
             </div>
 
@@ -88,13 +88,13 @@ export default async function VerifyRequestPage() {
               href="/login" 
               className="inline-block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-brand-blue transition-colors"
             >
-              ← {dict.login.back_to_auth}
+              ← {dict.dashboard.login.back_to_auth}
             </Link>
           </div>
 
           <div className="mt-12">
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-              {dict.login.footer}
+              {dict.dashboard.login.footer}
             </p>
           </div>
         </div>

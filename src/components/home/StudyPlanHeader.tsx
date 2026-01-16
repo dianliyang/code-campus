@@ -21,7 +21,9 @@ export default function StudyPlanHeader({ enrolledCount, completedCount, average
 
         <div className="flex-grow flex flex-col sm:flex-row gap-16 sm:items-center relative z-10">
           <div className="relative pt-10">
-            <span className="absolute top-0 left-0 text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">Learning Sequence</span>
+            <span className="absolute top-0 left-0 text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
+              {dict?.learning_sequence || "Learning Sequence"}
+            </span>
             <div className="flex gap-2 items-end h-16 mb-6">
               {Array.from({ length: Math.max(enrolledCount, 12) }).map((_, i) => (
                 <div 
@@ -73,7 +75,7 @@ export default function StudyPlanHeader({ enrolledCount, completedCount, average
               </div>
               <div className="max-w-[160px]">
                 <p className="text-xs text-gray-400 font-bold leading-relaxed uppercase tracking-widest">
-                  Curriculum absorption rate across active tracks.
+                  {dict?.efficiency_desc || "Curriculum absorption rate across active tracks."}
                 </p>
               </div>
             </div>

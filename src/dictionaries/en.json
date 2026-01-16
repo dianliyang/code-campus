@@ -127,7 +127,9 @@
       "peak_ahead": "The peak is still ahead. Keep pushing.",
       "go_to_course": "Go to Course",
       "view_tracking": "Tracking",
-      "view_visual": "Visual"
+      "view_visual": "Visual",
+      "learning_sequence": "Learning Sequence",
+      "efficiency_desc": "Curriculum absorption rate across active tracks."
     },
     "profile": {
       "user_level": "Expertise",

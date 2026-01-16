@@ -15,7 +15,7 @@ export default async function ProfilePage() {
   );
 
   const profile = user[0];
-  if (!profile) return <div className="p-10 text-center font-mono">{dict.profile.user_not_found}</div>;
+  if (!profile) return <div className="p-10 text-center font-mono">{dict.dashboard.profile.user_not_found}</div>;
 
   // Enriched Queries
   const [basicStats, uniStats, allFieldStats, lastActive] = await Promise.all([
@@ -36,7 +36,7 @@ export default async function ProfilePage() {
   const totalCourses = basicStats.reduce((acc, curr) => acc + curr.total, 0);
   const completedCount = basicStats.find(s => s.status === 'completed')?.total || 0;
   const universityCount = uniStats[0]?.count || 0;
-  const topField = allFieldStats[0]?.name || dict.profile.none;
+  const topField = allFieldStats[0]?.name || dict.dashboard.profile.none;
   const lastActiveDate = lastActive[0]?.updated_at ? new Date(lastActive[0].updated_at) : null;
 
   // Calculate Field Distribution
@@ -56,25 +56,25 @@ export default async function ProfilePage() {
             <div className="flex items-center gap-4">
               <h1 className="text-4xl font-black text-gray-900 tracking-tighter">{profile.name}</h1>
               <span className="bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-gray-200">
-                {dict.profile.level_short} {Math.floor(completedCount / 2) + 1} {dict.profile.user_level}
+                {dict.dashboard.profile.level_short} {Math.floor(completedCount / 2) + 1} {dict.dashboard.profile.user_level}
               </span>
             </div>
             <p className="text-xl text-gray-400 font-medium tracking-tight">{profile.email}</p>
             <div className="flex items-center gap-6 mt-4 pt-4">
               <div className="flex items-center gap-2 text-sm font-bold text-gray-600">
                 <i className="fa-regular fa-clock text-brand-blue"></i>
-                {dict.profile.last_active} {lastActiveDate ? lastActiveDate.toLocaleDateString(lang, { month: 'short', day: 'numeric' }) : dict.profile.never}
+                {dict.dashboard.profile.last_active} {lastActiveDate ? lastActiveDate.toLocaleDateString(lang, { month: 'short', day: 'numeric' }) : dict.dashboard.profile.never}
               </div>
               <div className="flex items-center gap-2 text-sm font-bold text-gray-600">
                 <i className="fa-solid fa-graduation-cap text-brand-green"></i>
-                {universityCount} {dict.profile.institutions}
+                {universityCount} {dict.dashboard.profile.institutions}
               </div>
             </div>
           </div>
           <div className="flex flex-col gap-3">
             <button className="flex items-center gap-2 btn-secondary px-6 py-2.5">
               <i className="fa-solid fa-gear text-[10px]"></i>
-              <span>{dict.profile.settings}</span>
+              <span>{dict.dashboard.profile.settings}</span>
             </button>
             <form action={async () => {
               "use server";
@@ -82,7 +82,7 @@ export default async function ProfilePage() {
             }}>
               <button className="flex items-center gap-2 btn-secondary px-6 py-2.5 w-full hover:border-red-200 hover:text-red-500">
                 <i className="fa-solid fa-arrow-right-from-bracket text-[10px]"></i>
-                <span>{dict.profile.sign_out}</span>
+                <span>{dict.dashboard.profile.sign_out}</span>
               </button>
             </form>
           </div>
@@ -91,40 +91,40 @@ export default async function ProfilePage() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-16 py-16 border-b border-gray-100">
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.profile.stat_depth}</span>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.dashboard.profile.stat_depth}</span>
             <div className="flex items-baseline gap-2">
               <span className="text-7xl font-black text-gray-900 tracking-tighter leading-none">{totalCourses}</span>
-              <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">{dict.profile.stat_depth_unit}</span>
+              <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">{dict.dashboard.profile.stat_depth_unit}</span>
             </div>
-            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed max-w-[240px]">{dict.profile.stat_depth_desc}</p>
+            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed max-w-[240px]">{dict.dashboard.profile.stat_depth_desc}</p>
           </div>
 
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.profile.stat_mastery}</span>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.dashboard.profile.stat_mastery}</span>
             <div className="flex items-baseline gap-2">
               <span className="text-7xl font-black text-brand-green tracking-tighter leading-none">{completedCount}</span>
-              <span className="text-sm font-bold text-green-600 uppercase tracking-widest">{dict.profile.stat_mastery_unit}</span>
+              <span className="text-sm font-bold text-green-600 uppercase tracking-widest">{dict.dashboard.profile.stat_mastery_unit}</span>
             </div>
-            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed max-w-[240px]">{dict.profile.stat_mastery_desc}</p>
+            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed max-w-[240px]">{dict.dashboard.profile.stat_mastery_desc}</p>
           </div>
 
           <div className="flex flex-col border-l border-gray-100 pl-12 hidden md:flex">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.profile.stat_focus}</span>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.dashboard.profile.stat_focus}</span>
             <div className="h-full flex flex-col justify-center">
               <h3 className="text-3xl font-black text-gray-900 tracking-tight leading-tight uppercase">
                 {topField}
               </h3>
-              <p className="text-sm text-gray-600 font-medium mt-4 leading-relaxed">{dict.profile.stat_focus_desc}</p>
+              <p className="text-sm text-gray-600 font-medium mt-4 leading-relaxed">{dict.dashboard.profile.stat_focus_desc}</p>
             </div>
           </div>
 
           <div className="flex flex-col border-l border-gray-100 pl-12 hidden md:flex">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.profile.stat_diversity}</span>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.dashboard.profile.stat_diversity}</span>
             <div className="flex items-baseline gap-2">
               <span className="text-7xl font-black text-brand-blue tracking-tighter leading-none">{universityCount > 0 ? Math.round((universityCount / 4) * 100) : 0}</span>
               <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">%</span>
             </div>
-            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed">{dict.profile.stat_diversity_desc}</p>
+            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed">{dict.dashboard.profile.stat_diversity_desc}</p>
           </div>
         </div>
 
@@ -132,8 +132,8 @@ export default async function ProfilePage() {
         <div className="py-24 border-b border-gray-100">
           <div className="flex justify-between items-end mb-20">
             <div>
-              <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.4em] mb-2">{dict.profile.neural_map}</h2>
-              <h3 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">{dict.profile.fingerprint}</h3>
+              <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.4em] mb-2">{dict.dashboard.profile.neural_map}</h2>
+              <h3 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">{dict.dashboard.profile.fingerprint}</h3>
             </div>
             <div className="text-right hidden md:block">
               <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] border border-gray-100 px-3 py-1 rounded-lg">DATA_SIG: 0x{profile.id.toString().substring(0, 8).toUpperCase()}</span>
@@ -153,7 +153,7 @@ export default async function ProfilePage() {
                     <div key={f.name} className="flex items-end gap-[2px] h-full transition-opacity hover:opacity-100 opacity-80" style={{ width: `${percentage}%` }}>
                       {Array.from({ length: tickCount }).map((_, i) => {
                         // Deterministic height based on user ID, field, and tick index
-                        const seed = (profile.id.length * 10000) + (fieldIdx * 1000) + i;
+                        const seed = (profile.id * 10000) + (fieldIdx * 1000) + i;
                         const pseudoRandom = Math.abs(Math.sin(seed) * 10000) % 1;
                         const randomHeight = 15 + Math.sin(i * 0.4) * 20 + (pseudoRandom * 65);
                         const pseudoOpacity = 0.2 + (Math.abs(Math.cos(seed) * 10000) % 1 * 0.8);
@@ -188,7 +188,7 @@ export default async function ProfilePage() {
                       </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-5xl font-black text-gray-900 tracking-tighter group-hover:text-brand-blue transition-colors leading-none">{f.count}</span>
-                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{dict.profile.units}</span>
+                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{dict.dashboard.profile.units}</span>
                       </div>
                     </div>
                     <div className="mt-6">
@@ -204,14 +204,14 @@ export default async function ProfilePage() {
             </div>
           ) : (
             <div className="h-40 bg-gray-50 rounded-3xl flex items-center justify-center border border-dashed border-gray-200">
-              <p className="text-xs font-black text-gray-300 uppercase tracking-[0.3em]">{dict.profile.no_data}</p>
+              <p className="text-xs font-black text-gray-300 uppercase tracking-[0.3em]">{dict.dashboard.profile.no_data}</p>
             </div>
           )}
         </div>
 
         {/* Identity Section */}
         <div className="pt-16">
-          <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-12">{dict.profile.security_title}</h2>
+          <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-12">{dict.dashboard.profile.security_title}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
             <div className="space-y-12">
               <div className="flex gap-6 items-start">
@@ -219,11 +219,11 @@ export default async function ProfilePage() {
                   <i className="fa-brands fa-github"></i>
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900">{dict.profile.github_title}</h4>
-                  <p className="text-sm text-gray-500 leading-relaxed mt-1">{dict.profile.github_desc}</p>
+                  <h4 className="text-lg font-bold text-gray-900">{dict.dashboard.profile.github_title}</h4>
+                  <p className="text-sm text-gray-500 leading-relaxed mt-1">{dict.dashboard.profile.github_desc}</p>
                   <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-brand-green uppercase tracking-widest bg-green-50 w-fit px-3 py-1 rounded-lg border border-green-100">
                     <span className="w-1.5 h-1.5 bg-brand-green rounded-full"></span>
-                    {dict.profile.connected}
+                    {dict.dashboard.profile.connected}
                   </div>
                 </div>
               </div>
@@ -238,10 +238,10 @@ export default async function ProfilePage() {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900">{dict.profile.google_title}</h4>
-                  <p className="text-sm text-gray-500 leading-relaxed mt-1">{dict.profile.google_desc}</p>
+                  <h4 className="text-lg font-bold text-gray-900">{dict.dashboard.profile.google_title}</h4>
+                  <p className="text-sm text-gray-500 leading-relaxed mt-1">{dict.dashboard.profile.google_desc}</p>
                   <button className="mt-4 flex items-center gap-2 text-[10px] font-black text-brand-blue uppercase tracking-widest bg-blue-50/50 w-fit px-3 py-1 rounded-lg border border-blue-100/50 hover:bg-blue-50 cursor-pointer">
-                    {dict.profile.link_account}
+                    {dict.dashboard.profile.link_account}
                   </button>
                 </div>
               </div>
@@ -251,10 +251,10 @@ export default async function ProfilePage() {
                   <i className="fa-brands fa-apple"></i>
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900">{dict.profile.apple_title}</h4>
-                  <p className="text-sm text-gray-500 leading-relaxed mt-1">{dict.profile.apple_desc}</p>
+                  <h4 className="text-lg font-bold text-gray-900">{dict.dashboard.profile.apple_title}</h4>
+                  <p className="text-sm text-gray-500 leading-relaxed mt-1">{dict.dashboard.profile.apple_desc}</p>
                   <button className="mt-4 flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 w-fit px-3 py-1 rounded-lg border border-gray-100 hover:bg-gray-100 cursor-pointer">
-                    {dict.profile.link_account}
+                    {dict.dashboard.profile.link_account}
                   </button>
                 </div>
               </div>
@@ -269,16 +269,16 @@ export default async function ProfilePage() {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900">{dict.profile.microsoft_title}</h4>
-                  <p className="text-sm text-gray-500 leading-relaxed mt-1">{dict.profile.microsoft_desc}</p>
+                  <h4 className="text-lg font-bold text-gray-900">{dict.dashboard.profile.microsoft_title}</h4>
+                  <p className="text-sm text-gray-500 leading-relaxed mt-1">{dict.dashboard.profile.microsoft_desc}</p>
                   <button className="mt-4 flex items-center gap-2 text-[10px] font-black text-[#00a1f1] uppercase tracking-widest bg-blue-50/30 w-fit px-3 py-1 rounded-lg border border-blue-100/30 hover:bg-blue-50 cursor-pointer">
-                    {dict.profile.link_account}
+                    {dict.dashboard.profile.link_account}
                   </button>
                 </div>
               </div>
             </div>
 
-            <DeleteAccount dict={dict.profile} />
+            <DeleteAccount dict={dict.dashboard.profile} />
           </div>
         </div>
       </main>

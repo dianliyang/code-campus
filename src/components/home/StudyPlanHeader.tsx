@@ -4,9 +4,10 @@ interface StudyPlanHeaderProps {
   enrolledCount: number;
   completedCount: number;
   averageProgress: number;
+  dict?: any;
 }
 
-export default function StudyPlanHeader({ enrolledCount, completedCount, averageProgress }: StudyPlanHeaderProps) {
+export default function StudyPlanHeader({ enrolledCount, completedCount, averageProgress, dict }: StudyPlanHeaderProps) {
   return (
     <div className="relative mb-32">
       <div className="absolute -left-12 top-0 bottom-0 w-px bg-gray-100 hidden lg:block"></div>
@@ -14,7 +15,7 @@ export default function StudyPlanHeader({ enrolledCount, completedCount, average
       <div className="flex flex-col lg:flex-row lg:items-end gap-16 lg:gap-32">
         <div>
           <h1 className="text-6xl font-black text-gray-900 tracking-tighter leading-none uppercase">
-            Study <br /> <span className="text-brand-blue">Path</span>
+            {dict?.title?.split(' ')[0] || "Study"} <br /> <span className="text-brand-blue">{dict?.title?.split(' ')[1] || "Path"}</span>
           </h1>
         </div>
 
@@ -37,18 +38,24 @@ export default function StudyPlanHeader({ enrolledCount, completedCount, average
             </div>
             <div className="flex gap-12">
               <div className="flex flex-col">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Total Tracks</span>
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                  {dict?.header_total || "Total Tracks"}
+                </span>
                 <span className="text-3xl font-black text-gray-900 leading-none mt-2">{enrolledCount}</span>
               </div>
               <div className="flex flex-col border-l-2 border-gray-100 pl-10">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Mastered</span>
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                  {dict?.header_mastered || "Mastered"}
+                </span>
                 <span className="text-3xl font-black text-brand-green leading-none mt-2">{completedCount}</span>
               </div>
             </div>
           </div>
 
           <div className="relative pt-10 sm:ml-auto">
-            <span className="absolute top-0 left-0 text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">Core Efficiency</span>
+            <span className="absolute top-0 left-0 text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
+              {dict?.header_efficiency || "Core Efficiency"}
+            </span>
             <div className="flex items-center gap-10">
               <div className="relative w-24 h-24 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90">

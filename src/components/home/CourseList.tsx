@@ -12,6 +12,7 @@ interface CourseListProps {
   totalPages: number;
   currentPage: number;
   initialEnrolledIds: number[];
+  dict?: any;
 }
 
 export default function CourseList({ 
@@ -19,7 +20,8 @@ export default function CourseList({
   totalItems, 
   totalPages, 
   currentPage,
-  initialEnrolledIds 
+  initialEnrolledIds,
+  dict
 }: CourseListProps) {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [enrolledIds, setEnrolledIds] = useState<number[]>(initialEnrolledIds);
@@ -48,6 +50,7 @@ export default function CourseList({
         totalItems={totalItems} 
         viewMode={viewMode} 
         setViewMode={handleViewModeChange} 
+        dict={dict}
       />
 
       <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-6" : "space-y-4"}>
@@ -57,13 +60,16 @@ export default function CourseList({
             course={course} 
             isInitialEnrolled={enrolledIds.includes(course.id)} 
             onEnrollToggle={fetchEnrolled}
+            dict={dict}
           />
         ))}
         {initialCourses?.length === 0 && (
           <div className="text-center py-32 bg-white rounded-2xl border border-gray-100 relative overflow-hidden group">
             {/* Background Watermark */}
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] select-none pointer-events-none transition-transform duration-1000 group-hover:scale-110">
-              <span className="text-[12rem] font-black uppercase tracking-tighter">NULL</span>
+              <span className="text-[12rem] font-black uppercase tracking-tighter">
+                {dict?.empty_title || "NULL"}
+              </span>
             </div>
             
             <div className="relative z-10 flex flex-col items-center">
@@ -72,7 +78,7 @@ export default function CourseList({
               </div>
               <h3 className="text-xs font-black text-gray-900 uppercase tracking-[0.4em] mb-2">Zero Matches Found</h3>
               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest max-w-[280px] leading-relaxed">
-                Adjust your frequency filters or expand the topic spectrum to initialize new results.
+                {dict?.empty_desc || "Adjust your frequency filters or expand the topic spectrum to initialize new results."}
               </p>
               <div className="mt-8 h-px w-12 bg-gray-100"></div>
             </div>

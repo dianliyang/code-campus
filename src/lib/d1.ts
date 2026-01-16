@@ -54,10 +54,54 @@ export async function queryD1<T = unknown>(
     }
   }
 
-  // 3. Local Mode (better-sqlite3) - REMOVED for Edge Compatibility
-  // The previous implementation used Node.js APIs (fs, path, better-sqlite3) and process.versions
-  // which caused build errors in the Edge Runtime.
-  // For local development, rely on 'wrangler dev' or Remote D1 fallback.
+  // 3. Local Mode (better-sqlite3) - Enabled for local Node.js environment
+  if (!bindingDB && !REMOTE_DB && process.env.NODE_ENV === "development" && process.env.NEXT_RUNTIME !== "edge") {
+    try {
+      // Dynamic import/require to avoid bundle issues in non-node environments
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Database = require("better-sqlite3");
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const path = require("path");
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const fs = require("fs");
+
+      let dbPath = process.env.LOCAL_DB_PATH;
+
+      if (!dbPath) {
+        const wranglerDir = path.join(
+          process.cwd(),
+          ".wrangler/state/v3/d1/miniflare-D1DatabaseObject"
+        );
+        if (fs.existsSync(wranglerDir)) {
+          const files = fs
+            .readdirSync(wranglerDir)
+            .filter((f: string) => f.endsWith(".sqlite"));
+          if (files.length > 0) {
+            // Sort by mtime to get the latest one
+            const sortedFiles = files
+              .map((f: string) => ({
+                name: f,
+                time: fs.statSync(path.join(wranglerDir, f)).mtime.getTime(),
+              }))
+              .sort((a: { time: number }, b: { time: number }) => b.time - a.time);
+            dbPath = path.join(wranglerDir, sortedFiles[0].name);
+          }
+        }
+      }
+
+      if (dbPath && fs.existsSync(dbPath)) {
+        const db = new Database(dbPath);
+        if (sql.trim().toLowerCase().startsWith("select")) {
+          return db.prepare(sql).all(...params) as T[];
+        } else {
+          const result = db.prepare(sql).run(...params);
+          return [result] as unknown as T[];
+        }
+      }
+    } catch (e) {
+      console.warn("[D1 Local Fallback Error]", e);
+    }
+  }
 
   if (process.env.NODE_ENV === "development") {
     console.warn("[D1] No database binding found. Using Mock Data for dev.");

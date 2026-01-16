@@ -6,7 +6,8 @@ import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
 import Link from "next/link";
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { getLanguage } from "@/actions/language";
+import { getDictionary } from "@/lib/dictionary";
 
 interface EnrolledCourse extends Course {
   status: string;
@@ -20,6 +21,8 @@ interface PageProps {
 
 export default async function StudyPlanPage({ searchParams }: PageProps) {
   const session = await auth();
+  const lang = await getLanguage();
+  const dict = await getDictionary(lang);
   const email = session?.user?.email || "guest@codecampus.example.com";
 
   const params = await searchParams;
@@ -69,13 +72,14 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
             enrolledCount={enrolledCourses.length} 
             completedCount={completed.length}
             averageProgress={enrolledCourses.length > 0 ? Math.round(enrolledCourses.reduce((acc, curr) => acc + curr.progress, 0) / enrolledCourses.length) : 0}
+            dict={dict.dashboard.roadmap}
           />
           <Link 
             href="/import" 
             className="btn-secondary flex items-center gap-3 mt-4 md:mt-0"
           >
             <i className="fa-solid fa-plus text-[7px]"></i>
-            Import Course
+            {dict.dashboard.roadmap.import_btn}
           </Link>
         </div>
 
@@ -90,8 +94,8 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
                   <i className="fa-solid fa-bolt-lightning text-sm"></i>
                 </div>
                 <div>
-                  <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em]">Phase 01</h2>
-                  <h3 className="text-2xl font-black text-gray-900 tracking-tighter">Current Active Focus</h3>
+                  <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em]">{dict.dashboard.roadmap.phase_1_label}</h2>
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tighter">{dict.dashboard.roadmap.phase_1_title}</h3>
                 </div>
               </div>
 
@@ -121,10 +125,10 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
                 inProgress.map(course => (
                   focusView === 'track' 
                     ? <ActiveCourseTrack key={course.id} course={course} initialProgress={course.progress} />
-                    : <CourseCard key={course.id} course={course} isInitialEnrolled={true} progress={course.progress} />
+                    : <CourseCard key={course.id} course={course} isInitialEnrolled={true} progress={course.progress} dict={dict.dashboard.courses} />
                 ))
               ) : (
-                <p className="text-sm text-gray-400 font-mono italic">No active courses. Explore the network to begin.</p>
+                <p className="text-sm text-gray-400 font-mono italic">No active courses. Explore the catalog to begin.</p>
               )}
             </div>
           </section>
@@ -136,15 +140,20 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
                 <i className="fa-solid fa-trophy text-sm"></i>
               </div>
               <div>
-                <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em]">Phase 02</h2>
-                <h3 className="text-2xl font-black text-gray-900 tracking-tighter">Academic Achievements</h3>
+                <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em]">{dict.dashboard.roadmap.phase_2_label}</h2>
+                <h3 className="text-2xl font-black text-gray-900 tracking-tighter">{dict.dashboard.roadmap.phase_2_title}</h3>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 pl-0 md:pl-20">
               {completed.length > 0 ? (
                 completed.map(course => (
-                  <AchievementCard key={course.id} course={course} completionDate={course.updated_at} />
+                  <AchievementCard 
+                    key={course.id} 
+                    course={course} 
+                    completionDate={course.updated_at} 
+                    masteredLabel={dict.dashboard.roadmap.header_mastered}
+                  />
                 ))
               ) : (
                 <p className="text-sm text-gray-400 font-mono italic">The peak is still ahead. Keep pushing.</p>
@@ -156,7 +165,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
         {enrolledCourses.length === 0 && (
           <div className="py-48 text-center relative overflow-hidden group">
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] select-none pointer-events-none transition-transform duration-1000 group-hover:scale-110">
-              <span className="text-[12rem] font-black uppercase tracking-tighter italic">VOID</span>
+              <span className="text-[12rem] font-black uppercase tracking-tighter italic">{dict.dashboard.roadmap.empty_title}</span>
             </div>
             
             <div className="relative z-10 flex flex-col items-center">
@@ -165,9 +174,9 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
               </div>
               <h2 className="text-sm font-black text-gray-900 uppercase tracking-[0.5em] mb-4">Null Path Detected</h2>
                           <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] max-w-[320px] leading-relaxed mb-12">
-                            Your roadmap is currently empty. Explore the course catalog to start your first study plan.
+                            {dict.dashboard.roadmap.empty_desc}
                           </p>
-                          <Link href="/" className="px-10 py-4 bg-brand-dark text-white rounded-xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-brand-blue transition-all shadow-xl shadow-brand-dark/10">
+                          <Link href="/courses" className="btn-primary">
                             Begin Initialization
                           </Link>
                         </div>          </div>

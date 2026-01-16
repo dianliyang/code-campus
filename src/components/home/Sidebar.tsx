@@ -7,9 +7,10 @@ interface SidebarProps {
   universities: University[];
   fields: Field[];
   enrolledCount: number;
+  dict?: any;
 }
 
-export default function Sidebar({ universities, fields, enrolledCount }: SidebarProps) {
+export default function Sidebar({ universities, fields, enrolledCount, dict }: SidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -41,7 +42,9 @@ export default function Sidebar({ universities, fields, enrolledCount }: Sidebar
       <div className="sticky top-24 space-y-12">
         {/* Library Section */}
         <div>
-          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-[0.3em] mb-6">Personal Library</h3>
+          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-[0.3em] mb-6">
+            {dict?.sidebar_library || "Personal Library"}
+          </h3>
           <label className="flex items-center justify-between group cursor-pointer">
             <div className="flex items-center gap-3">
               <input 
@@ -51,7 +54,7 @@ export default function Sidebar({ universities, fields, enrolledCount }: Sidebar
                 onChange={(e) => updateParams("enrolled", e.target.checked)} 
               />
               <span className={`text-[15px] transition-colors ${showEnrolledOnly ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
-                Enrolled Only
+                {dict?.sidebar_enrolled || "Enrolled Only"}
               </span>
             </div>
             <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-lg">
@@ -62,7 +65,9 @@ export default function Sidebar({ universities, fields, enrolledCount }: Sidebar
 
         {/* University Section */}
         <div>
-          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-[0.3em] mb-6">Universities</h3>
+          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-[0.3em] mb-6">
+            {dict?.sidebar_universities || "Universities"}
+          </h3>
           <div className="space-y-4 max-h-64 overflow-y-auto custom-scroll pr-4">
             {universities.map((uni) => (
               <label key={uni.name} className="flex items-center justify-between group cursor-pointer">
@@ -87,7 +92,9 @@ export default function Sidebar({ universities, fields, enrolledCount }: Sidebar
 
         {/* Focus Area Section */}
         <div>
-          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-[0.3em] mb-6">Focus Area</h3>
+          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-[0.3em] mb-6">
+            {dict?.sidebar_fields || "Focus Area"}
+          </h3>
           <div className="space-y-4 max-h-80 overflow-y-auto custom-scroll pr-4">
             {fields.map((field) => (
               <label key={field.name} className="flex items-center justify-between group cursor-pointer">

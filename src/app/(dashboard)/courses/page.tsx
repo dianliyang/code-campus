@@ -44,7 +44,7 @@ async function SidebarData() {
   return <Sidebar universities={dbUniversities} fields={dbFields} enrolledCount={0} />;
 }
 
-async function CourseListData({ params }: { params: { [key: string]: string | string[] | undefined } }) {
+async function CourseListData({ params, dict }: { params: any, dict: any }) {
   const session = await auth();
   const page = parseInt((params.page as string) || "1");
   const size = 10;

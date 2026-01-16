@@ -30,9 +30,9 @@ export default function NavLinks({
       ];
     }
     return [
-      { name: "Courses", href: "/courses", icon: "fa-solid fa-book-open" },
-      { name: "Study Roadmap", href: "/study-plan", icon: "fa-solid fa-map-location-dot" },
-      { name: "My Profile", href: "/profile", icon: "fa-solid fa-user-gear" }
+      { name: dict?.courses || "Courses", href: "/courses", icon: "fa-solid fa-book-open" },
+      { name: dict?.roadmap || "Study Roadmap", href: "/study-plan", icon: "fa-solid fa-map-location-dot" },
+      { name: dict?.profile || "My Profile", href: "/profile", icon: "fa-solid fa-user-gear" }
     ];
   }, [mode, dict]);
 

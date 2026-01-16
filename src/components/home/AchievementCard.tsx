@@ -7,9 +7,10 @@ import { useEffect, useState } from "react";
 interface AchievementCardProps {
   course: Course;
   completionDate?: string;
+  masteredLabel?: string;
 }
 
-export default function AchievementCard({ course }: AchievementCardProps) {
+export default function AchievementCard({ course, masteredLabel }: AchievementCardProps) {
   const [completionId, setCompletionId] = useState("");
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function AchievementCard({ course }: AchievementCardProps) {
           #{completionId}
         </span>
         <span className="text-[9px] font-black text-brand-green uppercase tracking-widest">
-          Mastered
+          {masteredLabel || "Mastered"}
         </span>
       </div>
     </div>

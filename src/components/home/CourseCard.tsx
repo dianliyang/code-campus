@@ -9,9 +9,10 @@ interface CourseCardProps {
   isInitialEnrolled: boolean;
   onEnrollToggle?: () => void;
   progress?: number;
+  dict?: any;
 }
 
-export default function CourseCard({ course, isInitialEnrolled, onEnrollToggle, progress }: CourseCardProps) {
+export default function CourseCard({ course, isInitialEnrolled, onEnrollToggle, progress, dict }: CourseCardProps) {
   const [isEnrolled, setIsEnrolled] = useState(isInitialEnrolled);
   const [loading, setLoading] = useState(false);
 
@@ -55,9 +56,9 @@ export default function CourseCard({ course, isInitialEnrolled, onEnrollToggle, 
         {loading ? (
           <i className="fa-solid fa-circle-notch fa-spin"></i>
         ) : isEnrolled ? (
-          <span className="flex items-center gap-1"><i className="fa-solid fa-check"></i> Enrolled</span>
+          <span className="flex items-center gap-1"><i className="fa-solid fa-check"></i> {dict?.enrolled || "Enrolled"}</span>
         ) : (
-          <span className="flex items-center gap-1"><i className="fa-solid fa-plus"></i> Join</span>
+          <span className="flex items-center gap-1"><i className="fa-solid fa-plus"></i> {dict?.enroll || "Join"}</span>
         )}
       </button>
 
@@ -84,11 +85,11 @@ export default function CourseCard({ course, isInitialEnrolled, onEnrollToggle, 
       </div>
 
       <div className="mt-5 pt-5 border-t border-gray-50 flex-grow">
-        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{course.description || `View course details and requirements on ${course.university}.`}</p>
+        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{course.description || `${dict?.view_details_prefix || "View course details and requirements on"} ${course.university}.`}</p>
         {course.corequisites && (
           <p className="text-[9px] font-bold text-brand-blue/60 uppercase tracking-widest mt-4 flex items-center gap-2">
             <i className="fa-solid fa-link text-[8px]"></i>
-            Coreq: {course.corequisites}
+            {dict?.coreq || "Coreq"}: {course.corequisites}
           </p>
         )}
       </div>
@@ -96,7 +97,7 @@ export default function CourseCard({ course, isInitialEnrolled, onEnrollToggle, 
       {isEnrolled && displayProgress > 0 && (
         <div className="mt-4">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">Learning Signal</span>
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">{dict?.learning_signal || "Learning Signal"}</span>
             <span className="text-[10px] font-black text-brand-blue italic">{displayProgress}%</span>
           </div>
           <div className="flex gap-[2px] items-center w-full">
@@ -120,7 +121,7 @@ export default function CourseCard({ course, isInitialEnrolled, onEnrollToggle, 
       <div className="mt-6 flex items-center justify-between border-t border-gray-50 pt-6">
         <div className="flex items-center gap-4 text-[10px] uppercase tracking-widest">
           <div className="flex flex-col -space-y-1">
-            <span className="text-[8px] font-black text-gray-300">IMPACT</span>
+            <span className="text-[8px] font-black text-gray-300">{dict?.impact || "IMPACT"}</span>
             <div className="flex items-center gap-1">
               <i className="fa-solid fa-fire-flame-simple text-orange-500 text-[10px]"></i>
               <span className="text-sm font-black text-gray-900 tracking-tighter italic">{course.popularity}</span>
@@ -144,7 +145,7 @@ export default function CourseCard({ course, isInitialEnrolled, onEnrollToggle, 
           </div>
         </div>
         <a href={course.url} target="_blank" rel="noopener noreferrer" className="text-brand-blue text-[10px] font-black uppercase tracking-widest hover:underline flex items-center gap-1.5">
-          Course Detail <i className="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+          {dict?.details || "Course Detail"} <i className="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
         </a>
       </div>
     </div>

@@ -71,9 +71,27 @@ export default function Hero({ dict }: { dict?: any }) {
           </div>
 
           <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-8">
-            {dict?.search?.title?.split('learn')[0] || "What do you want to "} 
-            <span className="text-brand-blue">{dict?.search?.title?.includes('学') ? "学" : "learn"}</span> 
-            {dict?.search?.title?.split('learn')[1] || " today?"}
+            {dict?.search?.title ? (
+              dict.search.title.includes("learn") ? (
+                <>
+                  {dict.search.title.split("learn")[0]}
+                  <span className="text-brand-blue">learn</span>
+                  {dict.search.title.split("learn")[1]}
+                </>
+              ) : dict.search.title.includes("学") ? (
+                <>
+                  {dict.search.title.split("学")[0]}
+                  <span className="text-brand-blue">学</span>
+                  {dict.search.title.split("学")[1]}
+                </>
+              ) : (
+                dict.search.title
+              )
+            ) : (
+              <>
+                What do you want to <span className="text-brand-blue">learn</span> today?
+              </>
+            )}
           </h2>
 
           <div className="relative group">

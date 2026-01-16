@@ -6,9 +6,10 @@ interface CourseListHeaderProps {
   totalItems: number;
   viewMode: "list" | "grid";
   setViewMode: (mode: "list" | "grid") => void;
+  dict?: any;
 }
 
-export default function CourseListHeader({ totalItems, viewMode, setViewMode }: CourseListHeaderProps) {
+export default function CourseListHeader({ totalItems, viewMode, setViewMode, dict }: CourseListHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sortBy = searchParams.get("sort") || "relevance";
@@ -22,7 +23,9 @@ export default function CourseListHeader({ totalItems, viewMode, setViewMode }: 
 
   return (
     <div className="flex justify-between items-center mb-4">
-      <span className="text-sm text-gray-500 font-mono">Found {totalItems} courses...</span>
+      <span className="text-sm text-gray-500 font-mono">
+        {dict?.found_prefix || "Found"} {totalItems} {dict?.found_suffix || "courses..."}
+      </span>
       <div className="flex items-center gap-4">
         <div className="flex bg-gray-100 rounded p-1 gap-1">
           <button 
@@ -43,10 +46,10 @@ export default function CourseListHeader({ totalItems, viewMode, setViewMode }: 
           onChange={(e) => handleSortChange(e.target.value)} 
           className="text-sm border-none bg-transparent font-bold focus:ring-0 cursor-pointer outline-none"
         >
-          <option value="relevance">Relevance</option>
-          <option value="popularity">Popularity</option>
-          <option value="newest">Newest</option>
-          <option value="title">Title (A-Z)</option>
+          <option value="relevance">{dict?.sort_relevance || "Relevance"}</option>
+          <option value="popularity">{dict?.sort_popularity || "Popularity"}</option>
+          <option value="newest">{dict?.sort_newest || "Newest"}</option>
+          <option value="title">{dict?.sort_title || "Title (A-Z)"}</option>
         </select>
       </div>
     </div>

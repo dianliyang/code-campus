@@ -69,7 +69,6 @@ async function CourseListData({ params }: { params: { [key: string]: string | st
   );
   initialEnrolledIds = enrolledRows.map(r => r.course_id);
 
-  const email = session?.user?.email || "guest@codecampus.example.com";
   const dbCourses = await fetchCourses(page, size, offset, query, sort, enrolledOnly, universities, fields, levels, email);
 
   return (

@@ -10,25 +10,31 @@ const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 const TOKEN_STORE_PATH = ".dev_tokens.json";
 
 function getMockTokens(): any[] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const globalMocks = (globalThis as any).mockVerificationTokens;
+  if (globalMocks) return globalMocks;
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const fs = require("fs");
     if (fs.existsSync(TOKEN_STORE_PATH)) {
-      return JSON.parse(fs.readFileSync(TOKEN_STORE_PATH, "utf-8"));
+      const tokens = JSON.parse(fs.readFileSync(TOKEN_STORE_PATH, "utf-8"));
+      (globalThis as any).mockVerificationTokens = tokens;
+      return tokens;
     }
   } catch (e) {
-    // In Edge Runtime, 'fs' will fail
+    // fs not available or file error
   }
-  return (globalThis as any).mockVerificationTokens || [];
+  return [];
 }
 
 function saveMockTokens(tokens: any[]) {
+  (globalThis as any).mockVerificationTokens = tokens;
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const fs = require("fs");
     fs.writeFileSync(TOKEN_STORE_PATH, JSON.stringify(tokens));
   } catch (e) {}
-  (globalThis as any).mockVerificationTokens = tokens;
 }
 
 export async function queryD1<T = unknown>(
@@ -36,9 +42,13 @@ export async function queryD1<T = unknown>(
   params: unknown[] = []
 ): Promise<T[]> {
   // Utility to clone results and avoid "immutable" errors in Edge runtime
-  const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const clone = (obj: any) => {
+    try { return JSON.parse(JSON.stringify(obj)); } catch { return obj; }
+  };
   
-  // 1. Try D1 Binding (Cloudflare Pages/Workers)  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // 1. Try D1 Binding (Cloudflare Pages/Workers)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bindingDB = process.env.DB || (globalThis as any).DB;
 
   if (bindingDB && typeof bindingDB.prepare === "function") {
@@ -211,22 +221,22 @@ export function getD1(): any {
       bind: (...params: any[]) => ({
         all: async () => {
           const results = await queryD1(sql, params);
-          return { results, success: true };
+          return { results, success: true, meta: { duration: 0 } };
         },
         run: async () => {
           const results = await queryD1(sql, params);
-          return { results, success: true };
+          return { success: true, meta: { duration: 0, changes: results.length } };
         },
         first: async (column?: string) => {
           const results = await queryD1(sql, params);
           const first = results[0];
-          if (column && first) return (first as any)[column];
+          if (!first) return null;
+          if (column) return (first as any)[column];
           return first;
         }
       })
     }),
     batch: async (statements: any[]) => {
-      // Very basic batch implementation
       const results = [];
       for (const stmt of statements) {
         results.push(await stmt.all());
@@ -235,7 +245,7 @@ export function getD1(): any {
     },
     exec: async (sql: string) => {
       await queryD1(sql);
-      return { success: true };
+      return { success: true, count: 1 };
     }
   };
 }

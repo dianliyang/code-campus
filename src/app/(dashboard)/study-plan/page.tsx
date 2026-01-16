@@ -14,6 +14,8 @@ interface EnrolledCourse extends Course {
   status: string;
   progress: number;
   updated_at: string;
+  gpa?: number;
+  score?: number;
 }
 
 interface PageProps {
@@ -43,7 +45,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
     .from('courses')
     .select(`
       *,
-      uc:user_courses!inner(status, progress, updated_at),
+      uc:user_courses!inner(status, progress, updated_at, gpa, score),
       fields:course_fields(fields(name)),
       semesters:course_semesters(semesters(term, year))
     `)
@@ -67,6 +69,8 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
       status: uc?.status || 'pending',
       progress: uc?.progress || 0,
       updated_at: uc?.updated_at || new Date().toISOString(),
+      gpa: uc?.gpa,
+      score: uc?.score,
     } as EnrolledCourse;
   });
 

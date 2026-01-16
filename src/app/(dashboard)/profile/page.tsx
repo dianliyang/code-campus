@@ -17,49 +17,50 @@ export default async function ProfilePage() {
   const name = user.user_metadata?.full_name || email?.split('@')[0] || "User";
   const supabase = await createClient();
 
-  // Enriched Queries - using Supabase client
-  const { data: statsData } = await supabase
+  // 1. Fetch user's enrolled courses basic info
+  const { data: enrolledData } = await supabase
     .from('user_courses')
-    .select('status')
+    .select('course_id, status, updated_at')
     .eq('user_id', user.id);
     
+  const enrolledIds = enrolledData?.map(r => r.course_id) || [];
   const statusCounts: Record<string, number> = {};
-  statsData?.forEach(s => {
+  enrolledData?.forEach(s => {
     statusCounts[s.status] = (statusCounts[s.status] || 0) + 1;
   });
 
-  const { data: uniData } = await supabase
-    .from('courses')
-    .select('university', { count: 'exact', head: false })
-    .in('id', (await supabase.from('user_courses').select('course_id').eq('user_id', user.id)).data?.map(r => r.course_id) || []);
+  // 2. Parallel fetch for Universities and Fields based on enrolled IDs
+  let universityCount = 0;
+  let allFieldStats: { name: string, count: number }[] = [];
+
+  if (enrolledIds.length > 0) {
+    const [uniRes, fieldRes] = await Promise.all([
+      supabase.from('courses').select('university').in('id', enrolledIds),
+      supabase.from('course_fields').select('fields(name)').in('course_id', enrolledIds)
+    ]);
+
+    universityCount = new Set(uniRes.data?.map(r => r.university)).size;
+
+    const fieldCounts: Record<string, number> = {};
+    fieldRes.data?.forEach((cf: any) => {
+      if (cf.fields?.name) {
+        fieldCounts[cf.fields.name] = (fieldCounts[cf.fields.name] || 0) + 1;
+      }
+    });
     
-  const universityCount = new Set(uniData?.map(r => r.university)).size;
+    allFieldStats = Object.entries(fieldCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }
 
-  const { data: fieldStats } = await supabase
-    .from('fields')
-    .select('name, course_fields!inner(course_id, user_courses!inner(user_id))')
-    .eq('course_fields.user_courses.user_id', user.id);
-    
-  const fieldCounts: Record<string, number> = {};
-  fieldStats?.forEach((f: any) => {
-    fieldCounts[f.name] = (fieldCounts[f.name] || 0) + 1;
-  });
-  
-  const allFieldStats = Object.entries(fieldCounts)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
-
-  const { data: lastActiveData } = await supabase
-    .from('user_courses')
-    .select('updated_at')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
-    .limit(1);
-
-  const totalCourses = statsData?.length || 0;
+  const totalCourses = enrolledData?.length || 0;
   const completedCount = statusCounts['completed'] || 0;
   const topField = allFieldStats[0]?.name || dict.dashboard.profile.none;
-  const lastActiveDate = lastActiveData?.[0]?.updated_at ? new Date(lastActiveData[0].updated_at) : null;
+  const lastActiveData = enrolledData?.sort((a, b) => 
+    new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  )[0];
+
+  const lastActiveDate = lastActiveData?.updated_at ? new Date(lastActiveData.updated_at) : null;
 
   // Calculate Field Distribution
   const fieldTotal = allFieldStats.reduce((acc, curr) => acc + curr.count, 0);

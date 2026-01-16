@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { University, Field } from "@/types";
 
 interface SidebarProps {
@@ -41,10 +42,20 @@ export default function Sidebar({ universities, fields, enrolledCount, dict }: S
     <aside className="w-full md:w-64 flex-shrink-0">
       <div className="sticky top-24 space-y-12">
         {/* Library Section */}
-        <div>
-          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-[0.3em] mb-6">
-            {dict?.sidebar_library || "Personal Library"}
-          </h3>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-[0.3em]">
+              {dict?.sidebar_library || "Personal Library"}
+            </h3>
+            <Link 
+              href="/import" 
+              className="w-6 h-6 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-brand-blue hover:border-brand-blue/30 transition-all group/plus"
+              title="Import Data"
+            >
+              <i className="fa-solid fa-plus text-[8px] group-hover/plus:rotate-90 transition-transform duration-300"></i>
+            </Link>
+          </div>
+          
           <label className="flex items-center justify-between group cursor-pointer">
             <div className="flex items-center gap-3">
               <input 

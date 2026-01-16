@@ -88,13 +88,6 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
             averageProgress={enrolledCourses.length > 0 ? Math.round(enrolledCourses.reduce((acc, curr) => acc + curr.progress, 0) / enrolledCourses.length) : 0}
             dict={dict.dashboard.roadmap}
           />
-          <Link 
-            href="/import" 
-            className="btn-secondary flex items-center gap-3 mt-4 md:mt-0"
-          >
-            <i className="fa-solid fa-plus text-[7px]"></i>
-            {dict.dashboard.roadmap.import_btn}
-          </Link>
         </div>
 
         <div className="relative space-y-32">

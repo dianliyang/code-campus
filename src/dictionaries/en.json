@@ -72,8 +72,24 @@
     "universities": "Schools",
     "curriculum": "Features",
     "pricing": "Pricing",
+    "courses": "Courses",
+    "roadmap": "Study Roadmap",
+    "profile": "My Profile",
     "enter": "Browse",
     "enter_network": "Start Browsing",
     "global_network": "Open Catalog"
+  },
+  "dashboard": {
+    "search": {
+      "label": "Course Registry Search",
+      "title": "What do you want to learn today?",
+      "placeholder": "Search by course name, code, or university...",
+      "popular": "Popular Nodes"
+    },
+    "courses": {
+      "sidebar_universities": "Institutions",
+      "sidebar_fields": "Disciplines",
+      "sidebar_enrolled": "My Enrolled Only"
+    }
   }
 }

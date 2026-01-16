@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-export default function Hero() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function Hero({ dict }: { dict?: any }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -52,39 +53,63 @@ export default function Hero() {
   };
 
   return (
-    <div className="bg-brand-dark text-white py-12 relative overflow-hidden">
-      {/* Background Decorative Element */}
-      <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none select-none hidden lg:block">
-        <div className="text-8xl font-black italic tracking-tighter">INIT_0xFC</div>
+    <div className="bg-slate-50 border-b border-slate-200 py-16 relative overflow-hidden">
+      {/* Subtle Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none">
+        <div className="absolute inset-0 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:20px_20px]"></div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex justify-between items-end mb-6">
-          <h1 className="text-3xl md:text-4xl font-black mb-0 tracking-tight uppercase">Git Push Your Career.</h1>
-        </div>
+        <div className="max-w-3xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center text-brand-blue border border-brand-blue/20">
+              <i className="fa-solid fa-magnifying-glass text-xs"></i>
+            </div>
+            <h1 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em]">
+              {dict?.search?.label || "Course Registry Search"}
+            </h1>
+          </div>
 
-        <div className="w-full max-w-3xl bg-gray-900 border border-gray-700 rounded-lg p-4 shadow-xl flex items-center font-mono text-sm md:text-base focus-within:border-brand-blue transition-all">
-          <span className="text-brand-green mr-3">user@codecampus:~$</span>
-          <input
-            type="text"
-            placeholder="Search by course name, code (e.g. CS106), or topic (e.g. Machine Learning)"
-            className="bg-transparent border-none outline-none text-gray-300 w-full placeholder-gray-600 focus:ring-0 caret-brand-green"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        
-        <div className="mt-4 flex items-center gap-2 text-xs font-mono text-gray-400 flex-wrap">
-          <span className="mr-1">Try searching:</span>
-          {["AI", "Systems", "Algorithms", "Computer Vision"].map((tag) => (
-            <span 
-              key={tag} 
-              className={`bg-gray-800 px-2 py-1 rounded cursor-pointer hover:text-white transition-colors ${query === tag ? 'text-brand-blue border border-brand-blue/30' : 'text-gray-400'}`}
-              onClick={() => handleSuggestion(tag)}
-            >
-              #{tag}
-            </span>
-          ))}
+          <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-8">
+            {dict?.search?.title?.split('learn')[0] || "What do you want to "} 
+            <span className="text-brand-blue">{dict?.search?.title?.includes('学') ? "学" : "learn"}</span> 
+            {dict?.search?.title?.split('learn')[1] || " today?"}
+          </h2>
+
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+              <span className="text-slate-400 font-mono text-sm group-focus-within:text-brand-blue transition-colors">/</span>
+            </div>
+            <input
+              type="text"
+              placeholder={dict?.search?.placeholder || "Search by course name, code, or university..."}
+              className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-20 py-5 text-lg font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/5 transition-all"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none">
+              <kbd className="hidden sm:inline-flex h-6 items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 font-sans text-[10px] font-bold text-slate-400">
+                <span className="text-xs">⌘</span> K
+              </kbd>
+            </div>
+          </div>
+          
+          <div className="mt-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-slate-400 flex-wrap">
+            <span className="mr-2 opacity-60">{dict?.search?.popular || "Popular Nodes"}:</span>
+            {["AI", "Systems", "Algorithms", "ML"].map((tag) => (
+              <button 
+                key={tag} 
+                className={`px-3 py-1 rounded-full border transition-all ${
+                  query === tag 
+                    ? 'bg-brand-blue text-white border-brand-blue' 
+                    : 'bg-white border-slate-200 hover:border-slate-400 text-slate-500 hover:text-slate-900'
+                }`}
+                onClick={() => handleSuggestion(tag)}
+              >
+                #{tag}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

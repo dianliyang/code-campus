@@ -29,8 +29,8 @@ export default function ImportPage() {
       } else {
         setMessage({ type: "error", text: data.error });
       }
-    } catch { 
-      setMessage({ type: "error", text: "Network sync failure" }); 
+    } catch {
+      setMessage({ type: "error", text: "Network sync failure" });
     }
     finally { setLoading(false); }
   };
@@ -85,7 +85,7 @@ export default function ImportPage() {
 
   return (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 w-full">
-        {/* Header */}
+        {/* Header * */}
         <div className="relative mb-20 flex flex-col md:flex-row md:items-end justify-between gap-8">
 
           <div>
@@ -101,7 +101,7 @@ export default function ImportPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-24">
-          {/* Left Column: Manual Form */}
+          {/* Left Column: Manual Form * */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="space-y-20">
               <div className="space-y-12">
@@ -157,9 +157,7 @@ export default function ImportPage() {
                           key={lvl}
                           type="button"
                           onClick={() => setFormData({...formData, level: lvl})}
-                          className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                            formData.level === lvl ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-400 hover:text-gray-600'
-                          }`}
+                          className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${formData.level === lvl ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                         >
                           {lvl}
                         </button>
@@ -199,7 +197,7 @@ export default function ImportPage() {
               </div>
             </form>
 
-            {/* Data Format Reference - Detailed and Straightforward */}
+            {/* Data Format Reference - Detailed and Straightforward * */}
             <div className="mt-32 pt-24 border-t border-gray-100">
               <div className="flex items-center gap-3 mb-16">
                 <div className="w-2 h-2 bg-brand-blue rounded-full"></div>
@@ -210,7 +208,7 @@ export default function ImportPage() {
                 <div className="space-y-10">
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Field Requirements</span>
                   <div className="space-y-6">
-                    {[
+                    {[ 
                       { key: 'university', req: true, note: 'Official school name' },
                       { key: 'courseCode', req: true, note: 'Unique alphanumeric ID' },
                       { key: 'title', req: true, note: 'Full name of course' },
@@ -236,11 +234,13 @@ export default function ImportPage() {
                   <div>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-6">JSON Blueprint</span>
                     <pre className="bg-gray-900 p-8 rounded-3xl text-[11px] font-mono text-blue-300 overflow-x-auto">
-{`[{
-  "university": "MIT",
-  "courseCode": "6.001",
-  "title": "Structure..."
-}]`}
+{`[
+  {
+    "university": "MIT",
+    "courseCode": "6.001",
+    "title": "Structure..."
+  }
+]`}
                     </pre>
                   </div>
                   <div>
@@ -258,7 +258,7 @@ export default function ImportPage() {
             </div>
           </div>
 
-          {/* Right Column: Bulk Upload */}
+          {/* Right Column: Bulk Upload * */}
           <div className="relative">
             <div className="absolute -left-12 top-0 bottom-0 w-px bg-gray-50 hidden lg:block"></div>
             <div className="space-y-10 sticky top-32">

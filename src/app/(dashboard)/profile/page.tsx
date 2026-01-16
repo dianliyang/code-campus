@@ -1,5 +1,4 @@
 import { queryD1 } from "@/lib/d1";
-import Navbar from "@/components/layout/Navbar";
 import DeleteAccount from "@/components/profile/DeleteAccount";
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
@@ -43,7 +42,6 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
         {/* Profile Header */}

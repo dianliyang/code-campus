@@ -1,5 +1,4 @@
 import { queryD1, mapCourseFromRow } from "@/lib/d1";
-import Navbar from "@/components/layout/Navbar";
 import { Course } from "@/types";
 import CourseCard from "@/components/home/CourseCard";
 import AchievementCard from "@/components/home/AchievementCard";
@@ -63,7 +62,6 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 mb-12">

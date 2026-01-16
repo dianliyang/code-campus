@@ -1,12 +1,12 @@
 import { Suspense } from "react";
-import Navbar from "@/components/layout/Navbar";
 import Hero from "@/components/home/Hero";
 import Sidebar from "@/components/home/Sidebar";
 import CourseList from "@/components/home/CourseList";
 import { queryD1, mapCourseFromRow } from "@/lib/d1";
 import { University, Field, Course } from "@/types";
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { getLanguage } from "@/actions/language";
+import { getDictionary } from "@/lib/dictionary";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -14,17 +14,13 @@ interface PageProps {
 
 export default async function CoursesPage({ searchParams }: PageProps) {
   const session = await auth();
-  console.log("CoursesPage Session Check:", session);
-  // if (!session) {
-  //   redirect("/login");
-  // }
-
+  const lang = await getLanguage();
+  const dict = await getDictionary(lang);
   const params = await searchParams;
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <Navbar />
-      <Hero />
+      <Hero dict={dict.dashboard} />
       
       <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col md:flex-row gap-8">
         <Suspense fallback={<SidebarSkeleton />}>

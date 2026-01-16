@@ -72,8 +72,24 @@
     "universities": "学校",
     "curriculum": "功能",
     "pricing": "价格",
+    "courses": "课程目录",
+    "roadmap": "学习路线",
+    "profile": "个人中心",
     "enter": "进入",
     "enter_network": "开始浏览",
     "global_network": "公开课程库"
+  },
+  "dashboard": {
+    "search": {
+      "label": "课程注册搜索",
+      "title": "今天你想学点什么？",
+      "placeholder": "搜索课程名称、代码或大学...",
+      "popular": "热门节点"
+    },
+    "courses": {
+      "sidebar_universities": "合作学府",
+      "sidebar_fields": "学科领域",
+      "sidebar_enrolled": "仅看我已加入"
+    }
   }
 }

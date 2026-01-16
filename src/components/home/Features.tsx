@@ -1,19 +1,20 @@
-export default function Features() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function Features({ dict }: { dict: any }) {
   const features = [
     {
       icon: "fa-solid fa-layer-group",
-      title: "Universal Index",
-      description: "Query a normalized database of curricula from MIT, Stanford, Berkeley, and CMU in one unified interface.",
+      title: dict.universal_index.title,
+      description: dict.universal_index.desc,
     },
     {
       icon: "fa-solid fa-chart-line",
-      title: "Progress Analytics",
-      description: "Log your completed coursework. Visualize your academic velocity and track credit distribution across domains.",
+      title: dict.progress_analytics.title,
+      description: dict.progress_analytics.desc,
     },
     {
       icon: "fa-solid fa-microchip",
-      title: "Gap Analysis",
-      description: "Compare your transcript against top degree requirements to identify missing prerequisites and skill voids.",
+      title: dict.gap_analysis.title,
+      description: dict.gap_analysis.desc,
     },
   ];
 

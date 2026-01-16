@@ -3,13 +3,19 @@ import UniversityLogos from "@/components/home/UniversityLogos";
 import Features from "@/components/home/Features";
 import Mission from "@/components/home/Mission";
 import Link from "next/link";
+import { getLanguage } from "@/actions/language";
+import { getDictionary } from "@/lib/dictionary";
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 
 export const revalidate = 60;
 
-export default function Home() {
+export default async function Home() {
+  const lang = await getLanguage();
+  const dict = await getDictionary(lang);
+
   return (
     <div className="flex flex-col bg-white">
-      <LandingNavbar />
+      <LandingNavbar dict={dict.navbar} />
       
       {/* SECTION 1: HERO */}
       <div id="hero" className="min-h-screen flex flex-col justify-center relative overflow-hidden bg-white">
@@ -21,16 +27,16 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 pt-20">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 border border-gray-100 mb-8">
             <span className="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
-            <span className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">System Initialized // v1.0.4</span>
+            <span className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">{dict.hero.system_status}</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase mb-8 leading-[0.95]">
-            The Global <br />
-            <span className="text-brand-blue">CS</span> Catalog<span className="text-brand-blue">.</span>
+            {dict.hero.title_prefix} <br />
+            <span className="text-brand-blue">{dict.hero.title_highlight}</span> {dict.hero.title_suffix}<span className="text-brand-blue">.</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-gray-500 font-medium max-w-3xl mx-auto mb-12 leading-relaxed">
-            Analyze and explore computer science curricula from the world&apos;s leading universities through a unified, high-performance interface.
+            {dict.hero.description}
           </p>
 
           <div className="flex justify-center">
@@ -38,7 +44,7 @@ export default function Home() {
               href="/courses" 
               className="inline-flex items-center justify-center gap-5 btn-primary group"
             >
-              Explore the Catalog
+              {dict.hero.cta}
               <i className="fa-solid fa-chevron-right text-[9px] transition-transform group-hover:translate-x-1"></i>
             </Link>
           </div>
@@ -51,27 +57,28 @@ export default function Home() {
       </div>
 
       {/* SECTION 2: MISSION */}
-      <Mission />
+      <Mission dict={dict.mission} />
 
       {/* SECTION 3: ECOSYSTEM & FOOTER */}
       <div id="ecosystem" className="min-h-screen flex flex-col justify-center bg-gray-50 border-t border-gray-200">
         <div className="flex-grow flex flex-col justify-center">
            <div id="universities">
-             <UniversityLogos />
+             <UniversityLogos dict={dict.universities} />
            </div>
            
            <div id="features">
-             <Features />
+             <Features dict={dict.features} />
            </div>
         </div>
 
         {/* Footer */}
         <div className="py-12 bg-gray-50 border-t border-gray-200/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="w-16 h-1 bg-gray-200 mx-auto mb-8"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center gap-8">
+            <div className="w-16 h-1 bg-gray-200"></div>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">
-              &copy; 2026 CodeCampus Global Network. Initialized 0xFC.
+              {dict.footer.copyright}
             </p>
+            <LanguageSwitcher currentLang={lang} />
           </div>
         </div>
       </div>

@@ -1,0 +1,49 @@
+{
+  "hero": {
+    "system_status": "系统已初始化 // v1.0.4",
+    "title_prefix": "全球",
+    "title_highlight": "计算机科学",
+    "title_suffix": "目录",
+    "description": "通过统一的高性能界面，分析和探索来自世界顶尖大学的计算机科学课程体系。",
+    "cta": "探索目录"
+  },
+  "mission": {
+    "label": "系统架构",
+    "title_prefix": "计算机科学课程的",
+    "title_middle": "",
+    "title_highlight": "中央索引",
+    "desc_1": "CodeCampus 是一个专门的搜索引擎，索引世界顶尖大学的公开课程目录，创建用于比较的统一架构。",
+    "desc_2": "我们不托管内容。相反，我们将分散的数据——先决条件、难度评级和教学大纲——构建成一个单一的、可查询的知识图谱，帮助您构建自己的学习路线图。",
+    "stat_sources": "来源",
+    "stat_nodes": "节点",
+    "stat_schema": "架构"
+  },
+  "features": {
+    "universal_index": {
+      "title": "通用索引",
+      "desc": "在一个统一的界面中查询来自麻省理工学院、斯坦福大学、伯克利分校和卡内基梅隆大学的标准化课程数据库。"
+    },
+    "progress_analytics": {
+      "title": "进度分析",
+      "desc": "记录您完成的课程。可视化您的学术速度并跟踪跨领域的学分分布。"
+    },
+    "gap_analysis": {
+      "title": "差距分析",
+      "desc": "将您的成绩单与顶级学位要求进行比较，以识别缺失的先决条件和技能空白。"
+    }
+  },
+  "universities": {
+    "label": "汇聚世界级课程体系"
+  },
+  "footer": {
+    "copyright": "© 2026 CodeCampus 全球网络. 0xFC 已初始化."
+  },
+  "navbar": {
+    "mission": "使命",
+    "universities": "大学",
+    "curriculum": "课程",
+    "enter": "进入",
+    "enter_network": "进入网络",
+    "global_network": "全球网络"
+  }
+}

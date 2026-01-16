@@ -1,0 +1,49 @@
+{
+  "hero": {
+    "system_status": "System Initialized // v1.0.4",
+    "title_prefix": "The Global",
+    "title_highlight": "CS",
+    "title_suffix": "Catalog",
+    "description": "Analyze and explore computer science curricula from the world's leading universities through a unified, high-performance interface.",
+    "cta": "Explore the Catalog"
+  },
+  "mission": {
+    "label": "System Architecture",
+    "title_prefix": "The Central Index",
+    "title_middle": "for",
+    "title_highlight": "CS Curricula",
+    "desc_1": "CodeCampus is a specialized search engine that indexes public course catalogs from the world's top universities, creating a unified schema for comparison.",
+    "desc_2": "We don't host content. Instead, we structure scattered data—prerequisites, difficulty ratings, and syllabi—into a single, queryable knowledge graph to help you build your own learning roadmap.",
+    "stat_sources": "Sources",
+    "stat_nodes": "Nodes",
+    "stat_schema": "Schema"
+  },
+  "features": {
+    "universal_index": {
+      "title": "Universal Index",
+      "desc": "Query a normalized database of curricula from MIT, Stanford, Berkeley, and CMU in one unified interface."
+    },
+    "progress_analytics": {
+      "title": "Progress Analytics",
+      "desc": "Log your completed coursework. Visualize your academic velocity and track credit distribution across domains."
+    },
+    "gap_analysis": {
+      "title": "Gap Analysis",
+      "desc": "Compare your transcript against top degree requirements to identify missing prerequisites and skill voids."
+    }
+  },
+  "universities": {
+    "label": "Aggregating World-Class Curricula From"
+  },
+  "footer": {
+    "copyright": "© 2026 CodeCampus Global Network. Initialized 0xFC."
+  },
+  "navbar": {
+    "mission": "Mission",
+    "universities": "Universities",
+    "curriculum": "Curriculum",
+    "enter": "Enter",
+    "enter_network": "Enter Network",
+    "global_network": "Global Network"
+  }
+}

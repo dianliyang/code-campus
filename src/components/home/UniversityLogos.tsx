@@ -7,12 +7,13 @@ const universities = [
   { name: "Carnegie Mellon", logo: "/cmu.jpg", width: 50, height: 50 },
 ];
 
-export default function UniversityLogos() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function UniversityLogos({ dict }: { dict: any }) {
   return (
     <div className="w-full bg-white border-b border-gray-100 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <p className="text-center text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-8">
-          Aggregating World-Class Curricula From
+          {dict.label}
         </p>
         <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
           {universities.map((uni) => (

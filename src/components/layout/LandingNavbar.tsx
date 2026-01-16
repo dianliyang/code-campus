@@ -4,7 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import FloatingNavWrapper from "./FloatingNavWrapper";
 
-export default function LandingNavbar() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function LandingNavbar({ dict }: { dict: any }) {
   return (
     <FloatingNavWrapper initialClassName="w-full bg-transparent translate-y-0 border-b border-transparent">
       {(scrolled) => (
@@ -24,7 +25,7 @@ export default function LandingNavbar() {
                 {!scrolled && (
                   <div className="flex flex-col transition-opacity duration-300">
                     <span className="text-2xl font-black tracking-tighter text-gray-900 uppercase leading-none">CodeCampus</span>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] group-hover:text-brand-blue transition-colors">Global Network</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] group-hover:text-brand-blue transition-colors">{dict?.global_network || "Global Network"}</span>
                   </div>
                 )}
               </Link>
@@ -37,9 +38,9 @@ export default function LandingNavbar() {
                 : 'gap-8 bg-white/80 backdrop-blur-md px-8 py-3 rounded-full border border-gray-100 shadow-sm'
             }`}>
               {[
-                { name: "Mission", href: "#mission", icon: "fa-solid fa-shuttle-space" },
-                { name: "Universities", href: "#universities", icon: "fa-solid fa-building-columns" },
-                { name: "Curriculum", href: "#features", icon: "fa-solid fa-layer-group" }
+                { name: dict?.mission || "Mission", href: "#mission", icon: "fa-solid fa-shuttle-space" },
+                { name: dict?.universities || "Universities", href: "#universities", icon: "fa-solid fa-building-columns" },
+                { name: dict?.curriculum || "Curriculum", href: "#features", icon: "fa-solid fa-layer-group" }
               ].map((item) => (
                 <Link 
                   key={item.name} 
@@ -76,7 +77,7 @@ export default function LandingNavbar() {
                   <i className="fa-solid fa-arrow-right text-sm"></i>
                 ) : (
                   <>
-                    Enter
+                    {dict?.enter || "Enter"}
                     <i className="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-1"></i>
                   </>
                 )}

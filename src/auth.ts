@@ -23,6 +23,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         process.env.EMAIL_FROM ||
         "CodeCampus <no-reply@codecampus.example.com>",
       maxAge: 60 * 60, // Increased to 60 minutes
+      generateVerificationToken() {
+        return crypto.randomUUID();
+      },
       async sendVerificationRequest({ identifier: email, url }) {
         console.log(`[Auth] Dispatching Link for ${email}`);
 

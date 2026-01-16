@@ -130,7 +130,9 @@
       "view_tracking": "Tracking",
       "view_visual": "Visual",
       "learning_sequence": "Learning Sequence",
-      "efficiency_desc": "Curriculum absorption rate across active tracks."
+      "efficiency_desc": "Curriculum absorption rate across active tracks.",
+      "mark_complete": "Complete",
+      "update_progress": "Update"
     },
     "profile": {
       "user_level": "Expertise",

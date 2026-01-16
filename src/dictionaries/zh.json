@@ -130,7 +130,9 @@
       "view_tracking": "进度追踪",
       "view_visual": "视觉卡片",
       "learning_sequence": "学习序列",
-      "efficiency_desc": "活跃课程的课程吸收率。"
+      "efficiency_desc": "活跃课程的课程吸收率。",
+      "mark_complete": "完成",
+      "update_progress": "更新"
     },
     "profile": {
       "user_level": "专业度",

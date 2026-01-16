@@ -1,8 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import Globe from "@/components/ui/Globe";
+import { getLanguage } from "@/actions/language";
+import { getDictionary } from "@/lib/dictionary";
 
-export default function VerifyRequestPage() {
+export default async function VerifyRequestPage() {
+  const lang = await getLanguage();
+  const dict = await getDictionary(lang);
+
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white overflow-hidden">
       {/* Left Side: Immersive Branding & Globe */}
@@ -22,7 +27,7 @@ export default function VerifyRequestPage() {
             />
             <div className="flex flex-col -space-y-1.5">
               <span className="text-2xl font-black tracking-tighter text-white uppercase">CodeCampus</span>
-              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-[0.3em]">Open Catalog</span>
+              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-[0.3em]">{dict.navbar.global_network}</span>
             </div>
           </Link>
         </div>
@@ -36,16 +41,16 @@ export default function VerifyRequestPage() {
 
         <div className="relative z-10 max-w-md">
            <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-6 leading-none">
-             Verification <br /> In <span className="text-brand-blue">Progress</span>.
+             {dict.login.verify_title.split(' ')[0]} <br /> {dict.login.verify_title.split(' ').slice(1).join(' ')}.
            </h2>
            <p className="text-gray-400 font-medium leading-relaxed">
-             A secure access link has been dispatched to your identity vector. Please verify your inbox to establish a session.
+             {dict.login.verify_desc}
            </p>
         </div>
 
         <div className="relative z-10">
            <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.3em]">
-             © 2026 CodeCampus Catalog.
+             {dict.footer.copyright}
            </p>
         </div>
       </div>
@@ -65,18 +70,17 @@ export default function VerifyRequestPage() {
           </div>
 
           <div className="mb-10">
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase mb-2">Check your email</h1>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase mb-2">{dict.login.check_email}</h1>
             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
-              A magic link has been sent to your email address. 
-              Click the link in the email to sign in instantly.
+              {dict.login.check_email_desc}
             </p>
           </div>
 
           <div className="space-y-6">
             <div className="p-6 bg-brand-blue/5 border border-brand-blue/10 rounded-xl">
-              <p className="text-xs font-bold text-brand-blue uppercase tracking-widest mb-2">Security Protocol</p>
+              <p className="text-xs font-bold text-brand-blue uppercase tracking-widest mb-2">{dict.login.security_protocol}</p>
               <p className="text-sm text-gray-600 leading-relaxed italic">
-                &quot;If you don&apos;t see the email, please check your spam folder or request a new link.&quot;
+                &quot;{dict.login.spam_notice}&quot;
               </p>
             </div>
 
@@ -84,14 +88,13 @@ export default function VerifyRequestPage() {
               href="/login" 
               className="inline-block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-brand-blue transition-colors"
             >
-              ← Back to Authentication
+              ← {dict.login.back_to_auth}
             </Link>
           </div>
 
           <div className="mt-12">
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-              Protected by the CodeCampus Security Protocol. <br />
-              Authorized Access Only.
+              {dict.login.footer}
             </p>
           </div>
         </div>

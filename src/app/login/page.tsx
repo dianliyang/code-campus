@@ -5,6 +5,8 @@ import Link from "next/link";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import LoginForm from "@/components/auth/LoginForm";
+import { getLanguage } from "@/actions/language";
+import { getDictionary } from "@/lib/dictionary";
 
 export const runtime = "edge";
 
@@ -14,6 +16,8 @@ interface PageProps {
 
 export default async function LoginPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  const lang = await getLanguage();
+  const dict = await getDictionary(lang);
   const callbackUrl = (params.callbackUrl as string) || "/courses";
   const sent = params.sent === "true";
 
@@ -53,7 +57,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
             />
             <div className="flex flex-col -space-y-1.5">
               <span className="text-2xl font-black tracking-tighter text-white uppercase">CodeCampus</span>
-              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-[0.3em]">Open Catalog</span>
+              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-[0.3em]">{dict.navbar.global_network}</span>
             </div>
           </Link>
         </div>
@@ -67,16 +71,16 @@ export default async function LoginPage({ searchParams }: PageProps) {
 
         <div className="relative z-10 max-w-md">
            <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-6 leading-none">
-             The Central <br /> Index for <span className="text-brand-blue">CS</span>.
+             {dict.login.title.split(' ')[0]} <br /> {dict.login.title.split(' ').slice(1).join(' ')} <span className="text-brand-blue">CS</span>.
            </h2>
            <p className="text-gray-400 font-medium leading-relaxed">
-             Access a unified database of curricula from the world&apos;s leading universities. Sync your progress and analyze your learning velocity.
+             {dict.hero.description}
            </p>
         </div>
 
         <div className="relative z-10">
            <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.3em]">
-             © 2026 CodeCampus Catalog.
+             {dict.footer.copyright}
            </p>
         </div>
       </div>
@@ -95,7 +99,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
             />
           </div>
 
-          <LoginForm onMagicLink={handleMagicLink} sent={sent} />
+          <LoginForm onMagicLink={handleMagicLink} sent={sent} dict={dict.login} />
         </div>
       </div>
     </div>

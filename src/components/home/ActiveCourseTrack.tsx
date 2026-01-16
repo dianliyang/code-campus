@@ -8,9 +8,10 @@ interface ActiveCourseTrackProps {
   course: Course;
   initialProgress: number;
   onUpdate?: () => void;
+  dict?: any;
 }
 
-export default function ActiveCourseTrack({ course, initialProgress, onUpdate }: ActiveCourseTrackProps) {
+export default function ActiveCourseTrack({ course, initialProgress, onUpdate, dict }: ActiveCourseTrackProps) {
   const [progress, setProgress] = useState(initialProgress);
   const [isUpdating, setIsInUpdating] = useState(false);
 
@@ -64,7 +65,7 @@ export default function ActiveCourseTrack({ course, initialProgress, onUpdate }:
           </h3>
           {course.corequisites && (
             <p className="text-[8px] font-medium text-gray-400 uppercase tracking-wider mt-1 truncate" title={course.corequisites}>
-              Coreq: {course.corequisites}
+              {dict?.coreq || "Coreq"}: {course.corequisites}
             </p>
           )}
         </div>
@@ -116,7 +117,7 @@ export default function ActiveCourseTrack({ course, initialProgress, onUpdate }:
           target="_blank" 
           rel="noopener noreferrer"
           className="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 hover:text-brand-blue hover:bg-blue-50 transition-all cursor-pointer"
-          title="Go to Course"
+          title={dict?.go_to_course || "Go to Course"}
         >
           <i className="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
         </a>

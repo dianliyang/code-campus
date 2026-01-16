@@ -92,6 +92,7 @@
       "sidebar_universities": "合作学府",
       "sidebar_fields": "学科领域",
       "sidebar_enrolled": "仅看我已加入",
+      "sidebar_library": "个人图书馆",
       "enroll": "加入",
       "enrolled": "已加入",
       "details": "课程详情",
@@ -100,7 +101,7 @@
       "coreq": "先修课程",
       "view_details_prefix": "在官网上查看更多详情和要求：",
       "empty_title": "空无一物",
-      "empty_desc": "没有找到符合当前筛选条件的课程。",
+      "empty_desc": "调整您的筛选条件或扩大搜索范围以获取新结果。",
       "found_prefix": "共找到",
       "found_suffix": "门课程...",
       "sort_relevance": "相关性",
@@ -109,7 +110,7 @@
       "sort_title": "标题 (A-Z)"
     },
     "roadmap": {
-      "title": "修读路线图",
+      "title": "修读路线",
       "header_total": "总课程数",
       "header_mastered": "已掌握",
       "header_efficiency": "核心效率",
@@ -119,7 +120,14 @@
       "phase_2_label": "阶段 02",
       "phase_2_title": "学业成就",
       "empty_title": "虚位以待",
-      "empty_desc": "你的路线图目前还是空的。去课程目录看看，开始你的第一个学习计划吧。"
+      "empty_desc": "您的路线图目前是空的。去课程目录看看，开始您的第一个学习计划吧。",
+      "empty_cta": "开始初始化",
+      "null_path": "检测到空路径",
+      "no_active": "暂无进行中的课程。去课程目录开始吧。",
+      "peak_ahead": "巅峰尚在前方，继续努力。",
+      "go_to_course": "前往课程官网",
+      "view_tracking": "进度追踪",
+      "view_visual": "视觉卡片"
     },
     "profile": {
       "user_level": "专业度",
@@ -163,6 +171,29 @@
       "delete_confirm_desc": "这将永久删除您的个人资料和所有课程进度。此操作无法撤销。",
       "delete_confirm_btn": "确认删除",
       "delete_cancel_btn": "取消"
+    },
+    "login": {
+      "title": "系统身份验证",
+      "subtitle": "连接至学术节点",
+      "success_title": "成功",
+      "success_desc": "魔法链接已成功发送。请检查您的收件箱。",
+      "error_title": "身份验证失败",
+      "error_oauth": "此邮箱已与其他登录方式绑定。",
+      "error_denied": "访问被拒绝。您的账户可能受到限制。",
+      "error_config": "系统配置错误。",
+      "error_default": "请验证您的身份信息。",
+      "email_label": "身份向量 (邮箱)",
+      "submit_loading": "处理中...",
+      "submit_resend": "重新发送魔法链接",
+      "submit_send": "发送魔法链接",
+      "footer": "受 CodeCampus 安全协议保护。仅限授权访问。",
+      "verify_title": "身份验证中",
+      "verify_desc": "安全访问链接已发送至您的电子邮箱。请检查您的收件箱以建立会话。",
+      "check_email": "请查收邮件",
+      "check_email_desc": "魔法链接已发送至您的邮箱。点击邮件中的链接即可立即登录。",
+      "security_protocol": "安全协议",
+      "spam_notice": "如果您没有看到邮件，请检查垃圾邮件文件夹或请求新链接。",
+      "back_to_auth": "返回身份验证"
     },
     "import": {
       "label": "批量处理",

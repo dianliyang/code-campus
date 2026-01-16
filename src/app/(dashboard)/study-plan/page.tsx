@@ -107,7 +107,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
                     focusView === 'track' ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  <i className="fa-solid fa-list-ul mr-2"></i> Tracking
+                  <i className="fa-solid fa-list-ul mr-2"></i> {dict.dashboard.roadmap.view_tracking}
                 </a>
                 <a 
                   href="?focusView=card" 
@@ -115,7 +115,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
                     focusView === 'card' ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  <i className="fa-solid fa-border-all mr-2"></i> Visual
+                  <i className="fa-solid fa-border-all mr-2"></i> {dict.dashboard.roadmap.view_visual}
                 </a>
               </div>
             </div>
@@ -124,11 +124,11 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
               {inProgress.length > 0 ? (
                 inProgress.map(course => (
                   focusView === 'track' 
-                    ? <ActiveCourseTrack key={course.id} course={course} initialProgress={course.progress} />
+                    ? <ActiveCourseTrack key={course.id} course={course} initialProgress={course.progress} dict={dict.dashboard.roadmap} />
                     : <CourseCard key={course.id} course={course} isInitialEnrolled={true} progress={course.progress} dict={dict.dashboard.courses} />
                 ))
               ) : (
-                <p className="text-sm text-gray-400 font-mono italic">No active courses. Explore the catalog to begin.</p>
+                <p className="text-sm text-gray-400 font-mono italic">{dict.dashboard.roadmap.no_active}</p>
               )}
             </div>
           </section>
@@ -156,7 +156,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
                   />
                 ))
               ) : (
-                <p className="text-sm text-gray-400 font-mono italic">The peak is still ahead. Keep pushing.</p>
+                <p className="text-sm text-gray-400 font-mono italic">{dict.dashboard.roadmap.peak_ahead}</p>
               )}
             </div>
           </section>
@@ -172,12 +172,12 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
               <div className="w-16 h-16 rounded-2xl border border-gray-100 flex items-center justify-center mb-8 bg-gray-50/50 group-hover:rotate-12 transition-transform duration-500">
                 <i className="fa-solid fa-ghost text-gray-200 text-xl"></i>
               </div>
-              <h2 className="text-sm font-black text-gray-900 uppercase tracking-[0.5em] mb-4">Null Path Detected</h2>
+              <h2 className="text-sm font-black text-gray-900 uppercase tracking-[0.5em] mb-4">{dict.dashboard.roadmap.null_path}</h2>
                           <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] max-w-[320px] leading-relaxed mb-12">
                             {dict.dashboard.roadmap.empty_desc}
                           </p>
                           <Link href="/courses" className="btn-primary">
-                            Begin Initialization
+                            {dict.dashboard.roadmap.empty_cta}
                           </Link>
                         </div>          </div>
         )}

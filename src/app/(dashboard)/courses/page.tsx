@@ -24,24 +24,24 @@ export default async function CoursesPage({ searchParams }: PageProps) {
       
       <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col md:flex-row gap-8">
         <Suspense fallback={<SidebarSkeleton />}>
-          <SidebarData />
+          <SidebarData dict={dict.dashboard.courses} />
         </Suspense>
         
         <Suspense fallback={<CourseListSkeleton />}>
-          <CourseListData params={params} />
+          <CourseListData params={params} dict={dict.dashboard.courses} />
         </Suspense>
       </div>
     </div>
   );
 }
 
-async function SidebarData() {
+async function SidebarData({ dict }: { dict: any }) {
   const [dbUniversities, dbFields] = await Promise.all([
     queryD1<University>('SELECT university as name, COUNT(*) as count FROM courses WHERE is_hidden = 0 GROUP BY university ORDER BY count DESC'),
     queryD1<Field>('SELECT f.name, COUNT(cf.course_id) as count FROM fields f JOIN course_fields cf ON f.id = cf.field_id GROUP BY f.id ORDER BY count DESC'),
   ]);
 
-  return <Sidebar universities={dbUniversities} fields={dbFields} enrolledCount={0} />;
+  return <Sidebar universities={dbUniversities} fields={dbFields} enrolledCount={0} dict={dict} />;
 }
 
 async function CourseListData({ params, dict }: { params: any, dict: any }) {
@@ -74,6 +74,7 @@ async function CourseListData({ params, dict }: { params: any, dict: any }) {
       totalPages={dbCourses.pages}
       currentPage={page}
       initialEnrolledIds={initialEnrolledIds}
+      dict={dict}
     />
   );
 }

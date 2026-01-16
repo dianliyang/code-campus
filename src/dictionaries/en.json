@@ -92,6 +92,7 @@
       "sidebar_universities": "Institutions",
       "sidebar_fields": "Disciplines",
       "sidebar_enrolled": "My Enrolled Only",
+      "sidebar_library": "Personal Library",
       "enroll": "Join",
       "enrolled": "Enrolled",
       "details": "Course Detail",
@@ -100,7 +101,7 @@
       "coreq": "Coreq",
       "view_details_prefix": "View course details and requirements on",
       "empty_title": "NULL",
-      "empty_desc": "No courses found matching your current filter parameters.",
+      "empty_desc": "Adjust your frequency filters or expand the topic spectrum to initialize new results.",
       "found_prefix": "Found",
       "found_suffix": "courses...",
       "sort_relevance": "Relevance",
@@ -109,7 +110,7 @@
       "sort_title": "Title (A-Z)"
     },
     "roadmap": {
-      "title": "Learning Roadmap",
+      "title": "Study Path",
       "header_total": "Total Tracks",
       "header_mastered": "Mastered",
       "header_efficiency": "Core Efficiency",
@@ -119,7 +120,14 @@
       "phase_2_label": "Phase 02",
       "phase_2_title": "Academic Achievements",
       "empty_title": "VOID",
-      "empty_desc": "Your roadmap is currently empty. Explore the course catalog to start your first study plan."
+      "empty_desc": "Your roadmap is currently empty. Explore the course catalog to start your first study plan.",
+      "empty_cta": "Begin Initialization",
+      "null_path": "Null Path Detected",
+      "no_active": "No active courses. Explore the catalog to begin.",
+      "peak_ahead": "The peak is still ahead. Keep pushing.",
+      "go_to_course": "Go to Course",
+      "view_tracking": "Tracking",
+      "view_visual": "Visual"
     },
     "profile": {
       "user_level": "Expertise",
@@ -163,6 +171,29 @@
       "delete_confirm_desc": "This will permanently delete your profile and all course progress. This cannot be undone.",
       "delete_confirm_btn": "Confirm Deletion",
       "delete_cancel_btn": "Cancel"
+    },
+    "login": {
+      "title": "System Authentication",
+      "subtitle": "Connect to the academic node",
+      "success_title": "Success",
+      "success_desc": "Magic link dispatched successfully. Please verify your inbox.",
+      "error_title": "Authentication Failure",
+      "error_oauth": "This email is linked to another provider.",
+      "error_denied": "Access denied. Your account may be restricted.",
+      "error_config": "System configuration error.",
+      "error_default": "Please verify your identity vector.",
+      "email_label": "Identity Vector (Email)",
+      "submit_loading": "Processing...",
+      "submit_resend": "Resend Magic Link",
+      "submit_send": "Send Magic Link",
+      "footer": "Protected by the CodeCampus Security Protocol. Authorized Access Only.",
+      "verify_title": "Verification In Progress",
+      "verify_desc": "A secure access link has been dispatched to your identity vector. Please verify your inbox to establish a session.",
+      "check_email": "Check your email",
+      "check_email_desc": "A magic link has been sent to your email address. Click the link in the email to sign in instantly.",
+      "security_protocol": "Security Protocol",
+      "spam_notice": "If you don't see the email, please check your spam folder or request a new link.",
+      "back_to_auth": "Back to Authentication"
     },
     "import": {
       "label": "Batch Processing",

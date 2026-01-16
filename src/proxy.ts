@@ -10,10 +10,10 @@ export default auth((req) => {
 
   // console.log(`[Middleware] Path: ${req.nextUrl.pathname}, LoggedIn: ${isLoggedIn}`);
 
-  // if (!isLoggedIn && !isPublicPage) {
-  //   // console.log("[Middleware] Redirecting to /login");
-  //   return NextResponse.redirect(new URL("/login", req.url));
-  // }
+  if (!isLoggedIn && !isPublicPage) {
+    // console.log("[Middleware] Redirecting to /login");
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
 
   if (isLoggedIn && isLoginPage) {
     return NextResponse.redirect(new URL("/courses", req.url));

@@ -22,13 +22,15 @@ export default async function LoginPage({ searchParams }: PageProps) {
     try {
       const email = formData.get("email") as string;
       const baseUrl = await getBaseUrl();
-      console.log(`[Login] Attempting Supabase Magic Link for ${email} with redirect to ${baseUrl}`);
+      console.log(
+        `[Login] Attempting Supabase Magic Link for ${email} with redirect to ${baseUrl}`
+      );
 
       const supabase = await createClient();
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${baseUrl}/auth/callback?next=${callbackUrl}`,
+          emailRedirectTo: `https://course.oili.dev/auth/callback?next=${callbackUrl}`,
         },
       });
       if (error) throw error;

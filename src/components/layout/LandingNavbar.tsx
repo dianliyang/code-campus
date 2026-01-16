@@ -20,58 +20,31 @@ export default function LandingNavbar({ dict }: { dict: any }) {
                   alt="CodeCampus" 
                   width={scrolled ? 32 : 40} 
                   height={scrolled ? 32 : 40} 
-                  className={`transition-all duration-500 group-hover:-rotate-6 ${scrolled ? 'w-8 h-8' : 'w-10 h-10'}`}
+                  className={`transition-all duration-500 group-hover:-rotate-6 brightness-200 ${scrolled ? 'w-8 h-8' : 'w-10 h-10'}`}
                 />
                 {!scrolled && (
                   <div className="flex flex-col transition-opacity duration-300">
-                    <span className="text-2xl font-black tracking-tighter text-gray-900 uppercase leading-none">CodeCampus</span>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] group-hover:text-brand-blue transition-colors">{dict?.global_network || "Open Catalog"}</span>
+                    <span className="text-2xl font-black tracking-tighter text-white uppercase leading-none">CodeCampus</span>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] group-hover:text-brand-blue transition-colors">{dict?.global_network || "Open Catalog"}</span>
                   </div>
                 )}
               </Link>
             </div>
 
             {/* Navigation Links */}
-            <div className={`hidden md:flex items-center transition-all duration-500 ${
-              scrolled 
-                ? 'gap-4 bg-transparent' 
-                : 'gap-8 bg-white/80 backdrop-blur-md px-8 py-3 rounded-full border border-gray-100 shadow-sm'
-            }`}>
-              {[
-                { name: dict?.mission || "Mission", href: "#mission", icon: "fa-solid fa-shuttle-space" },
-                { name: dict?.universities || "Universities", href: "#universities", icon: "fa-solid fa-building-columns" },
-                { name: dict?.curriculum || "Curriculum", href: "#features", icon: "fa-solid fa-layer-group" }
-              ].map((item) => (
-                <Link 
-                  key={item.name} 
-                  href={item.href} 
-                  className={`group relative flex items-center justify-center transition-all duration-500 ${
-                    scrolled 
-                      ? 'w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 hover:text-brand-blue' 
-                      : 'px-4 py-2 gap-2'
-                  }`}
-                  title={scrolled ? item.name : undefined}
-                >
-                  <i className={`${item.icon} text-sm transition-all duration-500 group-hover:scale-110 ${!scrolled && 'text-gray-400 group-hover:text-brand-blue'}`}></i>
-                  
-                  <span className={`text-xs font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-gray-900 transition-all duration-500 overflow-hidden whitespace-nowrap ${
-                    scrolled ? 'max-w-0 opacity-0' : 'max-w-[150px] opacity-100'
-                  }`}>
-                    {item.name}
-                  </span>
-                </Link>
-              ))}
-            </div>
+            <NavLinks variant="dark" collapsed={scrolled} dict={dict} />
 
             {/* CTA Section */}
             <div className="flex items-center gap-6">
               <Link 
                 href="/courses" 
-                className={`flex items-center justify-center btn-primary group transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] ${
-                   scrolled ? 'w-10 h-10 !rounded-full !px-0 !py-0' : '!rounded-full gap-4 px-6 py-3'
+                className={`flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] ${
+                   scrolled 
+                    ? 'w-10 h-10 !rounded-full !px-0 !py-0 bg-white text-gray-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:bg-brand-blue hover:text-white' 
+                    : 'btn-primary !rounded-full gap-4 px-6 py-3 shadow-[0_0_20px_rgba(59,130,246,0.2)]'
                 }`}
               >
-                <span className={`transition-all duration-500 overflow-hidden whitespace-nowrap ${
+                <span className={`transition-all duration-500 overflow-hidden whitespace-nowrap font-black text-[11px] uppercase tracking-[0.2em] ${
                   scrolled ? 'max-w-0 opacity-0' : 'max-w-[100px] opacity-100'
                 }`}>
                   {dict?.enter || "Enter"}

@@ -39,6 +39,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
   const userId = user.id;
   const params = await searchParams;
   const focusView = (params.focusView as string) || "track";
+  const selectedSemester = (params.semester as string) || "all";
   
   const supabase = await createClient();
   const { data: enrolledRows, error } = await supabase
@@ -76,6 +77,22 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
 
   const inProgress = enrolledCourses.filter(c => c.status === 'in_progress');
   const completed = enrolledCourses.filter(c => c.status === 'completed');
+
+  // Extract unique semesters for filtering
+  const availableSemesters = Array.from(new Set(
+    completed.flatMap(c => c.semesters)
+  )).sort((a, b) => {
+    // Sort logic: Year DESC, then Term (Fall > Summer > Spring)
+    const [yearA, termA] = a.split(' ');
+    const [yearB, termB] = b.split(' ');
+    if (yearA !== yearB) return parseInt(yearB) - parseInt(yearA);
+    const order: Record<string, number> = { 'Fall': 3, 'Summer': 2, 'Spring': 1 };
+    return (order[termB] || 0) - (order[termA] || 0);
+  });
+
+  const filteredAchievements = selectedSemester === "all" 
+    ? completed 
+    : completed.filter(c => c.semesters.includes(selectedSemester));
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -142,19 +159,46 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
 
           {/* Achievements Section */}
           <section className="relative">
-            <div className="flex items-center gap-6 mb-12">
-              <div className="w-11 h-11 bg-brand-green rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-brand-green/20 ring-8 ring-white">
-                <i className="fa-solid fa-trophy text-sm"></i>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+              <div className="flex items-center gap-6">
+                <div className="w-11 h-11 bg-brand-green rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-brand-green/20 ring-8 ring-white">
+                  <i className="fa-solid fa-trophy text-sm"></i>
+                </div>
+                <div>
+                  <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em]">{dict.dashboard.roadmap.phase_2_label}</h2>
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tighter">{dict.dashboard.roadmap.phase_2_title}</h3>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em]">{dict.dashboard.roadmap.phase_2_label}</h2>
-                <h3 className="text-2xl font-black text-gray-900 tracking-tighter">{dict.dashboard.roadmap.phase_2_title}</h3>
-              </div>
+
+              {/* Semester Filter Bar */}
+              {availableSemesters.length > 0 && (
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 md:pb-0">
+                  <a 
+                    href="?semester=all" 
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
+                      selectedSemester === 'all' ? 'bg-brand-green text-white border-brand-green shadow-lg shadow-brand-green/20' : 'bg-gray-50 text-gray-400 border-transparent hover:border-gray-200'
+                    }`}
+                  >
+                    All Eras
+                  </a>
+                  {availableSemesters.map(sem => (
+                    <a 
+                      key={sem}
+                      href={`?semester=${encodeURIComponent(sem)}`}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
+                        selectedSemester === sem ? 'bg-brand-green text-white border-brand-green shadow-lg shadow-brand-green/20' : 'bg-gray-50 text-gray-400 border-transparent hover:border-gray-200'
+                      }`}
+                    >
+                      {sem}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 pl-0 md:pl-20">
-              {completed.length > 0 ? (
-                completed.map(course => (
+              {filteredAchievements.length > 0 ? (
+                filteredAchievements.map(course => (
                   <AchievementCard 
                     key={course.id} 
                     course={course} 

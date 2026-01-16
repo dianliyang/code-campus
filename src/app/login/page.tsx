@@ -21,7 +21,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
     "use server";
     try {
       const email = formData.get("email") as string;
-      const baseUrl = getBaseUrl();
+      const baseUrl = await getBaseUrl();
       console.log(`[Login] Attempting Supabase Magic Link for ${email} with redirect to ${baseUrl}`);
 
       const supabase = await createClient();

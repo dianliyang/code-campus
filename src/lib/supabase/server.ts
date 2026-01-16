@@ -3,11 +3,29 @@ import { cookies } from "next/headers";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Course } from "../scrapers/types";
 
-export function getBaseUrl() {
+import { headers } from "next/headers";
+
+export async function getBaseUrl() {
+  // 1. Check environment variable first (highest priority)
   const envUrl = process.env.NEXT_PUBLIC_APP_URL;
-  let url = envUrl || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-  
-  // Remove trailing slash if present
+  if (envUrl) return envUrl.replace(/\/$/, "");
+
+  // 2. Try to detect from request headers
+  try {
+    const host = (await headers()).get("host");
+    if (host) {
+      const protocol = host.includes("localhost") ? "http" : "https";
+      return `${protocol}://${host}`;
+    }
+  } catch (e) {
+    // Headers might not be available in all contexts (e.g. some background tasks)
+  }
+
+  // 3. Fallback to Vercel system URL or localhost
+  const url = process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}` 
+    : "http://localhost:3000";
+    
   return url.replace(/\/$/, "");
 }
 

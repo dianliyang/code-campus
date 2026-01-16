@@ -39,6 +39,19 @@ export default function OrbitingCircles() {
            <i className="fa-solid fa-database text-emerald-500 text-[11px]"></i>
         </div>
       </div>
+
+      {/* Orbiting Nodes - Ring 3 (Outer) */}
+      <div className="absolute w-[100%] h-[100%] animate-spin-slow">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white border border-violet-100 rounded-full shadow-lg flex items-center justify-center">
+           <i className="fa-solid fa-brain text-violet-500 text-[10px]"></i>
+        </div>
+        <div className="absolute bottom-1/4 -right-3 w-8 h-8 bg-white border border-sky-100 rounded-full shadow-lg flex items-center justify-center">
+           <i className="fa-solid fa-shield-halved text-sky-500 text-[10px]"></i>
+        </div>
+        <div className="absolute bottom-1/4 -left-3 w-8 h-8 bg-white border border-rose-100 rounded-full shadow-lg flex items-center justify-center">
+           <i className="fa-solid fa-square-root-variable text-rose-500 text-[10px]"></i>
+        </div>
+      </div>
     </div>
   );
 }

@@ -39,55 +39,38 @@ export default async function CoursesPage({ searchParams }: PageProps) {
 async function SidebarData({ userId, params, dict }: { userId?: string, params: any, dict: any }) {
   const supabase = await createClient();
   
-  // Extract filters for dynamic counts
-  const universitiesParam = ((params.universities as string) || "").split(",").filter(Boolean);
-  const fieldsParam = ((params.fields as string) || "").split(",").filter(Boolean);
-  const levelsParam = ((params.levels as string) || "").split(",").filter(Boolean);
-  const queryParam = (params.q as string) || "";
+  // Parallelize static and dynamic fetches
+  const [universitiesRes, fieldsRes, enrolledRes] = await Promise.all([
+    supabase.from('courses').select('university').eq('is_hidden', false),
+    supabase.from('fields').select('name, course_fields(count)'),
+    userId ? (async () => {
+      // Extract filters for dynamic enrolled count
+      const universitiesParam = ((params.universities as string) || "").split(",").filter(Boolean);
+      const queryParam = (params.q as string) || "";
+      const levelsParam = ((params.levels as string) || "").split(",").filter(Boolean);
 
-  // Helper to apply common filters
-  const applyFilters = (query: any) => {
-    let q = query.eq('is_hidden', false);
-    if (queryParam) {
-      q = q.or(`title.ilike.%${queryParam}%,description.ilike.%${queryParam}%,course_code.ilike.%${queryParam}%`);
-    }
-    if (universitiesParam.length > 0) {
-      q = q.in('university', universitiesParam);
-    }
-    if (levelsParam.length > 0) {
-      q = q.in('level', levelsParam);
-    }
-    // Note: fields filtering is more complex due to join table, skipping for Sidebar for simplicity unless needed
-    return q;
-  };
-
-  // Fetch enrolled count if user is logged in
-  let enrolledCount = 0;
-  if (userId) {
-    const { data: enrolledIdsRows } = await supabase
-      .from('user_courses')
-      .select('course_id')
-      .eq('user_id', userId);
-    
-    const enrolledIds = (enrolledIdsRows || []).map(r => r.course_id);
-    
-    if (enrolledIds.length > 0) {
-      let q = supabase.from('courses').select('id', { count: 'exact', head: true });
-      q = applyFilters(q);
-      q = q.in('id', enrolledIds);
+      let q = supabase.from('user_courses')
+        .select('course_id, courses!inner(university, title, description, course_code, is_hidden, level)', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('courses.is_hidden', false);
+      
+      if (queryParam) {
+        q = q.or(`title.ilike.%${queryParam}%,description.ilike.%${queryParam}%,course_code.ilike.%${queryParam}%`, { foreignTable: 'courses' });
+      }
+      if (universitiesParam.length > 0) {
+        q = q.in('courses.university', universitiesParam);
+      }
+      if (levelsParam.length > 0) {
+        q = q.in('courses.level', levelsParam);
+      }
+      
       const { count } = await q;
-      enrolledCount = count || 0;
-    }
-  }
-  
-  // Use RPC or separate queries for aggregations in Supabase
-  const { data: universitiesData } = await supabase
-    .from('courses')
-    .select('university')
-    .eq('is_hidden', false);
-    
+      return count || 0;
+    })() : Promise.resolve(0)
+  ]);
+
   const universityCounts: Record<string, number> = {};
-  universitiesData?.forEach(c => {
+  universitiesRes.data?.forEach(c => {
     universityCounts[c.university] = (universityCounts[c.university] || 0) + 1;
   });
   
@@ -95,17 +78,12 @@ async function SidebarData({ userId, params, dict }: { userId?: string, params: 
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 
-  const { data: fieldsData } = await supabase
-    .from('fields')
-    .select('name, course_fields(count)');
-    
-  // Simple mapping for fields
-  const dbFields: Field[] = (fieldsData || []).map((f: any) => ({
+  const dbFields: Field[] = (fieldsRes.data || []).map((f: any) => ({
     name: f.name,
     count: f.course_fields?.[0]?.count || 0
   })).sort((a, b) => b.count - a.count);
 
-  return <Sidebar universities={dbUniversities} fields={dbFields} enrolledCount={enrolledCount} dict={dict} />;
+  return <Sidebar universities={dbUniversities} fields={dbFields} enrolledCount={enrolledRes as number} dict={dict} />;
 }
 
 async function CourseListData({ params, dict }: { params: any, dict: any }) {
@@ -121,18 +99,18 @@ async function CourseListData({ params, dict }: { params: any, dict: any }) {
   const fields = ((params.fields as string) || "").split(",").filter(Boolean);
   const levels = ((params.levels as string) || "").split(",").filter(Boolean);
 
-  const supabase = await createClient();
-  let initialEnrolledIds: number[] = [];
-  
-  if (user) {
-    const { data: enrolledRows } = await supabase
-      .from('user_courses')
-      .select('course_id')
-      .eq('user_id', user.id);
-    initialEnrolledIds = (enrolledRows || []).map(r => Number(r.course_id));
-  }
-
-  const dbCourses = await fetchCourses(page, size, offset, query, sort, enrolledOnly, universities, fields, levels, user?.id);
+  // Parallelize course fetch and enrolled IDs fetch
+  const [dbCourses, initialEnrolledIds] = await Promise.all([
+    fetchCourses(page, size, offset, query, sort, enrolledOnly, universities, fields, levels, user?.id),
+    user ? (async () => {
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from('user_courses')
+        .select('course_id')
+        .eq('user_id', user.id);
+      return (data || []).map(r => Number(r.course_id));
+    })() : Promise.resolve([])
+  ]);
 
   return (
     <CourseList 
@@ -171,15 +149,18 @@ async function fetchCourses(
 
   if (enrolledOnly) {
     if (!userId) return { items: [], total: 0, pages: 0 };
-    // This requires a more complex join or subquery, usually handled via filtering on the join table
-    const { data: enrolledIds } = await supabase
-      .from('user_courses')
-      .select('course_id')
-      .eq('user_id', userId);
     
-    const ids = (enrolledIds || []).map(r => r.course_id);
-    if (ids.length === 0) return { items: [], total: 0, pages: 0 };
-    supabaseQuery = supabaseQuery.in('id', ids);
+    // Instead of subquery, use inner join via !inner
+    supabaseQuery = supabase
+      .from('courses')
+      .select(`
+        *,
+        fields:course_fields(fields(name)),
+        semesters:course_semesters(semesters(term, year)),
+        user_courses!inner(user_id)
+      `, { count: 'exact' })
+      .eq('is_hidden', false)
+      .eq('user_courses.user_id', userId);
   }
 
   if (query) {
@@ -191,7 +172,7 @@ async function fetchCourses(
   }
 
   if (fields.length > 0) {
-    // Filter courses that have at least one of the selected fields
+    // Keep this as is for now as it's efficient enough with a small set of IDs
     const { data: fieldData } = await supabase
       .from('fields')
       .select('course_fields(course_id)')

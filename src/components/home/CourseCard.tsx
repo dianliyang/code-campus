@@ -61,14 +61,13 @@ export default function CourseCard({
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl transition-all relative overflow-hidden group flex flex-col h-full">
-      {/* Enrollment Tag */}
       <button 
         onClick={handleEnroll}
         disabled={loading}
         className={`absolute top-0 right-6 px-3 py-1 rounded-b-lg text-[10px] font-black uppercase tracking-widest transition-all ${
           isEnrolled 
             ? 'bg-brand-green text-white translate-y-0' 
-            : 'bg-gray-100 text-gray-500 hover:bg-brand-blue hover:text-white -translate-y-0.5 group-hover:translate-y-0'
+            : 'bg-gray-100 text-gray-500 hover:bg-brand-dark hover:text-white -translate-y-0.5 group-hover:translate-y-0'
         }`}
       >
         {loading ? (
@@ -112,8 +111,8 @@ export default function CourseCard({
               {course.courseCode}
             </span>
           </div>
-          <h2 className="text-lg font-extrabold text-gray-900 mt-1 leading-tight group-hover:text-brand-blue transition-colors line-clamp-2 pr-12">
-            <Link href={`/courses/${course.id}`}>{course.title}</Link>
+          <h2 className="text-lg font-extrabold text-gray-900 mt-1 leading-tight line-clamp-2 pr-12 transition-colors">
+            <Link href={`/courses/${course.id}`} className="hover:text-brand-blue hover:underline decoration-2 underline-offset-4">{course.title}</Link>
           </h2>
           <div className="flex gap-2 mt-3 flex-wrap">
             {course.fields?.map((f) => (

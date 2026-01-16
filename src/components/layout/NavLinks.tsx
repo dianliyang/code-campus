@@ -14,10 +14,10 @@ export default function NavLinks({
 }) {
   const pathname = usePathname();
   const navLinks = [
-    { name: dict?.mission || "Mission", href: "#mission", icon: "fa-solid fa-shuttle-space" },
-    { name: dict?.universities || "Nodes", href: "#universities", icon: "fa-solid fa-building-columns" },
-    { name: dict?.curriculum || "Protocol", href: "#features", icon: "fa-solid fa-layer-group" },
-    { name: dict?.pricing || "Pricing", href: "#pricing", icon: "fa-solid fa-credit-card" }
+    { name: dict?.mission || "Mission", href: "#mission", icon: "fa-solid fa-bullseye" },
+    { name: dict?.universities || "Nodes", href: "#universities", icon: "fa-solid fa-network-wired" },
+    { name: dict?.curriculum || "Protocol", href: "#features", icon: "fa-solid fa-cubes-stacked" },
+    { name: dict?.pricing || "Pricing", href: "#pricing", icon: "fa-solid fa-ticket" }
   ];
 
   const isDark = variant === "dark";
@@ -37,15 +37,15 @@ export default function NavLinks({
             className={`group relative flex items-center justify-center transition-all duration-500 ${
               collapsed 
                 ? 'w-10 h-10 rounded-full hover:bg-white/10 text-gray-400 hover:text-white' 
-                : `px-5 py-2 rounded-full text-xs font-black uppercase tracking-[0.2em] ${
+                : `px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-[0.2em] ${
                     isActive 
                       ? (isDark ? 'bg-white text-gray-950 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'bg-white text-gray-900 shadow-[0_2px_8px_rgba(0,0,0,0.08)]') 
-                      : (isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50')
+                      : (isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-gray-900 hover:bg-white/50')
                   }`
             }`}
             title={collapsed ? item.name : undefined}
           >
-            <i className={`${item.icon} text-sm transition-all duration-500 group-hover:scale-110 ${
+            <i className={`${item.icon} text-base transition-all duration-500 group-hover:scale-110 ${
               collapsed ? '' : 'hidden'
             }`}></i>
             

@@ -14,7 +14,6 @@ export default async function LoginPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const lang = await getLanguage();
   const dict = await getDictionary(lang);
-  const callbackUrl = (params.callbackUrl as string) || "/courses";
   const sent = params.sent === "true";
 
   async function handleMagicLink(formData: FormData) {
@@ -30,7 +29,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${baseUrl}/auth/callback?next=${callbackUrl}`,
+          emailRedirectTo: `${baseUrl}/auth/callback`,
         },
       });
       if (error) throw error;

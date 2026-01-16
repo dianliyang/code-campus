@@ -98,7 +98,6 @@ export class SupabaseDatabase {
       .upsert(toUpsert, { onConflict: 'university,course_code' });
       
     if (error) {
-    if (error) {
       console.error(
         `[Supabase] Error saving courses for ${university}:`,
         error

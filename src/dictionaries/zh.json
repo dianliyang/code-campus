@@ -189,6 +189,7 @@
       "submit_loading": "处理中...",
       "submit_resend": "重新发送魔法链接",
       "submit_send": "发送魔法链接",
+      "wrong_email": "邮箱填错了？",
       "footer": "受 CodeCampus 安全协议保护。仅限授权访问。",
       "verify_title": "身份验证中",
       "verify_desc": "安全访问链接已发送至您的电子邮箱。请检查您的收件箱以建立会话。",

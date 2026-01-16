@@ -189,6 +189,7 @@
       "submit_loading": "Processing...",
       "submit_resend": "Resend Magic Link",
       "submit_send": "Send Magic Link",
+      "wrong_email": "Wrong email?",
       "footer": "Protected by the CodeCampus Security Protocol. Authorized Access Only.",
       "verify_title": "Verification In Progress",
       "verify_desc": "A secure access link has been dispatched to your identity vector. Please verify your inbox to establish a session.",

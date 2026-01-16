@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 export default function KnowledgeGraph({ nodeColor = "#0f172a" }: { nodeColor?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mouseRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -14,27 +15,41 @@ export default function KnowledgeGraph({ nodeColor = "#0f172a" }: { nodeColor?: 
     let animationFrameId: number;
     let time = 0;
 
-    const nodes = Array.from({ length: 15 }).map(() => ({
+    // Initialize more nodes with variety
+    const nodeCount = 45;
+    const nodes = Array.from({ length: nodeCount }).map(() => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.5,
-      vy: (Math.random() - 0.5) * 0.5,
-      radius: Math.random() * 2 + 1,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      radius: Math.random() < 0.2 ? Math.random() * 2 + 2 : Math.random() * 1.5 + 0.5, // 20% are larger hubs
+      phase: Math.random() * Math.PI * 2,
     }));
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseRef.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+    };
 
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      time += 0.01;
+      time += 0.005;
 
-      // Draw Connections
-      ctx.strokeStyle = "rgba(59, 130, 246, 0.15)";
-      ctx.lineWidth = 1;
+      // Draw Connections first
+      ctx.lineWidth = 0.5;
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[i].x - nodes[j].x;
           const dy = nodes[i].y - nodes[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 150) {
+          
+          if (dist < 120) {
+            // Opacity based on distance
+            const alpha = (1 - dist / 120) * 0.15;
+            ctx.strokeStyle = `rgba(59, 130, 246, ${alpha})`;
             ctx.beginPath();
             ctx.moveTo(nodes[i].x, nodes[i].y);
             ctx.lineTo(nodes[j].x, nodes[j].y);
@@ -45,45 +60,64 @@ export default function KnowledgeGraph({ nodeColor = "#0f172a" }: { nodeColor?: 
 
       // Draw Nodes
       nodes.forEach((node) => {
-        // Move
+        // Natural movement
         node.x += node.vx;
         node.y += node.vy;
 
-        // Bounce
-        if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
-        if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+        // Interaction with mouse (gentle push)
+        const dx = node.x - mouseRef.current.x;
+        const dy = node.y - mouseRef.current.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 100) {
+          const force = (100 - dist) / 1000;
+          node.vx += dx * force * 0.1;
+          node.vy += dy * force * 0.1;
+        }
 
-        // Draw
+        // Friction/Damping
+        node.vx *= 0.99;
+        node.vy *= 0.99;
+
+        // Bounce/Wrap
+        if (node.x < 0) { node.x = 0; node.vx *= -1; }
+        if (node.x > canvas.width) { node.x = canvas.width; node.vx *= -1; }
+        if (node.y < 0) { node.y = 0; node.vy *= -1; }
+        if (node.y > canvas.height) { node.y = canvas.height; node.vy *= -1; }
+
+        // Draw node core
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
         ctx.fillStyle = nodeColor; 
         ctx.fill();
         
-        // Pulse effect
-        const pulse = Math.sin(time + node.x) * 2 + 2;
+        // Pulse effect for hubs
+        const pulseAlpha = (Math.sin(time * 2 + node.phase) * 0.1 + 0.1);
         ctx.beginPath();
-        ctx.arc(node.x, node.y, node.radius + pulse, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(59, 130, 246, 0.1)";
+        ctx.arc(node.x, node.y, node.radius + 4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(59, 130, 246, ${pulseAlpha})`;
         ctx.fill();
       });
 
       animationFrameId = requestAnimationFrame(render);
     };
 
-    // Initial Resize
     const resize = () => {
-      canvas.width = canvas.parentElement?.clientWidth || 400;
-      canvas.height = canvas.parentElement?.clientHeight || 400;
+      if (!canvas.parentElement) return;
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
     };
+
     window.addEventListener("resize", resize);
+    window.addEventListener("mousemove", handleMouseMove);
     resize();
     render();
 
     return () => {
       window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", handleMouseMove);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [nodeColor]);
 
-  return <canvas ref={canvasRef} className="w-full h-full opacity-80" />;
+  return <canvas ref={canvasRef} className="w-full h-full opacity-90" />;
 }

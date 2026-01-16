@@ -62,18 +62,18 @@ export default function AchievementCard({ course, masteredLabel }: AchievementCa
           {course.title}
         </h3>
 
-        {(course.gpa !== undefined || course.score !== undefined) && (
+        {(course.gpa || course.score) && (
           <div className="flex gap-4 items-center bg-gray-50/50 p-3 rounded-xl border border-gray-100/50">
-            {course.gpa !== undefined && (
+            {course.gpa && (
               <div className="flex flex-col">
                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">GPA</span>
-                <span className="text-sm font-black text-gray-900 italic">{course.gpa.toFixed(2)}</span>
+                <span className="text-sm font-black text-gray-900 italic">{Number(course.gpa).toFixed(2)}</span>
               </div>
             )}
-            {course.score !== undefined && (
+            {course.score && (
               <div className="flex flex-col border-l border-gray-200 pl-4">
                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">SCORE</span>
-                <span className="text-sm font-black text-gray-900 italic">{course.score.toFixed(1)}%</span>
+                <span className="text-sm font-black text-gray-900 italic">{Number(course.score).toFixed(1)}%</span>
               </div>
             )}
           </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import LoginForm from "@/components/auth/LoginForm";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getBaseUrl } from "@/lib/supabase/server";
 
 export const runtime = "edge";
 
@@ -25,22 +25,23 @@ export default async function LoginPage({ searchParams }: PageProps) {
       const email = formData.get("email") as string;
       console.log(`[Login] Attempting Supabase Magic Link for ${email}`);
       
+      const baseUrl = await getBaseUrl();
       const supabase = await createClient();
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=${callbackUrl}`,
+          emailRedirectTo: `${baseUrl}/auth/callback?next=${callbackUrl}`,
         },
       });
-
       if (error) throw error;
 
       console.log("[Login] Supabase Magic Link dispatched");
-      
+
       return { success: true };
     } catch (error) {
       console.error("[Login] Supabase Magic Link dispatch error:", error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return { error: errorMessage };
     }
   }

@@ -1,7 +1,17 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { Course } from '../scrapers/types'
+
+export async function getBaseUrl() {
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (envUrl) return envUrl;
+
+  const headerList = await headers();
+  const host = headerList.get('host');
+  const protocol = host?.includes('localhost') ? 'http' : 'https';
+  return `${protocol}://${host}`;
+}
 
 export async function createClient() {
   const cookieStore = await cookies()

@@ -1,104 +1,73 @@
 # CodeCampus
 
-CodeCampus is a modern web application designed to scrape, aggregate, and browse university course data from top institutions like CMU, MIT, Stanford, and UC Berkeley.
+CodeCampus is a Next.js course aggregator that scrapes, aggregates, and organizes university course data from top institutions like CMU, MIT, Stanford, and UC Berkeley.
 
 ## Tech Stack
 
-- **Framework**: [Next.js 16+](https://nextjs.org/) (App Router)
-- **Database**: [Cloudflare D1](https://developers.cloudflare.com/d1/) (SQLite-based)
-- **Scraping**: [Cheerio](https://cheerio.js.org/) & [Undici](https://undici.nodejs.org/)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
+- **Database**: [Supabase](https://supabase.com/) (PostgreSQL)
+- **Authentication**: Supabase Auth (Magic Link / OTP)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
-- **Runtime/Tooling**: [TypeScript](https://www.typescript.org/), [tsx](https://tsx.is/), [Wrangler](https://developers.cloudflare.com/workers/wrangler/)
+- **Scraping**: [Cheerio](https://cheerio.js.org/) & [Undici](https://undici.nodejs.org/)
+- **Runtime/Tooling**: [tsx](https://tsx.is/)
 
 ## Project Structure
 
 - `src/app/`: Next.js application routes and API endpoints.
 - `src/lib/scrapers/`: Individual university scraper implementations (CMU, MIT, Stanford, UCB).
 - `src/scripts/`: Utility scripts for running scrapers and database maintenance.
-- `schema.sql`: Database schema definition for Cloudflare D1.
+- `supabase_schema.sql`: Database schema definition for Supabase.
 
 ## Getting Started
 
 ### 1. Prerequisites
 - Node.js (Latest LTS recommended)
-- Cloudflare Account (for D1)
+- Supabase Account and Project
 
-### 2. Installation
+### 2. Environment Variables
+Create a `.env.local` file with the following variables:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 3. Installation
 ```bash
 npm install
 ```
 
-### 3. Database Setup
-Initialize your local D1 database:
-```bash
-npx wrangler d1 execute code-campus-db --local --file=./schema.sql
-```
+### 4. Database Setup
+Apply the schema in `supabase_schema.sql` using the Supabase SQL Editor.
 
-## Running Scrapers
+## Key Commands
 
-Scrapers can be run locally or against the remote production database.
-
-### Local Scraping
-This will populate your local `.wrangler/state/v3/d1` database:
+### Running Scrapers
+To scrape course data and populate the database:
 ```bash
 npm run scrape
 ```
 
-### Remote Scraping
-To update the production database (requires `wrangler login`):
+### Categorizing Courses
+To categorize scraped courses into fields:
 ```bash
-npm run scrape:remote
+npm run categorize
 ```
 
-## Local Development
-
+### Local Development
 Start the Next.js development server:
 ```bash
 npm run dev
 ```
 The application will be available at `http://localhost:3000`.
 
-## Authentication
+## Authentication Flow
 
-The project uses [NextAuth.js](https://next-auth.js.org/) for authentication, supporting both OAuth (GitHub, Google) and Credentials (Email/Password) providers.
-
-### Default Admin User
-For local development, an admin user can be created manually in the database. The system expects passwords to be hashed using `bcryptjs`.
-
-## Database Management
-
-### User Management
-You can manage users via Wrangler:
-
-```bash
-# List all users
-npx wrangler d1 execute code-campus-db --local --command "SELECT id, email, name, provider FROM users;"
-
-# Manually insert a user (Password must be bcrypt hashed)
-npx wrangler d1 execute code-campus-db --local --command "INSERT INTO users (email, password, provider, provider_id, name) VALUES ('admin@codecampus.com', 'HASHED_PASSWORD', 'credentials', 'admin@codecampus.com', 'Admin');"
-```
-
-### Searching the Local DB
-You can query your local database directly using Wrangler:
-
-```bash
-# Search for a specific course
-npx wrangler d1 execute code-campus-db --local --command "SELECT * FROM courses WHERE course_code LIKE '%CS106%';"
-
-# Count courses by university
-npx wrangler d1 execute code-campus-db --local --command "SELECT university, COUNT(*) FROM courses GROUP BY university;"
-```
-
-### Debugging Script
-Alternatively, use the built-in debug script:
-```bash
-npx tsx src/scripts/debug-db.ts
-```
-
-## API Endpoints
-
-- `GET /api/courses`: List courses with optional filtering.
-- `GET /api/universities`: List supported universities.
+The system uses passwordless authentication via Supabase Magic Link:
+1. User enters email in the login form.
+2. Supabase sends a verification token/link to the user's email.
+3. User clicks the link, establishing a session through `/auth/callback`.
 
 ## License
 MIT

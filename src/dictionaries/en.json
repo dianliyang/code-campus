@@ -101,6 +101,7 @@
       "coreq": "Coreq",
       "view_details_prefix": "View course details and requirements on",
       "empty_title": "NULL",
+      "empty_header": "Zero Matches Found",
       "empty_desc": "Adjust your frequency filters or expand the topic spectrum to initialize new results.",
       "found_prefix": "Found",
       "found_suffix": "courses...",

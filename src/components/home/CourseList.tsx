@@ -76,7 +76,9 @@ export default function CourseList({
               <div className="w-12 h-12 rounded-full border border-gray-100 flex items-center justify-center mb-6 bg-gray-50/50">
                 <i className="fa-solid fa-radar fa-spin-slow text-gray-300 text-sm"></i>
               </div>
-              <h3 className="text-xs font-black text-gray-900 uppercase tracking-[0.4em] mb-2">Zero Matches Found</h3>
+              <h3 className="text-xs font-black text-gray-900 uppercase tracking-[0.4em] mb-2">
+                {dict?.empty_header || "Zero Matches Found"}
+              </h3>
               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest max-w-[280px] leading-relaxed">
                 {dict?.empty_desc || "Adjust your frequency filters or expand the topic spectrum to initialize new results."}
               </p>

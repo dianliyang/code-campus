@@ -101,6 +101,7 @@
       "coreq": "先修课程",
       "view_details_prefix": "在官网上查看更多详情和要求：",
       "empty_title": "空无一物",
+      "empty_header": "未找到匹配结果",
       "empty_desc": "调整您的筛选条件或扩大搜索范围以获取新结果。",
       "found_prefix": "共找到",
       "found_suffix": "门课程...",

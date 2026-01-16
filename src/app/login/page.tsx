@@ -24,24 +24,26 @@ export default async function LoginPage({ searchParams }: PageProps) {
   async function handleMagicLink(formData: FormData) {
     "use server";
     try {
-      await signIn("resend", {
-        email: formData.get("email"),
+      const email = formData.get("email") as string;
+      console.log(`[Login] Attempting Magic Link for ${email}`);
+      
+      const result = await signIn("resend", {
+        email,
         redirectTo: callbackUrl,
+        redirect: false,
       });
+
+      console.log("[Login] Magic Link result:", result);
+      
+      return { success: true };
     } catch (error) {
-      if ((error as Error).message === "NEXT_REDIRECT") throw error;
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "digest" in error &&
-        (error as { digest: string }).digest?.startsWith("NEXT_REDIRECT")
-      )
-        throw error;
-
-      console.error("Magic Link error:", error);
-
-      const errorType = error instanceof AuthError ? error.type : "Default";
-      return redirect(`/login?error=${errorType}`);
+      console.error("[Login] Magic Link dispatch error detail:", error);
+      
+      if (error instanceof AuthError) {
+        return { error: error.type };
+      }
+      
+      return { error: "Default" };
     }
   }
 

@@ -4,26 +4,37 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 interface LoginFormProps {
-  onMagicLink: (formData: FormData) => Promise<void>;
+  onMagicLink: (formData: FormData) => Promise<{ success?: boolean; error?: string } | void>;
   sent?: boolean;
   dict?: any;
 }
 
-export default function LoginForm({ onMagicLink, sent, dict }: LoginFormProps) {
+export default function LoginForm({ onMagicLink, sent: initialSent, dict }: LoginFormProps) {
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  const urlError = searchParams.get("error");
   const [loading, setLoading] = useState(false);
+  const [isSent, setIsSent] = useState(initialSent || false);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const error = serverError || urlError;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
+    setServerError(null);
 
     const formData = new FormData(event.currentTarget);
     
     try {
-      await onMagicLink(formData);
+      const result = await onMagicLink(formData);
+      if (result && result.success) {
+        setIsSent(true);
+      } else if (result && result.error) {
+        setServerError(result.error);
+      }
     } catch (e) {
       console.error("Login submission error:", e);
+      setServerError("Default");
     } finally {
       setLoading(false); 
     }
@@ -36,7 +47,7 @@ export default function LoginForm({ onMagicLink, sent, dict }: LoginFormProps) {
         <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{dict?.subtitle || "Connect to the academic node"}</p>
       </div>
 
-      {sent ? (
+      {isSent ? (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="p-8 bg-green-50 border border-green-100 rounded-3xl">
             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-brand-green mb-6 shadow-sm border border-green-100">
@@ -59,12 +70,7 @@ export default function LoginForm({ onMagicLink, sent, dict }: LoginFormProps) {
 
           <div className="flex justify-center">
             <button 
-              onClick={() => {
-                const url = new URL(window.location.href);
-                url.searchParams.delete('sent');
-                window.history.replaceState({}, '', url.toString());
-                window.location.reload();
-              }}
+              onClick={() => setIsSent(false)}
               className="text-[10px] font-black text-gray-400 hover:text-brand-blue uppercase tracking-widest transition-colors cursor-pointer flex items-center gap-2"
             >
               <i className="fa-solid fa-arrow-left-long text-[8px]"></i>

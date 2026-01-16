@@ -228,12 +228,13 @@ export function CodeCampusAdapter(): Adapter {
     async createVerificationToken(verificationToken) {
       const { identifier, token, expires } = verificationToken;
       const id = identifier.toLowerCase();
-      console.log(`[Adapter] createVerificationToken: ${id}`);
+      console.log(`[Adapter] createVerificationToken for ${id}`);
       try {
-        await runD1(
+        const result = await runD1(
           "INSERT INTO verification_tokens (identifier, token, expires) VALUES (?, ?, ?)",
           [id, token, expires.toISOString()]
         );
+        console.log(`[Adapter] createVerificationToken success:`, result);
         return verificationToken;
       } catch (err) {
         console.error("[Adapter] createVerificationToken Error:", err);

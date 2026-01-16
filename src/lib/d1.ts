@@ -9,6 +9,8 @@ export async function queryD1<T = unknown>(
   sql: string,
   params: unknown[] = []
 ): Promise<T[]> {
+  // console.log(`[D1 Query] SQL: ${sql.substring(0, 100)}... Params: ${JSON.stringify(params)}`);
+  
   // 1. Try D1 Binding (Cloudflare Pages/Workers)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bindingDB = process.env.DB || (globalThis as any).DB;
@@ -34,6 +36,7 @@ export async function queryD1<T = unknown>(
 
   // 2. Remote HTTP API Fallback
   if (REMOTE_DB && ACCOUNT_ID && DATABASE_ID && API_TOKEN) {
+    // console.log("[D1 Remote] Using HTTP API");
     const url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${DATABASE_ID}/query`;
     try {
       const response = await fetch(url, {
@@ -48,6 +51,9 @@ export async function queryD1<T = unknown>(
       if (response.ok) {
         const json = await response.json();
         if (json.success) return json.result[0].results as T[];
+      } else {
+        const errText = await response.text();
+        console.error("[D1 Remote Error Response]", response.status, errText);
       }
     } catch (err) {
       console.error("[D1 Remote Error]", err);
@@ -56,6 +62,7 @@ export async function queryD1<T = unknown>(
 
   // 3. Local Mode (better-sqlite3) - Enabled for local Node.js environment
   if (!bindingDB && !REMOTE_DB && process.env.NODE_ENV === "development" && process.env.NEXT_RUNTIME !== "edge") {
+    // console.log("[D1 Local] Using better-sqlite3");
     try {
       // Dynamic import/require to avoid bundle issues in non-node environments
       const nodeProcess = process;

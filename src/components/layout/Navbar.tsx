@@ -41,7 +41,7 @@ export default async function Navbar() {
                     </div>
                   </div>
                   <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center text-gray-500 border border-gray-200 shadow-sm group-hover:border-brand-blue/40 group-hover:text-brand-blue group-hover:shadow-md transition-all">
-                    <i className="fa-solid fa-user-astronaut text-sm"></i>
+                    <i className="fa-solid fa-user text-sm"></i>
                   </div>
                 </Link>
                 {session && (

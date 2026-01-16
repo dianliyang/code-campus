@@ -14,10 +14,10 @@ export default function NavLinks({
 }) {
   const pathname = usePathname();
   const navLinks = [
-    { name: dict?.mission || "Mission", href: "#mission", icon: "fa-solid fa-bullseye" },
-    { name: dict?.universities || "Nodes", href: "#universities", icon: "fa-solid fa-network-wired" },
-    { name: dict?.curriculum || "Protocol", href: "#features", icon: "fa-solid fa-cubes-stacked" },
-    { name: dict?.pricing || "Pricing", href: "#pricing", icon: "fa-solid fa-ticket" }
+    { name: dict?.mission || "Mission", href: "#mission", icon: "fa-solid fa-circle-info" },
+    { name: dict?.universities || "Nodes", href: "#universities", icon: "fa-solid fa-diagram-project" },
+    { name: dict?.curriculum || "Protocol", href: "#features", icon: "fa-solid fa-layer-group" },
+    { name: dict?.pricing || "Pricing", href: "#pricing", icon: "fa-solid fa-tag" }
   ];
 
   const isDark = variant === "dark";
@@ -45,7 +45,7 @@ export default function NavLinks({
             }`}
             title={collapsed ? item.name : undefined}
           >
-            <i className={`${item.icon} text-base transition-all duration-500 group-hover:scale-110 ${
+            <i className={`${item.icon} text-[14px] transition-all duration-500 group-hover:scale-110 ${
               collapsed ? '' : 'hidden'
             }`}></i>
             

@@ -3,26 +3,7 @@ import { cookies } from "next/headers";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Course } from "../scrapers/types";
 
-import { headers } from "next/headers";
-
 export async function getBaseUrl() {
-  // 1. Try to detect from request headers (most accurate for Vercel/proxies/custom domains)
-  try {
-    const headerList = await headers();
-    const host = headerList.get("x-forwarded-host") || headerList.get("host");
-    const proto = headerList.get("x-forwarded-proto") || (host?.includes("localhost") ? "http" : "https");
-    
-    if (host) {
-      const detectedUrl = `${proto}://${host}`.replace(/\/$/, "");
-      console.log(`[getBaseUrl] Detected from headers: ${detectedUrl}`);
-      return detectedUrl;
-    }
-  } catch (e) {
-    // Headers might not be available in all contexts
-    console.log("[getBaseUrl] Headers not available, falling back.");
-  }
-
-  // 2. Fallback to environment variable
   const envUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (envUrl) {
     const formattedEnvUrl = envUrl.replace(/\/$/, "");
@@ -30,13 +11,7 @@ export async function getBaseUrl() {
     return formattedEnvUrl;
   }
 
-  // 3. Last resort fallbacks
-  const fallbackUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : "http://localhost:3000";
-    
-  console.log(`[getBaseUrl] Using last resort fallback: ${fallbackUrl}`);
-  return fallbackUrl.replace(/\/$/, "");
+  throw new Error("NEXT_PUBLIC_APP_URL is not defined");
 }
 
 export async function createClient() {

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUser, createClient, mapCourseFromRow } from '@/lib/supabase/server';
 
-export const runtime = "edge";
 
 export async function GET(request: Request) {
   const user = await getUser();

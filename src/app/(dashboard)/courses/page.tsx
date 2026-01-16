@@ -8,7 +8,6 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

@@ -5,7 +5,6 @@ import { getDictionary } from "@/lib/dictionary";
 import LogoutButton from "@/components/layout/LogoutButton";
 
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
 
 export default async function ProfilePage() {
   const user = await getUser();

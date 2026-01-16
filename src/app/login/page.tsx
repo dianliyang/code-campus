@@ -6,7 +6,6 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import { createClient } from "@/lib/supabase/server";
 
-export const runtime = "edge";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

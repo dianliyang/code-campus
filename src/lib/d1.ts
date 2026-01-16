@@ -5,6 +5,9 @@ const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const DATABASE_ID = process.env.CLOUDFLARE_DATABASE_ID;
 const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 
+// In-memory mock store for verification tokens during development
+const mockVerificationTokens: Array<{ identifier: string; token: string; expires: string }> = [];
+
 export async function queryD1<T = unknown>(
   sql: string,
   params: unknown[] = []
@@ -114,8 +117,31 @@ export async function queryD1<T = unknown>(
   }
 
   if (process.env.NODE_ENV === "development") {
-    console.warn("[D1] No database binding found. Using Mock Data for dev.");
+    // console.warn(`[D1] No database binding or remote API found. Runtime: ${process.env.NEXT_RUNTIME}. Falling back to mocks.`);
     
+    // Mock Verification Tokens (Magic Link Support in Dev)
+    if (sql.includes("INSERT INTO verification_tokens")) {
+      const [identifier, token, expires] = params as [string, string, string];
+      mockVerificationTokens.push({ identifier, token, expires });
+      console.log(`[D1 Mock] Token saved for ${identifier}. Total: ${mockVerificationTokens.length}`);
+      return [{ success: true }] as unknown as T[];
+    }
+
+    if (sql.includes("SELECT * FROM verification_tokens WHERE identifier = ? AND token = ?")) {
+      const [identifier, token] = params as [string, string];
+      const found = mockVerificationTokens.find(t => t.identifier === identifier && t.token === token);
+      console.log(`[D1 Mock] Token lookup for ${identifier}: ${found ? "Found" : "Not Found"}`);
+      return (found ? [found] : []) as unknown as T[];
+    }
+
+    if (sql.includes("DELETE FROM verification_tokens WHERE identifier = ? AND token = ?")) {
+      const [identifier, token] = params as [string, string];
+      const idx = mockVerificationTokens.findIndex(t => t.identifier === identifier && t.token === token);
+      if (idx !== -1) mockVerificationTokens.splice(idx, 1);
+      console.log(`[D1 Mock] Token deleted for ${identifier}. Remaining: ${mockVerificationTokens.length}`);
+      return [{ success: true }] as unknown as T[];
+    }
+
     // Mock Guest User Fetch
     if (sql.includes("SELECT * FROM users WHERE email = ?") && params[0] === "guest@codecampus.example.com") {
         return [{

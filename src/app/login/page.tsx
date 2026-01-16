@@ -43,7 +43,9 @@ export default async function LoginPage({ searchParams }: PageProps) {
         return { error: error.type };
       }
       
-      return { error: "Default" };
+      // Return the actual error message for better debugging if not a standard AuthError
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return { error: `Debug: ${errorMessage}` };
     }
   }
 

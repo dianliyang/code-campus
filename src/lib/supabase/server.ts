@@ -1,20 +1,18 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies, headers } from 'next/headers'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import { Course } from '../scrapers/types'
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { Course } from "../scrapers/types";
 
 export async function getBaseUrl() {
-  const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const envUrl = process.env.NEXT_PUBLIC_VERCEL_URL;
   if (envUrl) return envUrl;
-
-  const headerList = await headers();
-  const host = headerList.get('host');
-  const protocol = host?.includes('localhost') ? 'http' : 'https';
-  return `${protocol}://${host}`;
+  else {
+    throw new Error("Missing NEXT_PUBLIC_VERCEL_URL environment variable");
+  }
 }
 
 export async function createClient() {
-  const cookieStore = await cookies()
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,13 +20,13 @@ export async function createClient() {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll()
+          return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
-            )
+            );
           } catch {
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
@@ -37,7 +35,7 @@ export async function createClient() {
         },
       },
     }
-  )
+  );
 }
 
 export function createAdminClient() {
@@ -46,34 +44,38 @@ export function createAdminClient() {
 
   if (!url || !key) {
     throw new Error(`Supabase Admin configuration missing. 
-      URL: ${url ? 'Found' : 'MISSING'}
-      KEY: ${key ? 'Found' : 'MISSING'}
+      URL: ${url ? "Found" : "MISSING"}
+      KEY: ${key ? "Found" : "MISSING"}
       Check your .env file.`);
   }
 
-  return createSupabaseClient(url, key)
+  return createSupabaseClient(url, key);
 }
 
 export async function getUser() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
 }
 
 export class SupabaseDatabase {
   async saveCourses(courses: Course[]): Promise<void> {
     if (courses.length === 0) return;
-    
+
     const university = courses[0].university;
-    console.log(`[Supabase] Saving ${courses.length} courses for ${university}...`);
-    
+    console.log(
+      `[Supabase] Saving ${courses.length} courses for ${university}...`
+    );
+
     const supabase = createAdminClient();
-    
+
     // Clear existing
     await this.clearUniversity(university);
-    
+
     // Bulk insert
-    const toInsert = courses.map(c => ({
+    const toInsert = courses.map((c) => ({
       university: c.university,
       course_code: c.courseCode,
       title: c.title,
@@ -87,12 +89,15 @@ export class SupabaseDatabase {
       difficulty: c.difficulty,
       popularity: c.popularity || 0,
       workload: c.workload,
-      is_hidden: c.isHidden || false
+      is_hidden: c.isHidden || false,
     }));
-    
-    const { error } = await supabase.from('courses').insert(toInsert);
+
+    const { error } = await supabase.from("courses").insert(toInsert);
     if (error) {
-      console.error(`[Supabase] Error saving courses for ${university}:`, error);
+      console.error(
+        `[Supabase] Error saving courses for ${university}:`,
+        error
+      );
       throw error;
     }
   }
@@ -100,10 +105,10 @@ export class SupabaseDatabase {
   async clearUniversity(university: string): Promise<void> {
     const supabase = createAdminClient();
     const { error } = await supabase
-      .from('courses')
+      .from("courses")
       .delete()
-      .eq('university', university);
-      
+      .eq("university", university);
+
     if (error) {
       console.error(`[Supabase] Error clearing ${university}:`, error);
       throw error;
@@ -113,11 +118,20 @@ export class SupabaseDatabase {
 
 export async function incrementPopularity(courseId: number): Promise<void> {
   const supabase = await createClient();
-  const { error } = await supabase.rpc('increment_popularity', { row_id: courseId });
+  const { error } = await supabase.rpc("increment_popularity", {
+    row_id: courseId,
+  });
   if (error) {
     // Fallback if RPC is not defined yet
-    const { data: current } = await supabase.from('courses').select('popularity').eq('id', courseId).single();
-    await supabase.from('courses').update({ popularity: (current?.popularity || 0) + 1 }).eq('id', courseId);
+    const { data: current } = await supabase
+      .from("courses")
+      .select("popularity")
+      .eq("id", courseId)
+      .single();
+    await supabase
+      .from("courses")
+      .update({ popularity: (current?.popularity || 0) + 1 })
+      .eq("id", courseId);
   }
 }
 

@@ -46,4 +46,4 @@ The system is passwordless using Supabase OTP:
 - NEXT_PUBLIC_SUPABASE_URL: Supabase API URL.
 - NEXT_PUBLIC_SUPABASE_ANON_KEY: Supabase public key.
 - SUPABASE_SERVICE_ROLE_KEY: Supabase private key for administrative tasks (scrapers).
-- NEXT_PUBLIC_SITE_URL: The base URL of the application.
+- NEXT_PUBLIC_VERCEL_URL: The base URL of the application.

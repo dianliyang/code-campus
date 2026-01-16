@@ -5,7 +5,7 @@ import LogoutButton from "./LogoutButton";
 
 export default async function Navbar() {
   const session = await auth();
-  const navLinks = session ? ["Courses", "Study Roadmap", "My Profile"] : ["Courses"];
+  const navLinks = ["Courses", "Study Roadmap", "My Profile"];
 
   return (
     <nav className="bg-white/90 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50">

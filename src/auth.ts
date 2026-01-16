@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import Resend from "next-auth/providers/resend";
-import { queryD1 } from "@/lib/d1";
 import { CodeCampusAdapter } from "@/lib/auth-adapter";
 import { authConfig } from "./auth.config";
 
@@ -9,7 +8,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: CodeCampusAdapter(),
   secret: process.env.AUTH_SECRET,
   session: {
-    strategy: "jwt",
+    strategy: "jwt", // Keep JWT for edge compatibility
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
     signIn: "/login",
@@ -21,13 +21,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       from:
         process.env.EMAIL_FROM ||
         "CodeCampus <no-reply@codecampus.example.com>",
-      maxAge: 10 * 60, // 10 minutes
+      maxAge: 60 * 60, // Increased to 60 minutes
       async sendVerificationRequest({ identifier: email, url }) {
         console.log(`[Auth] Dispatching Link for ${email}`);
-        
+
         const link = url;
 
-        if (process.env.AUTH_RESEND_KEY && process.env.AUTH_RESEND_KEY !== "re_123456789") {
+        if (
+          process.env.AUTH_RESEND_KEY &&
+          process.env.AUTH_RESEND_KEY !== "re_123456789"
+        ) {
           try {
             const res = await fetch("https://api.resend.com/emails", {
               method: "POST",
@@ -67,7 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         <a href="${link}" class="button">Authenticate Session</a>
                         <div class="divider"></div>
                         <div class="security">
-                          <strong>Security Protocol:</strong> This link is valid for 10 minutes and can only be used once. If you did not initiate this request, no action is required.
+                          <strong>Security Protocol:</strong> This link is valid for 60 minutes and can only be used once. If you did not initiate this request, no action is required.
                         </div>
                       </div>
                       <div class="footer">
@@ -86,6 +89,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               console.error("[Resend Error]", res.status, err);
               throw new Error("Resend dispatch failed.");
             }
+            console.log("[Auth] Email sent successfully");
           } catch (e: unknown) {
             console.error("[Auth Action Error]", e);
             throw e;
@@ -97,59 +101,40 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ account }) {
-      console.log("[Auth] signIn callback", account?.provider);
-      return !!(
-        account?.provider === "resend" || account?.provider === "email"
-      );
+    async signIn({ user, account, email }) {
+      console.log("[Auth] signIn callback", account?.provider, user?.email);
+
+      // Allow sign in for resend/email providers
+      if (account?.provider === "resend" || account?.provider === "email") {
+        return true;
+      }
+
+      return false;
     },
 
-    async jwt({ token, user, account }) {
-      console.log("[Auth] jwt callback");
-      if (account && user) {
-        return {
-          ...token,
-          id: user.id,
-        };
+    async jwt({ token, user, account, trigger }) {
+      console.log("[Auth] jwt callback", trigger);
+
+      // Initial sign in
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
       }
+
       return token;
     },
+
     async session({ session, token }) {
       console.log("[Auth] session callback");
-      if (session.user?.email) {
-        try {
-          // If we have token.id (from jwt), use it
-          if (token?.id) {
-            return {
-              ...session,
-              user: {
-                ...session.user,
-                id: token.id as string,
-              },
-            };
-          }
 
-          // Fallback to DB lookup if needed (e.g. if jwt didn't populate it)
-          const results = await queryD1(
-            "SELECT id FROM users WHERE email = ? LIMIT 1",
-            [session.user.email]
-          );
-          if (results && results.length > 0) {
-            const u = results[0] as { id: string };
-            return {
-              ...session,
-              user: {
-                ...session.user,
-                id: u.id,
-              },
-            };
-          }
-        } catch (e) {
-          console.error("[Session Callback Error]", e);
-        }
+      // Add user id from token to session
+      if (token?.id && session.user) {
+        session.user.id = token.id as string;
       }
+
       return session;
     },
+
     async authorized({ auth }) {
       return !!auth;
     },

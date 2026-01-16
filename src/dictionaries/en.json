@@ -12,60 +12,60 @@
     "title_prefix": "A Simple Index",
     "title_middle": "for",
     "title_highlight": "Computer Science",
-    "desc_1": "CodeCampus is a student-focused project that gathers public course catalogs from top schools like MIT, Stanford, and Berkeley into one easy-to-use search tool.",
-    "desc_2": "We don't host the classes. Instead, we organize scattered info—like what you need to know before joining and how hard a course is—to help you plan your own studies.",
+    "desc_1": "CodeCampus is an independent project that gathers public course catalogs from top schools like MIT, Stanford, and Berkeley into one easy-to-use search tool.",
+    "desc_2": "We don't host the classes. Instead, we organize scattered info—like what you need to know before joining and how hard a course is—to help you plan your own learning path.",
     "stat_sources": "Schools",
     "stat_nodes": "Courses",
     "stat_schema": "Structured"
   },
   "features": {
     "universal_index": {
-      "title": "Universal Index",
-      "desc": "Access a normalized, query-optimized registry of courses from MIT, Stanford, Berkeley, and CMU via a single, latency-free control plane."
+      "title": "All in One Place",
+      "desc": "Search through a combined list of courses from top universities without jumping between different websites."
     },
     "progress_analytics": {
-      "title": "Progress Telemetry",
-      "desc": "Track your intellectual velocity. Log coursework to generate real-time visualizations of your credit distribution and domain expertise."
+      "title": "Track Your Learning",
+      "desc": "Keep a simple log of the classes you've finished and see how your skills are growing over time."
     },
     "gap_analysis": {
-      "title": "Skill Audit",
-      "desc": "Algorithmic comparison of your transcript against top-tier degree requirements. Detect prerequisite voids and optimize your learning vector."
+      "title": "Plan Your Path",
+      "desc": "Compare what you've learned against real degree requirements to see what classes you should take next."
     }
   },
   "pricing": {
     "label": "Membership",
     "title_prefix": "Simple Plans for",
-    "title_highlight": "Every Student",
-    "desc": "Choose the level of insight that fits your academic goals.",
+    "title_highlight": "Your Goals",
+    "desc": "Choose the level of insight that fits your personal learning journey.",
     "free": {
-      "name": "Scholar",
+      "name": "Starter",
       "price": "$0",
       "desc": "Essential tools for finding and tracking courses.",
       "features": ["Unlimited Course Search", "Basic Progress Tracking", "Public Catalog Access"],
       "cta": "Get Started"
     },
     "pro": {
-      "name": "Fellow",
+      "name": "Professional",
       "price": "$9",
       "period": "/mo",
-      "desc": "Advanced analytics for serious academic planning.",
+      "desc": "Advanced analytics for serious learning planning.",
       "features": ["Degree Audit Tools", "Export Transcripts", "Learning Velocity Charts", "Priority Support"],
-      "cta": "Go Fellow"
+      "cta": "Go Pro"
     },
     "elite": {
-      "name": "Researcher",
+      "name": "Expert",
       "price": "$29",
       "period": "/mo",
-      "desc": "Institutional-grade intelligence and research tools.",
-      "features": ["Unlimited Roadmap Plans", "Cross-Uni Gap Analysis", "API Access", "Dedicated Mentor"],
-      "cta": "Get Researcher"
+      "desc": "High-level intelligence and specialized tools.",
+      "features": ["Unlimited Roadmap Plans", "Cross-Uni Gap Analysis", "API Access", "Dedicated Support"],
+      "cta": "Get Expert"
     }
   },
   "universities": {
     "label": "Including Public Catalogs From"
   },
   "footer": {
-    "copyright": "© 2026 CodeCampus Catalog. A helpful tool for students."
+    "copyright": "© 2026 CodeCampus Catalog. A helpful tool for learners."
   },
   "navbar": {
     "mission": "About",

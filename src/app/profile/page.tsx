@@ -55,7 +55,7 @@ export default async function ProfilePage() {
             <div className="flex items-center gap-4">
               <h1 className="text-4xl font-black text-gray-900 tracking-tighter">{profile.name}</h1>
               <span className="bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-gray-200">
-                Lvl {Math.floor(completedCount / 2) + 1} Scholar
+                Lvl {Math.floor(completedCount / 2) + 1} Expertise
               </span>
             </div>
             <p className="text-xl text-gray-400 font-medium tracking-tight">{profile.email}</p>

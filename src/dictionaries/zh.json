@@ -12,7 +12,7 @@
     "title_prefix": "一个简单的",
     "title_middle": "计算机课程",
     "title_highlight": "索引库",
-    "desc_1": "CodeCampus 是一个面向学生的项目，旨在将 MIT、Stanford 和 Berkeley 等名校的公开课程目录汇聚在一起，方便大家搜索和查阅。",
+    "desc_1": "CodeCampus 是一个独立的开源项目，旨在将 MIT、Stanford 和 Berkeley 等名校的公开课程目录汇聚在一起，方便所有人搜索和查阅。",
     "desc_2": "我们不提供课程视频，而是帮你整理散落在各处的教学大纲、先修要求和难度信息，助你更清晰地制定个人学习计划。",
     "stat_sources": "学校",
     "stat_nodes": "课程数量",
@@ -20,53 +20,52 @@
   },
   "features": {
     "universal_index": {
-      "title": "全网索引",
-      "desc": "通过单一的低延迟控制平面，无缝检索 MIT、Stanford、Berkeley 和 CMU 的标准化课程注册表。"
+      "title": "一站式搜索",
+      "desc": "在一个界面里搜索多家名校的课程，无需在不同的学校官网上反复跳转。"
     },
     "progress_analytics": {
-      "title": "学业遥测",
-      "desc": "追踪你的智力加速度。记录修读课程，实时生成学分分布和领域专长的可视化数据。",
-      "note": "Telemetry translated as 遥测 conveys a high-tech/space feel."
+      "title": "修读进度",
+      "desc": "简单记录你已经学过的课程，直观地看到自己在不同领域的学术积累。"
     },
     "gap_analysis": {
-      "title": "技能审计",
-      "desc": "算法化比对你的成绩单与顶尖学位要求。精准探测先修课黑洞，优化你的学习矢量。"
+      "title": "规划建议",
+      "desc": "将你的学习情况与顶尖学位的要求进行对比，看看还有哪些核心技能需要补充。"
     }
   },
   "pricing": {
     "label": "会员计划",
-    "title_prefix": "为每位同学设计的",
-    "title_highlight": "简单方案",
-    "desc": "根据你的学术目标，选择最适合的洞察深度。",
+    "title_prefix": "为您打造的",
+    "title_highlight": "灵活方案",
+    "desc": "根据你的个人学习目标，选择最适合的洞察深度。",
     "free": {
-      "name": "学者 (Scholar)",
+      "name": "基础版 (Starter)",
       "price": "¥0",
       "desc": "查找和追踪课程的基础工具。",
       "features": ["无限课程搜索", "基础进度追踪", "公开目录访问"],
       "cta": "免费开始"
     },
     "pro": {
-      "name": "进阶 (Fellow)",
+      "name": "专业版 (Pro)",
       "price": "¥68",
       "period": "/月",
-      "desc": "为严谨学术规划设计的进阶分析工具。",
+      "desc": "为严谨学习规划设计的进阶分析工具。",
       "features": ["学位审计工具", "导出成绩单", "学习加速度图表", "优先技术支持"],
-      "cta": "选择进阶版"
+      "cta": "选择专业版"
     },
     "elite": {
-      "name": "研究员 (Researcher)",
+      "name": "专家版 (Expert)",
       "price": "¥198",
       "period": "/月",
-      "desc": "机构级的学术情报与研究工具。",
-      "features": ["无限路线图规划", "跨校差距分析", "API 数据接入", "专属学术导师"],
-      "cta": "选择研究员"
+      "desc": "高阶的学术情报与专业研究工具。",
+      "features": ["无限路线图规划", "跨校差距分析", "API 数据接入", "专属技术支持"],
+      "cta": "选择专家版"
     }
   },
   "universities": {
     "label": "收录了来自这些学府的公开目录"
   },
   "footer": {
-    "copyright": "© 2026 CodeCampus 课程库. 一个帮助同学的小工具."
+    "copyright": "© 2026 CodeCampus 课程库. 一个实用的学习工具."
   },
   "navbar": {
     "mission": "关于",

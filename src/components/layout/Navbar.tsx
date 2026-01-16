@@ -34,7 +34,7 @@ export default async function Navbar() {
             <div className="flex items-center pl-8 border-l border-gray-200 h-8">
                 <Link href="/profile" className="flex items-center gap-3 group">
                   <div className="hidden sm:flex flex-col items-end -space-y-0.5">
-                    <span className="text-[9px] font-black text-gray-900 uppercase tracking-tight">{session?.user?.name || "Guest Scholar"}</span>
+                    <span className="text-[9px] font-black text-gray-900 uppercase tracking-tight">{session?.user?.name || "Guest User"}</span>
                     <div className="flex items-center gap-1">
                       <div className="w-1.5 h-1.5 bg-brand-green rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
                       <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Online</span>

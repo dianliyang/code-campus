@@ -66,7 +66,7 @@ export async function queryD1<T = unknown>(
     if (sql.includes("SELECT * FROM users WHERE email = ?") && params[0] === "guest@codecampus.example.com") {
         return [{
             id: "guest-user-id",
-            name: "Guest Scholar",
+            name: "Guest User",
             email: "guest@codecampus.example.com",
             image: null,
             provider: "credentials",

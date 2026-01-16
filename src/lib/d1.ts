@@ -1,4 +1,5 @@
 import { Course } from "./scrapers/types";
+import { up } from "@auth/d1-adapter";
 
 const config = {
   isDev: process.env.NODE_ENV === "development",
@@ -7,6 +8,21 @@ const config = {
   databaseId: process.env.CLOUDFLARE_DATABASE_ID,
   apiToken: process.env.CLOUDFLARE_API_TOKEN,
 };
+
+let migrated = false;
+
+async function ensureTables(binding: any) {
+  if (migrated || !binding) return;
+  try {
+    // Auth.js D1Adapter expects 'up' to be run to initialize tables
+    await up(binding);
+    migrated = true;
+    console.log("[D1] Migration successful");
+  } catch (e: any) {
+    console.warn("[D1] Migration skipped or failed:", e.message);
+    migrated = true; // Don't retry every time if it fails (e.g. already exists)
+  }
+}
 
 // Avoid "immutable" errors in Edge runtime by cloning results
 const clone = <T>(obj: T): T => {
@@ -22,6 +38,7 @@ export async function queryD1<T = unknown>(sql: string, params: unknown[] = []):
 
   // 1. Cloudflare D1 Binding (Production/Edge)
   if (binding?.prepare) {
+    await ensureTables(binding);
     const stmt = binding.prepare(sql).bind(...params);
     const res = isSelect ? await stmt.all() : await stmt.run();
     return clone(res.results || (isSelect ? [] : [res]));
@@ -74,6 +91,9 @@ export const runD1 = queryD1;
  * Returns a D1-compatible interface for Auth.js
  */
 export function getD1(): any {
+  const binding = (process.env.DB || (globalThis as any).DB) as any;
+  if (binding) ensureTables(binding);
+
   const wrap = (res: any) => ({ results: res, success: true, meta: { duration: 0, changes: res.length } });
   return {
     prepare: (sql: string) => ({

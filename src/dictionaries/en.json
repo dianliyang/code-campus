@@ -1,49 +1,49 @@
 {
   "hero": {
-    "system_status": "System Initialized // v1.0.4",
-    "title_prefix": "The Global",
+    "system_status": "Open Catalog // Beta",
+    "title_prefix": "Find the Best",
     "title_highlight": "CS",
-    "title_suffix": "Catalog",
-    "description": "Decode the matrix of global computer science education. Navigate a high-fidelity graph of curricula from the world's leading universities through a unified, high-performance interface.",
-    "cta": "Access the Network"
+    "title_suffix": "Courses",
+    "description": "A simple way to explore and compare computer science curricula from top universities. Find the right classes for your learning journey in one searchable index.",
+    "cta": "Browse Courses"
   },
   "mission": {
-    "label": "System Architecture",
-    "title_prefix": "The Central Index",
+    "label": "Project Overview",
+    "title_prefix": "A Simple Index",
     "title_middle": "for",
-    "title_highlight": "CS Curricula",
-    "desc_1": "CodeCampus is not just a search engine; it is a decentralized academic intelligence unit. We ingest disparate catalog data to forge a normalized schema for global education comparison.",
-    "desc_2": "We architect order from chaos. By structuring fragmented syllabi, prerequisites, and learning outcomes into a queryable knowledge graph, we empower you to reverse-engineer your path to mastery.",
-    "stat_sources": "Sources",
-    "stat_nodes": "Nodes",
-    "stat_schema": "Schema"
+    "title_highlight": "Computer Science",
+    "desc_1": "CodeCampus is a student-focused project that gathers public course catalogs from top schools like MIT, Stanford, and Berkeley into one easy-to-use search tool.",
+    "desc_2": "We don't host the classes. Instead, we organize scattered info—like what you need to know before joining and how hard a course is—to help you plan your own studies.",
+    "stat_sources": "Schools",
+    "stat_nodes": "Courses",
+    "stat_schema": "Structured"
   },
   "features": {
     "universal_index": {
-      "title": "Universal Index",
-      "desc": "Access a normalized, query-optimized registry of courses from MIT, Stanford, Berkeley, and CMU via a single, latency-free control plane."
+      "title": "All in One Place",
+      "desc": "Search through a combined list of courses from top universities without jumping between different websites."
     },
     "progress_analytics": {
-      "title": "Progress Telemetry",
-      "desc": "Track your intellectual velocity. Log coursework to generate real-time visualizations of your credit distribution and domain expertise."
+      "title": "Track Your Learning",
+      "desc": "Keep a simple log of the classes you've finished and see how your skills are growing over time."
     },
     "gap_analysis": {
-      "title": "Skill Audit",
-      "desc": "Algorithmic comparison of your transcript against top-tier degree requirements. Detect prerequisite voids and optimize your learning vector."
+      "title": "Plan Your Path",
+      "desc": "Compare what you've learned against real degree requirements to see what classes you should take next."
     }
   },
   "universities": {
-    "label": "Aggregating World-Class Curricula From"
+    "label": "Including Public Catalogs From"
   },
   "footer": {
-    "copyright": "© 2026 CodeCampus Global Network. Initialized 0xFC."
+    "copyright": "© 2026 CodeCampus Catalog. A helpful tool for students."
   },
   "navbar": {
-    "mission": "Mission",
-    "universities": "Nodes",
-    "curriculum": "Protocol",
-    "enter": "Enter",
-    "enter_network": "Enter Network",
-    "global_network": "Global Network"
+    "mission": "About",
+    "universities": "Schools",
+    "curriculum": "Features",
+    "enter": "Browse",
+    "enter_network": "Start Browsing",
+    "global_network": "Open Catalog"
   }
 }

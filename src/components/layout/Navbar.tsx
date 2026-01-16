@@ -23,7 +23,7 @@ export default async function Navbar() {
               </div>
               <div className="flex flex-col -space-y-1">
                 <span className="text-xl font-black tracking-tighter text-gray-900 uppercase leading-none">CodeCampus</span>
-                <span className="text-[9px] font-black text-brand-blue uppercase tracking-[0.3em] opacity-80 group-hover:opacity-100 transition-opacity">Network_v1.0</span>
+                <span className="text-[9px] font-black text-brand-blue uppercase tracking-[0.3em] opacity-80 group-hover:opacity-100 transition-opacity">Beta Catalog</span>
               </div>
             </Link>
           </div>

@@ -74,7 +74,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         </div>
                       </div>
                       <div class="footer">
-                        <p class="footer-text">© 2026 CodeCampus Global Network // 0xFC</p>
+                        <p class="footer-text">© 2026 CodeCampus // Beta</p>
                       </div>
                     </div>
                   </body>

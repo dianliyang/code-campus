@@ -167,7 +167,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
               </div>
               <h2 className="text-sm font-black text-gray-900 uppercase tracking-[0.5em] mb-4">Null Path Detected</h2>
                           <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] max-w-[320px] leading-relaxed mb-12">
-                            Your educational roadmap is currently inactive. Synchronize with the global network to initialize your first study sequence.
+                            Your roadmap is currently empty. Explore the course catalog to start your first study plan.
                           </p>
                           <Link href="/" className="px-10 py-4 bg-brand-dark text-white rounded-xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-brand-blue transition-all shadow-xl shadow-brand-dark/10">
                             Begin Initialization

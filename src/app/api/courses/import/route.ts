@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       VALUES (?, ?, ?, ?, ?, ?, 0)
     `, [university, courseCode, title, description || "", url || "#", level || "undergraduate"]);
 
-    return NextResponse.json({ success: true, message: "Course successfully initialized in global network" });
+    return NextResponse.json({ success: true, message: "Course successfully added to the catalog" });
   } catch (error) {
     console.error("Import error:", error);
     return NextResponse.json({ error: "System initialization failure" }, { status: 500 });

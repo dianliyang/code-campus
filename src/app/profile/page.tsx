@@ -123,7 +123,7 @@ export default async function ProfilePage() {
               <span className="text-7xl font-black text-brand-blue tracking-tighter leading-none">{Math.round((universityCount / 4) * 100)}</span>
               <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">%</span>
             </div>
-            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed">Percentage of available global networks explored.</p>
+            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed">Percentage of available university catalogs explored.</p>
           </div>
         </div>
 

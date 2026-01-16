@@ -22,7 +22,7 @@ export default function VerifyRequestPage() {
             />
             <div className="flex flex-col -space-y-1.5">
               <span className="text-2xl font-black tracking-tighter text-white uppercase">CodeCampus</span>
-              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-[0.3em]">Global Network</span>
+              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-[0.3em]">Open Catalog</span>
             </div>
           </Link>
         </div>
@@ -45,7 +45,7 @@ export default function VerifyRequestPage() {
 
         <div className="relative z-10">
            <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.3em]">
-             © 2026 CodeCampus Global Network.
+             © 2026 CodeCampus Catalog.
            </p>
         </div>
       </div>

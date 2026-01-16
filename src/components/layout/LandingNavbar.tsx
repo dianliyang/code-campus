@@ -25,7 +25,7 @@ export default function LandingNavbar({ dict }: { dict: any }) {
                 {!scrolled && (
                   <div className="flex flex-col transition-opacity duration-300">
                     <span className="text-2xl font-black tracking-tighter text-gray-900 uppercase leading-none">CodeCampus</span>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] group-hover:text-brand-blue transition-colors">{dict?.global_network || "Global Network"}</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] group-hover:text-brand-blue transition-colors">{dict?.global_network || "Open Catalog"}</span>
                   </div>
                 )}
               </Link>

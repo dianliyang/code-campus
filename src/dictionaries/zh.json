@@ -1,50 +1,49 @@
 {
   "hero": {
-    "system_status": "系统初始化完成 // v1.0.4",
-    "title_prefix": "全球",
+    "system_status": "公开课程库 // 测试版",
+    "title_prefix": "探索顶尖",
     "title_highlight": "CS",
-    "title_suffix": "课程图谱",
-    "description": "解构全球计算机科学教育矩阵。通过统一的高性能终端，深度解析来自世界顶尖学府的课程体系，构建你的高保真知识图谱。",
-    "cta": "接入网络"
+    "title_suffix": "课程",
+    "description": "一个简单实用的工具，帮助你查找并对比世界顶尖大学的计算机科学课程。在一个搜索框内，轻松规划你的学习路径。",
+    "cta": "浏览课程"
   },
   "mission": {
-    "label": "系统架构",
-    "title_prefix": "计算机科学的",
-    "title_middle": "",
-    "title_highlight": "中央索引库",
-    "desc_1": "CodeCampus 不仅仅是一个搜索引擎，它是去中心化的学术情报单元。我们摄取分散的目录数据，为全球教育比对打造标准化的数据基座。",
-    "desc_2": "我们在混沌中构建秩序。通过将碎片化的教学大纲、先修逻辑和学习成果重构为可查询的知识图谱，助你逆向工程通往精通的路径。",
-    "stat_sources": "数据源",
-    "stat_nodes": "知识节点",
+    "label": "项目简介",
+    "title_prefix": "一个简单的",
+    "title_middle": "计算机课程",
+    "title_highlight": "索引库",
+    "desc_1": "CodeCampus 是一个面向学生的项目，旨在将 MIT、Stanford 和 Berkeley 等名校的公开课程目录汇聚在一起，方便大家搜索和查阅。",
+    "desc_2": "我们不提供课程视频，而是帮你整理散落在各处的教学大纲、先修要求和难度信息，助你更清晰地制定个人学习计划。",
+    "stat_sources": "学校",
+    "stat_nodes": "课程数量",
     "stat_schema": "结构化"
   },
   "features": {
     "universal_index": {
-      "title": "全网索引",
-      "desc": "通过单一的低延迟控制平面，无缝检索 MIT、Stanford、Berkeley 和 CMU 的标准化课程注册表。"
+      "title": "一站式搜索",
+      "desc": "在一个界面里搜索多家名校的课程，无需在不同的学校官网上反复跳转。"
     },
     "progress_analytics": {
-      "title": "学业遥测",
-      "desc": "追踪你的智力加速度。记录修读课程，实时生成学分分布和领域专长的可视化数据。",
-      "note": "Telemetry translated as 遥测 conveys a high-tech/space feel."
+      "title": "修读进度",
+      "desc": "简单记录你已经学过的课程，直观地看到自己在不同领域的学术积累。"
     },
     "gap_analysis": {
-      "title": "技能审计",
-      "desc": "算法化比对你的成绩单与顶尖学位要求。精准探测先修课黑洞，优化你的学习矢量。"
+      "title": "规划建议",
+      "desc": "将你的学习情况与顶尖学位的要求进行对比，看看还有哪些核心技能需要补充。"
     }
   },
   "universities": {
-    "label": "汇聚全球顶尖计算机课程体系"
+    "label": "收录了来自这些学府的公开目录"
   },
   "footer": {
-    "copyright": "© 2026 CodeCampus 全球网络. 0xFC 初始化完成."
+    "copyright": "© 2026 CodeCampus 课程库. 一个帮助同学的小工具."
   },
   "navbar": {
-    "mission": "愿景",
-    "universities": "节点",
-    "curriculum": "协议",
-    "enter": "接入",
-    "enter_network": "接入网络",
-    "global_network": "全球学术网络"
+    "mission": "关于",
+    "universities": "学校",
+    "curriculum": "功能",
+    "enter": "进入",
+    "enter_network": "开始浏览",
+    "global_network": "公开课程库"
   }
 }

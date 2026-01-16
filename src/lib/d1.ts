@@ -147,30 +147,25 @@ export async function queryD1<T = unknown>(
   }
 
   if (process.env.NODE_ENV === "development") {
-    // console.warn(`[D1] No database binding or remote API found. Runtime: ${process.env.NEXT_RUNTIME}. Falling back to mocks.`);
-    
-    // Mock Verification Tokens (Magic Link Support in Dev)
-    if (sql.includes("INSERT INTO verification_tokens")) {
+    // Mock Verification Tokens
+    if (sql.includes("INSERT INTO verification_token")) {
       const [identifier, token, expires] = params as [string, string, string];
       const tokens = getMockTokens();
       tokens.push({ identifier, token, expires });
       saveMockTokens(tokens);
-      console.log(`[D1 Mock] Token saved for ${identifier}, token: ${token.substring(0, 8)}... Total: ${tokens.length}`);
+      console.log(`[D1 Mock] Token saved for ${identifier}, total: ${tokens.length}`);
       return [{ success: true }] as unknown as T[];
     }
 
-    if (sql.includes("SELECT * FROM verification_tokens WHERE identifier = ? AND token = ?")) {
+    if (sql.includes("SELECT * FROM verification_token WHERE identifier = ? AND token = ?")) {
       const [identifier, token] = params as [string, string];
       const tokens = getMockTokens();
       const found = tokens.find(t => t.identifier === identifier && t.token === token);
-      console.log(`[D1 Mock] Token lookup for ${identifier}, token: ${token.substring(0, 8)}... Result: ${found ? "Found" : "Not Found"}`);
-      if (!found) {
-        console.log(`[D1 Mock] Current tokens in store:`, tokens.map(t => `${t.identifier}:${t.token.substring(0, 8)}...`).join(', '));
-      }
+      console.log(`[D1 Mock] Token lookup for ${identifier}: ${found ? "Found" : "Not Found"}`);
       return (found ? [clone(found)] : []) as unknown as T[];
     }
 
-    if (sql.includes("DELETE FROM verification_tokens WHERE identifier = ? AND token = ?")) {
+    if (sql.includes("DELETE FROM verification_token WHERE identifier = ? AND token = ?")) {
       const [identifier, token] = params as [string, string];
       let tokens = getMockTokens();
       tokens = tokens.filter(t => !(t.identifier === identifier && t.token === token));
@@ -205,6 +200,44 @@ export async function runD1(
   params: unknown[] = []
 ): Promise<unknown> {
   return queryD1(sql, params);
+}
+
+/**
+ * Returns a D1-compatible interface that routes through our robust queryD1
+ */
+export function getD1(): any {
+  return {
+    prepare: (sql: string) => ({
+      bind: (...params: any[]) => ({
+        all: async () => {
+          const results = await queryD1(sql, params);
+          return { results, success: true };
+        },
+        run: async () => {
+          const results = await queryD1(sql, params);
+          return { results, success: true };
+        },
+        first: async (column?: string) => {
+          const results = await queryD1(sql, params);
+          const first = results[0];
+          if (column && first) return (first as any)[column];
+          return first;
+        }
+      })
+    }),
+    batch: async (statements: any[]) => {
+      // Very basic batch implementation
+      const results = [];
+      for (const stmt of statements) {
+        results.push(await stmt.all());
+      }
+      return results;
+    },
+    exec: async (sql: string) => {
+      await queryD1(sql);
+      return { success: true };
+    }
+  };
 }
 
 export function mapCourseFromRow(

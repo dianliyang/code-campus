@@ -1,11 +1,12 @@
 import NextAuth from "next-auth";
 import Resend from "next-auth/providers/resend";
-import { CodeCampusAdapter } from "@/lib/auth-adapter";
+import { D1Adapter } from "@auth/d1-adapter";
+import { getD1 } from "@/lib/d1";
 import { authConfig } from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  adapter: CodeCampusAdapter(),
+  adapter: D1Adapter(getD1()),
   secret: process.env.AUTH_SECRET,
   session: {
     strategy: "database",
@@ -23,9 +24,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         process.env.EMAIL_FROM ||
         "CodeCampus <no-reply@codecampus.example.com>",
       maxAge: 60 * 60, // Increased to 60 minutes
-      generateVerificationToken() {
-        return crypto.randomUUID();
-      },
       async sendVerificationRequest({ identifier: email, url }) {
         console.log(`[Auth] Dispatching Link for ${email}`);
 
@@ -114,18 +112,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       return false;
-    },
-
-    async jwt({ token, user, account, trigger }) {
-      console.log("[Auth] jwt callback", trigger);
-
-      // Initial sign in
-      if (user) {
-        token.id = user.id;
-        token.email = user.email;
-      }
-
-      return token;
     },
 
     async session({ session, token }) {

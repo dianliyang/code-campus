@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS user_courses (
   progress INTEGER DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
   status TEXT DEFAULT 'pending', -- pending, in_progress, completed, dropped
   priority INTEGER DEFAULT 0,
+  gpa NUMERIC(3,2) CHECK (gpa >= 0 AND gpa <= 5.0),
+  score NUMERIC(5,2) CHECK (score >= 0 AND score <= 100),
   notes TEXT,
   updated_at TIMESTAMPTZ DEFAULT now(),
   PRIMARY KEY (user_id, course_id)

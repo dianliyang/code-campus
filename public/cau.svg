@@ -1,7 +1,0 @@
-<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <rect width="200" height="200" rx="40" fill="#f8fafc"/>
-  <path d="M40 60 L40 140 M40 100 L70 100 M70 60 L70 140" stroke="#003d86" stroke-width="12" fill="none" stroke-linecap="round"/>
-  <path d="M90 140 L115 60 L140 140 M100 110 L130 110" stroke="#003d86" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M160 60 L160 120 C160 135 175 135 175 120 L175 60" stroke="#003d86" stroke-width="12" fill="none" stroke-linecap="round"/>
-  <text x="100" y="175" font-family="Arial, sans-serif" font-size="12" font-weight="900" text-anchor="middle" fill="#003d86" style="letter-spacing: 1px;">KIEL UNIVERSITY</text>
-</svg>

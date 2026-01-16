@@ -8,7 +8,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: CodeCampusAdapter(),
   secret: process.env.AUTH_SECRET,
   session: {
-    strategy: "jwt", // Keep JWT for edge compatibility
+    strategy: "database",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {

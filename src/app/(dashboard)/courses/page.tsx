@@ -3,7 +3,7 @@ import Hero from "@/components/home/Hero";
 import Sidebar from "@/components/home/Sidebar";
 import CourseList from "@/components/home/CourseList";
 import { University, Field, Course } from "@/types";
-import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
+import { getUser, createClient, mapCourseFromRow, formatUniversityName } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 
@@ -71,7 +71,8 @@ async function SidebarData({ userId, params, dict }: { userId?: string, params: 
 
   const universityCounts: Record<string, number> = {};
   universitiesRes.data?.forEach(c => {
-    universityCounts[c.university] = (universityCounts[c.university] || 0) + 1;
+    const formattedName = formatUniversityName(c.university);
+    universityCounts[formattedName] = (universityCounts[formattedName] || 0) + 1;
   });
   
   const dbUniversities: University[] = Object.entries(universityCounts)

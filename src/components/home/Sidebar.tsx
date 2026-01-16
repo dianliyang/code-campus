@@ -78,7 +78,7 @@ export default function Sidebar({ universities, fields, enrolledCount, dict }: S
                     checked={selectedUniversities.includes(uni.name)} 
                     onChange={() => updateParams("universities", handleToggle(selectedUniversities, uni.name))} 
                   />
-                  <span className={`text-sm uppercase tracking-tight transition-colors ${selectedUniversities.includes(uni.name) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                  <span className={`text-sm tracking-tight transition-colors ${selectedUniversities.includes(uni.name) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
                     {uni.name}
                   </span>
                 </div>

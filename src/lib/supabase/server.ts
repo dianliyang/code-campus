@@ -138,10 +138,20 @@ export async function incrementPopularity(courseId: number): Promise<void> {
   }
 }
 
+export function formatUniversityName(name: string): string {
+  const n = name.toLowerCase();
+  if (n === 'mit') return 'MIT';
+  if (n === 'stanford') return 'Stanford';
+  if (n === 'cmu') return 'CMU';
+  if (n === 'ucb') return 'UC Berkeley';
+  if (n === 'cau') return 'CAU Kiel';
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
 export function mapCourseFromRow(
   row: Record<string, unknown>
 ): Course & { id: number; url: string } {
-  const university = String(row.university || "").toLowerCase();
+  const university = formatUniversityName(String(row.university || ""));
   const courseCode = String(row.course_code || row.course_code || "");
   const code = encodeURIComponent(courseCode);
 

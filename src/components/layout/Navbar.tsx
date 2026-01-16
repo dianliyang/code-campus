@@ -42,8 +42,7 @@ export default async function Navbar() {
               })}
             </div>
             
-            {session || true ? (
-              <div className="flex items-center gap-8 pl-10 border-l border-gray-100">
+            <div className="flex items-center gap-8 pl-10 border-l border-gray-100">
                 <Link href="/profile" className="flex items-center gap-4 group">
                   <div className="hidden sm:flex flex-col items-end -space-y-1">
                     <span className="text-[10px] font-black text-gray-900 uppercase tracking-tight">{session?.user?.name || "Guest Scholar"}</span>
@@ -55,8 +54,6 @@ export default async function Navbar() {
                 </Link>
                 {session && <LogoutButton />}
               </div>
-            )}
-          </div>
           </div>
         </div>
       </div>

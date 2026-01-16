@@ -1,5 +1,5 @@
 import { signIn } from "@/auth";
-import Globe from "@/components/ui/Globe";
+import KnowledgeGraph from "@/components/home/KnowledgeGraph";
 import Image from "next/image";
 import Link from "next/link";
 import { AuthError } from "next-auth";
@@ -35,7 +35,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white overflow-hidden">
       
-      {/* Left Side: Immersive Branding & Globe */}
+      {/* Left Side: Immersive Branding & Data Visualization */}
       <div className="hidden lg:flex flex-col justify-between bg-gray-950 p-16 relative overflow-hidden">
         {/* Background Decorative Element */}
         <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none select-none">
@@ -58,10 +58,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
           </Link>
         </div>
 
-        {/* Globe Container */}
+        {/* Visualization Container */}
         <div className="absolute inset-0 flex items-center justify-center opacity-40">
            <div className="w-[120%] h-[120%]">
-             <Globe />
+             <KnowledgeGraph nodeColor="#3b82f6" />
            </div>
         </div>
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-export default function KnowledgeGraph() {
+export default function KnowledgeGraph({ nodeColor = "#0f172a" }: { nodeColor?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function KnowledgeGraph() {
         // Draw
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "#0f172a"; // Slate-900
+        ctx.fillStyle = nodeColor; 
         ctx.fill();
         
         // Pulse effect

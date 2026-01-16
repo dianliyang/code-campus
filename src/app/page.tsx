@@ -36,7 +36,7 @@ export default function Home() {
           <div className="flex justify-center">
             <Link 
               href="/courses" 
-              className="inline-flex items-center justify-center gap-4 px-8 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-[0.3em] rounded-full hover:bg-brand-blue hover:scale-105 transition-all duration-300 group shadow-2xl shadow-brand-blue/20"
+              className="inline-flex items-center justify-center gap-4 btn-primary group shadow-2xl shadow-brand-blue/20"
             >
               Explore the Catalog
               <i className="fa-solid fa-chevron-right text-[10px] transition-transform group-hover:translate-x-2"></i>

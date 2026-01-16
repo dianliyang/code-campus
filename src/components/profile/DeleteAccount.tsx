@@ -34,19 +34,19 @@ export default function DeleteAccount() {
           This will permanently delete your profile and all course progress. This cannot be undone.
         </p>
         <div className="flex gap-4">
-          <button 
-            onClick={handleDelete}
-            disabled={loading}
-            className="bg-red-500 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            {loading ? "Deleting..." : "Confirm Delete"}
-          </button>
-          <button 
-            onClick={() => setIsConfirming(false)}
-            className="bg-white text-gray-500 border border-gray-200 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-colors cursor-pointer"
-          >
-            Cancel
-          </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={loading}
+                  className="bg-red-500 text-white btn-base px-6 py-2 rounded-xl hover:bg-red-600 cursor-pointer disabled:opacity-50"
+                >
+                  {loading ? "Deleting..." : "Confirm Deletion"}
+                </button>
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="bg-white text-gray-500 border border-gray-200 btn-base px-6 py-2 rounded-xl hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
         </div>
       </div>
     );

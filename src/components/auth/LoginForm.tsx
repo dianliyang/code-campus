@@ -79,7 +79,7 @@ export default function LoginForm({ onMagicLink, sent }: LoginFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-brand-blue text-white font-black text-xs uppercase tracking-[0.2em] py-5 rounded-xl hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full btn-primary py-5 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {loading ? "Processing..." : sent ? "Resend Magic Link" : "Send Magic Link"}
         </button>

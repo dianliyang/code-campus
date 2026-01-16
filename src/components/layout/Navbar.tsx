@@ -33,7 +33,7 @@ export default async function Navbar() {
                 const href = item === "Courses" ? "/courses" : item === "Study Roadmap" ? "/study-plan" : "/profile";
                 return (
                   <Link key={item} href={href} className="group flex flex-col items-center">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-gray-900 transition-colors">
+                    <span className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-gray-900 transition-colors">
                       {item}
                     </span>
                     <div className="h-0.5 w-0 group-hover:w-4 bg-brand-blue mt-1 transition-all duration-300 rounded-full"></div>

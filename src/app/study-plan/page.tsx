@@ -74,7 +74,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
           />
           <Link 
             href="/import" 
-            className="px-8 py-2.5 border border-gray-200 text-gray-500 hover:text-brand-blue hover:border-brand-blue rounded-xl text-[9px] font-black uppercase tracking-[0.3em] transition-all flex items-center gap-3 mt-4 md:mt-0"
+            className="btn-secondary flex items-center gap-3 mt-4 md:mt-0"
           >
             <i className="fa-solid fa-plus text-[7px]"></i>
             Import Course

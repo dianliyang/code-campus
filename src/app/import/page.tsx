@@ -185,7 +185,7 @@ export default function ImportPage() {
               <div className="flex flex-col md:flex-row items-center gap-10 pt-10">
                 <button 
                   disabled={loading} 
-                  className="px-10 py-3 border border-gray-200 text-gray-500 hover:text-brand-blue hover:border-brand-blue rounded-xl text-[10px] font-black uppercase tracking-[0.3em] transition-all disabled:opacity-50 cursor-pointer"
+                  className="btn-secondary disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? "PROCESSING..." : "Execute Entry"}
                 </button>

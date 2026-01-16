@@ -53,4 +53,23 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@utility btn-base {
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  transition-property: all;
+  transition-duration: 300ms;
+}
+
+@utility btn-primary {
+  @apply btn-base bg-brand-dark text-white rounded-xl px-8 py-3 hover:bg-brand-blue active:scale-95;
+}
+
+@utility btn-secondary {
+  @apply btn-base border border-gray-200 text-gray-500 rounded-xl px-8 py-3 hover:border-brand-blue hover:text-brand-blue active:scale-95;
 }

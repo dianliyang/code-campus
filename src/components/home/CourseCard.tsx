@@ -46,10 +46,10 @@ export default function CourseCard({ course, isInitialEnrolled, onEnrollToggle, 
       <button 
         onClick={handleEnroll}
         disabled={loading}
-        className={`absolute top-0 right-6 px-3 py-1.5 rounded-b-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+        className={`absolute top-0 right-6 px-4 py-2 rounded-b-lg btn-base ${
           isEnrolled 
             ? 'bg-brand-green text-white translate-y-0' 
-            : 'bg-gray-100 text-gray-500 hover:bg-blue-700 hover:text-white -translate-y-1 group-hover:translate-y-0'
+            : 'bg-gray-100 text-gray-500 hover:bg-brand-blue hover:text-white -translate-y-1 group-hover:translate-y-0'
         }`}
       >
         {loading ? (

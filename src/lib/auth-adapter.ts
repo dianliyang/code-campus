@@ -230,15 +230,15 @@ export function CodeCampusAdapter(): Adapter {
       const id = identifier.toLowerCase();
       console.log(`[Adapter] createVerificationToken for ${id}`);
       try {
-        const result = await runD1(
+        await runD1(
           "INSERT INTO verification_tokens (identifier, token, expires) VALUES (?, ?, ?)",
           [id, token, expires.toISOString()]
         );
-        console.log(`[Adapter] createVerificationToken success:`, result);
         return verificationToken;
       } catch (err) {
         console.error("[Adapter] createVerificationToken Error:", err);
-        throw err;
+        // Don't throw here to avoid 500, return null to let Auth.js handle it
+        return null;
       }
     },
     async useVerificationToken({ identifier, token }) {

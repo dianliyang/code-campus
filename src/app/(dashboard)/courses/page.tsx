@@ -60,7 +60,7 @@ async function CourseListData({ params, dict }: { params: any, dict: any }) {
   let initialEnrolledIds: number[] = [];
   const email = session?.user?.email || "guest@codecampus.example.com";
   const enrolledRows = await queryD1<{ course_id: number }>(
-    'SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1)',
+    'SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM user WHERE email = ? LIMIT 1)',
     [email]
   );
   initialEnrolledIds = enrolledRows.map(r => r.course_id);
@@ -97,7 +97,7 @@ async function fetchCourses(
 
   if (enrolledOnly) {
     if (!userEmail) return { items: [], total: 0, pages: 0 };
-    whereClause += ` AND c.id IN (SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1))`;
+    whereClause += ` AND c.id IN (SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM user WHERE email = ? LIMIT 1))`;
     queryParams.push(userEmail);
   }
 

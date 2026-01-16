@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     const queryParams: (string | number)[] = [];
 
     if (enrolledOnly) {
-      whereClause += ` AND c.id IN (SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1))`;
+      whereClause += ` AND c.id IN (SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM user WHERE email = ? LIMIT 1))`;
       queryParams.push(session.user?.email || "");
     }
 

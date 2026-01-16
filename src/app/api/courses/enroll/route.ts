@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     const { courseId, action } = body; // action: 'enroll' | 'unenroll' | 'update_progress'
     const progress = body.progress ?? 0;
 
-    const user = await queryD1<{ id: number }>('SELECT id FROM users WHERE email = ?', [email]);
+    const user = await queryD1<{ id: number }>('SELECT id FROM user WHERE email = ?', [email]);
     
     if (user.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

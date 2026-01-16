@@ -38,7 +38,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
     LEFT JOIN fields f ON cf.field_id = f.id
     LEFT JOIN course_semesters cs ON c.id = cs.course_id
     LEFT JOIN semesters s ON cs.semester_id = s.id
-    WHERE uc.user_id = (SELECT id FROM users WHERE email = ? LIMIT 1)
+    WHERE uc.user_id = (SELECT id FROM user WHERE email = ? LIMIT 1)
     GROUP BY c.id, uc.status, uc.progress, uc.updated_at
     ORDER BY uc.updated_at DESC
   `, [email]);

@@ -72,10 +72,10 @@ You can manage users via Wrangler:
 
 ```bash
 # List all users
-npx wrangler d1 execute code-campus-db --local --command "SELECT id, email, name, provider FROM users;"
+npx wrangler d1 execute code-campus-db --local --command "SELECT id, email, name, provider FROM user;"
 
 # Manually insert a user (Password must be bcrypt hashed)
-npx wrangler d1 execute code-campus-db --local --command "INSERT INTO users (email, password, provider, provider_id, name) VALUES ('admin@codecampus.com', 'HASHED_PASSWORD', 'credentials', 'admin@codecampus.com', 'Admin');"
+npx wrangler d1 execute code-campus-db --local --command "INSERT INTO user (email, password, provider, provider_id, name) VALUES ('admin@codecampus.com', 'HASHED_PASSWORD', 'credentials', 'admin@codecampus.com', 'Admin');"
 ```
 
 ### Searching the Local DB

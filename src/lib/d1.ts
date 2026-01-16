@@ -197,7 +197,7 @@ export async function queryD1<T = unknown>(
     }
 
     // Mock Guest User Fetch
-    if (sql.includes("SELECT * FROM users WHERE email = ?") && params[0] === "guest@codecampus.example.com") {
+    if (sql.includes("SELECT * FROM user WHERE email = ?") && params[0] === "guest@codecampus.example.com") {
         return [clone({
             id: "guest-user-id",
             name: "Guest User",

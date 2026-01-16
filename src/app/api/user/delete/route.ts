@@ -9,7 +9,7 @@ export async function POST() {
   }
 
   try {
-    const user = await queryD1<{ id: number }>('SELECT id FROM users WHERE email = ? LIMIT 1', [session.user.email]);
+    const user = await queryD1<{ id: number }>('SELECT id FROM user WHERE email = ? LIMIT 1', [session.user.email]);
     
     if (user.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -20,7 +20,7 @@ export async function POST() {
     // Delete user data (Cascading delete in schema will handle user_courses if configured, 
     // but we'll do it explicitly here for safety)
     await runD1('DELETE FROM user_courses WHERE user_id = ?', [userId]);
-    await runD1('DELETE FROM users WHERE id = ?', [userId]);
+    await runD1('DELETE FROM user WHERE id = ?', [userId]);
 
     return NextResponse.json({ success: true, message: "Account deleted successfully" });
   } catch (error) {

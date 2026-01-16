@@ -11,7 +11,7 @@ export default async function ProfilePage() {
   const email = session?.user?.email || "guest@codecampus.example.com";
   
   const user = await queryD1<{ id: number; name: string; email: string; image: string; provider: string; created_at: string }>(
-    'SELECT * FROM users WHERE email = ? LIMIT 1', [email]
+    'SELECT * FROM user WHERE email = ? LIMIT 1', [email]
   );
 
   const profile = user[0];

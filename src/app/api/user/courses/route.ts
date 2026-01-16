@@ -8,7 +8,7 @@ export async function GET() {
 
   try {
     const rows = await queryD1<{ course_id: number }>(
-      'SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM users WHERE email = ? LIMIT 1)',
+      'SELECT course_id FROM user_courses WHERE user_id = (SELECT id FROM user WHERE email = ? LIMIT 1)',
       [email]
     );
 

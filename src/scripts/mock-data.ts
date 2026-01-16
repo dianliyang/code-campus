@@ -5,7 +5,7 @@ async function main() {
 
   // 1. Ensure mock user exists
   await runD1(`
-    INSERT OR IGNORE INTO users (id, email, name) 
+    INSERT OR IGNORE INTO user (id, email, name) 
     VALUES (?, ?, ?)
   `, [1, "test@example.com", "Demo User"]);
 

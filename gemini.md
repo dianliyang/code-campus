@@ -16,7 +16,7 @@ CodeCampus is a Next.js course aggregator. It uses Cloudflare D1 for storage and
 
 The database uses a simplified structure where user identity and account details are merged:
 
-- accounts: The primary user table. Stores email, profile info, and auth provider details.
+- account: The primary user table. Stores email, profile info, and auth provider details.
 - user_courses: Tracks course enrollments and progress linked to account IDs.
 - courses: The central catalog of scraped courses.
 - fields/semesters: Categorization and scheduling data.

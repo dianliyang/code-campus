@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import HeroBackground from "@/components/home/HeroBackground";
 
 export const revalidate = 60;
 
@@ -17,51 +18,45 @@ export default async function Home() {
     <div className="flex flex-col bg-white">
       <LandingNavbar dict={dict.navbar} />
       
-      {/* SECTION 1: HERO */}
-      <div id="hero" className="min-h-screen flex flex-col justify-center relative overflow-hidden bg-white">
-        {/* Background Grid & Decor */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
-        
-        <div className="absolute top-0 right-0 p-20 opacity-[0.03] pointer-events-none select-none hidden lg:block animate-pulse-slow">
-          <div className="text-[15rem] font-black italic tracking-tighter leading-none">0xFC</div>
-        </div>
+      {/* SECTION 1: RADICAL HERO */}
+      <div id="hero" className="min-h-screen flex flex-col justify-center relative overflow-hidden bg-gray-950">
+        <HeroBackground />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 pt-20">
-          {/* System Status Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-gray-200/60 shadow-sm backdrop-blur-sm mb-10 hover:border-brand-blue/30 hover:shadow-md transition-all duration-500 cursor-default animate-[float_4s_ease-in-out_infinite]">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-green opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-green"></span>
-            </span>
-            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{dict.hero.system_status}</span>
+          {/* Cyber Status Badge */}
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-brand-blue/10 border border-brand-blue/20 backdrop-blur-md mb-12 animate-[float_6s_ease-in-out_infinite]">
+            <div className="w-1.5 h-1.5 rounded-full bg-brand-blue shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse"></div>
+            <span className="text-[10px] font-mono font-bold text-brand-blue uppercase tracking-[0.2em]">{dict.hero.system_status}</span>
           </div>
 
-          {/* Animated Title */}
-          <h1 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase mb-8 leading-[0.95] perspective-1000">
-            <span className="inline-block opacity-0 animate-[fadeUp_0.8s_ease-out_0.1s_forwards]">{dict.hero.title_prefix}</span> <br />
-            <span className="inline-block opacity-0 animate-[fadeUp_0.8s_ease-out_0.3s_forwards]"><span className="text-brand-blue">{dict.hero.title_highlight}</span> {dict.hero.title_suffix}<span className="text-brand-blue">.</span></span>
+          {/* Glitch Title */}
+          <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter uppercase mb-10 leading-[0.9] perspective-1000 drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+            <span className="block opacity-0 animate-[fadeUp_0.8s_ease-out_0.1s_forwards]">{dict.hero.title_prefix}</span>
+            <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 opacity-0 animate-[fadeUp_0.8s_ease-out_0.3s_forwards]">
+              <span className="text-brand-blue">{dict.hero.title_highlight}</span> {dict.hero.title_suffix}
+            </span>
           </h1>
 
-          {/* Animated Description */}
-          <p className="text-xl md:text-2xl text-gray-500 font-medium max-w-3xl mx-auto mb-12 leading-relaxed opacity-0 animate-[fadeUp_0.8s_ease-out_0.6s_forwards]">
+          {/* Data Description */}
+          <p className="text-lg md:text-xl text-gray-400 font-medium max-w-2xl mx-auto mb-16 leading-relaxed opacity-0 animate-[fadeUp_0.8s_ease-out_0.6s_forwards] font-mono">
             {dict.hero.description}
           </p>
 
           <div className="flex justify-center opacity-0 animate-[fadeUp_0.8s_ease-out_0.8s_forwards]">
             <Link 
               href="/courses" 
-              className="inline-flex items-center justify-center gap-5 btn-primary group relative overflow-hidden"
+              className="inline-flex items-center justify-center gap-4 px-10 py-4 bg-white text-gray-950 text-xs font-black uppercase tracking-[0.2em] rounded-full hover:bg-brand-blue hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_40px_rgba(59,130,246,0.5)] group"
             >
-              <span className="relative z-10">{dict.hero.cta}</span>
-              <i className="fa-solid fa-chevron-right text-[9px] transition-transform group-hover:translate-x-1 relative z-10"></i>
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+              {dict.hero.cta}
+              <i className="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-1"></i>
             </Link>
           </div>
         </div>
         
         {/* Scroll Indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-gray-300 opacity-0 animate-[fadeIn_1s_ease-out_1.5s_forwards]">
-          <i className="fa-solid fa-arrow-down"></i>
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-0 animate-[fadeIn_1s_ease-out_1.5s_forwards]">
+          <span className="text-[9px] font-mono text-gray-600 uppercase tracking-widest">Scroll to Initialize</span>
+          <div className="w-px h-12 bg-gradient-to-b from-brand-blue/0 via-brand-blue/50 to-brand-blue/0"></div>
         </div>
       </div>
 

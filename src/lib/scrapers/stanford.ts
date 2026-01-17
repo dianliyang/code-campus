@@ -30,6 +30,10 @@ export class Stanford extends BaseScraper {
     return `${year - 1}${year}`;
   }
 
+  links(): string[] {
+    return []; // Not used as retrieve() is overridden
+  }
+
   async retrieve(): Promise<Course[]> {
     const DEPTS = ["CS", "EE"];
     const allCourses: Course[] = [];

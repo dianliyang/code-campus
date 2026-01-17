@@ -46,7 +46,10 @@ async function uploadLogos() {
     'ucb.png',
     'stanford.jpg',
     'mit.svg',
-    'nju.png'
+    'nju.png',
+    'carnegie-mellon.jpg',
+    'uc-berkeley.png',
+    'cau-kiel.png'
   ];
 
   for (const file of files) {

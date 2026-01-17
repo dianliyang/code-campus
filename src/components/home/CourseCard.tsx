@@ -60,7 +60,7 @@ export default function CourseCard({
 
   if (viewMode === "list") {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all relative overflow-hidden group flex items-start gap-6">
+      <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all relative overflow-hidden group flex flex-col md:flex-row items-start gap-4 md:gap-6">
         {/* Enrolled Badge - Smaller/Different position for list */}
         <button 
           onClick={handleEnroll}
@@ -85,13 +85,13 @@ export default function CourseCard({
         </button>
 
         {/* Left: Logo & Basic Info */}
-        <div className="flex items-start gap-4 w-1/3 flex-shrink-0">
+        <div className="flex items-start gap-4 w-full md:w-1/3 flex-shrink-0">
           <UniversityIcon 
             name={course.university} 
             size={40} 
             className="flex-shrink-0 bg-white rounded-lg p-1 border border-gray-100"
           />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-grow">
              <div className="flex items-center gap-2 mb-1">
               <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">
                 {course.university}
@@ -100,7 +100,7 @@ export default function CourseCard({
                 {course.courseCode}
               </span>
             </div>
-            <h2 className="text-base font-extrabold text-gray-900 leading-tight line-clamp-2 transition-colors">
+            <h2 className="text-base font-extrabold text-gray-900 leading-tight line-clamp-2 transition-colors pr-12 md:pr-0">
               <Link href={detailHref} className="hover:text-brand-blue hover:underline decoration-2 underline-offset-4">
                 {course.title}
               </Link>
@@ -119,7 +119,7 @@ export default function CourseCard({
         </div>
 
         {/* Middle: Description */}
-        <div className="flex-grow min-w-0 border-l border-gray-100 pl-6 h-full flex flex-col justify-center">
+        <div className="flex-grow min-w-0 border-l-0 md:border-l border-t md:border-t-0 border-gray-100 pl-0 md:pl-6 pt-4 md:pt-0 mt-0 h-auto md:h-full flex flex-col justify-center w-full md:w-auto">
           <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
             {course.description || `${dict?.view_details_prefix || "View details on"} ${course.university}.`}
           </p>
@@ -131,8 +131,8 @@ export default function CourseCard({
         </div>
 
         {/* Right: Stats & Action */}
-        <div className="w-40 flex-shrink-0 flex flex-col items-end justify-between border-l border-gray-100 pl-6 h-full gap-2">
-           <div className="flex flex-col items-end gap-1">
+        <div className="w-full md:w-40 flex-shrink-0 flex flex-row md:flex-col items-center md:items-end justify-between border-l-0 md:border-l border-t md:border-t-0 border-gray-100 pl-0 md:pl-6 pt-4 md:pt-0 mt-0 h-auto md:h-full gap-2">
+           <div className="flex flex-col md:items-end gap-1">
              <div className="flex items-center gap-1">
                 <i className="fa-solid fa-fire-flame-simple text-orange-500 text-[10px]"></i>
                 <span className="text-sm font-black text-gray-900 tracking-tighter italic">
@@ -144,7 +144,7 @@ export default function CourseCard({
 
            <Link
             href={detailHref}
-            className="text-brand-blue text-[9px] font-black uppercase tracking-widest hover:underline flex items-center gap-1.5 mt-auto"
+            className="text-brand-blue text-[9px] font-black uppercase tracking-widest hover:underline flex items-center gap-1.5 md:mt-auto"
           >
             {dict?.details || "Details"} <i className="fa-solid fa-arrow-right text-[8px]"></i>
           </Link>

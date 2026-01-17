@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import EditCourseModal from "./EditCourseModal";
+import { deleteCourse } from "@/actions/courses";
 
 interface CourseDetailHeaderProps {
   course: Course;
@@ -11,17 +12,47 @@ interface CourseDetailHeaderProps {
 
 export default function CourseDetailHeader({ course }: CourseDetailHeaderProps) {
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this course? This action cannot be undone.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteCourse(course.id);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to delete course");
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
       <header className="space-y-6 relative group">
-        <button
-          onClick={() => setShowEditModal(true)}
-          className="absolute top-0 right-0 p-2 rounded-lg bg-gray-50 text-gray-400 opacity-0 group-hover:opacity-100 transition-all hover:text-brand-blue hover:bg-blue-50 cursor-pointer"
-          title="Edit Course Details"
-        >
-          <i className="fa-solid fa-pen-to-square"></i>
-        </button>
+        <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="p-2 rounded-lg bg-gray-50 text-gray-400 hover:text-brand-blue hover:bg-blue-50 cursor-pointer"
+            title="Edit Course Details"
+          >
+            <i className="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="p-2 rounded-lg bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer disabled:opacity-50"
+            title="Delete Course"
+          >
+            {isDeleting ? (
+              <i className="fa-solid fa-circle-notch fa-spin"></i>
+            ) : (
+              <i className="fa-solid fa-trash"></i>
+            )}
+          </button>
+        </div>
 
         <div className="flex items-center gap-4">
           <UniversityIcon 

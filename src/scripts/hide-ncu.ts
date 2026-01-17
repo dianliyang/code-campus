@@ -6,11 +6,11 @@ async function main() {
   console.log("--- Hiding NCU Courses ---");
   
   // Update courses where university is 'NCU' or 'ncu'
-  const { data, error, count } = await supabase
+  const { data, error } = await supabase
     .from('courses')
     .update({ is_hidden: true })
     .in('university', ['NCU', 'ncu'])
-    .select('id, university, is_hidden', { count: 'exact' });
+    .select('id, university, is_hidden');
 
   if (error) {
     console.error("Error hiding courses:", error);

@@ -45,7 +45,8 @@ async function uploadLogos() {
     'ncu.png',
     'ucb.png',
     'stanford.jpg',
-    'mit.svg'
+    'mit.svg',
+    'nju.png'
   ];
 
   for (const file of files) {

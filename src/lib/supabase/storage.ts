@@ -13,6 +13,7 @@ const LEGACY_LOGO_MAP: Record<string, string> = {
   "UC Berkeley": "ucb.png",
   "CAU Kiel": "cau.png",
   "NCU": "ncu.png",
+  "NJU": "nju.png",
 };
 
 export function getUniversityLogoUrl(universityName: string): string {

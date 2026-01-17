@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Course } from "@/types";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 
@@ -25,8 +25,12 @@ export default function CourseCard({
   viewMode = "grid",
 }: CourseCardProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isEnrolled, setIsEnrolled] = useState(isInitialEnrolled);
   const [loading, setLoading] = useState(false);
+  
+  const refParams = searchParams.toString();
+  const detailHref = `/courses/${course.id}${refParams ? `?refParams=${encodeURIComponent(refParams)}` : ''}`;
 
   const handleEnroll = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent link click if nested
@@ -97,7 +101,7 @@ export default function CourseCard({
               </span>
             </div>
             <h2 className="text-base font-extrabold text-gray-900 leading-tight line-clamp-2 transition-colors">
-              <Link href={`/courses/${course.id}`} className="hover:text-brand-blue hover:underline decoration-2 underline-offset-4">
+              <Link href={detailHref} className="hover:text-brand-blue hover:underline decoration-2 underline-offset-4">
                 {course.title}
               </Link>
             </h2>
@@ -139,7 +143,7 @@ export default function CourseCard({
            </div>
 
            <Link
-            href={`/courses/${course.id}`}
+            href={detailHref}
             className="text-brand-blue text-[9px] font-black uppercase tracking-widest hover:underline flex items-center gap-1.5 mt-auto"
           >
             {dict?.details || "Details"} <i className="fa-solid fa-arrow-right text-[8px]"></i>
@@ -194,7 +198,7 @@ export default function CourseCard({
             </span>
           </div>
           <h2 className="text-lg font-extrabold text-gray-900 mt-1 leading-tight line-clamp-2 pr-12 transition-colors">
-            <Link href={`/courses/${course.id}`} className="hover:text-brand-blue hover:underline decoration-2 underline-offset-4">{course.title}</Link>
+            <Link href={detailHref} className="hover:text-brand-blue hover:underline decoration-2 underline-offset-4">{course.title}</Link>
           </h2>
           <div className="flex gap-2 mt-3 flex-wrap">
             {course.fields?.map((f) => (
@@ -287,7 +291,7 @@ export default function CourseCard({
           </div>
         </div>
         <Link
-          href={`/courses/${course.id}`}
+          href={detailHref}
           className="text-brand-blue text-[10px] font-black uppercase tracking-widest hover:underline flex items-center gap-1.5"
         >
           {dict?.details || "Course Detail"}{" "}

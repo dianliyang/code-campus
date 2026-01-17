@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Course } from "@/types";
 import { updateCourse, deleteCourse } from "@/actions/courses";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface EditCourseModalProps {
   course: Course;
@@ -12,6 +12,7 @@ interface EditCourseModalProps {
 
 export default function EditCourseModal({ course, onClose }: EditCourseModalProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
@@ -53,7 +54,14 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
     setIsDeleting(true);
     try {
       await deleteCourse(course.id);
-      router.push("/courses");
+      
+      const refParams = searchParams.get('refParams');
+      if (refParams) {
+        router.push(`/courses?${decodeURIComponent(refParams)}`);
+      } else {
+        router.push("/courses");
+      }
+
       router.refresh();
     } catch (error) {
       console.error(error);

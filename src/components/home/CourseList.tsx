@@ -45,7 +45,7 @@ export default function CourseList({
   };
 
   return (
-    <main className="flex-grow space-y-4">
+    <main className="flex-grow space-y-4 min-w-0">
       <CourseListHeader 
         totalItems={totalItems} 
         viewMode={viewMode} 

@@ -188,7 +188,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: any }) {
               rel="noopener noreferrer"
               className="w-full btn-primary py-4 rounded-xl flex items-center justify-center gap-3 mb-4"
             >
-              Go to University{" "}
+              Go to Course Page{" "}
               <i className="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
             </a>
 

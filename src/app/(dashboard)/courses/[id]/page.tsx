@@ -6,7 +6,7 @@ import { createClient, mapCourseFromRow, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import { Course } from "@/types";
-import UniversityIcon from "@/components/common/UniversityIcon";
+import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -89,44 +89,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: any }) {
 
   return (
     <div className="space-y-12">
-      <header className="space-y-6">
-        <div className="flex items-center gap-4">
-          <UniversityIcon 
-            name={fullCourse.university} 
-            size={64} 
-            className="flex-shrink-0 bg-white rounded-xl p-1 shadow-sm border border-gray-100"
-          />
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-black text-brand-blue tracking-widest bg-brand-blue/5 px-2 py-1 rounded">
-                {fullCourse.university}
-              </span>
-              {fullCourse.isInternal && (
-                <span className="text-[10px] font-black bg-brand-blue text-white px-2 py-0.5 rounded uppercase tracking-widest">
-                  Internal
-                </span>
-              )}
-              <span className="text-xs font-mono font-bold text-gray-400">
-                {fullCourse.courseCode}
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter mt-2 leading-[0.9]">
-              {fullCourse.title}
-            </h1>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 pt-2">
-          {fullCourse.fields.map((field) => (
-            <span
-              key={field}
-              className="text-[10px] font-black uppercase tracking-widest bg-gray-50 text-gray-500 px-3 py-1.5 rounded-full border border-gray-100"
-            >
-              {field}
-            </span>
-          ))}
-        </div>
-      </header>
+      <CourseDetailHeader course={fullCourse} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 border-t border-gray-100 pt-12">
         <div className="lg:col-span-2 space-y-12">

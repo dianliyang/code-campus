@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import { BaseScraper } from "./BaseScraper";
 import { Course } from "./types";
 import { fetch, Agent } from "undici";
+import { parseCMUSemester } from "./utils/semester";
 
 export class CMU extends BaseScraper {
   constructor() {
@@ -12,28 +13,30 @@ export class CMU extends BaseScraper {
     return ["https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/search"];
   }
 
+  getSemesterParam(): string {
+    // Default to F25 if no semester is provided
+    if (!this.semester) return "F25";
+
+    const input = this.semester.toLowerCase();
+    const year = input.replace(/\D/g, "");
+    const term = input.replace(/\d/g, "");
+    
+    const termMap: Record<string, string> = {
+      'fa': 'F',
+      'fall': 'F',
+      'sp': 'S',
+      'spring': 'S',
+      'su': 'M',
+      'summer': 'M'
+    };
+    
+    const cmuTerm = termMap[term] || 'F';
+    return `${cmuTerm}${year || '25'}`;
+  }
+
   async retrieve(): Promise<Course[]> {
     const url = "https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/search";
-    
-    // Map user input (e.g., fa25, sp25) to CMU format (F25, S25)
-    let cmuSemester = "F25";
-    if (this.semester) {
-      const input = this.semester.toLowerCase();
-      const year = input.replace(/\D/g, "");
-      const term = input.replace(/\d/g, "");
-      
-      const termMap: Record<string, string> = {
-        'fa': 'F',
-        'fall': 'F',
-        'sp': 'S',
-        'spring': 'S',
-        'su': 'M',
-        'summer': 'M'
-      };
-      
-      const cmuTerm = termMap[term] || 'F';
-      cmuSemester = `${cmuTerm}${year || '25'}`;
-    }
+    const cmuSemester = this.getSemesterParam();
 
     console.log(`[${this.name}] Using semester code: ${cmuSemester}`);
 
@@ -51,7 +54,7 @@ export class CMU extends BaseScraper {
 
     const html = await this.fetchPage(url, params);
     if (html) {
-      return await this.parser(html, cmuSemester);
+      return await this.parser(html);
     }
     return [];
   }
@@ -113,27 +116,13 @@ export class CMU extends BaseScraper {
     }
   }
 
-  async parser(html: string, semesterCode: string): Promise<Course[]> {
+  async parser(html: string): Promise<Course[]> {
     const $ = cheerio.load(html);
     const courses: Course[] = [];
 
     // Parse semester code (e.g., "F25" -> "Fall", 2025)
-    let term = "Fall";
-    let year = 2025;
-    
-    if (semesterCode) {
-      const termCode = semesterCode.charAt(0);
-      const yearCode = semesterCode.substring(1);
-      
-      const termMap: Record<string, string> = {
-        'F': 'Fall',
-        'S': 'Spring',
-        'M': 'Summer'
-      };
-      
-      term = termMap[termCode] || "Fall";
-      year = 2000 + parseInt(yearCode);
-    }
+    const semesterCode = this.getSemesterParam();
+    const { term, year } = parseCMUSemester(semesterCode);
 
     const ALLOWED_DEPTS = [
       "ELECTRICAL & COMPUTER ENGINEERING",

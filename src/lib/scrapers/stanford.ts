@@ -1,28 +1,79 @@
 import * as cheerio from 'cheerio';
 import { BaseScraper } from './BaseScraper';
 import { Course } from './types';
+import { parseSemesterCode } from './utils/semester';
 
 export class Stanford extends BaseScraper {
   constructor() {
     super("stanford");
   }
 
-  links(query: string = "CS", terms?: string[]): string[] {
-    if (!terms) {
-      terms = ["Autumn", "Winter", "Spring", "Summer"];
+  getSemesterParam(): string {
+    if (!this.semester) return "";
+
+    const input = this.semester.toLowerCase();
+    if (input.includes('fa') || input.includes('fall')) return "Autumn";
+    if (input.includes('wi') || input.includes('winter')) return "Winter";
+    if (input.includes('sp') || input.includes('spring')) return "Spring";
+    if (input.includes('su') || input.includes('summer')) return "Summer";
+    
+    return "";
+  }
+
+  getAcademicYear(term: string, year: number): string {
+    // Stanford academic year starts in Autumn.
+    // e.g. Autumn 2025 is AY 2025-2026 (20252026)
+    // e.g. Spring 2026 is AY 2025-2026 (20252026)
+    if (term === "Autumn") {
+      return `${year}${year + 1}`;
+    }
+    return `${year - 1}${year}`;
+  }
+
+  async retrieve(): Promise<Course[]> {
+    const query = "CS";
+    const allCourses: Course[] = [];
+    
+    let termsToScrape: { term: string, year: number }[] = [];
+
+    if (this.semester) {
+      const { term, year } = parseSemesterCode(this.semester);
+      // Map "Fall" to "Autumn" for Stanford
+      const stanfordTerm = term === "Fall" ? "Autumn" : term;
+      termsToScrape.push({ term: stanfordTerm, year });
+    } else {
+      // Default: Scrape current academic year (assuming 2025-2026 based on today's date Jan 2026)
+      termsToScrape = [
+        { term: "Autumn", year: 2025 },
+        { term: "Winter", year: 2026 },
+        { term: "Spring", year: 2026 },
+        { term: "Summer", year: 2026 }
+      ];
     }
 
-    const baseUrl = "https://explorecourses.stanford.edu/print";
-    const params = new URLSearchParams();
-    params.append("filter-coursestatus-Active", "on");
-    params.append("descriptions", "on");
-    params.append("q", query);
+    console.log(`[${this.name}] Processing ${termsToScrape.length} terms separately...`);
 
-    for (const term of terms) {
+    for (const { term, year } of termsToScrape) {
+      const academicYear = this.getAcademicYear(term, year);
+      const baseUrl = "https://explorecourses.stanford.edu/print";
+      const params = new URLSearchParams();
+      params.append("filter-coursestatus-Active", "on");
+      params.append("descriptions", "on");
+      params.append("q", query);
+      params.append("academicYear", academicYear);
       params.append(`filter-term-${term}`, "on");
+
+      const url = `${baseUrl}?${params.toString()}`;
+      const html = await this.fetchPage(url);
+      if (html) {
+        // Map Stanford "Autumn" back to "Fall" for consistency in DB
+        const dbTerm = term === "Autumn" ? "Fall" : term;
+        const courses = await this.parser(html, { term: dbTerm, year });
+        allCourses.push(...courses);
+      }
     }
 
-    return [`${baseUrl}?${params.toString()}`];
+    return allCourses;
   }
 
   async fetchPage(url: string): Promise<string> {
@@ -43,7 +94,7 @@ export class Stanford extends BaseScraper {
     }
   }
 
-  async parser(html: string): Promise<Course[]> {
+  async parser(html: string, semesterInfo?: { term: string, year: number }): Promise<Course[]> {
     const $ = cheerio.load(html);
     const courses: Course[] = [];
 
@@ -54,6 +105,7 @@ export class Stanford extends BaseScraper {
         courseCode: '',
         title: '',
         description: '',
+        semesters: semesterInfo ? [semesterInfo] : [],
         details: {
           terms: [],
           instructors: []

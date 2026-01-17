@@ -15,3 +15,16 @@ export function parseCMUSemester(code: string): { term: string; year: number } {
 
   return { term, year };
 }
+
+export function parseSemesterCode(code: string): { term: string; year: number } {
+  const input = code.toLowerCase();
+  const yearNum = parseInt(input.replace(/\D/g, "")) || 25;
+  const year = 2000 + yearNum;
+  
+  let term = "Fall";
+  if (input.includes('sp') || input.includes('spring')) term = "Spring";
+  else if (input.includes('wi') || input.includes('winter')) term = "Winter";
+  else if (input.includes('su') || input.includes('summer')) term = "Summer";
+  
+  return { term, year };
+}

@@ -54,7 +54,16 @@ export class MIT extends BaseScraper {
           if (!foundCurrent) {
                // 2. Look for links in the Archived Subject Listings section
                console.log(`[${this.name}] Not current semester. Searching archive for: "${searchTitle}"`);
-               const archiveLink = $(`a:contains("${searchTitle}")`);
+               let archiveLink = $(`a:contains("${searchTitle}")`);
+               
+               // Fallback: If Spring, try searching for "IAP/Spring YYYY" explicitly if simple substring failed
+               // (Though :contains usually handles substrings, explicit check is safer)
+               if (archiveLink.length === 0 && term === 'spring') {
+                  const iapTitle = `IAP/${searchTitle}`;
+                  console.log(`[${this.name}] Retrying archive search for: "${iapTitle}"`);
+                  archiveLink = $(`a:contains("${iapTitle}")`);
+               }
+
                if (archiveLink.length > 0) {
                  const href = archiveLink.attr('href');
                  if (href) {

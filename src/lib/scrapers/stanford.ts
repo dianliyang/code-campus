@@ -31,18 +31,17 @@ export class Stanford extends BaseScraper {
   }
 
   async retrieve(): Promise<Course[]> {
-    const query = "CS";
+    const DEPTS = ["CS", "EE"];
     const allCourses: Course[] = [];
     
     let termsToScrape: { term: string, year: number }[] = [];
 
     if (this.semester) {
       const { term, year } = parseSemesterCode(this.semester);
-      // Map "Fall" to "Autumn" for Stanford
       const stanfordTerm = term === "Fall" ? "Autumn" : term;
       termsToScrape.push({ term: stanfordTerm, year });
     } else {
-      // Default: Scrape current academic year (assuming 2025-2026 based on today's date Jan 2026)
+      // Default to current AY 2025-2026
       termsToScrape = [
         { term: "Autumn", year: 2025 },
         { term: "Winter", year: 2026 },
@@ -51,25 +50,30 @@ export class Stanford extends BaseScraper {
       ];
     }
 
-    console.log(`[${this.name}] Processing ${termsToScrape.length} terms separately...`);
+    console.log(`[${this.name}] Processing ${termsToScrape.length} terms for depts: ${DEPTS.join(", ")}`);
 
     for (const { term, year } of termsToScrape) {
-      const academicYear = this.getAcademicYear(term, year);
-      const baseUrl = "https://explorecourses.stanford.edu/print";
-      const params = new URLSearchParams();
-      params.append("filter-coursestatus-Active", "on");
-      params.append("descriptions", "on");
-      params.append("q", query);
-      params.append("academicYear", academicYear);
-      params.append(`filter-term-${term}`, "on");
+      for (const dept of DEPTS) {
+        const academicYear = this.getAcademicYear(term, year);
+        const baseUrl = "https://explorecourses.stanford.edu/print";
+        const params = new URLSearchParams();
+        params.append("filter-coursestatus-Active", "on");
+        params.append("descriptions", "on");
+        params.append("q", dept);
+        params.append("academicYear", academicYear);
+        params.append(`filter-term-${term}`, "on");
 
-      const url = `${baseUrl}?${params.toString()}`;
-      const html = await this.fetchPage(url);
-      if (html) {
-        // Map Stanford "Autumn" back to "Fall" for consistency in DB
-        const dbTerm = term === "Autumn" ? "Fall" : term;
-        const courses = await this.parser(html, { term: dbTerm, year });
-        allCourses.push(...courses);
+        const url = `${baseUrl}?${params.toString()}`;
+        const html = await this.fetchPage(url);
+        if (html) {
+          const dbTerm = term === "Autumn" ? "Fall" : term;
+          const courses = await this.parser(html, { term: dbTerm, year });
+          
+          // Filter to ensure we only get courses from the target department 
+          // (Stanford search can be fuzzy)
+          const filtered = courses.filter(c => c.courseCode.startsWith(dept));
+          allCourses.push(...filtered);
+        }
       }
     }
 
@@ -131,6 +135,13 @@ export class Stanford extends BaseScraper {
               // Numbers like CS 7 are also undergrad
               course.level = "undergraduate";
             }
+          }
+
+          // Map department
+          if (rawCode.startsWith("CS")) {
+            course.department = "Computer Science";
+          } else if (rawCode.startsWith("EE")) {
+            course.department = "Electrical Engineering";
           }
         }
 

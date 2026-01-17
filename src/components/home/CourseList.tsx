@@ -61,6 +61,7 @@ export default function CourseList({
             isInitialEnrolled={enrolledIds.includes(course.id)} 
             onEnrollToggle={fetchEnrolled}
             dict={dict}
+            viewMode={viewMode}
           />
         ))}
         {initialCourses?.length === 0 && (

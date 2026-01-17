@@ -5,12 +5,14 @@ import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import EditCourseModal from "./EditCourseModal";
 import { deleteCourse } from "@/actions/courses";
+import { useRouter } from "next/navigation";
 
 interface CourseDetailHeaderProps {
   course: Course;
 }
 
 export default function CourseDetailHeader({ course }: CourseDetailHeaderProps) {
+  const router = useRouter();
   const [showEditModal, setShowEditModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -22,6 +24,8 @@ export default function CourseDetailHeader({ course }: CourseDetailHeaderProps) 
     setIsDeleting(true);
     try {
       await deleteCourse(course.id);
+      router.push("/courses");
+      router.refresh(); 
     } catch (error) {
       console.error(error);
       alert("Failed to delete course");

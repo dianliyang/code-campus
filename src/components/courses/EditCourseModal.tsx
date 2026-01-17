@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Course } from "@/types";
 import { updateCourse, deleteCourse } from "@/actions/courses";
+import { useRouter } from "next/navigation";
 
 interface EditCourseModalProps {
   course: Course;
@@ -10,6 +11,7 @@ interface EditCourseModalProps {
 }
 
 export default function EditCourseModal({ course, onClose }: EditCourseModalProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,7 +53,8 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
     setIsDeleting(true);
     try {
       await deleteCourse(course.id);
-      // No need to onClose, as deleteCourse redirects
+      router.push("/courses");
+      router.refresh();
     } catch (error) {
       console.error(error);
       alert("Failed to delete course");

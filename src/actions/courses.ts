@@ -75,5 +75,4 @@ export async function deleteCourse(courseId: number) {
   }
 
   revalidatePath("/courses");
-  redirect("/courses");
 }

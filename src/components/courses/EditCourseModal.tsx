@@ -78,8 +78,9 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-6">
+            {/* Row 1: University & Course Code */}
+            <div className="space-y-2 col-span-1">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 University
               </label>
@@ -91,7 +92,7 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-1">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 Course Code
               </label>
@@ -103,23 +104,23 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Course Title
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
-            />
-          </div>
+            {/* Row 2: Title (Full Width) */}
+            <div className="space-y-2 col-span-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Course Title
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
+              />
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
+            {/* Row 3: Department & Units */}
+            <div className="space-y-2 col-span-1">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 Department
               </label>
@@ -130,7 +131,7 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-1">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 Units
               </label>
@@ -141,46 +142,48 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Description
-            </label>
-            <textarea
-              rows={4}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-medium text-gray-700 transition-all resize-none"
-            />
-          </div>
+            {/* Row 4: Description (Full Width) */}
+            <div className="space-y-2 col-span-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Description
+              </label>
+              <textarea
+                rows={4}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-medium text-gray-700 transition-all resize-none"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Corequisites
-            </label>
-            <input
-              type="text"
-              value={formData.corequisites}
-              onChange={(e) => setFormData({ ...formData, corequisites: e.target.value })}
-              className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
-            />
-          </div>
+            {/* Row 5: Corequisites (Full Width) */}
+            <div className="space-y-2 col-span-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Corequisites
+              </label>
+              <input
+                type="text"
+                value={formData.corequisites}
+                onChange={(e) => setFormData({ ...formData, corequisites: e.target.value })}
+                className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Course URL
-            </label>
-            <input
-              type="url"
-              value={formData.url}
-              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-              className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
-            />
-          </div>
+            {/* Row 6: URL (Full Width) */}
+            <div className="space-y-2 col-span-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Course URL
+              </label>
+              <input
+                type="url"
+                value={formData.url}
+                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
+              />
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
+            {/* Row 7: Level & Workload */}
+            <div className="space-y-2 col-span-1">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 Level
               </label>
@@ -191,7 +194,7 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-1">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 Workload
               </label>
@@ -202,10 +205,9 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
+            {/* Row 8: Difficulty & Popularity */}
+            <div className="space-y-2 col-span-1">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 Difficulty (0-10)
               </label>
@@ -219,7 +221,7 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 className="w-full bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-bold text-gray-900 transition-all"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-1">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 Popularity
               </label>

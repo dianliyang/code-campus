@@ -2,6 +2,7 @@ import { Course } from './types';
 
 export abstract class BaseScraper {
   name: string;
+  semester?: string;
 
   constructor(name: string) {
     this.name = name;

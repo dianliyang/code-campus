@@ -15,8 +15,30 @@ export class CMU extends BaseScraper {
   async retrieve(): Promise<Course[]> {
     const url = "https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/search";
     
+    // Map user input (e.g., fa25, sp25) to CMU format (F25, S25)
+    let cmuSemester = "F25";
+    if (this.semester) {
+      const input = this.semester.toLowerCase();
+      const year = input.replace(/\D/g, "");
+      const term = input.replace(/\d/g, "");
+      
+      const termMap: Record<string, string> = {
+        'fa': 'F',
+        'fall': 'F',
+        'sp': 'S',
+        'spring': 'S',
+        'su': 'M',
+        'summer': 'M'
+      };
+      
+      const cmuTerm = termMap[term] || 'F';
+      cmuSemester = `${cmuTerm}${year || '25'}`;
+    }
+
+    console.log(`[${this.name}] Using semester code: ${cmuSemester}`);
+
     const params = new URLSearchParams();
-    params.append("SEMESTER", "F25"); // Updated to Fall 2025 to match sample
+    params.append("SEMESTER", cmuSemester);
     params.append("MINI", "NO");
     params.append("GRAD_UNDER", "All");
     params.append("PRG_LOCATION", "All");
@@ -29,7 +51,7 @@ export class CMU extends BaseScraper {
 
     const html = await this.fetchPage(url, params);
     if (html) {
-      return await this.parser(html, "F25");
+      return await this.parser(html, cmuSemester);
     }
     return [];
   }

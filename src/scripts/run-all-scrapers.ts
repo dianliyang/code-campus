@@ -22,6 +22,12 @@ async function runScraper(scraper: BaseScraper, db: SupabaseDatabase) {
 
 async function main() {
   const db = new SupabaseDatabase();
+  
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+  const semesterArg = args.find(arg => arg.startsWith('--semester='));
+  const semester = semesterArg ? semesterArg.split('=')[1] : 'fa25';
+
   const scrapers: BaseScraper[] = [
     new MIT(),
     new Stanford(),
@@ -29,10 +35,11 @@ async function main() {
     new UCB()
   ];
 
-  console.log("Starting full scrape for all universities...");
+  console.log(`Starting full scrape for all universities... (Semester: ${semester})`);
   console.log(`Target: Supabase Database`);
 
   for (const scraper of scrapers) {
+    scraper.semester = semester;
     await runScraper(scraper, db);
   }
 

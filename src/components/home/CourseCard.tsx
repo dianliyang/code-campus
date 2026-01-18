@@ -162,7 +162,7 @@ export default function CourseCard({
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all relative overflow-hidden group flex flex-col h-full">
-      <div className="absolute top-5 right-5 z-10">
+      <div className="absolute top-0 right-6 z-10">
         <button 
           onClick={handleEnroll}
           disabled={loading}

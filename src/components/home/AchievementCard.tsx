@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Course } from "@/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -23,7 +22,7 @@ export default function AchievementCard({ course, masteredLabel }: AchievementCa
   useEffect(() => {
     // Generate ID only on client to avoid hydration mismatch
     const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
-    setCompletionId(`${randomPart}`); // eslint-disable-line react-hooks/set-state-in-effect
+    setCompletionId(`${randomPart}`);
   }, []);
 
   const handleUpdate = async () => {

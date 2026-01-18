@@ -25,7 +25,7 @@ async function uploadLogos() {
   const bucketExists = buckets.find(b => b.name === bucketName);
   if (!bucketExists) {
     console.log(`Bucket '${bucketName}' not found. Creating...`);
-    const { data: bucket, error: createError } = await supabase.storage.createBucket(bucketName, {
+    const { error: createError } = await supabase.storage.createBucket(bucketName, {
       public: true,
       fileSizeLimit: 5242880, // 5MB
     });
@@ -67,7 +67,7 @@ async function uploadLogos() {
     else if (fileExt === 'svg') contentType = 'image/svg+xml';
 
     console.log(`Uploading ${file}...`);
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(bucketName)
       .upload(file, fileContent, {
         contentType,

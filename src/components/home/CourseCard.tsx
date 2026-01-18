@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Course } from "@/types";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";

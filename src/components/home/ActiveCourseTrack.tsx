@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Course } from "@/types";
 import { useRouter } from "next/navigation";
 import UniversityIcon from "@/components/common/UniversityIcon";

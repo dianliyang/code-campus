@@ -162,29 +162,27 @@ export default function CourseCard({
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all relative overflow-hidden group flex flex-col h-full">
-      <div className="absolute top-0 right-6 z-10">
-        <button 
-          onClick={handleEnroll}
-          disabled={loading}
-          className={`px-3 py-1 rounded-b-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-            isEnrolled 
-              ? 'bg-brand-green text-white' 
-              : 'bg-gray-100 text-gray-500 hover:bg-brand-dark hover:text-white'
-          }`}
-        >
-          {loading ? (
-            <i className="fa-solid fa-circle-notch fa-spin"></i>
-          ) : isEnrolled ? (
-            <span className="flex items-center gap-1">
-              <i className="fa-solid fa-check"></i> {dict?.enrolled || "Added"}
-            </span>
-          ) : (
-            <span className="flex items-center gap-1">
-              <i className="fa-solid fa-plus"></i> {dict?.enroll || "Join"}
-            </span>
-          )}
-        </button>
-      </div>
+      <button 
+        onClick={handleEnroll}
+        disabled={loading}
+        className={`absolute top-0 right-6 z-10 px-3 py-1 rounded-b-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+          isEnrolled 
+            ? 'bg-brand-green text-white' 
+            : 'bg-gray-100 text-gray-500 hover:bg-brand-dark hover:text-white'
+        }`}
+      >
+        {loading ? (
+          <i className="fa-solid fa-circle-notch fa-spin"></i>
+        ) : isEnrolled ? (
+          <span className="flex items-center gap-1">
+            <i className="fa-solid fa-check"></i> {dict?.enrolled || "Added"}
+          </span>
+        ) : (
+          <span className="flex items-center gap-1">
+            <i className="fa-solid fa-plus"></i> {dict?.enroll || "Join"}
+          </span>
+        )}
+      </button>
 
       <div className="mb-3">
         {/* Row 1: Icon + Code + Level */}

@@ -1,6 +1,4 @@
-import {
-  createAdminClient
-} from '../lib/supabase/server';
+import { createAdminClient } from '../lib/supabase/server';
 
 // Weighted keywords: [keyword, weight]
 // Higher weight for specific/unique terms. Lower for generic ones.
@@ -51,7 +49,16 @@ const TAXONOMY: Record<string, [string, number][]> = {
 
 async function main() {
   const supabase = createAdminClient();
-  console.log("Starting smart categorization...");
+  console.log("Starting smart categorization (FULL RESET)...");
+
+  // 0. Clear existing categorizations
+  console.log("Deleting all existing course field associations...");
+  const { error: deleteError } = await supabase.from('course_fields').delete().neq('course_id', 0); // Delete all
+  if (deleteError) {
+    console.error("Error clearing course_fields:", deleteError);
+    return;
+  }
+  console.log("Cleared course_fields.");
 
   // 1. Ensure fields exist and get IDs
   const fieldMap: Record<string, number> = {};
@@ -64,17 +71,21 @@ async function main() {
   const { data: genData } = await supabase.from('fields').upsert({ name: 'General CS' }, { onConflict: 'name' }).select('id').single();
   const genId = genData?.id;
 
-  // 2. Fetch uncategorized
+  // 2. Fetch ALL courses
   const { data: courses } = await supabase
     .from('courses')
-    .select('id, title, description, course_fields(field_id)');
+    .select('id, title, description');
 
-  const uncategorized = courses?.filter(c => !c.course_fields || c.course_fields.length === 0) || [];
-  console.log(`Analyzing ${uncategorized.length} courses...`);
+  if (!courses) {
+    console.log("No courses found.");
+    return;
+  }
+
+  console.log(`Analyzing ALL ${courses.length} courses...`);
 
   const updates = [];
 
-  for (const course of uncategorized) {
+  for (const course of courses) {
     const text = `${course.title} ${course.description || ''}`.toLowerCase();
     
     const scores: Record<string, number> = {};
@@ -82,8 +93,6 @@ async function main() {
     for (const [category, keywords] of Object.entries(TAXONOMY)) {
       scores[category] = 0;
       for (const [kw, weight] of keywords) {
-        // Regex for whole word match to avoid partials (e.g., 'art' in 'start')
-        // Escaping special regex chars in keyword if any
         const safeKw = kw.replace(/[.*+?^${}()|[\\]/g, '\\$&');
         const regex = new RegExp(`\\b${safeKw}\\b`, 'i');
         if (regex.test(text)) {
@@ -103,16 +112,13 @@ async function main() {
       }
     }
 
-    // Threshold for categorization (e.g., must match at least a weight of 2)
+    // Threshold
     if (maxScore >= 2 && bestCat && fieldMap[bestCat]) {
       updates.push({
         course_id: course.id,
         field_id: fieldMap[bestCat]
       });
     } else if (genId) {
-      // If we really can't determine, maybe General CS? 
-      // Or leave it? User said "categorize those haven't categorized".
-      // Let's check for "Intro" or "Principles" for General CS
       if (/intro|principle|foundation|fundamental|freshman|seminar/i.test(text)) {
          updates.push({ course_id: course.id, field_id: genId });
       }
@@ -125,7 +131,7 @@ async function main() {
   const BATCH = 100;
   for (let i = 0; i < updates.length; i += BATCH) {
     const chunk = updates.slice(i, i + BATCH);
-    const { error } = await supabase.from('course_fields').upsert(chunk, { onConflict: 'course_id,field_id' });
+    const { error } = await supabase.from('course_fields').insert(chunk); // insert is faster than upsert if we know table is empty
     if (error) console.error("Error inserting batch:", error);
     else console.log(`Saved batch ${i/BATCH + 1}`);
   }

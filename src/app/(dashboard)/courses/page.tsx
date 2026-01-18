@@ -90,7 +90,7 @@ async function SidebarData({ userId, params, dict }: { userId?: string, params: 
 async function CourseListData({ params, dict }: { params: any, dict: any }) {
   const user = await getUser();
   const page = parseInt((params.page as string) || "1");
-  const size = 10;
+  const size = 12;
   const offset = (page - 1) * size;
   const query = (params.q as string) || "";
   const sort = (params.sort as string) || "relevance";

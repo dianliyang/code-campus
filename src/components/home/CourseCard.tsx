@@ -60,7 +60,7 @@ export default function CourseCard({
 
   if (viewMode === "list") {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all relative overflow-hidden group flex items-center gap-4">
+      <div className="group flex items-center gap-4 py-3 px-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
         
         {/* 1. Icon */}
         <div className="flex-shrink-0">

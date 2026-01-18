@@ -67,7 +67,7 @@ export default function CourseCard({
           <UniversityIcon 
             name={course.university} 
             size={32} 
-            className="bg-white rounded-lg border border-gray-200"
+            className="bg-white border border-gray-200"
           />
         </div>
 
@@ -190,7 +190,7 @@ export default function CourseCard({
           <UniversityIcon 
             name={course.university} 
             size={32} 
-            className="flex-shrink-0 bg-white rounded-lg border border-gray-200"
+            className="flex-shrink-0 bg-white border border-gray-200"
           />
           <div className="flex items-center gap-2 min-w-0">
              <span className="text-xs font-mono font-bold text-gray-500 truncate">

@@ -43,7 +43,7 @@ export default function UniversityIcon({ name, size = 40, className = "" }: Univ
   if (error) {
     return (
       <div 
-        className={`bg-gray-100 text-gray-500 font-black flex items-center justify-center uppercase select-none rounded-lg ${className}`}
+        className={`bg-gray-100 text-gray-500 font-black flex items-center justify-center uppercase select-none ${className}`}
         style={{ width: size, height: size, fontSize: Math.max(8, size * 0.35) }}
         title={name}
       >
@@ -53,7 +53,7 @@ export default function UniversityIcon({ name, size = 40, className = "" }: Univ
   }
 
   return (
-    <div className={`relative rounded-lg overflow-hidden p-1.5 ${className}`} style={{ width: size, height: size }}>
+    <div className={`relative overflow-hidden ${className}`} style={{ width: size, height: size }}>
       <Image
         key={currentSrc} // Force re-render on src change
         src={currentSrc}

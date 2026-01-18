@@ -162,7 +162,7 @@ export default function CourseCard({
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all relative overflow-hidden group flex flex-col h-full">
-      <div className="absolute top-0 right-6 z-10">
+      <div className="absolute top-5 right-5 z-10">
         <button 
           onClick={handleEnroll}
           disabled={loading}
@@ -186,28 +186,16 @@ export default function CourseCard({
         </button>
       </div>
 
-      <div className="flex gap-4 min-w-0 mb-4">
-        <UniversityIcon 
-          name={course.university} 
-          size={48} 
-          className="flex-shrink-0 self-start bg-white rounded-xl p-1 shadow-sm border border-gray-100"
-        />
-        <div className="min-w-0 flex-grow pr-12">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate">
-              {course.university}
-            </h4>
-            {course.isInternal && (
-              <span className="text-[9px] font-bold bg-blue-50 text-brand-blue px-1.5 py-0.5 rounded uppercase">
-                Internal
-              </span>
-            )}
-          </div>
-          <h2 className="text-lg font-bold text-gray-900 leading-snug transition-colors">
-            <Link href={detailHref} className="hover:text-brand-blue">{course.title}</Link>
-          </h2>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs font-mono font-medium text-gray-500">
+      <div className="mb-3">
+        {/* Row 1: Icon + Code + Level */}
+        <div className="flex items-center gap-3 mb-2 pr-20">
+          <UniversityIcon 
+            name={course.university} 
+            size={32} 
+            className="flex-shrink-0 bg-white rounded-lg p-0.5 border border-gray-200"
+          />
+          <div className="flex items-center gap-2 min-w-0">
+             <span className="text-xs font-mono font-bold text-gray-500 truncate">
               {course.courseCode}
             </span>
             {course.level && (
@@ -219,8 +207,18 @@ export default function CourseCard({
                 )}
               </span>
             )}
+             {course.isInternal && (
+              <span className="text-[9px] font-bold bg-blue-50 text-brand-blue px-1.5 py-0.5 rounded uppercase flex-shrink-0">
+                Internal
+              </span>
+            )}
           </div>
         </div>
+
+        {/* Row 2: Title */}
+        <h2 className="text-lg font-bold text-gray-900 leading-snug transition-colors pr-4">
+            <Link href={detailHref} className="hover:text-brand-blue">{course.title}</Link>
+        </h2>
       </div>
 
       <div className="flex gap-1.5 mb-6 flex-wrap">

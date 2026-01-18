@@ -53,7 +53,7 @@ export default function CourseList({
         dict={dict}
       />
 
-      <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" : "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm"}>
+      <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm"}>
         {viewMode === "list" && initialCourses && initialCourses.length > 0 && (
           <div className="hidden md:flex items-center gap-4 px-4 py-3 bg-gray-50/50 border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-500 select-none">
              <div className="w-[40px] flex-shrink-0 text-center"></div>

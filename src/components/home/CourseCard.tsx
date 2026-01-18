@@ -86,8 +86,8 @@ export default function CourseCard({
                 </span>
               )}
             </div>
-            <h2 className="text-sm font-extrabold text-gray-900 leading-tight line-clamp-2 pr-4">
-              <Link href={detailHref} className="hover:text-brand-blue hover:underline decoration-2 underline-offset-4">
+            <h2 className="text-sm font-extrabold text-gray-900 leading-tight transition-colors pr-4">
+              <Link href={detailHref} className="hover:text-brand-blue">
                 {course.title}
               </Link>
             </h2>
@@ -195,8 +195,8 @@ export default function CourseCard({
               {course.courseCode}
             </span>
           </div>
-          <h2 className="text-lg font-extrabold text-gray-900 mt-1 leading-tight line-clamp-2 pr-12 transition-colors">
-            <Link href={detailHref} className="hover:text-brand-blue hover:underline decoration-2 underline-offset-4">{course.title}</Link>
+          <h2 className="text-lg font-extrabold text-gray-900 mt-1 leading-tight transition-colors">
+            <Link href={detailHref} className="hover:text-brand-blue">{course.title}</Link>
           </h2>
           <div className="flex gap-2 mt-3 flex-wrap">
             {course.fields?.map((f) => (

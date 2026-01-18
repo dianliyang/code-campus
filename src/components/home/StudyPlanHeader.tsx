@@ -1,10 +1,12 @@
 "use client";
 
+import { Dictionary } from "@/lib/dictionary";
+
 interface StudyPlanHeaderProps {
   enrolledCount: number;
   completedCount: number;
   averageProgress: number;
-  dict?: any;
+  dict: Dictionary['dashboard']['roadmap'];
 }
 
 export default function StudyPlanHeader({ enrolledCount, completedCount, averageProgress, dict }: StudyPlanHeaderProps) {

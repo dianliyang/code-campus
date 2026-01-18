@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState, useEffect, useRef } from "react";
+import { Dictionary } from "@/lib/dictionary";
 
 export default function NavLinks({ 
   variant = "light", 
@@ -12,7 +13,7 @@ export default function NavLinks({
 }: { 
   variant?: "light" | "dark", 
   collapsed?: boolean,
-  dict?: any,
+  dict: Dictionary['navbar'],
   mode?: "landing" | "dashboard"
 }) {
   const pathname = usePathname();

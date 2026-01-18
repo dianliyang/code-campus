@@ -2,10 +2,11 @@
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { Dictionary } from "@/lib/dictionary";
 
 interface LogoutButtonProps {
   showLabel?: boolean;
-  dict?: any;
+  dict?: Dictionary;
 }
 
 export default function LogoutButton({ showLabel, dict }: LogoutButtonProps) {
@@ -25,7 +26,7 @@ export default function LogoutButton({ showLabel, dict }: LogoutButtonProps) {
         className="flex items-center gap-2 btn-secondary px-6 py-2.5 w-full hover:border-red-200 hover:text-red-500"
       >
         <i className="fa-solid fa-arrow-right-from-bracket text-[10px]"></i>
-        <span>{dict?.dashboard?.profile?.sign_out || "Sign Out"}</span>
+        <span>{dict?.dashboard.profile.sign_out || "Sign Out"}</span>
       </button>
     );
   }

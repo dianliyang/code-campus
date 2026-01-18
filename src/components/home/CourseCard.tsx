@@ -6,13 +6,14 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
+import { Dictionary } from "@/lib/dictionary";
 
 interface CourseCardProps {
   course: Course;
   isInitialEnrolled: boolean;
   onEnrollToggle?: () => void;
   progress?: number;
-  dict?: any;
+  dict: Dictionary['dashboard']['courses'];
   viewMode?: "list" | "grid";
 }
 

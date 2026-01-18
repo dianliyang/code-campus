@@ -3,12 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { University, Field } from "@/types";
+import { Dictionary } from "@/lib/dictionary";
 
 interface SidebarProps {
   universities: University[];
   fields: Field[];
   enrolledCount: number;
-  dict?: any;
+  dict: Dictionary['dashboard']['courses'];
 }
 
 export default function Sidebar({ universities, fields, enrolledCount, dict }: SidebarProps) {

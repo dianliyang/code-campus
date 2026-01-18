@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { Dictionary } from "@/lib/dictionary";
 
 interface CourseListHeaderProps {
   totalItems: number;
   viewMode: "list" | "grid";
   setViewMode: (mode: "list" | "grid") => void;
-  dict?: any;
+  dict: Dictionary['dashboard']['courses'];
 }
 
 export default function CourseListHeader({ totalItems, viewMode, setViewMode, dict }: CourseListHeaderProps) {

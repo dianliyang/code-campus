@@ -64,8 +64,8 @@ export default function Mission({ dict }: { dict: any }) {
                   <span className="text-[9px] font-mono text-slate-400">api.ts</span>
                 </div>
                 <code className="text-xs font-mono block text-slate-600">
-                  <span className="text-brand-blue font-bold">const</span> query = <span className="text-emerald-600">"MIT"</span>;<br/>
-                  <span className="text-slate-400">// Fetching schema...</span><br/>
+                  <span className="text-brand-blue font-bold">const</span> query = <span className="text-emerald-600">&quot;MIT&quot;</span>;<br/>
+                  <span className="text-slate-400">{"// Fetching schema..."}</span><br/>
                   <span className="text-brand-blue font-bold">200 OK</span> <span className="text-slate-400">[1.2ms]</span>
                 </code>
              </div>

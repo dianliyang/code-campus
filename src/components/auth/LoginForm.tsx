@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Dictionary } from "@/lib/dictionary";
 
 interface LoginFormProps {
   onMagicLink: (formData: FormData) => Promise<{ success?: boolean; error?: string } | void>;
   sent?: boolean;
-  dict?: any;
+  dict: Dictionary['dashboard']['login'];
 }
 
 export default function LoginForm({ onMagicLink, sent: initialSent, dict }: LoginFormProps) {

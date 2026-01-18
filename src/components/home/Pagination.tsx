@@ -39,8 +39,8 @@ export default function Pagination({ totalPages, currentPage }: PaginationProps)
             onClick={() => updatePage(p)} 
             className={`w-10 h-10 flex items-center justify-center rounded-lg text-xs font-black transition-all ${
               currentPage === p 
-                ? "bg-brand-blue text-white shadow-lg shadow-brand-blue/30" 
-                : "bg-white border border-gray-200 text-gray-500 hover:border-brand-blue"
+                ? "bg-brand-blue text-white border border-brand-blue" 
+                : "bg-white text-gray-500 border border-gray-200 hover:border-gray-400 transition-colors"
             }`}
           >
             {p}

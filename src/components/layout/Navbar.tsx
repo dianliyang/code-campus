@@ -3,9 +3,9 @@ import Image from "next/image";
 import { getUser } from "@/lib/supabase/server";
 import LogoutButton from "./LogoutButton";
 import NavLinks from "./NavLinks";
+import { Dictionary } from "@/lib/dictionary";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default async function Navbar({ dict }: { dict?: any }) {
+export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
   const user = await getUser();
 
   return (

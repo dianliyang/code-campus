@@ -98,7 +98,7 @@ async function fetchCourses(
       .in('name', fields);
     
     const fieldCourseIds = (fieldData || [])
-      .flatMap(f => (f.course_fields as any[] || []).map(cf => cf.course_id));
+      .flatMap(f => (f.course_fields as { course_id: number }[] | null || []).map(cf => cf.course_id));
     
     if (fieldCourseIds.length === 0) return { items: [], total: 0, pages: 0 };
     supabaseQuery = supabaseQuery.in('id', fieldCourseIds);
@@ -122,10 +122,10 @@ async function fetchCourses(
     return { items: [], total: 0, pages: 0 };
   }
 
-  const items = (data || []).map((row: any) => {
+  const items = (data || []).map((row: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const course = mapCourseFromRow(row);
-    const fieldNames = row.fields?.map((f: any) => f.fields.name) || [];
-    const semesterNames = row.semesters?.map((s: any) => `${s.semesters.term} ${s.semesters.year}`) || [];
+    const fieldNames = (row.fields as { fields: { name: string } }[] | null)?.map((f) => f.fields.name) || [];
+    const semesterNames = (row.semesters as { semesters: { term: string; year: number } }[] | null)?.map((s) => `${s.semesters.term} ${s.semesters.year}`) || [];
     
     return { 
       ...course, 

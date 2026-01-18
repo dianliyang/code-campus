@@ -6,6 +6,8 @@ const dictionaries = {
   zh: () => import("@/dictionaries/zh.json").then((module) => module.default),
 };
 
-export const getDictionary = async (locale: Locale) => {
+export type Dictionary = Awaited<ReturnType<(typeof dictionaries)["en"]>>;
+
+export const getDictionary = async (locale: Locale): Promise<Dictionary> => {
   return dictionaries[locale]();
 };

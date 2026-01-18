@@ -5,7 +5,7 @@ import CourseList from "@/components/home/CourseList";
 import { University, Field, Course } from "@/types";
 import { getUser, createClient, mapCourseFromRow, formatUniversityName } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
-import { getDictionary } from "@/lib/dictionary";
+import { getDictionary, Dictionary } from "@/lib/dictionary";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,11 @@ export default async function CoursesPage({ searchParams }: PageProps) {
   );
 }
 
-async function SidebarData({ userId, params, dict }: { userId?: string, params: any, dict: any }) {
+async function SidebarData({ userId, params, dict }: { 
+  userId?: string, 
+  params: Record<string, string | string[] | undefined>, 
+  dict: Dictionary['dashboard']['courses'] 
+}) {
   const supabase = await createClient();
   
   // Parallelize static and dynamic fetches
@@ -79,15 +83,18 @@ async function SidebarData({ userId, params, dict }: { userId?: string, params: 
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 
-  const dbFields: Field[] = (fieldsRes.data || []).map((f: any) => ({
-    name: f.name,
-    count: f.course_fields?.[0]?.count || 0
+  const dbFields: Field[] = (fieldsRes.data || []).map((f: Record<string, unknown>) => ({
+    name: f.name as string,
+    count: (f.course_fields as { count: number }[] | null)?.[0]?.count || 0
   })).sort((a, b) => b.count - a.count);
 
   return <Sidebar universities={dbUniversities} fields={dbFields} enrolledCount={enrolledRes as number} dict={dict} />;
 }
 
-async function CourseListData({ params, dict }: { params: any, dict: any }) {
+async function CourseListData({ params, dict }: { 
+  params: Record<string, string | string[] | undefined>, 
+  dict: Dictionary['dashboard']['courses'] 
+}) {
   const user = await getUser();
   const page = parseInt((params.page as string) || "1");
   const size = 12;
@@ -139,29 +146,24 @@ async function fetchCourses(
 ) {
   const supabase = await createClient();
   
+  let selectString = `
+    id, university, course_code, title, units, url, details, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
+    fields:course_fields(fields(name)),
+    semesters:course_semesters(semesters(term, year))
+  `;
+
+  if (enrolledOnly) {
+    selectString += `, user_courses!inner(user_id)`;
+  }
+
   let supabaseQuery = supabase
     .from('courses')
-    .select(`
-      id, university, course_code, title, units, url, details, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
-      fields:course_fields(fields(name)),
-      semesters:course_semesters(semesters(term, year))
-    `, { count: 'exact' })
+    .select(selectString, { count: 'exact' })
     .eq('is_hidden', false);
 
   if (enrolledOnly) {
     if (!userId) return { items: [], total: 0, pages: 0 };
-    
-    // Instead of subquery, use inner join via !inner
-    supabaseQuery = supabase
-      .from('courses')
-      .select(`
-        id, university, course_code, title, units, url, details, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
-        fields:course_fields(fields(name)),
-        semesters:course_semesters(semesters(term, year)),
-        user_courses!inner(user_id)
-      `, { count: 'exact' })
-      .eq('is_hidden', false)
-      .eq('user_courses.user_id', userId);
+    supabaseQuery = supabaseQuery.eq('user_courses.user_id', userId);
   }
 
   if (query) {
@@ -180,7 +182,7 @@ async function fetchCourses(
       .in('name', fields);
     
     const fieldCourseIds = (fieldData || [])
-      .flatMap(f => (f.course_fields as any[] || []).map(cf => cf.course_id));
+      .flatMap(f => (f.course_fields as { course_id: number }[] | null || []).map(cf => cf.course_id));
     
     if (fieldCourseIds.length === 0) return { items: [], total: 0, pages: 0 };
     supabaseQuery = supabaseQuery.in('id', fieldCourseIds);
@@ -204,10 +206,10 @@ async function fetchCourses(
     return { items: [], total: 0, pages: 0 };
   }
 
-  const items = (data || []).map((row: any) => {
+  const items = (data || []).map((row: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const course = mapCourseFromRow(row);
-    const fieldNames = row.fields?.map((f: any) => f.fields.name) || [];
-    const semesterNames = row.semesters?.map((s: any) => `${s.semesters.term} ${s.semesters.year}`) || [];
+    const fieldNames = (row.fields as { fields: { name: string } }[] | null)?.map((f) => f.fields.name) || [];
+    const semesterNames = (row.semesters as { semesters: { term: string; year: number } }[] | null)?.map((s) => `${s.semesters.term} ${s.semesters.year}`) || [];
     
     return { 
       ...course, 

@@ -48,7 +48,13 @@ export async function POST(request: Request) {
       const status = isCompleted ? 'completed' : 'in_progress';
       const { gpa, score } = body;
 
-      const updateData: any = { 
+      const updateData: {
+        progress: number;
+        status: string;
+        updated_at: string;
+        gpa?: number;
+        score?: number;
+      } = { 
         progress: progress, 
         status: status, 
         updated_at: new Date().toISOString() 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { getUniversityLogoBase } from "@/lib/supabase/storage";
 
@@ -13,8 +13,16 @@ interface UniversityIconProps {
 export default function UniversityIcon({ name, size = 40, className = "" }: UniversityIconProps) {
   const [error, setError] = useState(false);
   const [extIndex, setExtIndex] = useState(0);
+  const [prevName, setPrevName] = useState(name);
+
+  // Reset state when name changes - during render as recommended by React docs
+  if (name !== prevName) {
+    setPrevName(name);
+    setError(false);
+    setExtIndex(0);
+  }
+
   const extensions = ['.png', '.jpg', '.jpeg', '.svg', '.webp'];
-  
   const baseLogoUrl = getUniversityLogoBase(name);
   const currentSrc = `${baseLogoUrl}${extensions[extIndex]}`;
 
@@ -25,12 +33,6 @@ export default function UniversityIcon({ name, size = 40, className = "" }: Univ
       setError(true);
     }
   };
-
-  // Reset state when name changes
-  useEffect(() => {
-    setError(false);
-    setExtIndex(0);
-  }, [name]);
 
   // Generate initials for fallback
   const getInitials = (str: string) => {

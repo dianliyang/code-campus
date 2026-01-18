@@ -17,12 +17,12 @@ export async function POST(request: Request) {
     const adminSupabase = createAdminClient();
     
     // Prepare courses for bulk upsert - De-duplicate locally first to avoid DB errors
-    const uniqueCoursesMap = new Map();
+    const uniqueCoursesMap = new Map<string, Record<string, unknown>>();
     
     courses.forEach(course => {
       const key = `${course.university}-${course.courseCode}`;
       if (!uniqueCoursesMap.has(key)) {
-        const base: any = {
+        const base: Record<string, unknown> = {
           university: course.university,
           course_code: course.courseCode,
           title: course.title,
@@ -34,8 +34,9 @@ export async function POST(request: Request) {
           popularity: 0
         };
         
-        if (course.isInternal !== undefined || (course as any).isInternal !== undefined) {
-          base.is_internal = course.isInternal ?? (course as any).isInternal;
+        const c = course as ImportRequest & { isInternal?: boolean; semester?: string; score?: number | string };
+        if (c.isInternal !== undefined) {
+          base.is_internal = c.isInternal;
         }
         uniqueCoursesMap.set(key, base);
       }
@@ -44,16 +45,21 @@ export async function POST(request: Request) {
     const coursesToUpsert = Array.from(uniqueCoursesMap.values());
 
     // Perform bulk upsert
-    let { data: upsertedCourses, error: upsertError } = await adminSupabase
+    const { data: initialData, error: upsertError } = await adminSupabase
       .from('courses')
       .upsert(coursesToUpsert, { onConflict: 'university,course_code' })
       .select('id, university, course_code');
+
+    let upsertedCourses = initialData;
 
     if (upsertError) {
       console.error("Bulk upsert error details:", upsertError);
       // If column is missing, try again without is_internal
       if (upsertError.message.includes('is_internal')) {
-        const fallbackCourses = coursesToUpsert.map(({ is_internal, ...rest }) => rest);
+        const fallbackCourses = coursesToUpsert.map((c) => {
+          const { is_internal: _isInternal, ...rest } = c; // eslint-disable-line @typescript-eslint/no-unused-vars
+          return rest;
+        });
         const { data: retryData, error: retryError } = await adminSupabase
           .from('courses')
           .upsert(fallbackCourses, { onConflict: 'university,course_code' })
@@ -71,8 +77,10 @@ export async function POST(request: Request) {
       const dbCourse = upsertedCourses?.find(c => c.university === course.university && c.course_code === course.courseCode);
       if (!dbCourse) continue;
 
+      const c = course as ImportRequest & { semester?: string; score?: number | string };
+
       // 1. Connect Semester
-      const semesterStr = (course as any).semester;
+      const semesterStr = c.semester;
       if (semesterStr) {
         const parts = semesterStr.split(' ');
         if (parts.length >= 2) {
@@ -96,9 +104,9 @@ export async function POST(request: Request) {
       }
 
       // 2. Automatic Enrollment if score exists
-      const scoreValue = (course as any).score;
+      const scoreValue = c.score;
       if (scoreValue !== undefined) {
-        const score = parseFloat(scoreValue);
+        const score = typeof scoreValue === 'string' ? parseFloat(scoreValue) : scoreValue;
         const gpa = score >= 60 ? (score / 20).toFixed(2) : "0.00";
         
         await adminSupabase
@@ -119,8 +127,9 @@ export async function POST(request: Request) {
       success: true, 
       message: `Successfully processed ${coursesToUpsert.length} courses and updated user roadmap.` 
     });
-  } catch (error: any) {
-    const errorMessage = error?.message || error?.details || String(error);
+  } catch (error: unknown) {
+    const e = error as { message?: string; details?: string };
+    const errorMessage = e.message || e.details || String(error);
     console.error("Bulk import error:", error);
     return NextResponse.json({ 
       error: "Batch processing failure", 

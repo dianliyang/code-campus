@@ -11,9 +11,9 @@ export async function GET() {
 
     if (error) throw error;
 
-    const formattedFields = (fields || []).map((f: any) => ({
-      name: f.name,
-      count: f.course_fields?.[0]?.count || 0
+    const formattedFields = (fields || []).map((f: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+      name: f.name as string,
+      count: (f.course_fields as { count: number }[] | null)?.[0]?.count || 0
     })).sort((a, b) => b.count - a.count);
 
     return NextResponse.json({ fields: formattedFields });

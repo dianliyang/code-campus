@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient, mapCourseFromRow, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
-import { getDictionary } from "@/lib/dictionary";
+import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { Course } from "@/types";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
 
@@ -38,11 +38,11 @@ export default async function CourseDetailPage({ params }: PageProps) {
   );
 }
 
-async function CourseDetailData({ id, dict }: { id: string; dict: any }) {
+async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['dashboard'] }) {
   const supabase = await createClient();
   const user = await getUser();
 
-  const { data: row, error } = await supabase
+  const { data, error } = await supabase
     .from("courses")
     .select(
       `
@@ -54,14 +54,15 @@ async function CourseDetailData({ id, dict }: { id: string; dict: any }) {
     .eq("id", id)
     .single();
 
-  if (error || !row) {
+  if (error || !data) {
     notFound();
   }
 
+  const row = data as Record<string, unknown>;
   const course = mapCourseFromRow(row);
-  const fieldNames = row.fields?.map((f: any) => f.fields.name) || [];
+  const fieldNames = (row.fields as { fields: { name: string } }[] | null)?.map((f) => f.fields.name) || [];
   const semesterNames =
-    row.semesters?.map((s: any) => `${s.semesters.term} ${s.semesters.year}`) ||
+    (row.semesters as { semesters: { term: string; year: number } }[] | null)?.map((s) => `${s.semesters.term} ${s.semesters.year}`) ||
     [];
 
   const fullCourse = {

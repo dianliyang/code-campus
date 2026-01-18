@@ -5,12 +5,13 @@ import Image from "next/image";
 import { Course } from "@/types";
 import { useRouter } from "next/navigation";
 import UniversityIcon from "@/components/common/UniversityIcon";
+import { Dictionary } from "@/lib/dictionary";
 
 interface ActiveCourseTrackProps {
   course: Course;
   initialProgress: number;
   onUpdate?: () => void;
-  dict?: any;
+  dict: Dictionary['dashboard']['roadmap'];
 }
 
 export default function ActiveCourseTrack({ course, initialProgress, onUpdate, dict }: ActiveCourseTrackProps) {

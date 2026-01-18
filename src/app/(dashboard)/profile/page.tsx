@@ -42,7 +42,7 @@ export default async function ProfilePage() {
     universityCount = new Set(uniRes.data?.map(r => r.university)).size;
 
     const fieldCounts: Record<string, number> = {};
-    fieldRes.data?.forEach((cf: any) => {
+    (fieldRes.data as { fields: { name: string } | null }[] | null)?.forEach((cf) => {
       if (cf.fields?.name) {
         fieldCounts[cf.fields.name] = (fieldCounts[cf.fields.name] || 0) + 1;
       }

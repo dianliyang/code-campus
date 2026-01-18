@@ -23,7 +23,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
     <div className="flex flex-col min-h-screen bg-white">
       <Hero dict={dict.dashboard} />
       
-      <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col md:flex-row gap-8">
+      <div className="flex-grow max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col md:flex-row gap-8">
         <Suspense fallback={<SidebarSkeleton />}>
           <SidebarData userId={user?.id} params={params} dict={dict.dashboard.courses} />
         </Suspense>
@@ -142,7 +142,7 @@ async function fetchCourses(
   let supabaseQuery = supabase
     .from('courses')
     .select(`
-      *,
+      id, university, course_code, title, units, url, details, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
       fields:course_fields(fields(name)),
       semesters:course_semesters(semesters(term, year))
     `, { count: 'exact' })
@@ -155,7 +155,7 @@ async function fetchCourses(
     supabaseQuery = supabase
       .from('courses')
       .select(`
-        *,
+        id, university, course_code, title, units, url, details, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
         fields:course_fields(fields(name)),
         semesters:course_semesters(semesters(term, year)),
         user_courses!inner(user_id)

@@ -134,10 +134,10 @@ export default function CourseCard({
              <button 
               onClick={handleEnroll}
               disabled={loading}
-              className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all shadow-sm flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
                 isEnrolled 
-                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100' 
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  ? 'bg-brand-green text-white' 
+                  : 'bg-gray-100 text-gray-500 hover:bg-brand-dark hover:text-white'
               }`}
             >
               {loading ? (
@@ -168,7 +168,7 @@ export default function CourseCard({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all relative overflow-hidden group flex flex-col h-full">
+    <div className="bg-white border border-gray-200 rounded-xl p-6 transition-all relative overflow-hidden group flex flex-col h-full">
       <button 
         onClick={handleEnroll}
         disabled={loading}

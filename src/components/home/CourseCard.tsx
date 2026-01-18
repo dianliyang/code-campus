@@ -60,88 +60,96 @@ export default function CourseCard({
 
   if (viewMode === "list") {
     return (
-      <div className="group flex items-center gap-4 py-3 px-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+      <div className="group flex items-center gap-6 py-4 px-6 border-b border-gray-100 hover:bg-gray-50 transition-colors">
         
         {/* 1. Icon */}
         <div className="flex-shrink-0">
           <UniversityIcon 
             name={course.university} 
-            size={40} 
-            className="bg-white rounded-lg p-1 border border-gray-100"
+            size={32} 
+            className="bg-white rounded-lg p-0.5 border border-gray-200"
           />
         </div>
 
         {/* 2. Main Info: Code & Title */}
-        <div className="w-[30%] flex-shrink-0 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">
+        <div className="w-[30%] flex-shrink-0 min-w-0 pr-4">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">
                 {course.university}
               </span>
-              <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-mono font-black">
+              <span className="text-[10px] font-mono font-medium text-gray-500">
                 {course.courseCode}
               </span>
               {course.isInternal && (
-                <span className="text-[8px] font-black bg-brand-blue/10 text-brand-blue px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                <span className="text-[9px] font-bold bg-blue-50 text-brand-blue px-1.5 py-0.5 rounded uppercase">
                     Internal
                 </span>
               )}
             </div>
-            <h2 className="text-sm font-extrabold text-gray-900 leading-tight transition-colors pr-4">
-              <Link href={detailHref} className="hover:text-brand-blue">
+            <h2 className="text-sm font-bold text-gray-900 leading-snug">
+              <Link href={detailHref} className="hover:text-brand-blue transition-colors">
                 {course.title}
               </Link>
             </h2>
         </div>
 
         {/* 3. Tags / Fields */}
-        <div className="w-[20%] flex-shrink-0 hidden md:flex flex-wrap gap-1">
-             {course.fields?.slice(0, 3).map((f) => (
+        <div className="w-[20%] flex-shrink-0 hidden md:flex flex-wrap gap-1.5">
+             {course.fields?.slice(0, 2).map((f) => (
                 <span
                   key={f}
-                  className="bg-gray-50 text-gray-500 text-[8px] uppercase tracking-widest font-black px-1.5 py-0.5 rounded border border-gray-100 truncate max-w-full"
+                  className="bg-gray-100/80 text-gray-600 text-[10px] font-medium px-2 py-0.5 rounded-full border border-gray-200 truncate max-w-full"
                 >
                   {f}
                 </span>
               ))}
+              {(course.fields?.length || 0) > 2 && (
+                <span className="text-[10px] text-gray-400 font-medium px-1 self-center">
+                  +{course.fields!.length - 2}
+                </span>
+              )}
         </div>
 
         {/* 4. Details / Coreqs / Stats */}
         <div className="flex-grow min-w-0 flex flex-col justify-center gap-1">
-             {course.corequisites && (
-               <p className="text-[9px] font-bold text-brand-blue/60 uppercase tracking-widest flex items-center gap-2 truncate">
-                <i className="fa-solid fa-link text-[8px]"></i> {course.corequisites}
+             {course.corequisites ? (
+               <p className="text-xs text-gray-500 flex items-center gap-1.5 truncate">
+                <i className="fa-solid fa-link text-[10px] text-gray-300"></i> 
+                <span className="truncate">{course.corequisites}</span>
               </p>
-            )}
-             <div className="flex items-center gap-1">
-                <i className="fa-solid fa-fire-flame-simple text-orange-500 text-[10px]"></i>
-                <span className="text-xs font-black text-gray-900 tracking-tighter italic">
+             ) : (
+                <span className="text-xs text-gray-300 italic">No coreqs</span>
+             )}
+             <div className="flex items-center gap-1.5 mt-0.5">
+                <i className="fa-solid fa-fire-flame-simple text-orange-400 text-[10px]"></i>
+                <span className="text-xs font-semibold text-gray-700">
                   {course.popularity}
                 </span>
              </div>
         </div>
 
         {/* 5. Actions */}
-        <div className="flex-shrink-0 flex flex-col items-end gap-2 w-24">
+        <div className="flex-shrink-0 flex flex-col items-end gap-2 w-28">
              <button 
               onClick={handleEnroll}
               disabled={loading}
-              className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest transition-all w-full text-center ${
+              className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all w-full text-center shadow-sm ${
                 isEnrolled 
-                  ? 'bg-brand-green text-white' 
-                  : 'bg-gray-100 text-gray-500 hover:bg-brand-dark hover:text-white'
+                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100' 
+                  : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
               }`}
             >
               {loading ? (
                 <i className="fa-solid fa-circle-notch fa-spin"></i>
               ) : isEnrolled ? (
-                <span><i className="fa-solid fa-check"></i> {dict?.enrolled || "Added"}</span>
+                <span className="flex items-center justify-center gap-1.5"><i className="fa-solid fa-check"></i> {dict?.enrolled || "Added"}</span>
               ) : (
-                <span><i className="fa-solid fa-plus"></i> {dict?.enroll || "Join"}</span>
+                <span className="flex items-center justify-center gap-1.5"><i className="fa-solid fa-plus"></i> {dict?.enroll || "Join"}</span>
               )}
             </button>
              <Link
                 href={detailHref}
-                className="text-brand-blue text-[9px] font-black uppercase tracking-widest hover:underline flex items-center gap-1"
+                className="text-gray-400 hover:text-brand-blue text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 transition-colors pr-1"
               >
                 {dict?.details || "Details"} <i className="fa-solid fa-arrow-right text-[8px]"></i>
               </Link>
@@ -152,145 +160,98 @@ export default function CourseCard({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl transition-all relative overflow-hidden group flex flex-col h-full">
-      <button 
-        onClick={handleEnroll}
-        disabled={loading}
-        className={`absolute top-0 right-6 px-3 py-1 rounded-b-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-          isEnrolled 
-            ? 'bg-brand-green text-white translate-y-0' 
-            : 'bg-gray-100 text-gray-500 hover:bg-brand-dark hover:text-white -translate-y-0.5 group-hover:translate-y-0'
-        }`}
-      >
-        {loading ? (
-          <i className="fa-solid fa-circle-notch fa-spin"></i>
-        ) : isEnrolled ? (
-          <span className="flex items-center gap-1">
-            <i className="fa-solid fa-check"></i> {dict?.enrolled || "Enrolled"}
-          </span>
-        ) : (
-          <span className="flex items-center gap-1">
-            <i className="fa-solid fa-plus"></i> {dict?.enroll || "Join"}
-          </span>
-        )}
-      </button>
+    <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all relative overflow-hidden group flex flex-col h-full">
+      <div className="absolute top-5 right-5 z-10">
+        <button 
+          onClick={handleEnroll}
+          disabled={loading}
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm ${
+            isEnrolled 
+              ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100' 
+              : 'bg-white text-gray-400 border border-gray-200 hover:text-brand-blue hover:border-brand-blue hover:scale-105'
+          }`}
+          title={isEnrolled ? "Enrolled" : "Join Course"}
+        >
+          {loading ? (
+            <i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
+          ) : isEnrolled ? (
+            <i className="fa-solid fa-check text-xs"></i>
+          ) : (
+            <i className="fa-solid fa-plus text-xs"></i>
+          )}
+        </button>
+      </div>
 
-      <div className="flex gap-4 min-w-0">
+      <div className="flex gap-4 min-w-0 mb-4">
         <UniversityIcon 
           name={course.university} 
-          size={44} 
-          className="flex-shrink-0 self-start mt-1 bg-white rounded-lg p-1"
+          size={48} 
+          className="flex-shrink-0 self-start bg-white rounded-xl p-1 shadow-sm border border-gray-100"
         />
-        <div className="min-w-0 flex-grow">
-          <div className="flex items-center gap-2">
-            <h4 className="text-xs text-gray-400 font-bold truncate tracking-widest">
+        <div className="min-w-0 flex-grow pr-8">
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate">
               {course.university}
             </h4>
             {course.isInternal && (
-              <span className="text-[8px] font-black bg-brand-blue/10 text-brand-blue px-1.5 py-0.5 rounded uppercase tracking-tighter">
+              <span className="text-[9px] font-bold bg-blue-50 text-brand-blue px-1.5 py-0.5 rounded uppercase">
                 Internal
               </span>
             )}
-            <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-mono font-black">
-              {course.courseCode}
-            </span>
           </div>
-          <h2 className="text-lg font-extrabold text-gray-900 mt-1 leading-tight transition-colors">
+          <h2 className="text-lg font-bold text-gray-900 leading-snug transition-colors">
             <Link href={detailHref} className="hover:text-brand-blue">{course.title}</Link>
           </h2>
-          <div className="flex gap-2 mt-3 flex-wrap">
-            {course.fields?.map((f) => (
-              <span
-                key={f}
-                className="bg-gray-50 text-gray-500 text-[9px] uppercase tracking-widest font-black px-2 py-1 rounded border border-gray-100"
-              >
-                {f}
-              </span>
-            ))}
+          <div className="text-xs font-mono font-medium text-gray-500 mt-1">
+            {course.courseCode}
           </div>
         </div>
       </div>
 
-      {course.corequisites ? (
-        <div className="mt-5 pt-5 border-t border-gray-50 flex-grow">
-          <p className="text-[9px] font-bold text-brand-blue/60 uppercase tracking-widest flex items-center gap-2">
-            <i className="fa-solid fa-link text-[8px]"></i>
-            {dict?.coreq || "Coreq"}: {course.corequisites}
-          </p>
+      <div className="flex gap-1.5 mb-6 flex-wrap">
+        {course.fields?.slice(0, 3).map((f) => (
+          <span
+            key={f}
+            className="bg-gray-50 text-gray-600 text-[10px] font-medium px-2.5 py-1 rounded-full border border-gray-200"
+          >
+            {f}
+          </span>
+        ))}
+      </div>
+
+      <div className="mt-auto pt-5 border-t border-gray-100">
+        <div className="flex items-center justify-between text-xs">
+          {course.corequisites ? (
+            <p className="text-gray-500 flex items-center gap-2 max-w-[70%] truncate">
+              <i className="fa-solid fa-link text-gray-300"></i>
+              <span className="truncate" title={course.corequisites}>Coreq: {course.corequisites}</span>
+            </p>
+          ) : (
+             <span className="text-gray-300 italic">No corequisites</span>
+          )}
+          
+          <div className="flex items-center gap-1.5">
+            <i className="fa-solid fa-fire-flame-simple text-orange-400"></i>
+            <span className="font-semibold text-gray-700">{course.popularity}</span>
+          </div>
         </div>
-      ) : (
-        <div className="flex-grow" />
-      )}
+      </div>
 
       {isEnrolled && displayProgress > 0 && (
-        <div className="mt-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">
-              {dict?.learning_signal || "Learning Signal"}
+        <div className="mt-4 pt-4 border-t border-gray-50">
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+              Progress
             </span>
-            <span className="text-[10px] font-black text-brand-blue italic">
+            <span className="text-[10px] font-bold text-brand-blue">
               {displayProgress}%
             </span>
           </div>
-          <div className="flex gap-[2px] items-center w-full">
-            {Array.from({ length: 20 }).map((_, i) => {
-              const isActive = i / 20 < displayProgress / 100;
-              return (
-                <div
-                  key={i}
-                  className={`flex-grow h-1 rounded-full transition-all duration-500 ${
-                    isActive
-                      ? "bg-brand-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]"
-                      : "bg-gray-100"
-                  }`}
-                ></div>
-              );
-            })}
+          <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+             <div className="h-full bg-brand-blue transition-all duration-1000" style={{ width: `${displayProgress}%` }}></div>
           </div>
         </div>
       )}
-
-      <div className="mt-6 flex items-center justify-between border-t border-gray-50 pt-6">
-        <div className="flex items-center gap-4 text-[10px] uppercase tracking-widest">
-          <div className="flex flex-col -space-y-1">
-            <span className="text-[8px] font-black text-gray-300">
-              {dict?.impact || "IMPACT"}
-            </span>
-            <div className="flex items-center gap-1">
-              <i className="fa-solid fa-fire-flame-simple text-orange-500 text-[10px]"></i>
-              <span className="text-sm font-black text-gray-900 tracking-tighter italic">
-                {course.popularity}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
-            {course.level && (
-              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
-                {course.level}
-              </span>
-            )}
-            {course.semesters && course.semesters.length > 0 && (
-              <div className="flex gap-2">
-                {course.semesters.map((s) => (
-                  <span
-                    key={s}
-                    className="bg-gray-50 text-gray-500 px-1.5 py-0.5 rounded-sm text-[8px] font-black tracking-tighter border border-gray-100 uppercase"
-                  >
-                    {s}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        <Link
-          href={detailHref}
-          className="text-brand-blue text-[10px] font-black uppercase tracking-widest hover:underline flex items-center gap-1.5"
-        >
-          {dict?.details || "Course Detail"}{" "}
-          <i className="fa-solid fa-arrow-right text-[8px]"></i>
-        </Link>
-      </div>
     </div>
   );
 }

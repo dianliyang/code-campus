@@ -58,6 +58,7 @@ async function SidebarData({ userId, params, dict }: {
       let q = supabase.from('user_courses')
         .select('course_id, courses!inner(university, title, description, course_code, is_hidden, level)', { count: 'exact', head: true })
         .eq('user_id', userId)
+        .neq('status', 'hidden')
         .eq('courses.is_hidden', false);
       
       if (queryParam) {
@@ -155,7 +156,7 @@ async function fetchCourses(
   `;
 
   if (enrolledOnly) {
-    selectString += `, user_courses!inner(user_id)`;
+    selectString += `, user_courses!inner(user_id, status)`;
   }
 
   let supabaseQuery = supabase
@@ -166,6 +167,17 @@ async function fetchCourses(
   if (enrolledOnly) {
     if (!userId) return { items: [], total: 0, pages: 0 };
     supabaseQuery = supabaseQuery.eq('user_courses.user_id', userId);
+    supabaseQuery = supabaseQuery.neq('user_courses.status', 'hidden');
+  } else if (userId) {
+     const { data: hiddenData } = await supabase
+       .from('user_courses')
+       .select('course_id')
+       .eq('user_id', userId)
+       .eq('status', 'hidden');
+     const hiddenIds = hiddenData?.map(h => h.course_id) || [];
+     if (hiddenIds.length > 0) {
+        supabaseQuery = supabaseQuery.not('id', 'in', `(${hiddenIds.join(',')})`);
+     }
   }
 
   if (query) {

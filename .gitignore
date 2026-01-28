@@ -46,4 +46,4 @@ backend/data/*.json
 .vscode/
 .idea/
 *.swp
-*.swo
+*.swoagent-skills/

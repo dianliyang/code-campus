@@ -8,17 +8,16 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 import HeroBackground from "@/components/home/HeroBackground";
-import { getUser } from "@/lib/supabase/server";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [lang, user] = await Promise.all([getLanguage(), getUser()]);
+  const lang = await getLanguage();
   const dict = await getDictionary(lang);
 
   return (
     <div className="flex flex-col bg-white">
-      <LandingNavbar dict={dict.navbar} user={user} />
+      <LandingNavbar dict={dict.navbar} />
       
       {/* SECTION 1: RADICAL HERO - LIGHT THEME */}
       <div id="hero" className="min-h-screen flex flex-col justify-center relative overflow-hidden bg-slate-50">

@@ -4,7 +4,7 @@ const universities = [
   "MIT",
   "Stanford",
   "UC Berkeley",
-  "Carnegie Mellon",
+  "CMU",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,14 +1,24 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import FloatingNavWrapper from "./FloatingNavWrapper";
 import NavLinks from "./NavLinks";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function LandingNavbar({ dict, user }: { dict: any, user?: any }) {
-  const enterLink = user ? "/courses" : "/courses"; // Both go to courses, but logic can differ
-  const enterText = user ? (dict?.dashboard_btn || "Dashboard") : (dict?.enter || "Enter");
+export default function LandingNavbar({ dict }: { dict: any }) {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+  }, []);
+
+  const enterText = isLoggedIn ? (dict?.dashboard_btn || "Dashboard") : (dict?.enter || "Enter");
 
   return (
     <FloatingNavWrapper initialClassName="w-full bg-transparent translate-y-0 border-b border-transparent">
@@ -42,7 +52,7 @@ export default function LandingNavbar({ dict, user }: { dict: any, user?: any })
             {/* CTA Section */}
             <div className="flex items-center gap-6">
               <Link 
-                href={enterLink} 
+                href="/courses"
                 className={`flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] ${
                    scrolled 
                     ? 'w-10 h-10 !rounded-full !px-0 !py-0 bg-slate-900 text-white shadow-xl hover:bg-brand-blue' 

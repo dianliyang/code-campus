@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { Course } from "@/types";
-import CourseCard from "@/components/home/CourseCard";
 import AchievementCard from "@/components/home/AchievementCard";
 import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
@@ -103,7 +102,7 @@ async function StudyPlanContent({
   });
 
   // Fetch study plans
-  const { data: plans } = await supabase
+  const { data: rawPlans } = await supabase
     .from('study_plans')
     .select(`
       id,
@@ -117,6 +116,12 @@ async function StudyPlanContent({
       courses(id, title, course_code, university)
     `)
     .eq('user_id', userId);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const plans = rawPlans?.map((plan: any) => ({
+    ...plan,
+    courses: Array.isArray(plan.courses) ? plan.courses[0] : plan.courses
+  }));
 
   // Fetch study logs (exceptions/completions)
   const { data: logs } = await supabase

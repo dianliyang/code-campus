@@ -107,7 +107,6 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
           isWithin(dateStr, plan.start_date, plan.end_date) &&
           plan.days_of_week.includes(dayOfWeek)
         ) {
-
           // Check for log override
           const log = logs.find(l => l.plan_id === plan.id && l.log_date === dateStr);
 

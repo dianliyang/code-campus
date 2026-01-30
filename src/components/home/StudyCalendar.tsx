@@ -388,18 +388,18 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                             {event.isCompleted && <i className="fa-solid fa-check-circle text-[10px] text-brand-green"></i>}
                           </div>
 
-                          <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-end justify-between gap-2">
                             <div className="flex items-center gap-1 min-w-0">
                               <i className="fa-solid fa-location-dot text-[9px] opacity-70"></i>
                               <span className="text-[9px] font-bold text-gray-600 truncate">{event.location || 'Campus'}</span>
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-md border h-fit ${
+                            <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                              <span className={`text-[8px] font-bold uppercase tracking-wider ${
                                 event.isCompleted
-                                  ? 'bg-brand-green/10 text-brand-green border-brand-green/30'
+                                  ? 'text-brand-green'
                                   : event.type === 'lecture'
-                                    ? 'bg-blue-100 text-blue-700 border-blue-300'
-                                    : 'bg-orange-100 text-orange-700 border-orange-300'
+                                    ? 'text-blue-600'
+                                    : 'text-orange-600'
                               }`}>
                                 {event.type.slice(0, 3)}
                               </span>

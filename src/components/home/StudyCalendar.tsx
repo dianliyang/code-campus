@@ -89,7 +89,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
   // Generate events based on plans for the current month
   const eventsByDate = useMemo(() => {
     const map = new Map<number, GeneratedEvent[]>();
-    
+
     // Helper to check if a date is within range [start, end]
     const isWithin = (dateStr: string, start: string, end: string) => {
       return dateStr >= start && dateStr <= end;
@@ -101,16 +101,19 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
       // Use local date string construction to avoid timezone issues
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const dayOfWeek = date.getDay(); // 0-6
+      const seenCourses = new Set<number>(); // Track seen course_ids for this day
 
       plans.forEach(plan => {
         if (
           plan.courses &&
           isWithin(dateStr, plan.start_date, plan.end_date) &&
-          plan.days_of_week.includes(dayOfWeek)
+          plan.days_of_week.includes(dayOfWeek) &&
+          !seenCourses.has(plan.course_id) // Skip if course already added for this day
         ) {
+          seenCourses.add(plan.course_id);
           // Check for log override
           const log = logs.find(l => l.plan_id === plan.id && l.log_date === dateStr);
-          
+
           const event: GeneratedEvent = {
             planId: plan.id,
             courseId: plan.course_id,
@@ -131,7 +134,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
         }
       });
     }
-    
+
     return map;
   }, [plans, logs, year, month, daysInMonth]);
 

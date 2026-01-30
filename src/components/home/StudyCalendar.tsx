@@ -401,7 +401,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                                     ? 'text-blue-600'
                                     : 'text-orange-600'
                               }`}>
-                                {event.type.slice(0, 3)}
+                                {event.type}
                               </span>
                               <span className="text-[9px] font-mono font-bold text-gray-600 whitespace-nowrap">
                                 {event.startTime.slice(0, 5)}-{event.endTime.slice(0, 5)}

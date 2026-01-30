@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { Course } from "@/types";
-import Link from "next/link";
 import { Dictionary } from "@/lib/dictionary";
 import { useRouter } from "next/navigation";
 
@@ -286,7 +285,6 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
 
               const isToday = day === today;
               const isSelected = day === selectedDay;
-              const isWeekend = (index % 7 === 0) || (index % 7 === 6);
               const dayEvents = eventsByDay.get(day) || [];
               const hasSchedule = dayEvents.length > 0;
 

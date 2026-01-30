@@ -7,8 +7,8 @@ async function testEmail() {
   console.log('📧 Sending test email...');
   
   const result = await sendStudyReminderEmail({
-    recipientEmail: 'opposed_leaps_8k@icloud.com', // Recognized Resend account email
-    recipientName: 'Student',
+    recipientEmail: 'opposed_leaps_8k@icloud.com',
+    recipientName: 'Dianli',
     courses: [
       {
         title: 'Introduction to Machine Learning',

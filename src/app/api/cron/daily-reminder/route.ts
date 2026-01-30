@@ -25,6 +25,7 @@ export async function GET() {
         end_time,
         location,
         type,
+        days_of_week,
         courses(id, title, course_code, university)
       `)
       .lte('start_date', todayString)
@@ -85,7 +86,9 @@ export async function GET() {
 
         // Calculate duration for each course
         const emailCourses = userPlans
-          .filter(plan => plan.courses) // Ensure course data exists
+          .filter((plan): plan is typeof plan & { courses: NonNullable<typeof plan.courses> } =>
+            plan.courses != null
+          )
           .map(plan => {
             const startTime = plan.start_time || '09:00:00';
             const endTime = plan.end_time || '11:00:00';
@@ -96,9 +99,9 @@ export async function GET() {
             const durationMinutes = (endHour * 60 + endMin) - (startHour * 60 + startMin);
 
             return {
-              title: (plan.courses as any).title,
-              courseCode: (plan.courses as any).course_code,
-              university: (plan.courses as any).university,
+              title: plan.courses.title,
+              courseCode: plan.courses.course_code,
+              university: plan.courses.university,
               durationMinutes: Math.max(durationMinutes, 30), // Minimum 30 minutes
               location: plan.location || undefined,
               startTime: startTime.slice(0, 5), // HH:MM format

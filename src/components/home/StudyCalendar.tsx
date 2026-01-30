@@ -101,16 +101,23 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
       // Use local date string construction to avoid timezone issues
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const dayOfWeek = date.getDay(); // 0-6
-      const seenCourses = new Set<number>(); // Track seen course_ids for this day
+      const seenEventKeys = new Set<string>(); // Track unique course+type+time combinations
 
       plans.forEach(plan => {
         if (
           plan.courses &&
           isWithin(dateStr, plan.start_date, plan.end_date) &&
-          plan.days_of_week.includes(dayOfWeek) &&
-          !seenCourses.has(plan.course_id) // Skip if course already added for this day
+          plan.days_of_week.includes(dayOfWeek)
         ) {
-          seenCourses.add(plan.course_id);
+          // Create unique key for this event (course + type + time)
+          const eventKey = `${plan.course_id}-${plan.type || 'lecture'}-${plan.start_time}`;
+
+          // Skip if exact duplicate (same course, type, and time)
+          if (seenEventKeys.has(eventKey)) {
+            return;
+          }
+          seenEventKeys.add(eventKey);
+
           // Check for log override
           const log = logs.find(l => l.plan_id === plan.id && l.log_date === dateStr);
 

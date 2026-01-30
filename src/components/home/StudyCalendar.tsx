@@ -194,19 +194,19 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
   const needsScheduleGeneration = inProgressCourses.length > 0 && !hasPlans;
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 hover:border-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/5 h-full flex flex-col">
+    <div className="bg-white border border-gray-200 rounded-2xl p-4 hover:border-gray-300 transition-all hover:shadow-lg h-full flex flex-col">
       <div className="flex gap-6 flex-1 min-h-0">
         {/* Left: Calendar */}
         <div className="flex-shrink-0 w-80 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-black text-gray-900 tracking-tight">
-              {monthNames[month]} <span className="text-violet-500">{year}</span>
+              {monthNames[month]} <span className="text-gray-400">{year}</span>
             </h3>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => navigateMonth(-1)}
-                className="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 hover:text-violet-500 hover:bg-violet-50 transition-all"
+                className="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all"
               >
                 <i className="fa-solid fa-chevron-left text-[10px]"></i>
               </button>
@@ -216,13 +216,13 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                   setCurrentDate(now);
                   setSelectedDay(now.getDate());
                 }}
-                className="px-2 py-1 text-[8px] font-black uppercase tracking-widest text-violet-500 bg-violet-50 rounded-md hover:bg-violet-500 hover:text-white transition-all"
+                className="px-2 py-1 text-[8px] font-black uppercase tracking-widest text-gray-700 bg-gray-100 rounded-md hover:bg-gray-800 hover:text-white transition-all"
               >
                 {dict.calendar_today}
               </button>
               <button
                 onClick={() => navigateMonth(1)}
-                className="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 hover:text-violet-500 hover:bg-violet-50 transition-all"
+                className="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all"
               >
                 <i className="fa-solid fa-chevron-right text-[10px]"></i>
               </button>
@@ -294,12 +294,12 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                   onClick={() => setSelectedDay(isSelected ? null : day)}
                   className={`flex-1 aspect-square rounded-lg flex flex-col items-center justify-center relative transition-all ${
                     isSelected
-                      ? 'bg-violet-500 text-white shadow-md shadow-violet-500/30'
+                      ? 'bg-gray-900 text-white shadow-md shadow-gray-900/20'
                       : isToday
-                        ? 'bg-violet-100 text-violet-700 ring-2 ring-violet-500'
+                        ? 'bg-gray-100 text-gray-900 ring-2 ring-gray-400'
                         : hasSchedule
-                          ? 'bg-violet-50 text-violet-600 hover:bg-violet-100'
-                          : 'text-gray-600 hover:bg-gray-50'
+                          ? 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                          : 'text-gray-400 hover:bg-gray-50'
                   }`}
                 >
                   <span className={`text-xs font-bold ${isToday && !isSelected ? 'text-violet-700' : ''}`}>
@@ -328,7 +328,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                   {monthNames[month]} {selectedDay}
                 </span>
                 {hasEvents && (
-                  <span className="text-[9px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">
+                  <span className="text-[9px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
                     <i className="fa-solid fa-clock mr-1"></i>
                     {dict.calendar_study_day}
                   </span>
@@ -352,52 +352,32 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                 <div className="flex-grow overflow-y-auto pr-2">
                   <div className="space-y-2">
                     {selectedDayEvents.map((event, idx) => {
-                      const courseColors = [
-                        'bg-red-50 border-red-200 hover:bg-red-100',
-                        'bg-blue-50 border-blue-200 hover:bg-blue-100',
-                        'bg-green-50 border-green-200 hover:bg-green-100',
-                        'bg-yellow-50 border-yellow-200 hover:bg-yellow-100',
-                        'bg-purple-50 border-purple-200 hover:bg-purple-100',
-                        'bg-pink-50 border-pink-200 hover:bg-pink-100',
-                        'bg-indigo-50 border-indigo-200 hover:bg-indigo-100',
-                        'bg-cyan-50 border-cyan-200 hover:bg-cyan-100',
-                        'bg-orange-50 border-orange-200 hover:bg-orange-100',
-                        'bg-lime-50 border-lime-200 hover:bg-lime-100'
-                      ];
-                      const colorIndex = event.courseId % courseColors.length;
-                      const bgColor = event.isCompleted ? 'bg-brand-green/5 border-brand-green/10 hover:bg-brand-green/8' : courseColors[colorIndex];
+                      const bgColor = event.isCompleted ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-white border-gray-200 hover:bg-gray-50';
+                      const borderColor = event.isCompleted ? 'border-r-gray-300' : 'border-r-gray-900';
 
                       return (
                         <div
                           key={`${event.planId}-${idx}`}
-                          className={`rounded-lg border cursor-pointer transition-all flex flex-col p-3 group/item border-r-4 ${bgColor} ${
-                            event.isCompleted
-                              ? 'border-r-brand-green'
-                              : event.type === 'lecture'
-                                ? 'border-r-blue-500'
-                                : 'border-r-orange-500'
-                          }`}
+                          className={`rounded-lg border cursor-pointer transition-all flex flex-col p-3 group/item border-r-4 ${bgColor} ${borderColor}`}
                           onClick={() => toggleComplete(event.planId, event.date)}
                         >
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <span className={`text-[10px] font-bold truncate ${event.isCompleted ? 'text-brand-green line-through' : 'text-gray-900'}`}>
+                            <span className={`text-[10px] font-bold truncate ${event.isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                               {event.title}
                             </span>
-                            {event.isCompleted && <i className="fa-solid fa-check-circle text-[10px] text-brand-green"></i>}
+                            {event.isCompleted && <i className="fa-solid fa-check text-[10px] text-gray-400"></i>}
                           </div>
 
                           <div className="flex items-end justify-between gap-2">
                             <div className="flex items-center gap-1 min-w-0">
-                              <i className="fa-solid fa-location-dot text-[9px] opacity-70"></i>
+                              <i className="fa-solid fa-location-dot text-[9px] opacity-50"></i>
                               <span className="text-[9px] font-bold text-gray-600 truncate">{event.location || 'Campus'}</span>
                             </div>
                             <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                               <span className={`text-[8px] font-bold uppercase tracking-wider ${
                                 event.isCompleted
-                                  ? 'text-brand-green'
-                                  : event.type === 'lecture'
-                                    ? 'text-blue-600'
-                                    : 'text-orange-600'
+                                  ? 'text-gray-400'
+                                  : 'text-gray-700'
                               }`}>
                                 {event.type}
                               </span>
@@ -427,7 +407,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                 {dict.calendar_events}
               </p>
               {plans.length > 0 && (
-                <p className="text-[9px] text-violet-400 mt-2 font-black">
+                <p className="text-[9px] text-gray-500 mt-2 font-black">
                   {plans.length} {dict.calendar_courses_scheduled || "plans active"}
                 </p>
               )}

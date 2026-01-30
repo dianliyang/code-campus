@@ -382,20 +382,9 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                           onClick={() => toggleComplete(event.planId, event.date)}
                         >
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className={`text-[10px] font-bold truncate ${event.isCompleted ? 'text-brand-green line-through' : 'text-gray-900'}`}>
-                                {event.title}
-                              </span>
-                              <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md flex-shrink-0 border ${
-                                event.isCompleted
-                                  ? 'bg-brand-green/10 text-brand-green border-brand-green/30'
-                                  : event.type === 'lecture'
-                                    ? 'bg-blue-100 text-blue-700 border-blue-300'
-                                    : 'bg-orange-100 text-orange-700 border-orange-300'
-                              }`}>
-                                {event.type.slice(0, 3)}
-                              </span>
-                            </div>
+                            <span className={`text-[10px] font-bold truncate ${event.isCompleted ? 'text-brand-green line-through' : 'text-gray-900'}`}>
+                              {event.title}
+                            </span>
                             {event.isCompleted && <i className="fa-solid fa-check-circle text-[10px] text-brand-green"></i>}
                           </div>
 
@@ -404,9 +393,20 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                               <i className="fa-solid fa-location-dot text-[9px] opacity-70"></i>
                               <span className="text-[9px] font-bold text-gray-600 truncate">{event.location || 'Campus'}</span>
                             </div>
-                            <span className="text-[9px] font-mono font-bold text-gray-600 flex-shrink-0 whitespace-nowrap">
-                              {event.startTime.slice(0, 5)}-{event.endTime.slice(0, 5)}
-                            </span>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${
+                                event.isCompleted
+                                  ? 'bg-brand-green/10 text-brand-green border-brand-green/30'
+                                  : event.type === 'lecture'
+                                    ? 'bg-blue-100 text-blue-700 border-blue-300'
+                                    : 'bg-orange-100 text-orange-700 border-orange-300'
+                              }`}>
+                                {event.type.slice(0, 3)}
+                              </span>
+                              <span className="text-[9px] font-mono font-bold text-gray-600 whitespace-nowrap">
+                                {event.startTime.slice(0, 5)}-{event.endTime.slice(0, 5)}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       );

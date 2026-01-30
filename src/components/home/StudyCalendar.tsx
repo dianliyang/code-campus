@@ -310,7 +310,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
 
                   {hasSchedule && !isSelected && (
                     <div className="absolute bottom-0.5 flex gap-0.5">
-                      {dayEvents.slice(0, 2).map((_, i) => (
+                      {dayEvents.map((_, i) => (
                         <div key={i} className="w-1 h-1 rounded-full bg-violet-400"></div>
                       ))}
                     </div>

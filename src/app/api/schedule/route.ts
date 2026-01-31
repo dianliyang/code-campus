@@ -14,7 +14,6 @@ interface ScheduleRequest {
   endTime?: string;
   location?: string;
   // For remove_plan
-  planId?: number;
   // For toggle_complete
   date?: string; // The specific date of the instance
   notes?: string;

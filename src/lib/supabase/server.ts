@@ -217,6 +217,29 @@ export async function incrementPopularity(courseId: number): Promise<void> {
   }
 }
 
+export async function decrementPopularity(courseId: number): Promise<void> {
+  const supabase = await createClient();
+  // Try RPC fallback; if RPC not available, do safe decrement
+  try {
+    const { error } = await supabase.rpc("decrement_popularity", {
+      row_id: courseId,
+    });
+    if (error) throw error;
+  } catch {
+    // Safe fallback: read current popularity and decrement but not below 0
+    const { data: current } = await supabase
+      .from("courses")
+      .select("popularity")
+      .eq("id", courseId)
+      .single();
+    const newVal = Math.max(0, (current?.popularity || 0) - 1);
+    await supabase
+      .from("courses")
+      .update({ popularity: newVal })
+      .eq("id", courseId);
+  }
+}
+
 export function formatUniversityName(name: string): string {
   const n = name.toLowerCase().trim();
   if (n === 'mit' || n === 'massachusetts institute of technology') return 'MIT';

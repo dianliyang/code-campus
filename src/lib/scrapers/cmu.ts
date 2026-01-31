@@ -19,7 +19,7 @@ export class CMU extends BaseScraper {
 
     const input = this.semester.toLowerCase();
     const year = input.replace(/\D/g, "");
-    const term = input.replace(/\d/g, "");
+    const term = input.replace(/[\d\s]/g, ""); // Remove digits and whitespace
     
     const termMap: Record<string, string> = {
       'fa': 'F',
@@ -31,7 +31,10 @@ export class CMU extends BaseScraper {
     };
     
     const cmuTerm = termMap[term] || 'F';
-    return `${cmuTerm}${year || '25'}`;
+    // Use last 2 digits of year
+    const shortYear = year.length === 4 ? year.slice(2) : (year || '25');
+    
+    return `${cmuTerm}${shortYear}`;
   }
 
   async retrieve(): Promise<Course[]> {

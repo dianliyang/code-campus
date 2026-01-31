@@ -9,7 +9,8 @@
     "lint": "eslint",
     "scrape": "tsx -r dotenv/config src/scripts/run-all-scrapers.ts dotenv_config_path=.env.local",
     "categorize": "tsx -r dotenv/config src/scripts/categorize-smart.ts dotenv_config_path=.env.local",
-    "mock": "tsx -r dotenv/config src/scripts/mock-data.ts dotenv_config_path=.env.local"
+    "test": "vitest",
+    "prepare": "husky"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
@@ -26,17 +27,23 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.2",
     "babel-plugin-react-compiler": "1.0.0",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "husky": "^9.1.7",
+    "jsdom": "^27.4.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }

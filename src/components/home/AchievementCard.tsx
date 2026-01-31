@@ -8,16 +8,16 @@ import UniversityIcon from "@/components/common/UniversityIcon";
 interface AchievementCardProps {
   course: Course & { gpa?: number; score?: number };
   completionDate?: string;
-  masteredLabel?: string;
 }
 
-export default function AchievementCard({ course, masteredLabel }: AchievementCardProps) {
+export default function AchievementCard({ course }: AchievementCardProps) {
   const router = useRouter();
   const [completionId, setCompletionId] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [gpa, setGpa] = useState(course.gpa?.toString() || "");
   const [score, setScore] = useState(course.score?.toString() || "");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isMarkingIncomplete, setIsMarkingIncomplete] = useState(false);
 
   useEffect(() => {
     // Generate ID only on client to avoid hydration mismatch
@@ -50,12 +50,34 @@ export default function AchievementCard({ course, masteredLabel }: AchievementCa
     }
   };
 
+  const handleMarkIncomplete = async () => {
+    setIsMarkingIncomplete(true);
+    try {
+      const res = await fetch("/api/courses/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: course.id,
+          action: "update_progress",
+          progress: 0
+        })
+      });
+      if (res.ok) {
+        router.refresh();
+      }
+    } catch (e) {
+      console.error("Failed to mark incomplete:", e);
+    } finally {
+      setIsMarkingIncomplete(false);
+    }
+  };
+
   return (
-    <div className="bg-white border border-gray-100 p-6 flex flex-col gap-5 h-full relative group hover:border-brand-green/30 transition-all hover:shadow-xl hover:shadow-brand-green/5 rounded-2xl">
+    <div className="bg-white border border-gray-100 p-4 flex flex-col gap-3 h-full relative group hover:border-brand-green/30 transition-all hover:shadow-xl hover:shadow-brand-green/5 rounded-xl">
       {/* Edit Trigger */}
       <button 
         onClick={() => setShowEditModal(true)}
-        className="absolute top-4 right-4 p-2 rounded-lg bg-gray-50 text-gray-400 opacity-0 group-hover:opacity-100 transition-all hover:text-brand-blue hover:bg-blue-50 cursor-pointer z-10"
+        className="absolute top-3 right-3 p-1.5 rounded-lg bg-gray-50 text-gray-400 opacity-0 group-hover:opacity-100 transition-all hover:text-brand-blue hover:bg-blue-50 cursor-pointer z-10"
         title="Update Grade"
       >
         <i className="fa-solid fa-pen-to-square text-[10px]"></i>
@@ -128,12 +150,12 @@ export default function AchievementCard({ course, masteredLabel }: AchievementCa
       <div className="flex items-center gap-3">
         <UniversityIcon 
           name={course.university} 
-          size={40} 
-          className="bg-gray-50 rounded-lg border border-gray-100 p-1.5"
+          size={32} 
+          className="bg-gray-50 rounded-lg border border-gray-100 p-1"
         />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black text-brand-green uppercase tracking-[0.2em] leading-none">
+            <span className="text-[9px] font-black text-brand-green uppercase tracking-[0.2em] leading-none">
               {course.university}
             </span>
             {course.semesters && course.semesters.length > 0 && (
@@ -148,14 +170,14 @@ export default function AchievementCard({ course, masteredLabel }: AchievementCa
         </div>
       </div>
 
-      <div className="flex-grow space-y-4 flex flex-col">
-        <h3 className="text-base font-black text-gray-900 leading-tight tracking-tight line-clamp-2 group-hover:text-brand-green transition-colors min-h-[3rem]">
+      <div className="flex-grow space-y-2 flex flex-col">
+        <h3 className="text-sm font-bold text-gray-900 leading-tight tracking-tight line-clamp-2 group-hover:text-brand-green transition-colors min-h-[2.5rem]">
           {course.title}
         </h3>
 
         <div className="mt-auto">
           {(course.gpa || course.score) ? (
-            <div className="flex gap-4 items-center bg-gray-50/50 p-3 rounded-xl border border-gray-100/50">
+            <div className="flex gap-3 items-center bg-gray-50/50 p-2 rounded-lg border border-gray-100/50">
               {course.gpa && (
                 <div className="flex flex-col">
                   <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">GPA</span>
@@ -177,13 +199,18 @@ export default function AchievementCard({ course, masteredLabel }: AchievementCa
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-5 border-t border-gray-50">
+      <div className="flex items-center justify-between pt-3 border-t border-gray-50">
         <span className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.2em] font-mono">
           CERT_ID: {completionId}
         </span>
-        <span className="text-[10px] font-black text-brand-green uppercase tracking-widest bg-brand-green/5 px-2 py-1 rounded">
-          {masteredLabel || "Mastered"}
-        </span>
+        <button
+          onClick={handleMarkIncomplete}
+          disabled={isMarkingIncomplete}
+          className="w-7 h-7 shrink-0 rounded-lg border border-red-200 text-red-500 bg-red-50 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center disabled:opacity-50"
+          title="Mark Incomplete"
+        >
+          <i className="fa-solid fa-rotate-left text-[10px]"></i>
+        </button>
       </div>
     </div>
   );

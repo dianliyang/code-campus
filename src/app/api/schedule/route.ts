@@ -3,8 +3,9 @@ import { revalidatePath } from 'next/cache';
 import { getUser, createClient } from '@/lib/supabase/server';
 
 interface ScheduleRequest {
-  action: 'generate' | 'add_plan' | 'remove_plan' | 'toggle_complete' | 'get';
-  // For add_plan
+  action: 'generate' | 'add_plan' | 'update_plan' | 'remove_plan' | 'toggle_complete' | 'get';
+  // For add_plan / update_plan
+  planId?: number;
   courseId?: number;
   startDate?: string;
   endDate?: string;
@@ -13,7 +14,6 @@ interface ScheduleRequest {
   endTime?: string;
   location?: string;
   // For remove_plan
-  planId?: number;
   // For toggle_complete
   date?: string; // The specific date of the instance
   notes?: string;
@@ -133,6 +133,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
 
+      // Check if plan already exists for this course to prevent duplicates if needed
+      // For now, we assume user might want multiple, but UI enforces one. 
+      // If we want to enforce single plan per course:
+      /*
+      const { data: existing } = await supabase.from('study_plans').select('id').eq('user_id', userId).eq('course_id', courseId).single();
+      if (existing) { ... update logic ... }
+      */
+
       const { error } = await supabase
         .from('study_plans')
         .insert({
@@ -149,6 +157,33 @@ export async function POST(request: Request) {
       if (error) throw error;
       revalidatePath('/study-plan');
       return NextResponse.json({ success: true, message: "Plan created" });
+    }
+
+    // Update a plan
+    if (action === 'update_plan') {
+      const { planId, startDate, endDate, daysOfWeek, startTime, endTime, location } = body;
+      
+      if (!planId || !startDate || !endDate || !daysOfWeek) {
+        return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      }
+
+      const { error } = await supabase
+        .from('study_plans')
+        .update({
+          start_date: startDate,
+          end_date: endDate,
+          days_of_week: daysOfWeek,
+          start_time: startTime,
+          end_time: endTime,
+          location: location,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', planId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      revalidatePath('/study-plan');
+      return NextResponse.json({ success: true, message: "Plan updated" });
     }
 
     // Remove a plan

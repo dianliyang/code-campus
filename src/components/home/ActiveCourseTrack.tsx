@@ -6,19 +6,30 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
+import AddPlanModal from "./AddPlanModal";
 
 interface ActiveCourseTrackProps {
   course: Course;
   initialProgress: number;
+  plan?: {
+    id: number;
+    start_date: string;
+    end_date: string;
+    days_of_week: number[];
+    start_time: string;
+    end_time: string;
+    location: string;
+  } | null;
   onUpdate?: () => void;
   dict: Dictionary['dashboard']['roadmap'];
 }
 
-export default function ActiveCourseTrack({ course, initialProgress, onUpdate, dict }: ActiveCourseTrackProps) {
+export default function ActiveCourseTrack({ course, initialProgress, plan, onUpdate, dict }: ActiveCourseTrackProps) {
   const router = useRouter();
   const [progress, setProgress] = useState(initialProgress);
   const [isUpdating, setIsInUpdating] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showAddPlanModal, setShowAddPlanModal] = useState(false);
   const [gpa, setGpa] = useState("");
   const [score, setScore] = useState("");
 
@@ -82,10 +93,20 @@ export default function ActiveCourseTrack({ course, initialProgress, onUpdate, d
   };
 
   const quickIncrements = [10, 25, 50, 75];
+  const weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-6 flex flex-col gap-6 group hover:border-brand-blue/30 transition-all hover:shadow-xl hover:shadow-brand-blue/5">
       {/* Completion Modal Overlay */}
+      {showAddPlanModal && (
+        <AddPlanModal 
+          isOpen={showAddPlanModal} 
+          onClose={() => setShowAddPlanModal(false)} 
+          course={{ id: course.id, title: course.title }} 
+          existingPlan={plan}
+        />
+      )}
+
       {showCompleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/20 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white border-2 border-gray-900 rounded-3xl p-8 shadow-[12px_12px_0_0_rgba(0,0,0,1)] w-full max-w-md animate-in zoom-in-95 duration-300">
@@ -164,7 +185,7 @@ export default function ActiveCourseTrack({ course, initialProgress, onUpdate, d
               <span className="text-[10px] font-black text-brand-blue uppercase tracking-[0.2em] leading-none">{course.university}</span>
               <span className="text-[10px] font-bold text-gray-400 font-mono">{course.courseCode}</span>
             </div>
-            <h3 className="text-lg font-black text-gray-900 tracking-tight leading-tight group-hover:text-brand-blue transition-colors line-clamp-1">
+            <h3 className="text-lg font-bold text-gray-900 tracking-tight leading-tight group-hover:text-brand-blue transition-colors line-clamp-1">
               <Link href={detailHref}>{course.title}</Link>
             </h3>
           </div>
@@ -214,6 +235,14 @@ export default function ActiveCourseTrack({ course, initialProgress, onUpdate, d
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
         </div>
+        {plan && (
+          <div className="flex items-center gap-2 text-[9px] font-bold text-gray-400 pl-1 mt-1">
+            <i className="fa-regular fa-clock text-gray-300"></i>
+            <span>
+              {plan.days_of_week.map(d => weekdaysShort[d]).join(', ')} • {plan.start_time.slice(0, 5)}-{plan.end_time.slice(0, 5)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Bottom Section: Quick Actions */}
@@ -235,10 +264,38 @@ export default function ActiveCourseTrack({ course, initialProgress, onUpdate, d
           ))}
         </div>
         <div className="w-px h-4 bg-gray-100 mx-2"></div>
+        {plan ? (
+          <button 
+            onClick={() => setShowAddPlanModal(true)}
+            className="px-3 py-1.5 rounded-lg border border-teal-100 text-teal-600 bg-teal-50 hover:bg-teal-100 hover:border-teal-200 transition-all flex items-center justify-center gap-2 mr-2"
+            title="Edit Study Plan"
+          >
+            <i className="fa-solid fa-calendar-check text-[10px]"></i>
+            <span className="text-[9px] font-bold uppercase tracking-wider hidden sm:inline">Scheduled</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowAddPlanModal(true)}
+            className="px-3 py-1.5 rounded-lg border border-violet-100 text-violet-500 bg-violet-50 hover:bg-violet-100 hover:border-violet-200 transition-all flex items-center justify-center gap-2 mr-2"
+            title="Add Study Plan"
+          >
+            <i className="fa-solid fa-calendar-plus text-[10px]"></i>
+          </button>
+        )}
+        {progress === 100 && (
+          <button
+            onClick={() => handleProgressChange(0)}
+            disabled={isUpdating}
+            className="w-7 h-7 shrink-0 rounded-lg border border-red-200 text-red-500 bg-red-50 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center"
+            title="Mark Incomplete"
+          >
+            <i className="fa-solid fa-rotate-left text-[10px]"></i>
+          </button>
+        )}
         <button
           onClick={() => handleProgressChange(100)}
           disabled={isUpdating || progress === 100}
-          className="flex-grow text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-brand-green/20 text-brand-green bg-brand-green/5 hover:bg-brand-green hover:text-white transition-all flex items-center justify-center gap-2"
+          className="flex-grow text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-brand-green/20 text-brand-green bg-brand-green/5 hover:bg-brand-green hover:text-white disabled:opacity-40 disabled:cursor-default transition-all flex items-center justify-center gap-2"
         >
           <i className="fa-solid fa-check text-[8px]"></i>
           {dict?.mark_complete || "Complete"}

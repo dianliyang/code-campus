@@ -88,31 +88,74 @@ export class CMU extends BaseScraper {
     }
   }
 
-  async fetchDetail(courseCode: string, semester: string): Promise<{ description: string; corequisites: string }> {
+  async fetchDetail(courseCode: string, semester: string): Promise<{
+    description: string;
+    prerequisites: string;
+    corequisites: string;
+    relatedUrls: string[];
+    crossListedCourses: string;
+  }> {
     const cleanCode = courseCode.replace(/-/g, "");
     const url = `https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/courseDetails?COURSE=${cleanCode}&SEMESTER=${semester}`;
-    
+
     // Small delay to be polite
     await new Promise(resolve => setTimeout(resolve, 200));
 
     try {
       const html = await this.fetchPage(url);
-      if (!html) return { description: "", corequisites: "" };
-      
+      if (!html) return {
+        description: "",
+        prerequisites: "",
+        corequisites: "",
+        relatedUrls: [],
+        crossListedCourses: ""
+      };
+
       const $ = cheerio.load(html);
+
+      // Extract description
       const description = $("#course-detail-description p").text().trim();
-      
-      const prereq = $("dt:contains('Prerequisites')").next("dd").text().trim();
-      const coreq = $("dt:contains('Corequisites')").next("dd").text().trim();
-      
-      let combined = "";
-      if (prereq && prereq !== "None") combined += `Prereq: ${prereq}`;
-      if (coreq && coreq !== "None") combined += (combined ? "; " : "") + `Coreq: ${coreq}`;
-      
-      return { description, corequisites: combined };
+
+      // Extract prerequisites
+      const prerequisites = $("dt:contains('Prerequisites')").next("dd").text().trim();
+
+      // Extract corequisites
+      const corequisites = $("dt:contains('Corequisites')").next("dd").text().trim();
+
+      // Extract related URLs (excluding generic department homepages)
+      const relatedUrls: string[] = [];
+      const ignoredUrls = [
+        "http://www.csd.cmu.edu",
+        "https://www.csd.cmu.edu",
+        "http://www.ece.cmu.edu/",
+        "https://www.ece.cmu.edu/"
+      ];
+      $("#course-detail-related-urls a").each((_, el) => {
+        const href = $(el).attr("href");
+        if (href && !ignoredUrls.includes(href)) {
+          relatedUrls.push(href);
+        }
+      });
+
+      // Extract cross-listed courses
+      const crossListedCourses = $("dt:contains('Cross-Listed Courses')").next("dd").text().trim();
+
+      return {
+        description,
+        prerequisites: prerequisites === "None" ? "" : prerequisites,
+        corequisites: corequisites === "None" ? "" : corequisites,
+        relatedUrls,
+        crossListedCourses: crossListedCourses === "None" ? "" : crossListedCourses
+      };
     } catch (error) {
       console.error(`[${this.name}] Error fetching details for ${courseCode}:`, error);
-      return { description: "", corequisites: "" };
+      return {
+        description: "",
+        prerequisites: "",
+        corequisites: "",
+        relatedUrls: [],
+        crossListedCourses: ""
+      };
     }
   }
 
@@ -167,11 +210,10 @@ export class CMU extends BaseScraper {
             courseUrl = `https://enr-apps.as.cmu.edu${urlMatch[1]}`.replace(/&amp;/g, "&");
           }
 
-          // const { description, corequisites } = await this.fetchDetail(rawId, semester);
-          const description = "";
-          const corequisites = "";
+          // Fetch detailed course information
+          const { description, prerequisites, corequisites, relatedUrls, crossListedCourses } = await this.fetchDetail(rawId, semesterCode);
 
-          // Determine Level: CMU levels are like 15-112. 
+          // Determine Level: CMU levels are like 15-112.
           // 100-500 are Undergraduate, 600+ are Graduate.
           let level = "undergraduate";
           const numMatch = rawId.match(/-(\d+)/);
@@ -198,6 +240,9 @@ export class CMU extends BaseScraper {
             semesters: [{ term: term, year: year }],
             details: {
               sections: [],
+              prerequisites: prerequisites,
+              relatedUrls: relatedUrls,
+              crossListedCourses: crossListedCourses,
             },
           };
         }

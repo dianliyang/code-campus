@@ -11,6 +11,7 @@ interface CourseCardProps {
   course: Course;
   isInitialEnrolled: boolean;
   onEnrollToggle?: () => void;
+  onHide?: (courseId: number) => void;
   progress?: number;
   dict: Dictionary['dashboard']['courses'];
   viewMode?: "list" | "grid";
@@ -20,6 +21,7 @@ export default function CourseCard({
   course,
   isInitialEnrolled,
   onEnrollToggle,
+  onHide,
   progress,
   dict,
   viewMode = "grid",
@@ -59,9 +61,14 @@ export default function CourseCard({
   const handleHide = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (loading) return;
+
+    // Immediately remove from UI
+    onHide?.(course.id);
+
+    // Execute DB operation in background
     setLoading(true);
     try {
-      const response = await fetch("/api/courses/enroll", {
+      await fetch("/api/courses/enroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -69,9 +76,6 @@ export default function CourseCard({
           action: "hide",
         }),
       });
-      if (response.ok) {
-        router.refresh();
-      }
     } catch (e) {
       console.error("Hide failed:", e);
     } finally {

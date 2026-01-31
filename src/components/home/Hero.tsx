@@ -8,13 +8,14 @@ export default function Hero({ dict }: { dict?: any }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  
+
   // Initialize from URL
   const initialQuery = searchParams.get("q") || "";
   const [query, setQuery] = useState(initialQuery);
-  
+
   // Track the last pushed query to avoid redundant navigations
   const lastPushedQuery = useRef(initialQuery);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // 1. Sync local state with URL (e.g. browser back button)
   useEffect(() => {
@@ -25,6 +26,20 @@ export default function Hero({ dict }: { dict?: any }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // Add Cmd+K / Ctrl+K keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // 2. Debounced URL update
   useEffect(() => {
@@ -99,6 +114,7 @@ export default function Hero({ dict }: { dict?: any }) {
               <span className="text-slate-400 font-mono text-sm group-focus-within:text-brand-blue transition-colors">/</span>
             </div>
             <input
+              ref={inputRef}
               type="text"
               placeholder={dict?.search?.placeholder || "Search by course name, code, or university..."}
               className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-20 py-5 text-lg font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/5 transition-all"

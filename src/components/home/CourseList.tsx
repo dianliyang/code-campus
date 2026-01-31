@@ -6,6 +6,7 @@ import { Dictionary } from "@/lib/dictionary";
 import CourseCard from "./CourseCard";
 import CourseListHeader from "./CourseListHeader";
 import Pagination from "./Pagination";
+import Toast from "../common/Toast";
 
 interface CourseListProps {
   initialCourses: Course[];
@@ -16,22 +17,29 @@ interface CourseListProps {
   dict: Dictionary['dashboard']['courses'];
 }
 
-export default function CourseList({ 
-  initialCourses, 
-  totalItems, 
-  totalPages, 
+export default function CourseList({
+  initialCourses,
+  totalItems,
+  totalPages,
   currentPage,
   initialEnrolledIds,
   dict
 }: CourseListProps) {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [enrolledIds, setEnrolledIds] = useState<number[]>(initialEnrolledIds);
+  const [courses, setCourses] = useState<Course[]>(initialCourses);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Load view mode from localStorage on mount
   useEffect(() => {
     const savedMode = localStorage.getItem("viewMode") as "list" | "grid";
     if (savedMode) setViewMode(savedMode); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
+
+  // Sync courses when initialCourses changes (e.g., page change, filter change)
+  useEffect(() => {
+    setCourses(initialCourses);
+  }, [initialCourses]);
 
   // Save view mode to localStorage whenever it changes
   const handleViewModeChange = (mode: "list" | "grid") => {
@@ -45,17 +53,33 @@ export default function CourseList({
     if (data.enrolledIds) setEnrolledIds(data.enrolledIds);
   };
 
+  const handleHide = (courseId: number) => {
+    // Immediately remove from UI
+    setCourses(prev => prev.filter(c => c.id !== courseId));
+
+    // Show success notification
+    setToast({ message: "Course hidden successfully", type: "success" });
+  };
+
   return (
     <main className="flex-grow space-y-4 min-w-0">
-      <CourseListHeader 
-        totalItems={totalItems} 
-        viewMode={viewMode} 
-        setViewMode={handleViewModeChange} 
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      <CourseListHeader
+        totalItems={totalItems}
+        viewMode={viewMode}
+        setViewMode={handleViewModeChange}
         dict={dict}
       />
 
       <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "bg-white border border-gray-200 rounded-xl overflow-hidden"}>
-        {viewMode === "list" && initialCourses && initialCourses.length > 0 && (
+        {viewMode === "list" && courses && courses.length > 0 && (
           <div className="hidden md:flex items-center gap-4 px-4 py-3 bg-gray-50/50 border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-500 select-none">
              <div className="w-[40px] flex-shrink-0 text-center"></div>
              <div className="w-[30%] flex-shrink-0">Course</div>
@@ -64,17 +88,18 @@ export default function CourseList({
              <div className="w-24 flex-shrink-0 text-right">Action</div>
           </div>
         )}
-        {initialCourses?.map((course) => (
-          <CourseCard 
-            key={course.id} 
-            course={course} 
-            isInitialEnrolled={enrolledIds.includes(course.id)} 
+        {courses?.map((course) => (
+          <CourseCard
+            key={course.id}
+            course={course}
+            isInitialEnrolled={enrolledIds.includes(course.id)}
             onEnrollToggle={fetchEnrolled}
+            onHide={handleHide}
             dict={dict}
             viewMode={viewMode}
           />
         ))}
-        {initialCourses?.length === 0 && (
+        {courses?.length === 0 && (
           <div className="text-center py-32 bg-white rounded-2xl border border-gray-100 relative overflow-hidden group">
             {/* Background Watermark */}
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] select-none pointer-events-none transition-transform duration-1000 group-hover:scale-110">

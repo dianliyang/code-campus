@@ -193,7 +193,15 @@ async function fetchCourses(
   }
 
   if (query) {
-    supabaseQuery = supabaseQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%,course_code.ilike.%${query}%`);
+    // Search in multiple fields: title, description, course_code, department, corequisites, university
+    supabaseQuery = supabaseQuery.or(
+      `title.ilike.%${query}%,` +
+      `description.ilike.%${query}%,` +
+      `course_code.ilike.%${query}%,` +
+      `department.ilike.%${query}%,` +
+      `corequisites.ilike.%${query}%,` +
+      `university.ilike.%${query}%`
+    );
   }
 
   if (universities.length > 0) {

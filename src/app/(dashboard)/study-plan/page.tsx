@@ -202,7 +202,7 @@ async function StudyPlanContent({
                   key={course.id} 
                   course={course} 
                   initialProgress={course.progress} 
-                  plan={plans?.find((p: any) => p.course_id === course.id)}
+                  plan={plans?.find((p: { course_id: number }) => p.course_id === course.id)}
                   dict={dict.dashboard.roadmap} 
                 />
               ))

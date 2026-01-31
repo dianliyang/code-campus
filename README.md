@@ -8,7 +8,7 @@ CodeCampus is a comprehensive platform for students and learners, acting as a co
 -   **Course Categorization**: Organizes courses into relevant fields and subjects.
 -   **User Enrollment**: Allows authenticated users to enroll in courses of interest (\`user_courses\` table).
 -   **Progress Tracking**: Track personal progress (0-100%), status (pending, in\_progress, completed, dropped), GPA, and scores for enrolled courses.
--   **Study Planning**: Create detailed, recurring study plans (\`study_plans\` table) including type (lecture, exercise, exam), start/end dates, days of the week, and specific times/locations.
+-   **Study Planning**: Create detailed, recurring study plans (\`study_plans\` table) including type (lecture, exercise, exam), start/end dates, days of week, and specific times/locations.
 -   **Study Logging**: Log individual study sessions and mark them as completed (\`study\_logs\` table) against a plan.
 -   **Course Popularity**: Tracks and increments course popularity based on user interaction (via \`increment\_popularity\` RPC).
 -   **Passwordless Authentication**: Secure login via Supabase Magic Link / OTP.
@@ -39,17 +39,15 @@ CodeCampus is a comprehensive platform for students and learners, acting as a co
 
 ### 2. Environment Variables
 Create a \`.env.local\` file with the following variables:
-\`\`\`bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-\`\`\`
+
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+    NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ### 3. Installation
-\`\`\`bash
-npm install
-\`\`\`
+
+    npm install
 
 ### 4. Database Setup
 Apply the schema in \`supabase\_schema.sql\` using the Supabase SQL Editor to provision all tables, indexes, RLS policies, and RPC functions (like \`increment\_popularity\`).

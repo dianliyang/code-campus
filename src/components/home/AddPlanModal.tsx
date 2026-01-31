@@ -7,18 +7,27 @@ interface AddPlanModalProps {
   isOpen: boolean;
   onClose: () => void;
   course: { id: number; title: string };
+  existingPlan?: {
+    id: number;
+    start_date: string;
+    end_date: string;
+    days_of_week: number[];
+    start_time: string;
+    end_time: string;
+    location: string;
+  } | null;
 }
 
-export default function AddPlanModal({ isOpen, onClose, course }: AddPlanModalProps) {
+export default function AddPlanModal({ isOpen, onClose, course, existingPlan }: AddPlanModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString().split('T')[0],
-    days: [] as number[],
-    startTime: "09:00",
-    endTime: "11:00",
-    location: "Library"
+    startDate: existingPlan?.start_date || new Date().toISOString().split('T')[0],
+    endDate: existingPlan?.end_date || new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString().split('T')[0],
+    days: existingPlan?.days_of_week || [] as number[],
+    startTime: existingPlan?.start_time?.slice(0, 5) || "09:00",
+    endTime: existingPlan?.end_time?.slice(0, 5) || "11:00",
+    location: existingPlan?.location || "Library"
   });
 
   if (!isOpen) return null;
@@ -36,7 +45,8 @@ export default function AddPlanModal({ isOpen, onClose, course }: AddPlanModalPr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'add_plan',
+          action: existingPlan ? 'update_plan' : 'add_plan',
+          planId: existingPlan?.id,
           courseId: course.id,
           startDate: formData.startDate,
           endDate: formData.endDate,
@@ -51,11 +61,11 @@ export default function AddPlanModal({ isOpen, onClose, course }: AddPlanModalPr
         router.refresh();
         onClose();
       } else {
-        alert("Failed to create plan");
+        alert("Failed to save plan");
       }
     } catch (err) {
       console.error(err);
-      alert("Error creating plan");
+      alert("Error saving plan");
     } finally {
       setLoading(false);
     }
@@ -76,7 +86,7 @@ export default function AddPlanModal({ isOpen, onClose, course }: AddPlanModalPr
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-bold text-gray-900">Add Study Plan</h3>
+          <h3 className="text-lg font-bold text-gray-900">{existingPlan ? 'Edit Study Plan' : 'Add Study Plan'}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <i className="fa-solid fa-xmark text-xl"></i>
           </button>
@@ -178,7 +188,7 @@ export default function AddPlanModal({ isOpen, onClose, course }: AddPlanModalPr
               disabled={loading}
               className="flex-1 py-3 bg-violet-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-violet-500/20 hover:bg-violet-600 disabled:opacity-50"
             >
-              {loading ? 'Saving...' : 'Create Plan'}
+              {loading ? 'Saving...' : (existingPlan ? 'Update Plan' : 'Create Plan')}
             </button>
           </div>
         </form>

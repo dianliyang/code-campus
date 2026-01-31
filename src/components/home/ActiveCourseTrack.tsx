@@ -11,12 +11,20 @@ import AddPlanModal from "./AddPlanModal";
 interface ActiveCourseTrackProps {
   course: Course;
   initialProgress: number;
-  hasPlan?: boolean;
+  plan?: {
+    id: number;
+    start_date: string;
+    end_date: string;
+    days_of_week: number[];
+    start_time: string;
+    end_time: string;
+    location: string;
+  } | null;
   onUpdate?: () => void;
   dict: Dictionary['dashboard']['roadmap'];
 }
 
-export default function ActiveCourseTrack({ course, initialProgress, hasPlan, onUpdate, dict }: ActiveCourseTrackProps) {
+export default function ActiveCourseTrack({ course, initialProgress, plan, onUpdate, dict }: ActiveCourseTrackProps) {
   const router = useRouter();
   const [progress, setProgress] = useState(initialProgress);
   const [isUpdating, setIsInUpdating] = useState(false);
@@ -85,6 +93,7 @@ export default function ActiveCourseTrack({ course, initialProgress, hasPlan, on
   };
 
   const quickIncrements = [10, 25, 50, 75];
+  const weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-6 flex flex-col gap-6 group hover:border-brand-blue/30 transition-all hover:shadow-xl hover:shadow-brand-blue/5">
@@ -94,6 +103,7 @@ export default function ActiveCourseTrack({ course, initialProgress, hasPlan, on
           isOpen={showAddPlanModal} 
           onClose={() => setShowAddPlanModal(false)} 
           course={{ id: course.id, title: course.title }} 
+          existingPlan={plan}
         />
       )}
 
@@ -225,6 +235,14 @@ export default function ActiveCourseTrack({ course, initialProgress, hasPlan, on
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
         </div>
+        {plan && (
+          <div className="flex items-center gap-2 text-[9px] font-bold text-gray-400 pl-1 mt-1">
+            <i className="fa-regular fa-clock text-gray-300"></i>
+            <span>
+              {plan.days_of_week.map(d => weekdaysShort[d]).join(', ')} • {plan.start_time.slice(0, 5)}-{plan.end_time.slice(0, 5)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Bottom Section: Quick Actions */}
@@ -246,14 +264,15 @@ export default function ActiveCourseTrack({ course, initialProgress, hasPlan, on
           ))}
         </div>
         <div className="w-px h-4 bg-gray-100 mx-2"></div>
-        {hasPlan ? (
-          <div 
-            className="px-3 py-1.5 rounded-lg border border-teal-100 text-teal-600 bg-teal-50 flex items-center justify-center gap-2 mr-2 cursor-default"
-            title="Study Plan Scheduled"
+        {plan ? (
+          <button 
+            onClick={() => setShowAddPlanModal(true)}
+            className="px-3 py-1.5 rounded-lg border border-teal-100 text-teal-600 bg-teal-50 hover:bg-teal-100 hover:border-teal-200 transition-all flex items-center justify-center gap-2 mr-2"
+            title="Edit Study Plan"
           >
             <i className="fa-solid fa-calendar-check text-[10px]"></i>
             <span className="text-[9px] font-bold uppercase tracking-wider hidden sm:inline">Scheduled</span>
-          </div>
+          </button>
         ) : (
           <button
             onClick={() => setShowAddPlanModal(true)}

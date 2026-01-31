@@ -20,6 +20,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+        # Dummy environment variables required for the Next.js build to succeed in CI
         env:
           NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "dummy-key"

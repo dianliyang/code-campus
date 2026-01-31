@@ -9,7 +9,6 @@
     "lint": "eslint",
     "scrape": "tsx -r dotenv/config src/scripts/run-all-scrapers.ts dotenv_config_path=.env.local",
     "categorize": "tsx -r dotenv/config src/scripts/categorize-smart.ts dotenv_config_path=.env.local",
-    "mock": "tsx -r dotenv/config src/scripts/mock-data.ts dotenv_config_path=.env.local",
     "test": "vitest"
   },
   "dependencies": {

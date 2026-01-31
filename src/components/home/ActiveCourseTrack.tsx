@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
+import AddPlanModal from "./AddPlanModal";
 
 interface ActiveCourseTrackProps {
   course: Course;
@@ -19,6 +20,7 @@ export default function ActiveCourseTrack({ course, initialProgress, onUpdate, d
   const [progress, setProgress] = useState(initialProgress);
   const [isUpdating, setIsInUpdating] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showAddPlanModal, setShowAddPlanModal] = useState(false);
   const [gpa, setGpa] = useState("");
   const [score, setScore] = useState("");
 
@@ -86,6 +88,14 @@ export default function ActiveCourseTrack({ course, initialProgress, onUpdate, d
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-6 flex flex-col gap-6 group hover:border-brand-blue/30 transition-all hover:shadow-xl hover:shadow-brand-blue/5">
       {/* Completion Modal Overlay */}
+      {showAddPlanModal && (
+        <AddPlanModal 
+          isOpen={showAddPlanModal} 
+          onClose={() => setShowAddPlanModal(false)} 
+          course={{ id: course.id, title: course.title }} 
+        />
+      )}
+
       {showCompleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/20 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white border-2 border-gray-900 rounded-3xl p-8 shadow-[12px_12px_0_0_rgba(0,0,0,1)] w-full max-w-md animate-in zoom-in-95 duration-300">
@@ -235,6 +245,13 @@ export default function ActiveCourseTrack({ course, initialProgress, onUpdate, d
           ))}
         </div>
         <div className="w-px h-4 bg-gray-100 mx-2"></div>
+        <button
+          onClick={() => setShowAddPlanModal(true)}
+          className="px-3 py-1.5 rounded-lg border border-violet-100 text-violet-500 bg-violet-50 hover:bg-violet-100 hover:border-violet-200 transition-all flex items-center justify-center gap-2 mr-2"
+          title="Add Study Plan"
+        >
+          <i className="fa-solid fa-calendar-plus text-[10px]"></i>
+        </button>
         <button
           onClick={() => handleProgressChange(100)}
           disabled={isUpdating || progress === 100}

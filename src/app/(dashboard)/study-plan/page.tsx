@@ -168,7 +168,7 @@ async function StudyPlanContent({
               <i className="fa-solid fa-calendar-days text-sm"></i>
             </div>
             <div>
-              <h3 className="text-2xl font-black text-gray-900 tracking-tighter">{dict.dashboard.roadmap.calendar_title}</h3>
+              <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.dashboard.roadmap.calendar_title}</h3>
             </div>
           </div>
 
@@ -190,7 +190,7 @@ async function StudyPlanContent({
                 <i className="fa-solid fa-bolt-lightning text-sm"></i>
               </div>
               <div>
-                <h3 className="text-2xl font-black text-gray-900 tracking-tighter">{dict.dashboard.roadmap.phase_1_title}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.dashboard.roadmap.phase_1_title}</h3>
               </div>
             </div>
           </div>
@@ -214,7 +214,7 @@ async function StudyPlanContent({
                 <i className="fa-solid fa-trophy text-sm"></i>
               </div>
               <div>
-                <h3 className="text-2xl font-black text-gray-900 tracking-tighter">{dict.dashboard.roadmap.phase_2_title}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.dashboard.roadmap.phase_2_title}</h3>
               </div>
             </div>
 

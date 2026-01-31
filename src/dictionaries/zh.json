@@ -143,6 +143,7 @@
       "learning_sequence": "学习序列",
       "efficiency_desc": "活跃课程的课程吸收率。",
       "mark_complete": "完成",
+      "mark_incomplete": "标记未完成",
       "update_progress": "更新",
       "phase_3_label": "阶段 03",
       "phase_3_title": "学习日历",

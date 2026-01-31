@@ -282,14 +282,36 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             <i className="fa-solid fa-calendar-plus text-[10px]"></i>
           </button>
         )}
-        <button
-          onClick={() => handleProgressChange(100)}
-          disabled={isUpdating || progress === 100}
-          className="flex-grow text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-brand-green/20 text-brand-green bg-brand-green/5 hover:bg-brand-green hover:text-white transition-all flex items-center justify-center gap-2"
-        >
-          <i className="fa-solid fa-check text-[8px]"></i>
-          {dict?.mark_complete || "Complete"}
-        </button>
+        {progress === 100 ? (
+          <div className="flex gap-2 w-full">
+            <button
+              onClick={() => handleProgressChange(0)}
+              disabled={isUpdating}
+              className="flex-1 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-all flex items-center justify-center gap-2"
+              title={dict?.mark_incomplete || "Mark Incomplete"}
+            >
+              <i className="fa-solid fa-undo text-[8px]"></i>
+              {dict?.mark_incomplete || "Mark Incomplete"}
+            </button>
+            <button
+              onClick={() => handleProgressChange(100)}
+              disabled={isUpdating}
+              className="flex-1 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-brand-green/20 text-brand-green bg-brand-green/5 hover:bg-brand-green hover:text-white transition-all flex items-center justify-center gap-2"
+            >
+              <i className="fa-solid fa-check text-[8px]"></i>
+              {dict?.mark_complete || "Complete"}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => handleProgressChange(100)}
+            disabled={isUpdating || progress === 100}
+            className="flex-grow text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-brand-green/20 text-brand-green bg-brand-green/5 hover:bg-brand-green hover:text-white transition-all flex items-center justify-center gap-2"
+          >
+            <i className="fa-solid fa-check text-[8px]"></i>
+            {dict?.mark_complete || "Complete"}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getUser, createClient, incrementPopularity } from '@/lib/supabase/server';
+import { getUser, createClient, incrementPopularity, decrementPopularity } from '@/lib/supabase/server';
 import { EnrollRequest } from '@/types';
 
 export async function POST(request: Request) {
@@ -72,6 +72,15 @@ export async function POST(request: Request) {
         updateData.score = score ?? 0;
       }
 
+      // Read previous user_course row to determine if we need to adjust popularity
+      const { data: prevRow, error: prevError } = await supabase
+        .from('user_courses')
+        .select('status')
+        .match({ user_id: userId, course_id: courseId })
+        .single();
+
+      if (prevError && prevError.code !== 'PGRST116') throw prevError;
+
       const { error } = await supabase
         .from('user_courses')
         .update(updateData)
@@ -79,8 +88,17 @@ export async function POST(request: Request) {
 
       if (error) throw error;
 
+      // If we just marked completed, increment popularity. If we changed from completed -> in_progress, decrement.
       if (isCompleted) {
         await incrementPopularity(courseId);
+      } else if (prevRow && prevRow.status === 'completed' && !isCompleted) {
+        // We moved from completed -> in_progress
+        // Decrement popularity but ensure function exists
+        try {
+          await decrementPopularity(courseId);
+        } catch (e) {
+          console.warn('Failed to decrement popularity:', e);
+        }
       }
 
       revalidatePath('/study-plan');

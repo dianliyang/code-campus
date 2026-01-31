@@ -9,15 +9,17 @@ interface AchievementCardProps {
   course: Course & { gpa?: number; score?: number };
   completionDate?: string;
   masteredLabel?: string;
+  markIncompleteLabel?: string;
 }
 
-export default function AchievementCard({ course, masteredLabel }: AchievementCardProps) {
+export default function AchievementCard({ course, masteredLabel, markIncompleteLabel }: AchievementCardProps) {
   const router = useRouter();
   const [completionId, setCompletionId] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [gpa, setGpa] = useState(course.gpa?.toString() || "");
   const [score, setScore] = useState(course.score?.toString() || "");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isMarkingIncomplete, setIsMarkingIncomplete] = useState(false);
 
   useEffect(() => {
     // Generate ID only on client to avoid hydration mismatch
@@ -47,6 +49,28 @@ export default function AchievementCard({ course, masteredLabel }: AchievementCa
       console.error("Failed to update achievement:", e);
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleMarkIncomplete = async () => {
+    setIsMarkingIncomplete(true);
+    try {
+      const res = await fetch("/api/courses/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: course.id,
+          action: "update_progress",
+          progress: 0
+        })
+      });
+      if (res.ok) {
+        router.refresh();
+      }
+    } catch (e) {
+      console.error("Failed to mark incomplete:", e);
+    } finally {
+      setIsMarkingIncomplete(false);
     }
   };
 
@@ -181,9 +205,19 @@ export default function AchievementCard({ course, masteredLabel }: AchievementCa
         <span className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.2em] font-mono">
           CERT_ID: {completionId}
         </span>
-        <span className="text-[10px] font-black text-brand-green uppercase tracking-widest bg-brand-green/5 px-2 py-1 rounded">
-          {masteredLabel || "Mastered"}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleMarkIncomplete}
+            disabled={isMarkingIncomplete}
+            className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-all flex items-center gap-1.5 disabled:opacity-50"
+          >
+            <i className="fa-solid fa-undo text-[8px]"></i>
+            {isMarkingIncomplete ? "..." : (markIncompleteLabel || "Mark Incomplete")}
+          </button>
+          <span className="text-[10px] font-black text-brand-green uppercase tracking-widest bg-brand-green/5 px-2 py-1 rounded">
+            {masteredLabel || "Mastered"}
+          </span>
+        </div>
       </div>
     </div>
   );

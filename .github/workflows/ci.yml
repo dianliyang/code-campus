@@ -19,6 +19,12 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run lint
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '!node_modules/**') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
       - run: npm run build
         # Dummy environment variables required for the Next.js build to succeed in CI
         env:
@@ -26,3 +32,4 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "dummy-key"
           SUPABASE_SERVICE_ROLE_KEY: "dummy-key"
           NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+          RESEND_API_KEY: "re_dummy_key"

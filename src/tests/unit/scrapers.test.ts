@@ -1,6 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { CMU } from '../../lib/scrapers/cmu';
-import { Course } from '../../lib/scrapers/types';
 
 // Mock dependencies
 vi.mock('undici', () => {

@@ -9,7 +9,8 @@
     "lint": "eslint",
     "scrape": "tsx -r dotenv/config src/scripts/run-all-scrapers.ts dotenv_config_path=.env.local",
     "categorize": "tsx -r dotenv/config src/scripts/categorize-smart.ts dotenv_config_path=.env.local",
-    "test": "vitest"
+    "test": "vitest",
+    "prepare": "husky"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
@@ -38,6 +39,7 @@
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "husky": "^9.1.7",
     "jsdom": "^27.4.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",

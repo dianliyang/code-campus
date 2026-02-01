@@ -18,6 +18,11 @@ export async function updateCourse(courseId: number, data: {
   workload: string;
   isHidden: boolean;
   isInternal: boolean;
+  details?: {
+    prerequisites?: string;
+    relatedUrls?: string[];
+    crossListedCourses?: string;
+  };
 }) {
   const user = await getUser();
   if (!user) {
@@ -25,6 +30,23 @@ export async function updateCourse(courseId: number, data: {
   }
 
   const supabase = createAdminClient();
+
+  // Merge new details with existing details to preserve scraper data (sections, terms, etc.)
+  let mergedDetails: Record<string, unknown> | undefined;
+  if (data.details) {
+    const { data: existing } = await supabase
+      .from("courses")
+      .select("details")
+      .eq("id", courseId)
+      .single();
+
+    const existingDetails =
+      typeof existing?.details === "string"
+        ? JSON.parse(existing.details)
+        : existing?.details || {};
+
+    mergedDetails = { ...existingDetails, ...data.details };
+  }
 
   const { error } = await supabase
     .from("courses")
@@ -43,6 +65,7 @@ export async function updateCourse(courseId: number, data: {
       workload: data.workload,
       is_hidden: data.isHidden,
       is_internal: data.isInternal,
+      ...(mergedDetails && { details: JSON.stringify(mergedDetails) }),
     })
     .eq("id", courseId);
 

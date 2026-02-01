@@ -102,40 +102,6 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
 
         <form onSubmit={handleSubmit} className="space-y-12">
           <div className="space-y-12">
-            {/* Read-only Course Information */}
-            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 space-y-4">
-              <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
-                Course Information (Read-only)
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <span className="text-xs text-gray-400 uppercase tracking-wider">University</span>
-                  <p className="text-lg font-bold text-gray-900 mt-1">{formData.university}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-400 uppercase tracking-wider">Course Code</span>
-                  <p className="text-lg font-bold text-gray-900 mt-1">{formData.courseCode}</p>
-                </div>
-              </div>
-              <div>
-                <span className="text-xs text-gray-400 uppercase tracking-wider">Title</span>
-                <p className="text-lg font-bold text-gray-900 mt-1">{formData.title}</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <span className="text-xs text-gray-400 uppercase tracking-wider">Department</span>
-                  <p className="text-sm font-medium text-gray-700 mt-1">{formData.department || 'N/A'}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-400 uppercase tracking-wider">Units</span>
-                  <p className="text-sm font-medium text-gray-700 mt-1">{formData.units || 'N/A'}</p>
-                </div>
-              </div>
-              <div>
-                <span className="text-xs text-gray-400 uppercase tracking-wider">Description</span>
-                <p className="text-sm text-gray-700 mt-1 leading-relaxed">{formData.description || 'N/A'}</p>
-              </div>
-            </div>
 
             {/* Editable Course Details */}
             <div className="space-y-8">

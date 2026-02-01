@@ -148,11 +148,38 @@ export default function CourseCard({
 
         {/* 4. Details / Stats */}
         <div className="flex-grow min-w-0 flex flex-col justify-center gap-1">
-             <div className="flex items-center gap-1.5">
-                <i className="fa-solid fa-fire-flame-simple text-orange-400 text-[10px]"></i>
-                <span className="text-xs font-semibold text-gray-700">
-                  {course.popularity}
-                </span>
+             <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <i className="fa-solid fa-fire-flame-simple text-orange-400 text-[10px]"></i>
+                  <span className="text-xs font-semibold text-gray-700">
+                    {course.popularity}
+                  </span>
+                </div>
+                {course.details?.relatedUrls && course.details.relatedUrls.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    {course.details.relatedUrls.slice(0, 2).map((url, i) => {
+                      let hostname = url;
+                      try { hostname = new URL(url).hostname.replace('www.', ''); } catch {}
+                      return (
+                        <a
+                          key={i}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand-blue transition-colors"
+                          title={url}
+                        >
+                          <i className="fa-solid fa-globe text-[8px]"></i>
+                          <span className="truncate max-w-[80px]">{hostname}</span>
+                        </a>
+                      );
+                    })}
+                    {course.details.relatedUrls.length > 2 && (
+                      <span className="text-[10px] text-gray-400">+{course.details.relatedUrls.length - 2}</span>
+                    )}
+                  </div>
+                )}
              </div>
         </div>
 
@@ -254,7 +281,7 @@ export default function CourseCard({
         </h2>
       </div>
 
-      <div className="flex gap-1.5 mb-6 flex-wrap">
+      <div className="flex gap-1.5 mb-4 flex-wrap">
         {course.fields?.slice(0, 3).map((f) => (
           <span
             key={f}
@@ -264,6 +291,32 @@ export default function CourseCard({
           </span>
         ))}
       </div>
+
+      {course.details?.relatedUrls && course.details.relatedUrls.length > 0 && (
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          {course.details.relatedUrls.slice(0, 2).map((url, i) => {
+            let hostname = url;
+            try { hostname = new URL(url).hostname.replace('www.', ''); } catch {}
+            return (
+              <a
+                key={i}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand-blue transition-colors bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100"
+                title={url}
+              >
+                <i className="fa-solid fa-globe text-[8px]"></i>
+                <span className="truncate max-w-[100px]">{hostname}</span>
+              </a>
+            );
+          })}
+          {course.details.relatedUrls.length > 2 && (
+            <span className="text-[10px] text-gray-400">+{course.details.relatedUrls.length - 2}</span>
+          )}
+        </div>
+      )}
 
       <div className="mt-auto pt-5 border-t border-gray-100">
         <div className="flex items-center justify-between text-xs">

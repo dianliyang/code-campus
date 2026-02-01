@@ -13,7 +13,7 @@ interface CourseListHeaderProps {
 export default function CourseListHeader({ totalItems, viewMode, setViewMode, dict }: CourseListHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sortBy = searchParams.get("sort") || "relevance";
+  const sortBy = searchParams.get("sort") || "title";
 
   const handleSortChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());

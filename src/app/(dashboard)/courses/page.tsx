@@ -107,7 +107,7 @@ async function CourseListData({ params, dict }: {
   const size = 12;
   const offset = (page - 1) * size;
   const query = (params.q as string) || "";
-  const sort = (params.sort as string) || "relevance";
+  const sort = (params.sort as string) || "title";
   const enrolledOnly = params.enrolled === "true";
   
   const universities = ((params.universities as string) || "").split(",").filter(Boolean);

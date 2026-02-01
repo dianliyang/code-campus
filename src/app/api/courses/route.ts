@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   const levels = levelsParam ? levelsParam.split(',').filter(Boolean) : [];
 
   const enrolledOnly = searchParams.get('enrolled') === 'true';
-  const sort = searchParams.get('sort') || 'relevance';
+  const sort = searchParams.get('sort') || 'title';
   const query = searchParams.get('q') || '';
 
   try {

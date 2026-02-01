@@ -5,6 +5,7 @@ import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
 import SemesterFilter from "@/components/home/SemesterFilter";
 import StudyCalendar from "@/components/home/StudyCalendar";
+import AILearningPlanner from "@/components/home/AILearningPlanner";
 import Link from "next/link";
 import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
@@ -173,12 +174,28 @@ async function StudyPlanContent({
           </div>
 
           <div className="pl-0 md:pl-20">
-            <StudyCalendar 
-              courses={enrolledCourses} 
-              plans={plans || []} 
-              logs={logs || []} 
-              dict={dict.dashboard.roadmap} 
+            <StudyCalendar
+              courses={enrolledCourses}
+              plans={plans || []}
+              logs={logs || []}
+              dict={dict.dashboard.roadmap}
             />
+          </div>
+        </section>
+
+        {/* AI Learning Planner Section */}
+        <section className="relative">
+          <div className="flex items-center gap-6 mb-6">
+            <div className="w-11 h-11 bg-violet-500 rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-violet-500/20 ring-8 ring-white">
+              <i className="fa-solid fa-brain text-sm"></i>
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 tracking-tight">AI Learning Planner</h3>
+              <p className="text-xs text-gray-400 uppercase tracking-wider">Smart course recommendations</p>
+            </div>
+          </div>
+          <div className="pl-0 md:pl-20">
+            <AILearningPlanner />
           </div>
         </section>
 

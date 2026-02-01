@@ -66,3 +66,20 @@ export interface ApiResponse {
   error?: string;
   details?: string;
 }
+
+export interface AILearningPathRequest {
+  messages: Array<{
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+  }>;
+}
+
+export interface CourseRecommendation {
+  courseId: number;
+  title: string;
+  university: string;
+  courseCode: string;
+  reasoning: string;
+  priority: 'high' | 'medium' | 'low';
+  prerequisites: string[];
+}

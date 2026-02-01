@@ -5,7 +5,7 @@ import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
 import SemesterFilter from "@/components/home/SemesterFilter";
 import StudyCalendar from "@/components/home/StudyCalendar";
-import AILearningPlanner from "@/components/home/AILearningPlanner";
+// import AILearningPlanner from "@/components/home/AILearningPlanner";
 import Link from "next/link";
 import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
@@ -183,8 +183,8 @@ async function StudyPlanContent({
           </div>
         </section>
 
-        {/* AI Learning Planner Section */}
-        <section className="relative">
+        {/* AI Learning Planner Section - Temporarily Hidden for Optimization */}
+        {/* <section className="relative">
           <div className="flex items-center gap-6 mb-6">
             <div className="w-11 h-11 bg-violet-500 rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-violet-500/20 ring-8 ring-white">
               <i className="fa-solid fa-brain text-sm"></i>
@@ -197,7 +197,7 @@ async function StudyPlanContent({
           <div className="pl-0 md:pl-20">
             <AILearningPlanner />
           </div>
-        </section>
+        </section> */}
 
         {/* Current Focus Section */}
         <section className="relative">

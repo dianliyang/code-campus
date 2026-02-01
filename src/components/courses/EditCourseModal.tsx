@@ -30,13 +30,28 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
     workload: course.workload || "",
     isHidden: course.isHidden || false,
     isInternal: course.isInternal || false,
+    details: {
+      prerequisites: course.details?.prerequisites || "",
+      relatedUrls: course.details?.relatedUrls?.join('\n') || "",
+      crossListedCourses: course.details?.crossListedCourses || "",
+    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await updateCourse(course.id, formData);
+      const updateData = {
+        ...formData,
+        details: {
+          prerequisites: formData.details.prerequisites || undefined,
+          relatedUrls: formData.details.relatedUrls
+            ? formData.details.relatedUrls.split('\n').map(url => url.trim()).filter(url => url.length > 0)
+            : undefined,
+          crossListedCourses: formData.details.crossListedCourses || undefined,
+        },
+      };
+      await updateCourse(course.id, updateData);
       onClose();
     } catch (error) {
       console.error(error);
@@ -87,81 +102,84 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
 
         <form onSubmit={handleSubmit} className="space-y-12">
           <div className="space-y-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              <div className="flex flex-col gap-3 group">
-                <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] group-focus-within:text-brand-blue transition-colors">
-                  University
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.university}
-                  onChange={(e) => setFormData({ ...formData, university: e.target.value })}
-                  className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-xl font-black transition-all placeholder:text-gray-100 tracking-tighter"
-                />
+            {/* Read-only Course Information */}
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 space-y-4">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+                Course Information (Read-only)
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span className="text-xs text-gray-400 uppercase tracking-wider">University</span>
+                  <p className="text-lg font-bold text-gray-900 mt-1">{formData.university}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-400 uppercase tracking-wider">Course Code</span>
+                  <p className="text-lg font-bold text-gray-900 mt-1">{formData.courseCode}</p>
+                </div>
               </div>
-              <div className="flex flex-col gap-3 group">
-                <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] group-focus-within:text-brand-blue transition-colors">
-                  Course Code
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.courseCode}
-                  onChange={(e) => setFormData({ ...formData, courseCode: e.target.value })}
-                  className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-xl font-black transition-all placeholder:text-gray-100 tracking-tighter"
-                />
+              <div>
+                <span className="text-xs text-gray-400 uppercase tracking-wider">Title</span>
+                <p className="text-lg font-bold text-gray-900 mt-1">{formData.title}</p>
               </div>
-            </div>
-
-            <div className="flex flex-col gap-3 group">
-              <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] group-focus-within:text-brand-blue transition-colors">
-                Course Title
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-xl font-black transition-all placeholder:text-gray-100 tracking-tighter"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
-              <div className="flex flex-col gap-3 group">
-                <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] group-focus-within:text-brand-blue transition-colors">
-                  Department
-                </label>
-                <input
-                  type="text"
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-sm font-bold transition-all placeholder:text-gray-100"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span className="text-xs text-gray-400 uppercase tracking-wider">Department</span>
+                  <p className="text-sm font-medium text-gray-700 mt-1">{formData.department || 'N/A'}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-400 uppercase tracking-wider">Units</span>
+                  <p className="text-sm font-medium text-gray-700 mt-1">{formData.units || 'N/A'}</p>
+                </div>
               </div>
-              <div className="flex flex-col gap-3 group">
-                <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] group-focus-within:text-brand-blue transition-colors">
-                  Units
-                </label>
-                <input
-                  type="text"
-                  value={formData.units}
-                  onChange={(e) => setFormData({ ...formData, units: e.target.value })}
-                  className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-sm font-bold transition-all placeholder:text-gray-100"
-                />
+              <div>
+                <span className="text-xs text-gray-400 uppercase tracking-wider">Description</span>
+                <p className="text-sm text-gray-700 mt-1 leading-relaxed">{formData.description || 'N/A'}</p>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                Description
-              </label>
-              <textarea
-                rows={4}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="bg-gray-50 border border-gray-100 rounded-3xl p-8 outline-none text-sm font-medium transition-all focus:ring-4 focus:ring-brand-blue/5 focus:bg-white focus:border-brand-blue/20"
-              />
+            {/* Editable Course Details */}
+            <div className="space-y-8">
+              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Course Details</h3>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+                  Prerequisites
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.details.prerequisites}
+                  onChange={(e) => setFormData({ ...formData, details: { ...formData.details, prerequisites: e.target.value } })}
+                  placeholder="e.g., CS101, MATH202"
+                  className="bg-gray-50 border border-gray-100 rounded-2xl p-4 outline-none text-sm font-medium transition-all focus:ring-4 focus:ring-brand-blue/5 focus:bg-white focus:border-brand-blue/20"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+                  Related URLs
+                  <span className="text-gray-300 ml-2 font-normal normal-case">(one per line)</span>
+                </label>
+                <textarea
+                  rows={4}
+                  value={formData.details.relatedUrls}
+                  onChange={(e) => setFormData({ ...formData, details: { ...formData.details, relatedUrls: e.target.value } })}
+                  placeholder="https://example.com/syllabus&#10;https://example.com/resources"
+                  className="bg-gray-50 border border-gray-100 rounded-2xl p-4 outline-none text-sm font-medium transition-all focus:ring-4 focus:ring-brand-blue/5 focus:bg-white focus:border-brand-blue/20 font-mono"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+                  Cross-Listed Courses
+                </label>
+                <input
+                  type="text"
+                  value={formData.details.crossListedCourses}
+                  onChange={(e) => setFormData({ ...formData, details: { ...formData.details, crossListedCourses: e.target.value } })}
+                  placeholder="e.g., ECE15-213, INI15-213"
+                  className="bg-gray-50 border border-gray-100 rounded-2xl p-4 outline-none text-sm font-medium transition-all focus:ring-4 focus:ring-brand-blue/5 focus:bg-white focus:border-brand-blue/20"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">

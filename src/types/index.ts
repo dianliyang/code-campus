@@ -6,6 +6,7 @@ export interface Course {
   url: string;
   description: string;
   units?: string;
+  credit?: number;
   department?: string;
   difficulty?: number;
   popularity: number;

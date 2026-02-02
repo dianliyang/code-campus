@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS courses (
   course_code TEXT NOT NULL,
   title TEXT NOT NULL,
   units TEXT,
+  credit DOUBLE PRECISION,
   description TEXT,
   url TEXT,
   details JSONB,

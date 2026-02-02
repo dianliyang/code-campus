@@ -79,6 +79,7 @@ export type Database = {
           corequisites: string | null
           course_code: string
           created_at: string | null
+          credit: number | null
           department: string | null
           description: string | null
           details: Json | null
@@ -99,6 +100,7 @@ export type Database = {
           corequisites?: string | null
           course_code: string
           created_at?: string | null
+          credit?: number | null
           department?: string | null
           description?: string | null
           details?: Json | null
@@ -119,6 +121,7 @@ export type Database = {
           corequisites?: string | null
           course_code?: string
           created_at?: string | null
+          credit?: number | null
           department?: string | null
           description?: string | null
           details?: Json | null

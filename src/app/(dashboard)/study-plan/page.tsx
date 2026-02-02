@@ -72,7 +72,7 @@ async function StudyPlanContent({
   const { data: enrolledRows, error } = await supabase
     .from('courses')
     .select(`
-      id, university, course_code, title, units, url, description, details, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal,
+      id, university, course_code, title, units, credit, url, description, details, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal,
       uc:user_courses!inner(status, progress, updated_at, gpa, score),
       fields:course_fields(fields(name)),
       semesters:course_semesters(semesters(term, year))
@@ -165,9 +165,7 @@ async function StudyPlanContent({
   const completed = enrolledWithAttendance.filter(c => c.status === 'completed');
 
   const totalCredits = completed.reduce((acc, course) => {
-    // Prioritize explicit credit field, fallback to parsing units string
-    const val = course.credit ?? parseFloat(course.units || "0");
-    return acc + (isNaN(val) ? 0 : val);
+    return acc + (course.credit || 0);
   }, 0);
 
   const availableSemesters = Array.from(new Set(

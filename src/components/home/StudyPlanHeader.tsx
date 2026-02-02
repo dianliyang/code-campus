@@ -42,31 +42,31 @@ export default function StudyPlanHeader({ enrolledCount, completedCount, totalCr
                 ></div>
               ))}
             </div>
-            <div className="flex gap-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
               <div className="flex flex-col">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block">
                   {dict?.header_total || "Total Tracks"}
                 </span>
-                <span className="text-3xl font-black text-gray-900 leading-none mt-2">{enrolledCount}</span>
+                <span className="text-3xl font-black text-gray-900 leading-none">{enrolledCount}</span>
               </div>
-              <div className="flex flex-col border-l-2 border-gray-100 pl-10">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              <div className="flex flex-col md:border-l-2 md:border-gray-100 md:pl-10">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block">
                   {dict?.header_mastered || "Mastered"}
                 </span>
-                <span className="text-3xl font-black text-brand-green leading-none mt-2">{completedCount}</span>
+                <span className="text-3xl font-black text-brand-green leading-none">{completedCount}</span>
               </div>
-              <div className="flex flex-col border-l-2 border-gray-100 pl-10">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              <div className="flex flex-col md:border-l-2 md:border-gray-100 md:pl-10">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block">
                   Credits
                 </span>
-                <span className="text-3xl font-black text-violet-600 leading-none mt-2">{totalCredits}</span>
+                <span className="text-3xl font-black text-violet-600 leading-none">{totalCredits}</span>
               </div>
               {attendance && attendance.total > 0 && (
-                <div className="flex flex-col border-l-2 border-gray-100 pl-10">
-                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                <div className="flex flex-col md:border-l-2 md:border-gray-100 md:pl-10">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block">
                     Attendance
                   </span>
-                  <div className="flex items-baseline gap-1 mt-2">
+                  <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-black text-gray-900 leading-none">{attendance.attended}</span>
                     <span className="text-lg font-bold text-gray-300">/{attendance.total}</span>
                   </div>

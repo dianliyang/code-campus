@@ -164,6 +164,11 @@ async function StudyPlanContent({
   const inProgress = enrolledWithAttendance.filter(c => c.status === 'in_progress');
   const completed = enrolledWithAttendance.filter(c => c.status === 'completed');
 
+  const totalCredits = completed.reduce((acc, course) => {
+    const units = parseFloat(course.units || "0");
+    return acc + (isNaN(units) ? 0 : units);
+  }, 0);
+
   const availableSemesters = Array.from(new Set(
     completed.flatMap(c => c.semesters)
   )).sort((a, b) => {
@@ -184,6 +189,7 @@ async function StudyPlanContent({
         <StudyPlanHeader
           enrolledCount={enrolledCourses.length}
           completedCount={completed.length}
+          totalCredits={totalCredits}
           averageProgress={enrolledCourses.length > 0 ? Math.round(enrolledCourses.reduce((acc, curr) => acc + curr.progress, 0) / enrolledCourses.length) : 0}
           attendance={{ attended: totalAttended, total: totalSessions }}
           dict={dict.dashboard.roadmap}

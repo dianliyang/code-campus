@@ -177,22 +177,28 @@ export default function AchievementCard({ course }: AchievementCardProps) {
         </h3>
 
         <div className="mt-auto">
-          {(course.gpa || course.score || (course.attendance && course.attendance.total > 0)) ? (
-            <div className="flex gap-3 items-center bg-gray-50/50 p-2 rounded-lg border border-gray-100/50">
+          {(course.gpa || course.score || (course.attendance && course.attendance.total > 0) || course.units) ? (
+            <div className="flex gap-3 items-center bg-gray-50/50 p-2 rounded-lg border border-gray-100/50 overflow-x-auto no-scrollbar">
+              {course.units && (
+                <div className="flex flex-col flex-shrink-0">
+                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">CREDITS</span>
+                  <span className="text-sm font-black text-gray-900 italic">{course.units}</span>
+                </div>
+              )}
               {course.gpa && (
-                <div className="flex flex-col">
+                <div className={`flex flex-col flex-shrink-0 ${course.units ? 'border-l border-gray-200 pl-4' : ''}`}>
                   <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">GPA</span>
                   <span className="text-sm font-black text-gray-900 italic">{Number(course.gpa).toFixed(2)}</span>
                 </div>
               )}
               {course.score && (
-                <div className={`flex flex-col ${course.gpa ? 'border-l border-gray-200 pl-4' : ''}`}>
+                <div className={`flex flex-col flex-shrink-0 ${(course.gpa || course.units) ? 'border-l border-gray-200 pl-4' : ''}`}>
                   <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">SCORE</span>
                   <span className="text-sm font-black text-gray-900 italic">{Number(course.score).toFixed(1)}%</span>
                 </div>
               )}
               {course.attendance && course.attendance.total > 0 && (
-                <div className={`flex flex-col ${(course.gpa || course.score) ? 'border-l border-gray-200 pl-4' : ''}`}>
+                <div className={`flex flex-col flex-shrink-0 ${(course.gpa || course.score || course.units) ? 'border-l border-gray-200 pl-4' : ''}`}>
                   <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">ATTENDANCE</span>
                   <div className="flex items-baseline gap-0.5">
                     <span className="text-sm font-black text-gray-900 italic">{course.attendance.attended}</span>

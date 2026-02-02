@@ -354,15 +354,14 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                   <div className="space-y-2">
                     {selectedDayEvents.map((event, idx) => {
                       const bgColor = event.isCompleted ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-white border-gray-200 hover:bg-gray-50';
-                      const borderColor = event.isCompleted ? 'border-r-gray-300' : 'border-r-gray-900';
 
                       return (
                         <div
                           key={`${event.planId}-${idx}`}
-                          className={`rounded-lg border cursor-pointer transition-all flex flex-col p-3 group/item border-r-4 ${bgColor} ${borderColor}`}
+                          className={`rounded-lg border cursor-pointer transition-all flex flex-col px-3 py-1.5 group/item ${bgColor}`}
                           onClick={() => toggleComplete(event.planId, event.date)}
                         >
-                          <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-start justify-between gap-2 mb-0.5">
                             <span className={`text-sm font-bold truncate ${event.isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                               {event.title}
                             </span>
@@ -372,7 +371,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                           <div className="flex items-end justify-between gap-2">
                             <div className="flex items-center gap-1 min-w-0">
                               <MapPin className="w-2.5 h-2.5 opacity-50" />
-                              <span className="text-[9px] font-bold text-gray-600 truncate">{event.location || 'Campus'}</span>
+                              <span className="text-xs font-mono font-bold text-gray-600 truncate">{event.location || 'Campus'}</span>
                             </div>
                             <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                               <span className={`text-[8px] font-bold uppercase tracking-wider ${

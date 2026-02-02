@@ -6,10 +6,11 @@ interface StudyPlanHeaderProps {
   enrolledCount: number;
   completedCount: number;
   averageProgress: number;
+  attendance?: { attended: number; total: number };
   dict: Dictionary['dashboard']['roadmap'];
 }
 
-export default function StudyPlanHeader({ enrolledCount, completedCount, averageProgress, dict }: StudyPlanHeaderProps) {
+export default function StudyPlanHeader({ enrolledCount, completedCount, averageProgress, attendance, dict }: StudyPlanHeaderProps) {
   return (
     <div className="relative mb-32">
       <div className="absolute -left-12 top-0 bottom-0 w-px bg-gray-100 hidden lg:block"></div>
@@ -53,6 +54,17 @@ export default function StudyPlanHeader({ enrolledCount, completedCount, average
                 </span>
                 <span className="text-3xl font-black text-brand-green leading-none mt-2">{completedCount}</span>
               </div>
+              {attendance && attendance.total > 0 && (
+                <div className="flex flex-col border-l-2 border-gray-100 pl-10">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                    Attendance
+                  </span>
+                  <div className="flex items-baseline gap-1 mt-2">
+                    <span className="text-3xl font-black text-gray-900 leading-none">{attendance.attended}</span>
+                    <span className="text-lg font-bold text-gray-300">/{attendance.total}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

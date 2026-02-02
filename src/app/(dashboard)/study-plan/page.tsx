@@ -9,6 +9,7 @@ import Link from "next/link";
 import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
+import { calculateAttendance } from "@/lib/attendance";
 import { CalendarDays, Zap, Trophy, Ghost } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ interface EnrolledCourse extends Course {
   updated_at: string;
   gpa?: number;
   score?: number;
+  attendance?: { attended: number; total: number };
 }
 
 interface PageProps {
@@ -131,8 +133,36 @@ async function StudyPlanContent({
     .select('*')
     .eq('user_id', userId);
 
-  const inProgress = enrolledCourses.filter(c => c.status === 'in_progress');
-  const completed = enrolledCourses.filter(c => c.status === 'completed');
+  const enrolledWithAttendance = enrolledCourses.map(course => {
+    const coursePlans = plans?.filter((p: { course_id: number }) => p.course_id === course.id) || [];
+    // logs are already filtered by user_id, now filter by plans belonging to this course
+    const planIds = coursePlans.map((p: { id: number }) => p.id);
+    const courseLogs = logs?.filter((l: { plan_id: number }) => planIds.includes(l.plan_id)) || [];
+    
+    const { attended, total } = calculateAttendance(coursePlans, courseLogs);
+
+    return {
+      ...course,
+      attendance: { attended, total }
+    };
+  });
+
+  const totalAttended = enrolledWithAttendance.reduce((acc, course) => {
+    if (course.status === 'in_progress' || course.status === 'completed') {
+      return acc + (course.attendance?.attended || 0);
+    }
+    return acc;
+  }, 0);
+
+  const totalSessions = enrolledWithAttendance.reduce((acc, course) => {
+    if (course.status === 'in_progress' || course.status === 'completed') {
+      return acc + (course.attendance?.total || 0);
+    }
+    return acc;
+  }, 0);
+
+  const inProgress = enrolledWithAttendance.filter(c => c.status === 'in_progress');
+  const completed = enrolledWithAttendance.filter(c => c.status === 'completed');
 
   const availableSemesters = Array.from(new Set(
     completed.flatMap(c => c.semesters)
@@ -155,6 +185,7 @@ async function StudyPlanContent({
           enrolledCount={enrolledCourses.length}
           completedCount={completed.length}
           averageProgress={enrolledCourses.length > 0 ? Math.round(enrolledCourses.reduce((acc, curr) => acc + curr.progress, 0) / enrolledCourses.length) : 0}
+          attendance={{ attended: totalAttended, total: totalSessions }}
           dict={dict.dashboard.roadmap}
         />
       </div>

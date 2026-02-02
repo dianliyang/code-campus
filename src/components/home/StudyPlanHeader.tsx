@@ -23,7 +23,7 @@ export default function StudyPlanHeader({ enrolledCount, completedCount, totalCr
           </h1>
         </div>
 
-        <div className="flex-grow flex flex-col sm:flex-row gap-16 sm:items-center relative z-10 min-w-0">
+        <div className="flex-grow flex flex-col xl:flex-row gap-12 xl:items-end relative z-10 min-w-0 w-full">
           <div className="relative pt-10 flex-grow min-w-0">
             <span className="absolute top-0 left-0 text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
               {dict?.learning_sequence || "Learning Sequence"}
@@ -42,28 +42,28 @@ export default function StudyPlanHeader({ enrolledCount, completedCount, totalCr
                 ></div>
               ))}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-8">
               <div className="flex flex-col">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block truncate">
                   {dict?.header_total || "Total Tracks"}
                 </span>
                 <span className="text-3xl font-black text-gray-900 leading-none">{enrolledCount}</span>
               </div>
-              <div className="flex flex-col md:border-l-2 md:border-gray-100 md:pl-10">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block">
+              <div className="flex flex-col sm:border-l-2 sm:border-gray-100 sm:pl-6">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block truncate">
                   {dict?.header_mastered || "Mastered"}
                 </span>
                 <span className="text-3xl font-black text-brand-green leading-none">{completedCount}</span>
               </div>
-              <div className="flex flex-col md:border-l-2 md:border-gray-100 md:pl-10">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block">
+              <div className="flex flex-col sm:border-l-2 sm:border-gray-100 sm:pl-6">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block truncate">
                   Credits
                 </span>
                 <span className="text-3xl font-black text-violet-600 leading-none">{totalCredits}</span>
               </div>
               {attendance && attendance.total > 0 && (
-                <div className="flex flex-col md:border-l-2 md:border-gray-100 md:pl-10">
-                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block">
+                <div className="flex flex-col sm:border-l-2 sm:border-gray-100 sm:pl-6">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block truncate">
                     Attendance
                   </span>
                   <div className="flex items-baseline gap-1">
@@ -75,11 +75,11 @@ export default function StudyPlanHeader({ enrolledCount, completedCount, totalCr
             </div>
           </div>
 
-          <div className="relative pt-10 sm:ml-auto">
+          <div className="relative pt-10 xl:ml-auto flex-shrink-0">
             <span className="absolute top-0 left-0 text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
               {dict?.header_efficiency || "Core Efficiency"}
             </span>
-            <div className="flex items-center gap-10">
+            <div className="flex items-center gap-6">
               <div className="relative w-24 h-24 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90">
                   <circle cx="48" cy="48" r="44" fill="transparent" stroke="currentColor" strokeWidth="2" className="text-gray-100" />

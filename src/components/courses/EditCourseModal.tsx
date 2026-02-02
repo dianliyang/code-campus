@@ -176,27 +176,42 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
               <div className="flex flex-col gap-3 group">
-                 <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] group-focus-within:text-brand-blue transition-colors">
-                   Workload
+                <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] group-focus-within:text-brand-blue transition-colors">
+                  Units
+                </label>
+                <input
+                  type="text"
+                  value={formData.units}
+                  onChange={(e) => setFormData({ ...formData, units: e.target.value })}
+                  placeholder="e.g., 3-0-1"
+                  className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-sm font-bold transition-all placeholder:text-gray-100"
+                />
+              </div>
+              <div className="flex flex-col gap-3 group">
+                 <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] text-gray-300">
+                   Workload (Read Only)
                  </label>
                  <input
                    type="text"
                    value={formData.workload}
-                   onChange={(e) => setFormData({ ...formData, workload: e.target.value })}
-                   className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-sm font-bold transition-all placeholder:text-gray-100"
+                   readOnly
+                   disabled
+                   className="bg-transparent border-b-2 border-gray-100 text-gray-400 cursor-not-allowed outline-none py-3 text-sm font-bold transition-all"
                  />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
               <div className="flex flex-col gap-3">
-                <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                  Level
+                <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] text-gray-300">
+                  Level (Read Only)
                 </label>
-                <div className="flex bg-gray-50 p-1 rounded-xl gap-1 w-fit border border-gray-100">
+                <div className="flex bg-gray-50 p-1 rounded-xl gap-1 w-fit border border-gray-100 opacity-60 pointer-events-none grayscale">
                   {['undergraduate', 'graduate'].map(lvl => (
                     <button
                       key={lvl}
                       type="button"
-                      onClick={() => setFormData({...formData, level: lvl})}
-                      className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${formData.level === lvl ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                      className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-default ${formData.level === lvl ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-400'}`}
                     >
                       {lvl}
                     </button>

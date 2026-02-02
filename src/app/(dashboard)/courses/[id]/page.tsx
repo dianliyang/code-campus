@@ -210,6 +210,38 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
                   {fullCourse.level || dict.course_detail.level_unspecified}
                 </span>
               </div>
+              {fullCourse.units && (
+                <div className="relative group/units">
+                  <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2 flex items-center gap-1 cursor-help">
+                    Units
+                    <span className="text-[8px] border border-gray-200 rounded-full w-3 h-3 flex items-center justify-center hover:bg-gray-50">?</span>
+                  </span>
+                  <span className="text-sm font-bold text-gray-900 uppercase">
+                    {fullCourse.units}
+                  </span>
+                  
+                  {/* Units Explanation Tooltip */}
+                  <div className="absolute left-0 bottom-full mb-2 w-64 p-4 bg-gray-900 text-white text-xs rounded-xl shadow-xl opacity-0 invisible group-hover/units:opacity-100 group-hover/units:visible transition-all z-50 pointer-events-none">
+                    <p className="font-bold mb-2 text-gray-300 uppercase tracking-widest text-[10px]">Weekly Structure</p>
+                    <p className="mb-2">Format: Lecture-Recitation-Lab</p>
+                    <div className="space-y-1 text-gray-400">
+                      <div className="flex justify-between">
+                        <span>Lecture Hours</span>
+                        <span className="font-mono text-white">X-0-0</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Tutorial/Recitation</span>
+                        <span className="font-mono text-white">0-Y-0</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Lab/Project</span>
+                        <span className="font-mono text-white">0-0-Z</span>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-4 translate-y-1/2 rotate-45 w-3 h-3 bg-gray-900"></div>
+                  </div>
+                </div>
+              )}
               {fullCourse.credit && (
                 <div>
                   <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">

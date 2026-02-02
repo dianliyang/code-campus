@@ -1,12 +1,17 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { sendStudyReminderEmail } from '@/lib/email';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     console.log('[Cron] Starting daily study reminder...');
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get today's date and day of week (0 = Sunday, 1 = Monday, etc.)
     const today = new Date();
@@ -62,22 +67,22 @@ export async function GET() {
 
     console.log(`[Cron] Found ${plansByUser.size} users with plans for today`);
 
+    // Fetch all users once (instead of per-user in the loop)
+    const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
+    if (usersError) {
+      console.error('[Cron] Error fetching users:', usersError);
+      return NextResponse.json({ error: 'Failed to fetch users', details: usersError }, { status: 500 });
+    }
+
+    const usersById = new Map(users.map(u => [u.id, u]));
+
     let sentCount = 0;
     const errors: string[] = [];
 
     // Send emails to each user
     for (const [userId, userPlans] of plansByUser) {
       try {
-        // Get user's email and name from auth
-        const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
-
-        if (usersError) {
-          console.error(`[Cron] Error fetching user ${userId}:`, usersError);
-          errors.push(`Failed to get user ${userId}`);
-          continue;
-        }
-
-        const user = users.find(u => u.id === userId);
+        const user = usersById.get(userId);
         if (!user || !user.email) {
           console.warn(`[Cron] User ${userId} not found or no email`);
           errors.push(`User ${userId} has no email`);

@@ -1,0 +1,19 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept: The Digital Keystone. Brackets (Code) + Shield (Campus) + Node (Network) -->
+
+  <!-- Outer Ring / Shield concept - subtle -->
+  <path d="M50 5 L85 25 V75 L50 95 L15 75 V25 L50 5Z" stroke="#0F172A" stroke-width="0" fill="none"/>
+
+  <!-- Left 'C' Bracket -->
+  <path d="M40 30 H25 V70 H40 V60 H35 V40 H40 V30Z" fill="#0F172A"/>
+
+  <!-- Right 'C' Bracket -->
+  <path d="M60 30 H75 V70 H60 V60 H65 V40 H60 V30Z" fill="#0F172A"/>
+
+  <!-- Central Network Node / Hub -->
+  <rect x="44" y="44" width="12" height="12" rx="2" fill="#3B82F6"/>
+
+  <!-- Connection Lines -->
+  <path d="M35 50 H44" stroke="#0F172A" stroke-width="4"/>
+  <path d="M56 50 H65" stroke="#0F172A" stroke-width="4"/>
+</svg>

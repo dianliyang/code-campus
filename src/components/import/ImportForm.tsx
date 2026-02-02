@@ -66,8 +66,8 @@ export default function ImportForm({ dict }: ImportFormProps) {
     url: "", 
     level: "undergraduate",
     isInternal: false,
-    units: "",
-    department: ""
+    department: "",
+    credit: ""
   });
   const [stagedBulkData, setStagedBulkData] = useState<ImportRequest[] | null>(null);
   const [stagedFileName, setStagedFileName] = useState("");
@@ -88,7 +88,7 @@ export default function ImportForm({ dict }: ImportFormProps) {
       if (res.ok) {
         setMessage({ type: "success", text: dict.msg_success });
         setFormData({
-          university: "", courseCode: "", title: "", description: "", url: "", level: "undergraduate", isInternal: false, units: "", department: ""
+          university: "", courseCode: "", title: "", description: "", url: "", level: "undergraduate", isInternal: false, credit: "", department: ""
         });
         setTimeout(() => router.push("/study-plan"), 2000);
       } else {
@@ -289,13 +289,13 @@ export default function ImportForm({ dict }: ImportFormProps) {
                   </div>
                   <div className="flex flex-col gap-3">
                     <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                      {dict.form_units}
+                      Credits
                     </label>
                     <input 
-                      placeholder={dict.form_units_placeholder}
+                      placeholder="e.g. 3.0"
                       className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-sm font-bold transition-all placeholder:text-gray-100"
-                      value={formData.units} 
-                      onChange={(e) => setFormData({...formData, units: e.target.value})} 
+                      value={formData.credit} 
+                      onChange={(e) => setFormData({...formData, credit: e.target.value})} 
                     />
                   </div>
                 </div>
@@ -383,7 +383,7 @@ export default function ImportForm({ dict }: ImportFormProps) {
                       { key: 'description', req: false, note: dict.note_desc },
                       { key: 'url', req: false, note: dict.note_url },
                       { key: 'department', req: false, note: dict.note_dept },
-                      { key: 'units', req: false, note: dict.note_units },
+                      { key: 'credit', req: false, note: "Credits (numeric)" },
                     ].map(f => (
                       <div key={f.key} className="flex items-center justify-between border-b border-gray-50 pb-4">
                         <div>

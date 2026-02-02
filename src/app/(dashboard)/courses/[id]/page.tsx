@@ -210,13 +210,13 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
                   {fullCourse.level || dict.course_detail.level_unspecified}
                 </span>
               </div>
-              {fullCourse.units && (
+              {fullCourse.credit && (
                 <div>
                   <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
-                    {dict.course_detail.units}
+                    Credits
                   </span>
                   <span className="text-sm font-bold text-gray-900 uppercase">
-                    {fullCourse.units}
+                    {fullCourse.credit}
                   </span>
                 </div>
               )}

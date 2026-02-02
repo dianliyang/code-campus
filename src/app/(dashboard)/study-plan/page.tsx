@@ -165,8 +165,9 @@ async function StudyPlanContent({
   const completed = enrolledWithAttendance.filter(c => c.status === 'completed');
 
   const totalCredits = completed.reduce((acc, course) => {
-    const units = parseFloat(course.units || "0");
-    return acc + (isNaN(units) ? 0 : units);
+    // Prioritize explicit credit field, fallback to parsing units string
+    const val = course.credit ?? parseFloat(course.units || "0");
+    return acc + (isNaN(val) ? 0 : val);
   }, 0);
 
   const availableSemesters = Array.from(new Set(

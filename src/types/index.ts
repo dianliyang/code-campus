@@ -54,6 +54,7 @@ export interface ImportRequest {
   level?: string;
   isInternal?: boolean;
   units?: string;
+  credit?: string | number;
   department?: string;
 }
 

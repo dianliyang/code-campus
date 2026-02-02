@@ -3,6 +3,7 @@ export interface Course {
   courseCode: string;
   title: string;
   units?: string;
+  credit?: number;
   description?: string;
   url?: string;
   department?: string;

@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json() as ImportRequest;
-    const { university, courseCode, title, description, url, level, units, department, isInternal } = body;
+    const { university, courseCode, title, description, url, level, units, credit, department, isInternal } = body;
 
     if (!university || !courseCode || !title) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -35,6 +35,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Course code already registered for this university" }, { status: 409 });
     }
 
+    const creditValue = typeof credit === 'string' ? parseFloat(credit) : credit;
+
     // Insert new course
     const { error: insertError } = await adminSupabase
       .from('courses')
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
         level: level || "undergraduate",
         is_internal: isInternal || false,
         units: units || "",
+        credit: isNaN(creditValue as number) ? null : creditValue,
         department: department || "",
         popularity: 0
       });

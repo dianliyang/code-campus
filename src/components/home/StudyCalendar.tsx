@@ -371,7 +371,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                           <div className="flex items-end justify-between gap-2">
                             <div className="flex items-center gap-1 min-w-0">
                               <MapPin className="w-2.5 h-2.5 opacity-50" />
-                              <span className="text-xs font-mono font-bold text-gray-600 truncate">{event.location || 'Campus'}</span>
+                              <span className="text-[8px] font-bold text-gray-600 truncate">{event.location || 'Campus'}</span>
                             </div>
                             <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                               <span className={`text-[8px] font-bold uppercase tracking-wider ${
@@ -381,7 +381,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                               }`}>
                                 {event.type}
                               </span>
-                              <span className="text-xs font-mono font-bold text-gray-600 whitespace-nowrap">
+                              <span className="text-[8px] font-bold text-gray-600 whitespace-nowrap">
                                 {event.startTime.slice(0, 5)}-{event.endTime.slice(0, 5)}
                               </span>
                             </div>

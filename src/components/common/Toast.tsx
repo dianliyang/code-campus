@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CheckCircle, XCircle, Info, X } from "lucide-react";
 
 interface ToastProps {
   message: string;
@@ -22,9 +23,9 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
   }, [duration, onClose]);
 
   const iconMap = {
-    success: "fa-circle-check",
-    error: "fa-circle-xmark",
-    info: "fa-circle-info"
+    success: CheckCircle,
+    error: XCircle,
+    info: Info
   };
 
   const colorMap = {
@@ -41,7 +42,7 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
       }`}
     >
-      <i className={`fa-solid ${iconMap[type]} text-lg`}></i>
+      {(() => { const Icon = iconMap[type]; return <Icon className="w-5 h-5" />; })()}
       <span className="text-sm font-medium">{message}</span>
       <button
         onClick={() => {
@@ -50,7 +51,7 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
         }}
         className="ml-2 text-current opacity-60 hover:opacity-100 transition-opacity"
       >
-        <i className="fa-solid fa-xmark text-sm"></i>
+        <X className="w-4 h-4" />
       </button>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { Search } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function Hero({ dict }: { dict?: any }) {
@@ -78,7 +79,7 @@ export default function Hero({ dict }: { dict?: any }) {
         <div className="max-w-3xl">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center text-brand-blue border border-brand-blue/20">
-              <i className="fa-solid fa-magnifying-glass text-xs"></i>
+              <Search className="w-3.5 h-3.5" />
             </div>
             <h1 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em]">
               {dict?.search?.label || "Course Registry Search"}

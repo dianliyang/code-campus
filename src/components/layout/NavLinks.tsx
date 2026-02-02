@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Dictionary } from "@/lib/dictionary";
+import { Info, Network, Layers, Tag, BookOpen, MapPin, UserCog, type LucideIcon } from "lucide-react";
 
 export default function NavLinks({ 
   variant = "light", 
@@ -21,19 +22,19 @@ export default function NavLinks({
   const navRef = useRef<HTMLDivElement>(null);
   const linksRef = useRef<(HTMLAnchorElement | null)[]>([]);
   
-  const navLinks = useMemo(() => {
+  const navLinks = useMemo((): { name: string; href: string; icon: LucideIcon }[] => {
     if (mode === "landing") {
       return [
-        { name: dict?.mission || "Mission", href: "#mission", icon: "fa-solid fa-circle-info" },
-        { name: dict?.universities || "Nodes", href: "#universities", icon: "fa-solid fa-diagram-project" },
-        { name: dict?.curriculum || "Protocol", href: "#features", icon: "fa-solid fa-layer-group" },
-        { name: dict?.pricing || "Pricing", href: "#pricing", icon: "fa-solid fa-tag" }
+        { name: dict?.mission || "Mission", href: "#mission", icon: Info },
+        { name: dict?.universities || "Nodes", href: "#universities", icon: Network },
+        { name: dict?.curriculum || "Protocol", href: "#features", icon: Layers },
+        { name: dict?.pricing || "Pricing", href: "#pricing", icon: Tag }
       ];
     }
     return [
-      { name: dict?.courses || "Courses", href: "/courses", icon: "fa-solid fa-book-open" },
-      { name: dict?.roadmap || "Study Roadmap", href: "/study-plan", icon: "fa-solid fa-map-location-dot" },
-      { name: dict?.profile || "My Profile", href: "/profile", icon: "fa-solid fa-user-gear" }
+      { name: dict?.courses || "Courses", href: "/courses", icon: BookOpen },
+      { name: dict?.roadmap || "Study Roadmap", href: "/study-plan", icon: MapPin },
+      { name: dict?.profile || "My Profile", href: "/profile", icon: UserCog }
     ];
   }, [mode, dict]);
 
@@ -101,9 +102,9 @@ export default function NavLinks({
             }`}
             title={collapsed ? item.name : undefined}
           >
-            <i className={`${item.icon} text-[13px] transition-all duration-500 ${
+            <item.icon className={`w-3.5 h-3.5 transition-all duration-500 ${
               isActive ? 'opacity-100' : 'opacity-40 group-hover:opacity-100'
-            }`}></i>
+            }`} />
             
             <span className={`transition-all duration-500 overflow-hidden whitespace-nowrap ${
               collapsed ? 'max-w-0 opacity-0' : 'max-w-[150px] opacity-100'

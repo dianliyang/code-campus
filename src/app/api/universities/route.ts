@@ -24,7 +24,8 @@ export async function GET() {
     })).sort((a, b) => b.count - a.count);
 
     const response = NextResponse.json({ universities: rows });
-    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=600');
+    response.headers.set('CDN-Cache-Control', 'public, s-maxage=600');
     return response;
   } catch (error) {
     console.error("Error fetching universities:", error);

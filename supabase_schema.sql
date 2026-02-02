@@ -27,6 +27,16 @@ CREATE TABLE IF NOT EXISTS courses (
 
 CREATE INDEX IF NOT EXISTS idx_courses_university ON courses(university);
 CREATE INDEX IF NOT EXISTS idx_courses_course_code ON courses(course_code);
+CREATE INDEX IF NOT EXISTS idx_courses_popularity ON courses(popularity DESC);
+CREATE INDEX IF NOT EXISTS idx_courses_created_at ON courses(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_courses_title ON courses(title);
+
+-- Full-text search support
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS search_vector tsvector
+  GENERATED ALWAYS AS (
+    to_tsvector('english', coalesce(title,'') || ' ' || coalesce(course_code,'') || ' ' || coalesce(description,''))
+  ) STORED;
+CREATE INDEX IF NOT EXISTS idx_courses_search ON courses USING GIN(search_vector);
 
 -- Fields Table
 CREATE TABLE IF NOT EXISTS fields (
@@ -59,6 +69,7 @@ CREATE TABLE IF NOT EXISTS user_courses (
 
 CREATE INDEX IF NOT EXISTS idx_user_courses_user ON user_courses(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_courses_status ON user_courses(status);
+CREATE INDEX IF NOT EXISTS idx_user_courses_user_status ON user_courses(user_id, status);
 
 -- Semesters Table
 CREATE TABLE IF NOT EXISTS semesters (
@@ -76,41 +87,6 @@ CREATE TABLE IF NOT EXISTS course_semesters (
 );
 
 CREATE INDEX IF NOT EXISTS idx_course_semesters_semester ON course_semesters(semester_id);
-
--- Row Level Security (RLS)
-ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE fields ENABLE ROW LEVEL SECURITY;
-ALTER TABLE course_fields ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_courses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE semesters ENABLE ROW LEVEL SECURITY;
-ALTER TABLE course_semesters ENABLE ROW LEVEL SECURITY;
-
--- Policies
--- Public Read Access
-CREATE POLICY "Allow public read access on courses" ON courses FOR SELECT USING (NOT is_hidden);
-CREATE POLICY "Allow public read access on fields" ON fields FOR SELECT USING (true);
-CREATE POLICY "Allow public read access on course_fields" ON course_fields FOR SELECT USING (true);
-CREATE POLICY "Allow public read access on semesters" ON semesters FOR SELECT USING (true);
-CREATE POLICY "Allow public read access on course_semesters" ON course_semesters FOR SELECT USING (true);
-
--- Authenticated User Access for user_courses
-CREATE POLICY "Users can view their own enrollments" ON user_courses FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert their own enrollments" ON user_courses FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update their own enrollments" ON user_courses FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete their own enrollments" ON user_courses FOR DELETE USING (auth.uid() = user_id);
-
--- RPC Functions
-CREATE OR REPLACE FUNCTION increment_popularity(row_id BIGINT)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  UPDATE courses
-  SET popularity = popularity + 1
-  WHERE id = row_id;
-END;
-$$;
 
 -- Study Plans Table
 -- Stores user's study rules (e.g., Mon/Wed/Fri from 9-11am)
@@ -130,6 +106,7 @@ CREATE TABLE IF NOT EXISTS study_plans (
 );
 
 CREATE INDEX IF NOT EXISTS idx_study_plans_user ON study_plans(user_id);
+CREATE INDEX IF NOT EXISTS idx_study_plans_dates ON study_plans(start_date, end_date);
 
 -- Study Logs Table
 -- Stores specific instances (exceptions, completions) for generated events
@@ -147,18 +124,64 @@ CREATE TABLE IF NOT EXISTS study_logs (
 
 CREATE INDEX IF NOT EXISTS idx_study_logs_user_date ON study_logs(user_id, log_date);
 
--- Enable RLS
+-- Scraper Background Queue
+CREATE TABLE IF NOT EXISTS scraper_jobs (
+  id SERIAL PRIMARY KEY,
+  university TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed')),
+  started_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  error TEXT,
+  course_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_scraper_jobs_status ON scraper_jobs(status, created_at);
+
+-- Row Level Security (RLS)
+ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fields ENABLE ROW LEVEL SECURITY;
+ALTER TABLE course_fields ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE semesters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE course_semesters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE study_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE study_logs ENABLE ROW LEVEL SECURITY;
 
--- Policies for study_plans
+-- Policies: Public Read Access
+CREATE POLICY "Allow public read access on courses" ON courses FOR SELECT USING (NOT is_hidden);
+CREATE POLICY "Allow public read access on fields" ON fields FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on course_fields" ON course_fields FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on semesters" ON semesters FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on course_semesters" ON course_semesters FOR SELECT USING (true);
+
+-- Policies: Authenticated User Access for user_courses
+CREATE POLICY "Users can view their own enrollments" ON user_courses FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own enrollments" ON user_courses FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own enrollments" ON user_courses FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own enrollments" ON user_courses FOR DELETE USING (auth.uid() = user_id);
+
+-- Policies: Study Plans
 CREATE POLICY "Users can view their own plans" ON study_plans FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert their own plans" ON study_plans FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update their own plans" ON study_plans FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete their own plans" ON study_plans FOR DELETE USING (auth.uid() = user_id);
 
--- Policies for study_logs
+-- Policies: Study Logs
 CREATE POLICY "Users can view their own logs" ON study_logs FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert their own logs" ON study_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update their own logs" ON study_logs FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete their own logs" ON study_logs FOR DELETE USING (auth.uid() = user_id);
+
+-- RPC Functions
+CREATE OR REPLACE FUNCTION increment_popularity(row_id BIGINT)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE courses
+  SET popularity = popularity + 1
+  WHERE id = row_id;
+END;
+$$;

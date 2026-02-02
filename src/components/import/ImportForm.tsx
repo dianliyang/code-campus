@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ApiResponse, ImportRequest } from "@/types";
+import { Loader2, LogIn, ArrowLeft, CloudUpload, FileCheck } from "lucide-react";
 
 interface ImportFormProps {
   dict: {
@@ -203,9 +204,9 @@ export default function ImportForm({ dict }: ImportFormProps) {
               className="flex-grow md:flex-grow-0 btn-primary px-12 py-4 rounded-2xl shadow-2xl shadow-brand-blue/30 disabled:bg-gray-100 disabled:text-gray-300 disabled:shadow-none min-w-[200px]"
             >
               {loading ? (
-                <span className="flex items-center gap-2"><i className="fa-solid fa-circle-notch fa-spin"></i> {dict.submit_loading}</span>
+                <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> {dict.submit_loading}</span>
               ) : (
-                <span className="flex items-center gap-2">{dict.submit_btn} <i className="fa-solid fa-arrow-right-to-bracket text-[10px]"></i></span>
+                <span className="flex items-center gap-2">{dict.submit_btn} <LogIn className="w-3 h-3" /></span>
               )}
             </button>
           </div>
@@ -224,7 +225,7 @@ export default function ImportForm({ dict }: ImportFormProps) {
             </h1>
           </div>
           <Link href="/study-plan" className="text-[10px] font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-[0.3em] flex items-center gap-2 mb-2">
-            <i className="fa-solid fa-arrow-left text-[8px]"></i>
+            <ArrowLeft className="w-2.5 h-2.5" />
             {dict.return_btn}
           </Link>
         </div>
@@ -447,7 +448,7 @@ export default function ImportForm({ dict }: ImportFormProps) {
                 onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
               >
                 <div className={`w-16 h-16 bg-white border rounded-2xl flex items-center justify-center transition-all shadow-sm ${stagedBulkData ? 'border-brand-blue text-brand-blue scale-110' : 'border-gray-100 text-gray-300 group-hover:text-brand-blue group-hover:scale-110'}`}>
-                  <i className={`fa-solid ${stagedBulkData ? 'fa-file-circle-check' : 'fa-cloud-arrow-up'} text-xl`}></i>
+                  {stagedBulkData ? <FileCheck className="w-5 h-5" /> : <CloudUpload className="w-5 h-5" />}
                 </div>
                 <div className="text-center">
                   <span className={`text-[11px] font-black uppercase tracking-[0.2em] block mb-1 ${stagedBulkData ? 'text-brand-blue' : 'text-gray-500 group-hover:text-brand-blue'}`}>

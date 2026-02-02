@@ -3,6 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useState, useMemo } from 'react';
+import { Brain, AlertTriangle, Loader2, Send } from 'lucide-react';
 
 const SUGGESTED_PROMPTS = [
   "What courses should I take next to advance in machine learning?",
@@ -48,7 +49,7 @@ export default function AILearningPlanner() {
         {messages.length === 0 && !error && (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-violet-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fa-solid fa-brain text-violet-500 text-2xl"></i>
+              <Brain className="w-6 h-6 text-violet-500" />
             </div>
             <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">
               AI-Powered Course Advisor
@@ -62,7 +63,7 @@ export default function AILearningPlanner() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <i className="fa-solid fa-exclamation-triangle text-red-500 mt-0.5"></i>
+              <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-red-900">Error</p>
                 <p className="text-xs text-red-700 mt-1">
@@ -93,7 +94,7 @@ export default function AILearningPlanner() {
               >
                 <div className="flex items-start gap-2">
                   {message.role === 'assistant' && (
-                    <i className="fa-solid fa-brain text-violet-500 text-sm mt-0.5 flex-shrink-0"></i>
+                    <Brain className="w-4 h-4 text-violet-500 mt-0.5 flex-shrink-0" />
                   )}
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">
                     {textContent}
@@ -108,7 +109,7 @@ export default function AILearningPlanner() {
           <div className="flex justify-start">
             <div className="max-w-[85%] rounded-xl px-4 py-3 bg-gray-100">
               <div className="flex items-center gap-2">
-                <i className="fa-solid fa-brain text-violet-500 text-sm"></i>
+                <Brain className="w-4 h-4 text-violet-500" />
                 <div className="flex gap-1">
                   <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
                   <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
@@ -160,9 +161,9 @@ export default function AILearningPlanner() {
           className="absolute right-2 bottom-2 w-8 h-8 bg-violet-500 text-white rounded-lg hover:bg-violet-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
         >
           {isLoading ? (
-            <i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            <i className="fa-solid fa-paper-plane text-xs"></i>
+            <Send className="w-3.5 h-3.5" />
           )}
         </button>
       </form>

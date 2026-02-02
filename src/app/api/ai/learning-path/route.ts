@@ -2,6 +2,7 @@ import { createClient, getUser } from '@/lib/supabase/server';
 import { buildSystemPrompt, fetchUserContext } from '@/lib/ai/perplexity';
 import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'edge';
 
@@ -32,6 +33,18 @@ export async function POST(req: Request) {
         JSON.stringify({ error: 'Unauthorized' }),
         {
           status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Rate limit: 10 requests per 60 seconds per user
+    const { success: withinLimit } = rateLimit(`ai:${user.id}`, 10, 60_000);
+    if (!withinLimit) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
+        {
+          status: 429,
           headers: { 'Content-Type': 'application/json' },
         }
       );

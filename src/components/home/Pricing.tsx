@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check, Plus } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function Pricing({ dict }: { dict: any }) {
@@ -41,7 +42,7 @@ export default function Pricing({ dict }: { dict: any }) {
                 {dict.free.features.map((feat: string, i: number) => (
                   <li key={i} className="flex items-center gap-3 text-[13px] text-slate-600">
                     <div className="w-5 h-5 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
-                      <i className="fa-solid fa-check text-slate-300 text-[10px]"></i>
+                      <Check className="w-3 h-3 text-slate-300" />
                     </div>
                     {feat}
                   </li>
@@ -85,7 +86,7 @@ export default function Pricing({ dict }: { dict: any }) {
                 {dict.pro.features.map((feat: string, i: number) => (
                   <li key={i} className="flex items-center gap-4 text-[14px] text-slate-800 font-semibold group/item">
                     <div className="w-6 h-6 rounded-full bg-brand-blue/10 flex items-center justify-center transition-transform group-hover/item:scale-110 shrink-0">
-                      <i className="fa-solid fa-check text-brand-blue text-[10px]"></i>
+                      <Check className="w-3 h-3 text-brand-blue" />
                     </div>
                     {feat}
                   </li>
@@ -120,7 +121,7 @@ export default function Pricing({ dict }: { dict: any }) {
                 {dict.elite.features.map((feat: string, i: number) => (
                   <li key={i} className="flex items-center gap-3 text-[13px] text-slate-600">
                     <div className="w-5 h-5 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
-                      <i className="fa-solid fa-plus text-slate-400 text-[10px]"></i>
+                      <Plus className="w-3 h-3 text-slate-400" />
                     </div>
                     {feat}
                   </li>

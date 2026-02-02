@@ -103,7 +103,7 @@ async function fetchCourses(
   }
 
   if (query) {
-    supabaseQuery = supabaseQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%,course_code.ilike.%${query}%`);
+    supabaseQuery = supabaseQuery.textSearch('search_vector', query, { type: 'websearch' });
   }
 
   if (universities.length > 0) {

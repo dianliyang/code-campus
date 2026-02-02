@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, getUser } from '@/lib/supabase/server';
 import { ImportRequest } from '@/types';
+import { rateLimit } from '@/lib/rate-limit';
+import { TablesInsert } from '@/lib/supabase/database.types';
 
 export async function POST(request: Request) {
   try {
     const user = await getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized access denied" }, { status: 401 });
+    }
+
+    // Rate limit: 5 requests per 60 seconds per user
+    const { success: withinLimit } = rateLimit(`bulk:${user.id}`, 5, 60_000);
+    if (!withinLimit) {
+      return NextResponse.json({ error: "Rate limit exceeded. Please try again in a moment." }, { status: 429 });
     }
 
     const courses = await request.json() as ImportRequest[];
@@ -17,12 +25,12 @@ export async function POST(request: Request) {
     const adminSupabase = createAdminClient();
     
     // Prepare courses for bulk upsert - De-duplicate locally first to avoid DB errors
-    const uniqueCoursesMap = new Map<string, Record<string, unknown>>();
-    
+    const uniqueCoursesMap = new Map<string, TablesInsert<'courses'>>();
+
     courses.forEach(course => {
       const key = `${course.university}-${course.courseCode}`;
       if (!uniqueCoursesMap.has(key)) {
-        const base: Record<string, unknown> = {
+        const base: TablesInsert<'courses'> = {
           university: course.university,
           course_code: course.courseCode,
           title: course.title,
@@ -33,7 +41,7 @@ export async function POST(request: Request) {
           department: course.department || "",
           popularity: 0
         };
-        
+
         const c = course as ImportRequest & { isInternal?: boolean; semester?: string; score?: number | string };
         if (c.isInternal !== undefined) {
           base.is_internal = c.isInternal;
@@ -58,7 +66,7 @@ export async function POST(request: Request) {
       if (upsertError.message.includes('is_internal')) {
         const fallbackCourses = coursesToUpsert.map((c) => {
           const { is_internal: _isInternal, ...rest } = c; // eslint-disable-line @typescript-eslint/no-unused-vars
-          return rest;
+          return rest as TablesInsert<'courses'>;
         });
         const { data: retryData, error: retryError } = await adminSupabase
           .from('courses')
@@ -79,7 +87,7 @@ export async function POST(request: Request) {
 
     const uniqueSemesters = new Map<string, { year: number; term: string }>();
     const semesterCourseLinks: { semKey: string; courseId: number }[] = [];
-    const enrollments: Record<string, unknown>[] = [];
+    const enrollments: TablesInsert<'user_courses'>[] = [];
     const now = new Date().toISOString();
 
     for (const course of courses) {

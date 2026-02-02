@@ -4,6 +4,7 @@ import { Course } from "@/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import UniversityIcon from "@/components/common/UniversityIcon";
+import { PenSquare, Save, RotateCcw } from "lucide-react";
 
 interface AchievementCardProps {
   course: Course & { gpa?: number; score?: number };
@@ -75,12 +76,12 @@ export default function AchievementCard({ course }: AchievementCardProps) {
   return (
     <div className="bg-white border border-gray-100 p-4 flex flex-col gap-3 h-full relative group hover:border-brand-green/30 transition-all hover:shadow-xl hover:shadow-brand-green/5 rounded-xl">
       {/* Edit Trigger */}
-      <button 
+      <button
         onClick={() => setShowEditModal(true)}
         className="absolute top-3 right-3 p-1.5 rounded-lg bg-gray-50 text-gray-400 opacity-0 group-hover:opacity-100 transition-all hover:text-brand-blue hover:bg-blue-50 cursor-pointer z-10"
         title="Update Grade"
       >
-        <i className="fa-solid fa-pen-to-square text-[10px]"></i>
+        <PenSquare className="w-2.5 h-2.5" />
       </button>
 
       {/* Update Modal */}
@@ -98,10 +99,10 @@ export default function AchievementCard({ course }: AchievementCardProps) {
               <div className="grid grid-cols-2 gap-6">
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Final GPA (0-5.0)</label>
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    min="0" 
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
                     max="5"
                     placeholder="0.00"
                     className="bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-black text-lg transition-all"
@@ -111,10 +112,10 @@ export default function AchievementCard({ course }: AchievementCardProps) {
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Score (%)</label>
-                  <input 
-                    type="number" 
-                    step="0.1" 
-                    min="0" 
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
                     max="100"
                     placeholder="0.0"
                     className="bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-black text-lg transition-all"
@@ -126,14 +127,14 @@ export default function AchievementCard({ course }: AchievementCardProps) {
             </div>
 
             <div className="flex flex-col gap-3">
-              <button 
+              <button
                 onClick={handleUpdate}
                 disabled={isUpdating}
                 className="w-full btn-primary py-4 rounded-xl flex items-center justify-center gap-3 text-sm font-black uppercase tracking-widest disabled:opacity-50"
               >
-                {isUpdating ? "Updating..." : "Save Changes"} <i className="fa-solid fa-save text-[10px]"></i>
+                {isUpdating ? "Updating..." : "Save Changes"} <Save className="w-2.5 h-2.5" />
               </button>
-              <button 
+              <button
                 onClick={() => setShowEditModal(false)}
                 className="w-full text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] hover:text-gray-900 transition-colors py-2"
               >
@@ -148,9 +149,9 @@ export default function AchievementCard({ course }: AchievementCardProps) {
       <div className="absolute top-6 right-6 w-2 h-2 bg-brand-green rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)] group-hover:opacity-0 transition-opacity"></div>
 
       <div className="flex items-center gap-3">
-        <UniversityIcon 
-          name={course.university} 
-          size={32} 
+        <UniversityIcon
+          name={course.university}
+          size={32}
           className="bg-gray-50 rounded-lg border border-gray-100 p-1"
         />
         <div className="flex flex-col">
@@ -209,7 +210,7 @@ export default function AchievementCard({ course }: AchievementCardProps) {
           className="w-7 h-7 shrink-0 rounded-lg border border-red-200 text-red-500 bg-red-50 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center disabled:opacity-50"
           title="Mark Incomplete"
         >
-          <i className="fa-solid fa-rotate-left text-[10px]"></i>
+          <RotateCcw className="w-2.5 h-2.5" />
         </button>
       </div>
     </div>

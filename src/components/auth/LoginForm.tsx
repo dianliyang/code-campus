@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
+import { Send, ArrowLeft } from "lucide-react";
 
 interface LoginFormProps {
   onMagicLink: (formData: FormData) => Promise<{ success?: boolean; error?: string } | void>;
@@ -52,7 +53,7 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="p-8 bg-green-50 border border-green-100 rounded-3xl">
             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-brand-green mb-6 shadow-sm border border-green-100">
-              <i className="fa-solid fa-paper-plane text-xl"></i>
+              <Send className="w-5 h-5" />
             </div>
             <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-2">
               {dict?.success_title || "Success"}
@@ -74,7 +75,7 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
               onClick={() => setIsSent(false)}
               className="text-[10px] font-black text-gray-400 hover:text-brand-blue uppercase tracking-widest transition-colors cursor-pointer flex items-center gap-2"
             >
-              <i className="fa-solid fa-arrow-left-long text-[8px]"></i>
+              <ArrowLeft className="w-2.5 h-2.5" />
               {dict?.wrong_email || "Wrong email?"}
             </button>
           </div>

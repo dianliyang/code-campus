@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { University, Field } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
+import { Plus } from "lucide-react";
 
 interface SidebarProps {
   universities: University[];
@@ -53,7 +54,7 @@ export default function Sidebar({ universities, fields, enrolledCount, dict }: S
               className="w-6 h-6 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-brand-blue hover:border-brand-blue/30 transition-all group/plus"
               title="Import Data"
             >
-              <i className="fa-solid fa-plus text-[8px] group-hover/plus:rotate-90 transition-transform duration-300"></i>
+              <Plus className="w-2.5 h-2.5 group-hover/plus:rotate-90 transition-transform duration-300" />
             </Link>
           </div>
           

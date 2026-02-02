@@ -1,3 +1,5 @@
+import { GraduationCap, Code, Database, Brain, Shield, Radical } from "lucide-react";
+
 export default function OrbitingCircles() {
   return (
     <div className="relative w-full h-full flex items-center justify-center">
@@ -24,26 +26,26 @@ export default function OrbitingCircles() {
       {/* Orbiting Nodes - Ring 2 (Reverse) */}
       <div className="absolute w-[70%] h-[70%] animate-spin-reverse-slower">
         <div className="absolute top-0 right-8 w-9 h-9 bg-white border border-amber-100 rounded-full shadow-xl flex items-center justify-center">
-           <i className="fa-solid fa-graduation-cap text-amber-500 text-[11px]"></i>
+           <GraduationCap className="w-3 h-3 text-amber-500" />
         </div>
         <div className="absolute bottom-12 -left-3 w-9 h-9 bg-white border border-indigo-100 rounded-full shadow-xl flex items-center justify-center">
-           <i className="fa-solid fa-code text-indigo-500 text-[11px]"></i>
+           <Code className="w-3 h-3 text-indigo-500" />
         </div>
         <div className="absolute -bottom-3 right-1/3 w-9 h-9 bg-white border border-emerald-100 rounded-full shadow-xl flex items-center justify-center">
-           <i className="fa-solid fa-database text-emerald-500 text-[11px]"></i>
+           <Database className="w-3 h-3 text-emerald-500" />
         </div>
       </div>
 
       {/* Orbiting Nodes - Ring 3 (Outer) */}
       <div className="absolute w-[100%] h-[100%] animate-spin-slow">
         <div className="absolute top-8 left-1/4 w-8 h-8 bg-white border border-violet-100 rounded-full shadow-lg flex items-center justify-center">
-           <i className="fa-solid fa-brain text-violet-500 text-[10px]"></i>
+           <Brain className="w-2.5 h-2.5 text-violet-500" />
         </div>
         <div className="absolute top-1/3 -right-3 w-8 h-8 bg-white border border-sky-100 rounded-full shadow-lg flex items-center justify-center">
-           <i className="fa-solid fa-shield-halved text-sky-500 text-[10px]"></i>
+           <Shield className="w-2.5 h-2.5 text-sky-500" />
         </div>
         <div className="absolute bottom-10 left-0 w-8 h-8 bg-white border border-rose-100 rounded-full shadow-lg flex items-center justify-center">
-           <i className="fa-solid fa-square-root-variable text-rose-500 text-[10px]"></i>
+           <Radical className="w-2.5 h-2.5 text-rose-500" />
         </div>
       </div>
     </div>

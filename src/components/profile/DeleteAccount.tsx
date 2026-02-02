@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AlertTriangle, UserX } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function DeleteAccount({ dict }: { dict?: any }) {
@@ -28,7 +29,7 @@ export default function DeleteAccount({ dict }: { dict?: any }) {
     return (
       <div className="flex flex-col gap-4 p-6 border border-red-100 bg-red-50 rounded-2xl animate-in fade-in slide-in-from-top-4 duration-300">
         <div className="flex items-center gap-3 text-red-600">
-          <i className="fa-solid fa-triangle-exclamation"></i>
+          <AlertTriangle className="w-4 h-4" />
           <p className="text-sm font-bold uppercase tracking-wider">{dict?.delete_confirm_title || "Dangerous Action"}</p>
         </div>
         <p className="text-sm text-red-500">
@@ -56,7 +57,7 @@ export default function DeleteAccount({ dict }: { dict?: any }) {
   return (
     <div className="flex gap-6 items-start">
       <div className="w-14 h-14 bg-gray-50 text-gray-400 rounded-2xl flex items-center justify-center text-2xl">
-        <i className="fa-solid fa-user-slash"></i>
+        <UserX className="w-6 h-6" />
       </div>
       <div>
         <h4 className="text-lg font-bold text-gray-900">{dict?.delete_title || "Deactivate Account"}</h4>

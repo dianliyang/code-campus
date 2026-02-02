@@ -6,6 +6,7 @@ import Image from "next/image";
 import FloatingNavWrapper from "./FloatingNavWrapper";
 import NavLinks from "./NavLinks";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { ArrowRight } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function LandingNavbar({ dict }: { dict: any }) {
@@ -65,9 +66,9 @@ export default function LandingNavbar({ dict }: { dict: any }) {
                   {enterText}
                 </span>
                 
-                <i className={`fa-solid transition-all duration-500 ${
-                  scrolled ? 'fa-arrow-right text-sm' : 'fa-arrow-right-long group-hover:translate-x-1'
-                }`}></i>
+                <ArrowRight className={`transition-all duration-500 ${
+                  scrolled ? 'w-4 h-4' : 'w-4 h-4 group-hover:translate-x-1'
+                }`} />
               </Link>
             </div>
 

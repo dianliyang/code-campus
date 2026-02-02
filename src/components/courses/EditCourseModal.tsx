@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Course } from "@/types";
 import { updateCourse, deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
+import { X, Loader2, Check, Trash2 } from "lucide-react";
 
 interface EditCourseModalProps {
   course: Course;
@@ -96,7 +97,7 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors"
           >
-            <i className="fa-solid fa-xmark"></i>
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -286,10 +287,10 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 className="flex-1 btn-primary py-4 rounded-xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest disabled:opacity-50"
               >
                 {loading ? (
-                  <i className="fa-solid fa-circle-notch fa-spin"></i>
+                  <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
                   <>
-                    Save Changes <i className="fa-solid fa-check"></i>
+                    Save Changes <Check className="w-3 h-3" />
                   </>
                 )}
               </button>
@@ -303,11 +304,11 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
             >
               {isDeleting ? (
                 <>
-                  <i className="fa-solid fa-circle-notch fa-spin"></i> Deleting...
+                  <Loader2 className="w-3 h-3 animate-spin" /> Deleting...
                 </>
               ) : (
                 <>
-                  <i className="fa-solid fa-trash"></i> Delete Course
+                  <Trash2 className="w-3 h-3" /> Delete Course
                 </>
               )}
             </button>

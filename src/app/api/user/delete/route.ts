@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUser, createClient } from '@/lib/supabase/server';
+import { getUser, createAdminClient } from '@/lib/supabase/server';
 
 export async function POST() {
   const user = await getUser();
@@ -7,24 +7,16 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = user.id;
-
   try {
-    const supabase = await createClient();
-    
-    // Delete user data from user_courses
-    const { error: deleteError } = await supabase
-      .from('user_courses')
-      .delete()
-      .eq('user_id', userId);
-      
-    if (deleteError) throw deleteError;
-    
-    // Note: To delete the user from Supabase Auth, you would typically use 
-    // supabase.auth.admin.deleteUser(userId) which requires a service role key.
-    await supabase.auth.signOut();
+    const adminSupabase = createAdminClient();
 
-    return NextResponse.json({ success: true, message: "Account data cleared successfully" });
+    // Delete the user from Supabase Auth
+    // FK cascades (ON DELETE CASCADE) will auto-clean user_courses, study_plans, study_logs
+    const { error: deleteError } = await adminSupabase.auth.admin.deleteUser(user.id);
+
+    if (deleteError) throw deleteError;
+
+    return NextResponse.json({ success: true, message: "Account deleted successfully" });
   } catch (error) {
     console.error("Account deletion error:", error);
     return NextResponse.json({ error: "Failed to delete account" }, { status: 500 });

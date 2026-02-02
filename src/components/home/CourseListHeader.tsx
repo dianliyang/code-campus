@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
+import { List, LayoutGrid } from "lucide-react";
 
 interface CourseListHeaderProps {
   totalItems: number;
@@ -33,13 +34,13 @@ export default function CourseListHeader({ totalItems, viewMode, setViewMode, di
             onClick={() => setViewMode("list")} 
             className={`p-1 px-2 rounded text-xs ${viewMode === "list" ? "bg-white shadow-sm text-brand-blue" : "text-gray-400"}`}
           >
-            <i className="fa-solid fa-list"></i>
+            <List className="w-3.5 h-3.5" />
           </button>
           <button 
             onClick={() => setViewMode("grid")} 
             className={`p-1 px-2 rounded text-xs ${viewMode === "grid" ? "bg-white shadow-sm text-brand-blue" : "text-gray-400"}`}
           >
-            <i className="fa-solid fa-border-all"></i>
+            <LayoutGrid className="w-3.5 h-3.5" />
           </button>
         </div>
         <select 

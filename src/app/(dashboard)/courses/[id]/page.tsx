@@ -7,6 +7,7 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { Course } from "@/types";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
+import { ArrowLeft, ListChecks, Link2, GitBranch, Globe, ExternalLink, Zap, Flame } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { data } = await supabase
     .from("courses")
     .select("title, course_code, university")
-    .eq("id", id)
+    .eq("id", Number(id))
     .single();
 
   if (!data) {
@@ -45,7 +46,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
           href="/courses"
           className="inline-flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-[0.3em] hover:text-brand-blue transition-colors mb-12 group"
         >
-          <i className="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
+          <ArrowLeft className="w-3 h-3 transition-transform group-hover:-translate-x-1" />
           {dict.dashboard.course_detail.back_to_catalog}
         </Link>
 
@@ -70,7 +71,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
       semesters:course_semesters(semesters(term, year))
     `
     )
-    .eq("id", id)
+    .eq("id", Number(id))
     .single();
 
   const enrollmentPromise = user
@@ -78,7 +79,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
         .from("user_courses")
         .select("progress")
         .eq("user_id", user.id)
-        .eq("course_id", id)
+        .eq("course_id", Number(id))
         .single()
     : Promise.resolve({ data: null });
 
@@ -128,7 +129,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
           {fullCourse.details?.prerequisites && (
             <section className="bg-orange-50/50 border border-orange-200/50 rounded-2xl p-8">
               <h3 className="text-xs font-black text-orange-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                <i className="fa-solid fa-list-check"></i>
+                <ListChecks className="w-3.5 h-3.5" />
                 Prerequisites
               </h3>
               <p className="text-sm text-gray-700 font-bold leading-relaxed italic">
@@ -140,7 +141,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
           {fullCourse.corequisites && (
             <section className="bg-brand-blue/[0.02] border border-brand-blue/10 rounded-2xl p-8">
               <h3 className="text-xs font-black text-brand-blue uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                <i className="fa-solid fa-link"></i>
+                <Link2 className="w-3.5 h-3.5" />
                 {dict.course_detail.corequisites_title}
               </h3>
               <p className="text-sm text-gray-700 font-bold leading-relaxed italic">
@@ -152,7 +153,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
           {fullCourse.details?.crossListedCourses && (
             <section className="bg-purple-50/50 border border-purple-200/50 rounded-2xl p-8">
               <h3 className="text-xs font-black text-purple-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                <i className="fa-solid fa-code-branch"></i>
+                <GitBranch className="w-3.5 h-3.5" />
                 Cross-Listed Courses
               </h3>
               <p className="text-sm text-gray-700 font-bold leading-relaxed italic">
@@ -164,7 +165,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
           {fullCourse.details?.relatedUrls && fullCourse.details.relatedUrls.length > 0 && (
             <section className="bg-green-50/50 border border-green-200/50 rounded-2xl p-8">
               <h3 className="text-xs font-black text-green-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                <i className="fa-solid fa-globe"></i>
+                <Globe className="w-3.5 h-3.5" />
                 Related Resources
               </h3>
               <div className="space-y-3">
@@ -176,7 +177,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
                     rel="noopener noreferrer"
                     className="group flex items-center gap-3 text-sm font-bold text-green-700 hover:text-green-800 transition-colors"
                   >
-                    <i className="fa-solid fa-arrow-up-right-from-square text-xs text-green-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+                    <ExternalLink className="w-3 h-3 text-green-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                     <span className="underline decoration-green-300 group-hover:decoration-green-500 transition-colors break-all">
                       {url}
                     </span>
@@ -272,7 +273,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
         <aside className="space-y-8">
           <div className="bg-white border-2 border-gray-900 rounded-3xl p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)] flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-brand-blue mb-6">
-              <i className="fa-solid fa-bolt-lightning text-2xl"></i>
+              <Zap className="w-6 h-6" />
             </div>
             <h3 className="text-xl font-black text-gray-900 tracking-tighter mb-2">
               {dict.course_detail.enrollment_status}
@@ -289,7 +290,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
             >
               <span className="relative z-10 flex items-center gap-2">
                 {dict.course_detail.go_to_page}
-                <i className="fa-solid fa-arrow-up-right-from-square text-xs transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"></i>
+                <ExternalLink className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
               </span>
               <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 ease-in-out group-hover:translate-x-full" />
             </a>
@@ -328,7 +329,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
                 </div>
               </div>
               <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center text-orange-500">
-                <i className="fa-solid fa-fire-flame-simple"></i>
+                <Flame className="w-5 h-5" />
               </div>
             </div>
           </div>

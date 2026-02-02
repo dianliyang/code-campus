@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
+import { GraduationCap, Loader2, Check, Plus, EyeOff, Flame, Globe } from "lucide-react";
 
 interface CourseCardProps {
   course: Course;
@@ -110,9 +111,9 @@ export default function CourseCard({
               {course.level && (
                 <span className="text-gray-500 text-[10px]" title={course.level}>
                   {course.level.toLowerCase().includes('grad') ? (
-                    <i className="fa-solid fa-user-graduate"></i>
+                    <GraduationCap className="w-3 h-3" />
                   ) : (
-                    <i className="fa-solid fa-graduation-cap"></i>
+                    <GraduationCap className="w-3 h-3" />
                   )}
                 </span>
               )}
@@ -150,7 +151,7 @@ export default function CourseCard({
         <div className="flex-grow min-w-0 flex flex-col justify-center gap-1">
              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
-                  <i className="fa-solid fa-fire-flame-simple text-orange-400 text-[10px]"></i>
+                  <Flame className="w-2.5 h-2.5 text-orange-400" />
                   <span className="text-xs font-semibold text-gray-700">
                     {course.popularity}
                   </span>
@@ -170,7 +171,7 @@ export default function CourseCard({
                           className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand-blue transition-colors"
                           title={url}
                         >
-                          <i className="fa-solid fa-globe text-[8px]"></i>
+                          <Globe className="w-2 h-2" />
                           <span className="truncate max-w-[80px]">{hostname}</span>
                         </a>
                       );
@@ -195,15 +196,15 @@ export default function CourseCard({
               }`}
             >
               {loading ? (
-                <i className="fa-solid fa-circle-notch fa-spin"></i>
+                <Loader2 className="w-3 h-3 animate-spin" />
               ) : isEnrolled ? (
                 <>
-                  <i className="fa-solid fa-check"></i>
+                  <Check className="w-3 h-3" />
                   <span className="hidden sm:inline">{dict?.enrolled || "Added"}</span>
                 </>
               ) : (
                 <>
-                  <i className="fa-solid fa-plus"></i>
+                  <Plus className="w-3 h-3" />
                   <span className="hidden sm:inline">{dict?.enroll || "Join"}</span>
                 </>
               )}
@@ -214,7 +215,7 @@ export default function CourseCard({
                 className="text-gray-400 hover:text-red-500 text-xs p-1.5 transition-colors"
                 title={dict?.hide || "Hide"}
               >
-                <i className="fa-solid fa-eye-slash"></i>
+                <EyeOff className="w-3 h-3" />
               </button>
         </div>
 
@@ -234,14 +235,14 @@ export default function CourseCard({
         }`}
       >
         {loading ? (
-          <i className="fa-solid fa-circle-notch fa-spin"></i>
+          <Loader2 className="w-3 h-3 animate-spin" />
         ) : isEnrolled ? (
           <span className="flex items-center gap-1">
-            <i className="fa-solid fa-check"></i> {dict?.enrolled || "Added"}
+            <Check className="w-3 h-3" /> {dict?.enrolled || "Added"}
           </span>
         ) : (
           <span className="flex items-center gap-1">
-            <i className="fa-solid fa-plus"></i> {dict?.enroll || "Join"}
+            <Plus className="w-3 h-3" /> {dict?.enroll || "Join"}
           </span>
         )}
       </button>
@@ -261,9 +262,9 @@ export default function CourseCard({
             {course.level && (
               <span className="text-gray-500 text-[11px]" title={course.level}>
                 {course.level.toLowerCase().includes('grad') ? (
-                  <i className="fa-solid fa-user-graduate"></i>
+                  <GraduationCap className="w-3 h-3" />
                 ) : (
-                  <i className="fa-solid fa-graduation-cap"></i>
+                  <GraduationCap className="w-3 h-3" />
                 )}
               </span>
             )}
@@ -307,7 +308,7 @@ export default function CourseCard({
                 className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand-blue transition-colors bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100"
                 title={url}
               >
-                <i className="fa-solid fa-globe text-[8px]"></i>
+                <Globe className="w-2 h-2" />
                 <span className="truncate max-w-[100px]">{hostname}</span>
               </a>
             );
@@ -321,7 +322,7 @@ export default function CourseCard({
       <div className="mt-auto pt-5 border-t border-gray-100">
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5">
-            <i className="fa-solid fa-fire-flame-simple text-orange-400"></i>
+            <Flame className="w-3 h-3 text-orange-400" />
             <span className="font-semibold text-gray-700">{course.popularity}</span>
           </div>
           <button
@@ -329,7 +330,7 @@ export default function CourseCard({
             disabled={loading}
             className="text-gray-400 hover:text-red-500 text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 transition-colors"
           >
-            {dict?.hide || "Hide"} <i className="fa-solid fa-eye-slash text-[8px]"></i>
+            {dict?.hide || "Hide"} <EyeOff className="w-3 h-3" />
           </button>
         </div>
       </div>

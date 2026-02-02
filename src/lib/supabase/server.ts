@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Course } from "../scrapers/types";
+import { Database, Json } from "./database.types";
 
 export async function getBaseUrl() {
   const envUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -18,7 +19,7 @@ export async function getBaseUrl() {
 export const createClient = cache(async () => {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -42,18 +43,23 @@ export const createClient = cache(async () => {
   );
 });
 
+let _adminClient: ReturnType<typeof createSupabaseClient<Database>> | null = null;
+
 export function createAdminClient() {
+  if (_adminClient) return _adminClient;
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !key) {
-    throw new Error(`Supabase Admin configuration missing. 
+    throw new Error(`Supabase Admin configuration missing.
       URL: ${url ? "Found" : "MISSING"}
       KEY: ${key ? "Found" : "MISSING"}
       Check your .env file.`);
   }
 
-  return createSupabaseClient(url, key);
+  _adminClient = createSupabaseClient<Database>(url, key);
+  return _adminClient;
 }
 
 export const getUser = cache(async () => {
@@ -83,7 +89,7 @@ export class SupabaseDatabase {
       units: c.units,
       description: c.description,
       url: c.url,
-      details: c.details,
+      details: c.details as Json,
       department: c.department,
       corequisites: c.corequisites,
       level: c.level,
@@ -221,7 +227,7 @@ export async function decrementPopularity(courseId: number): Promise<void> {
   const supabase = await createClient();
   // Try RPC fallback; if RPC not available, do safe decrement
   try {
-    const { error } = await supabase.rpc("decrement_popularity", {
+    const { error } = await supabase.rpc("decrement_popularity" as "increment_popularity", {
       row_id: courseId,
     });
     if (error) throw error;

@@ -1,4 +1,5 @@
 import { Course } from './types';
+import pLimit from 'p-limit';
 
 export abstract class BaseScraper {
   name: string;
@@ -21,33 +22,44 @@ export abstract class BaseScraper {
 
   abstract parser(html: string): Course[] | Promise<Course[]>;
 
-  async fetchPage(url: string): Promise<string> {
-    console.log(`[${this.name}] Fetching ${url}...`);
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+  async fetchPage(url: string, retries = 3): Promise<string> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`[${this.name}] Fetching ${url} (attempt ${attempt})...`);
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        }
+        return await response.text();
+      } catch (error) {
+        console.error(`[${this.name}] Attempt ${attempt} failed for ${url}:`, error);
+        if (attempt < retries) {
+          const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
-      return await response.text();
-    } catch (error) {
-      console.error(`[${this.name}] Error fetching ${url}:`, error);
-      return "";
     }
+    console.error(`[${this.name}] All ${retries} attempts failed for ${url}`);
+    return "";
   }
 
   async retrieve(): Promise<Course[]> {
     const links = await this.links();
-    const allCourses: Course[] = [];
     console.log(`[${this.name}] Processing ${links.length} links...`);
 
-    for (const link of links) {
-      const html = await this.fetchPage(link);
-      if (html) {
-        const courses = await this.parser(html);
-        allCourses.push(...courses);
-      }
-    }
+    const limit = pLimit(5);
+    const results = await Promise.all(
+      links.map(link =>
+        limit(async () => {
+          const html = await this.fetchPage(link);
+          if (html) {
+            return this.parser(html);
+          }
+          return [];
+        })
+      )
+    );
 
-    return allCourses;
+    return results.flat();
   }
 }

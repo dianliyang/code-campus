@@ -6,6 +6,7 @@ import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PenSquare, Loader2, Trash2 } from "lucide-react";
 
 const EditCourseModal = dynamic(() => import("./EditCourseModal"), {
   loading: () => (
@@ -65,7 +66,7 @@ export default function CourseDetailHeader({ course }: CourseDetailHeaderProps) 
             className="p-2 rounded-lg bg-gray-50 text-gray-400 hover:text-brand-blue hover:bg-blue-50 cursor-pointer"
             title="Edit Course Details"
           >
-            <i className="fa-solid fa-pen-to-square"></i>
+            <PenSquare className="w-4 h-4" />
           </button>
           <button
             onClick={handleDelete}
@@ -74,9 +75,9 @@ export default function CourseDetailHeader({ course }: CourseDetailHeaderProps) 
             title="Delete Course"
           >
             {isDeleting ? (
-              <i className="fa-solid fa-circle-notch fa-spin"></i>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <i className="fa-solid fa-trash"></i>
+              <Trash2 className="w-4 h-4" />
             )}
           </button>
         </div>

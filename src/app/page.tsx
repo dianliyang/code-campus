@@ -8,6 +8,7 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 import HeroBackground from "@/components/home/HeroBackground";
+import { ArrowRight } from "lucide-react";
 
 export const revalidate = 60;
 
@@ -49,7 +50,7 @@ export default async function Home() {
               className="inline-flex items-center justify-center gap-4 px-10 py-4 bg-slate-900 text-white text-xs font-black uppercase tracking-[0.2em] rounded-full hover:bg-brand-blue transition-all duration-300 shadow-xl shadow-slate-200 group"
             >
               {dict.hero.cta}
-              <i className="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-1"></i>
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
         </div>

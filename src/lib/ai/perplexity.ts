@@ -121,7 +121,7 @@ export async function fetchUserContext(
   const completedCourses = enrolledCourses.filter(c => c.status === 'completed');
   const inProgressCourses = enrolledCourses.filter(c => c.status !== 'completed');
 
-  // Fetch available courses (excluding enrolled ones)
+  // Fetch available courses (excluding enrolled ones) — capped for token budget
   const { data: availableData, error: availableError } = await supabase
     .from('courses')
     .select(`
@@ -145,7 +145,7 @@ export async function fetchUserContext(
     .eq('is_hidden', false)
     .not('id', 'in', `(${enrolledCourseIds.length > 0 ? enrolledCourseIds.join(',') : '0'})`)
     .order('popularity', { ascending: false })
-    .limit(100);
+    .limit(30);
 
   if (availableError) {
     console.error('Error fetching available courses:', availableError);
@@ -183,7 +183,11 @@ export async function fetchUserContext(
 }
 
 export function buildSystemPrompt(context: UserLearningContext): string {
-  const { completedCourses, inProgressCourses, availableCourses, fields } = context;
+  // Cap courses to reduce token usage
+  const completedCourses = context.completedCourses.slice(0, 20);
+  const inProgressCourses = context.inProgressCourses.slice(0, 20);
+  const availableCourses = context.availableCourses.slice(0, 30);
+  const fields = context.fields;
 
   let prompt = `You are an expert academic advisor helping students plan their learning path in computer science and related fields.
 
@@ -224,13 +228,13 @@ export function buildSystemPrompt(context: UserLearningContext): string {
 
 `;
 
-  availableCourses.slice(0, 50).forEach(c => {
+  availableCourses.forEach(c => {
     prompt += `### ${c.courseCode} - ${c.title}\n`;
     prompt += `- **University**: ${c.university}\n`;
     if (c.level) prompt += `- **Level**: ${c.level}\n`;
     if (c.difficulty) prompt += `- **Difficulty**: ${c.difficulty}/10\n`;
     if (c.workload) prompt += `- **Workload**: ${c.workload}\n`;
-    if (c.description) prompt += `- **Description**: ${c.description.slice(0, 200)}...\n`;
+    if (c.description) prompt += `- **Description**: ${c.description.slice(0, 100)}...\n`;
     if (c.details?.prerequisites) prompt += `- **Prerequisites**: ${c.details.prerequisites}\n`;
     prompt += `\n`;
   });

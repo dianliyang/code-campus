@@ -7,6 +7,7 @@ import CourseCard from "./CourseCard";
 import CourseListHeader from "./CourseListHeader";
 import Pagination from "./Pagination";
 import Toast from "../common/Toast";
+import { Radio } from "lucide-react";
 
 interface CourseListProps {
   initialCourses: Course[];
@@ -110,7 +111,7 @@ export default function CourseList({
             
             <div className="relative z-10 flex flex-col items-center">
               <div className="w-12 h-12 rounded-full border border-gray-100 flex items-center justify-center mb-6 bg-gray-50/50">
-                <i className="fa-solid fa-radar fa-spin-slow text-gray-300 text-sm"></i>
+                <Radio className="w-4 h-4 text-gray-300 animate-spin" style={{ animationDuration: '3s' }} />
               </div>
               <h3 className="text-xs font-black text-gray-900 uppercase tracking-[0.4em] mb-2">
                 {dict?.empty_header || "Zero Matches Found"}

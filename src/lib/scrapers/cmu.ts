@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import { BaseScraper } from "./BaseScraper";
 import { Course } from "./types";
-import { fetch, Agent } from "undici";
+import { fetch } from "undici";
 import { parseCMUSemester } from "./utils/semester";
 
 export class CMU extends BaseScraper {
@@ -55,14 +55,14 @@ export class CMU extends BaseScraper {
     params.append("TITLE_ONLY", "NO");
     params.append("SUBMIT", "Retrieve Schedule");
 
-    const html = await this.fetchPage(url, params);
+    const html = await this.fetchWithBody(url, params);
     if (html) {
       return await this.parser(html);
     }
     return [];
   }
 
-  async fetchPage(url: string, body?: URLSearchParams): Promise<string> {
+  private async fetchWithBody(url: string, body?: URLSearchParams): Promise<string> {
     console.log(`[${this.name}] Fetching ${url}...`);
 
     try {
@@ -72,11 +72,6 @@ export class CMU extends BaseScraper {
           "Content-Type": "application/x-www-form-urlencoded",
         } : {},
         body: body,
-        dispatcher: new Agent({
-          connect: {
-            rejectUnauthorized: false,
-          },
-        }),
       });
 
       if (!response.ok) {

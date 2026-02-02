@@ -4,6 +4,7 @@ import { getUser } from "@/lib/supabase/server";
 import LogoutButton from "./LogoutButton";
 import NavLinks from "./NavLinks";
 import { Dictionary } from "@/lib/dictionary";
+import { User } from "lucide-react";
 
 export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
   const user = await getUser();
@@ -48,7 +49,7 @@ export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
                     </div>
                   </div>
                   <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white border border-slate-800 shadow-lg group-hover:bg-brand-blue group-hover:border-brand-blue transition-all duration-300">
-                    <i className="fa-solid fa-user text-sm"></i>
+                    <User className="w-4 h-4" />
                   </div>
                 </Link>
                 {user && (

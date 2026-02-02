@@ -5,11 +5,11 @@ import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
 import SemesterFilter from "@/components/home/SemesterFilter";
 import StudyCalendar from "@/components/home/StudyCalendar";
-// import AILearningPlanner from "@/components/home/AILearningPlanner";
 import Link from "next/link";
 import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
+import { CalendarDays, Zap, Trophy, Ghost } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -166,7 +166,7 @@ async function StudyPlanContent({
         <section className="relative">
           <div className="flex items-center gap-6 mb-6">
             <div className="w-11 h-11 bg-violet-500 rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-violet-500/20 ring-8 ring-white">
-              <i className="fa-solid fa-calendar-days text-sm"></i>
+              <CalendarDays className="w-4 h-4" />
             </div>
             <div>
               <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.dashboard.roadmap.calendar_title}</h3>
@@ -204,7 +204,7 @@ async function StudyPlanContent({
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div className="flex items-center gap-6">
               <div className="w-11 h-11 bg-brand-blue rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-brand-blue/20 ring-8 ring-white">
-                <i className="fa-solid fa-bolt-lightning text-sm"></i>
+                <Zap className="w-4 h-4" />
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.dashboard.roadmap.phase_1_title}</h3>
@@ -234,7 +234,7 @@ async function StudyPlanContent({
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
             <div className="flex items-center gap-6">
               <div className="w-11 h-11 bg-brand-green rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-brand-green/20 ring-8 ring-white">
-                <i className="fa-solid fa-trophy text-sm"></i>
+                <Trophy className="w-4 h-4" />
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.dashboard.roadmap.phase_2_title}</h3>
@@ -273,7 +273,7 @@ async function StudyPlanContent({
 
           <div className="relative z-10 flex flex-col items-center">
             <div className="w-16 h-16 rounded-2xl border border-gray-100 flex items-center justify-center mb-8 bg-gray-50/50 group-hover:rotate-12 transition-transform duration-500">
-              <i className="fa-solid fa-ghost text-gray-200 text-xl"></i>
+              <Ghost className="w-5 h-5 text-gray-200" />
             </div>
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-[0.5em] mb-4">{dict.dashboard.roadmap.null_path}</h2>
             <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] max-w-[320px] leading-relaxed mb-12">

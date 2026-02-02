@@ -7,6 +7,7 @@ import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
 import AddPlanModal from "./AddPlanModal";
+import { ExternalLink, Trophy, CheckCheck, CalendarCheck, CalendarPlus, RotateCcw, Check, Clock } from "lucide-react";
 
 interface ActiveCourseTrackProps {
   course: Course;
@@ -99,10 +100,10 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
     <div className="bg-white border border-gray-100 rounded-2xl p-6 flex flex-col gap-6 group hover:border-brand-blue/30 transition-all hover:shadow-xl hover:shadow-brand-blue/5">
       {/* Completion Modal Overlay */}
       {showAddPlanModal && (
-        <AddPlanModal 
-          isOpen={showAddPlanModal} 
-          onClose={() => setShowAddPlanModal(false)} 
-          course={{ id: course.id, title: course.title }} 
+        <AddPlanModal
+          isOpen={showAddPlanModal}
+          onClose={() => setShowAddPlanModal(false)}
+          course={{ id: course.id, title: course.title }}
           existingPlan={plan}
         />
       )}
@@ -112,7 +113,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           <div className="bg-white border-2 border-gray-900 rounded-3xl p-8 shadow-[12px_12px_0_0_rgba(0,0,0,1)] w-full max-w-md animate-in zoom-in-95 duration-300">
             <div className="flex flex-col items-center text-center mb-8">
               <div className="w-16 h-16 bg-brand-green/10 rounded-2xl flex items-center justify-center text-brand-green mb-6">
-                <i className="fa-solid fa-trophy text-2xl"></i>
+                <Trophy className="w-6 h-6" />
               </div>
               <h3 className="text-2xl font-black text-gray-900 tracking-tighter mb-2 uppercase">Course Mastered</h3>
               <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
@@ -124,10 +125,10 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
               <div className="grid grid-cols-2 gap-6">
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Final GPA (0-5.0)</label>
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    min="0" 
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
                     max="5"
                     placeholder="0.00"
                     className="bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-black text-lg transition-all"
@@ -137,10 +138,10 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Score (%)</label>
-                  <input 
-                    type="number" 
-                    step="0.1" 
-                    min="0" 
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
                     max="100"
                     placeholder="0.0"
                     className="bg-gray-50 border-2 border-gray-100 focus:border-brand-blue rounded-xl px-4 py-3 outline-none font-black text-lg transition-all"
@@ -155,13 +156,13 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             </div>
 
             <div className="flex flex-col gap-3">
-              <button 
+              <button
                 onClick={executeCompletion}
                 className="w-full btn-primary py-4 rounded-xl flex items-center justify-center gap-3 text-sm font-black uppercase tracking-widest"
               >
-                Confirm Achievement <i className="fa-solid fa-check-double text-[10px]"></i>
+                Confirm Achievement <CheckCheck className="w-3 h-3" />
               </button>
-              <button 
+              <button
                 onClick={() => setShowCompleteModal(false)}
                 className="w-full text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] hover:text-gray-900 transition-colors py-2"
               >
@@ -175,9 +176,9 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
       {/* Top Section: Title & Logo */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4 min-w-0">
-          <UniversityIcon 
-            name={course.university} 
-            size={40} 
+          <UniversityIcon
+            name={course.university}
+            size={40}
             className="flex-shrink-0 bg-gray-50 rounded-xl border border-gray-100 p-1.5"
           />
           <div className="min-w-0">
@@ -190,15 +191,15 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             </h3>
           </div>
         </div>
-        
-        <a 
-          href={course.url} 
-          target="_blank" 
+
+        <a
+          href={course.url}
+          target="_blank"
           rel="noopener noreferrer"
           className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 hover:text-brand-blue hover:bg-blue-50 transition-all cursor-pointer border border-transparent hover:border-brand-blue/20 flex-shrink-0"
           title={dict?.go_to_course || "Go to Course"}
         >
-          <i className="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+          <ExternalLink className="w-3 h-3" />
         </a>
       </div>
 
@@ -237,7 +238,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
         </div>
         {plan && (
           <div className="flex items-center gap-2 text-[9px] font-bold text-gray-400 pl-1 mt-1">
-            <i className="fa-regular fa-clock text-gray-300"></i>
+            <Clock className="w-2.5 h-2.5 text-gray-300" />
             <span>
               {plan.days_of_week.map(d => weekdaysShort[d]).join(', ')} • {plan.start_time.slice(0, 5)}-{plan.end_time.slice(0, 5)}
             </span>
@@ -254,8 +255,8 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
               onClick={() => handleProgressChange(inc)}
               disabled={isUpdating}
               className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border transition-all ${
-                progress === inc 
-                  ? 'bg-brand-blue text-white border-brand-blue shadow-lg shadow-brand-blue/20' 
+                progress === inc
+                  ? 'bg-brand-blue text-white border-brand-blue shadow-lg shadow-brand-blue/20'
                   : 'bg-white text-gray-400 border-gray-100 hover:border-brand-blue/30 hover:text-brand-blue'
               }`}
             >
@@ -265,12 +266,12 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
         </div>
         <div className="w-px h-4 bg-gray-100 mx-2"></div>
         {plan ? (
-          <button 
+          <button
             onClick={() => setShowAddPlanModal(true)}
             className="px-3 py-1.5 rounded-lg border border-teal-100 text-teal-600 bg-teal-50 hover:bg-teal-100 hover:border-teal-200 transition-all flex items-center justify-center gap-2 mr-2"
             title="Edit Study Plan"
           >
-            <i className="fa-solid fa-calendar-check text-[10px]"></i>
+            <CalendarCheck className="w-2.5 h-2.5" />
             <span className="text-[9px] font-bold uppercase tracking-wider hidden sm:inline">Scheduled</span>
           </button>
         ) : (
@@ -279,7 +280,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             className="px-3 py-1.5 rounded-lg border border-violet-100 text-violet-500 bg-violet-50 hover:bg-violet-100 hover:border-violet-200 transition-all flex items-center justify-center gap-2 mr-2"
             title="Add Study Plan"
           >
-            <i className="fa-solid fa-calendar-plus text-[10px]"></i>
+            <CalendarPlus className="w-2.5 h-2.5" />
           </button>
         )}
         {progress === 100 && (
@@ -289,7 +290,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             className="w-7 h-7 shrink-0 rounded-lg border border-red-200 text-red-500 bg-red-50 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center"
             title="Mark Incomplete"
           >
-            <i className="fa-solid fa-rotate-left text-[10px]"></i>
+            <RotateCcw className="w-2.5 h-2.5" />
           </button>
         )}
         <button
@@ -297,7 +298,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           disabled={isUpdating || progress === 100}
           className="flex-grow text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-brand-green/20 text-brand-green bg-brand-green/5 hover:bg-brand-green hover:text-white disabled:opacity-40 disabled:cursor-default transition-all flex items-center justify-center gap-2"
         >
-          <i className="fa-solid fa-check text-[8px]"></i>
+          <Check className="w-2 h-2" />
           {dict?.mark_complete || "Complete"}
         </button>
       </div>

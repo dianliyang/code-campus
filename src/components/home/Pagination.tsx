@@ -2,6 +2,7 @@
 
 import { useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   totalPages: number;
@@ -28,22 +29,22 @@ export default function Pagination({ totalPages, currentPage }: PaginationProps)
 
   return (
     <div className="flex justify-center items-center gap-2 mt-12 flex-wrap">
-      <button 
-        onClick={() => updatePage(Math.max(1, currentPage - 1))} 
-        disabled={currentPage === 1} 
+      <button
+        onClick={() => updatePage(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
         className="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-30 transition-all"
       >
-        <i className="fa-solid fa-chevron-left text-xs"></i>
+        <ChevronLeft className="w-3 h-3" />
       </button>
 
       {pages.map((p, i, arr) => (
         <div key={p} className="flex items-center">
           {i > 0 && p - arr[i - 1] > 1 && <span className="px-3 text-gray-300">...</span>}
-          <button 
-            onClick={() => updatePage(p)} 
+          <button
+            onClick={() => updatePage(p)}
             className={`w-10 h-10 flex items-center justify-center rounded-lg text-xs font-black transition-all ${
-              currentPage === p 
-                ? "bg-brand-blue text-white border border-brand-blue" 
+              currentPage === p
+                ? "bg-brand-blue text-white border border-brand-blue"
                 : "bg-white text-gray-500 border border-gray-200 hover:border-gray-400 transition-colors"
             }`}
           >
@@ -52,12 +53,12 @@ export default function Pagination({ totalPages, currentPage }: PaginationProps)
         </div>
       ))}
 
-      <button 
-        onClick={() => updatePage(Math.min(totalPages, currentPage + 1))} 
-        disabled={currentPage === totalPages} 
+      <button
+        onClick={() => updatePage(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
         className="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-30 transition-all"
       >
-        <i className="fa-solid fa-chevron-right text-xs"></i>
+        <ChevronRight className="w-3 h-3" />
       </button>
     </div>
   );

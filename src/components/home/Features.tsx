@@ -1,18 +1,20 @@
+import { Layers, TrendingUp, Cpu, type LucideIcon } from "lucide-react";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function Features({ dict }: { dict: any }) {
-  const features = [
+  const features: { icon: LucideIcon; title: string; description: string }[] = [
     {
-      icon: "fa-solid fa-layer-group",
+      icon: Layers,
       title: dict.universal_index.title,
       description: dict.universal_index.desc,
     },
     {
-      icon: "fa-solid fa-chart-line",
+      icon: TrendingUp,
       title: dict.progress_analytics.title,
       description: dict.progress_analytics.desc,
     },
     {
-      icon: "fa-solid fa-microchip",
+      icon: Cpu,
       title: dict.gap_analysis.title,
       description: dict.gap_analysis.desc,
     },
@@ -26,7 +28,7 @@ export default function Features({ dict }: { dict: any }) {
             <div key={idx} className="group relative transition-all duration-500">
               {/* Minimalist Icon Container */}
               <div className="w-12 h-12 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400 mb-8 transition-all duration-500 group-hover:border-brand-blue/40 group-hover:text-brand-blue group-hover:shadow-md">
-                <i className={`${feature.icon} text-lg`}></i>
+                <feature.icon className="w-5 h-5" />
               </div>
               
               <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight mb-4 transition-colors">

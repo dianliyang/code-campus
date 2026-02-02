@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { unstable_cache } from "next/cache";
 import Hero from "@/components/home/Hero";
 import Sidebar from "@/components/home/Sidebar";
 import CourseList from "@/components/home/CourseList";
@@ -6,8 +7,6 @@ import { University, Field, Course } from "@/types";
 import { getUser, createClient, mapCourseFromRow, formatUniversityName } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
-
-export const dynamic = "force-dynamic";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -44,11 +43,30 @@ async function SidebarData({ userId, params, dict }: {
   dict: Dictionary['dashboard']['courses'] 
 }) {
   const supabase = await createClient();
-  
-  // Parallelize static and dynamic fetches
-  const [universitiesRes, fieldsRes, enrolledRes] = await Promise.all([
-    supabase.from('courses').select('university').eq('is_hidden', false),
-    supabase.from('course_fields').select('fields(name), courses!inner(id)').eq('courses.is_hidden', false),
+
+  // Cached static data (shared across all users)
+  const getCachedUniversities = unstable_cache(
+    async () => {
+      const { data } = await (await createClient()).from('courses').select('university').eq('is_hidden', false);
+      return data;
+    },
+    ['universities-list'],
+    { revalidate: 300 }
+  );
+
+  const getCachedFields = unstable_cache(
+    async () => {
+      const { data } = await (await createClient()).from('course_fields').select('fields(name), courses!inner(id)').eq('courses.is_hidden', false);
+      return data;
+    },
+    ['fields-list'],
+    { revalidate: 300 }
+  );
+
+  // Parallelize cached static and dynamic fetches
+  const [universitiesData, fieldsData, enrolledRes] = await Promise.all([
+    getCachedUniversities(),
+    getCachedFields(),
     userId ? (async () => {
       // Extract filters for dynamic enrolled count
       const universitiesParam = ((params.universities as string) || "").split(",").filter(Boolean);
@@ -77,7 +95,7 @@ async function SidebarData({ userId, params, dict }: {
   ]);
 
   const universityCounts: Record<string, number> = {};
-  universitiesRes.data?.forEach(c => {
+  universitiesData?.forEach(c => {
     const formattedName = formatUniversityName(c.university);
     universityCounts[formattedName] = (universityCounts[formattedName] || 0) + 1;
   });
@@ -87,7 +105,7 @@ async function SidebarData({ userId, params, dict }: {
     .sort((a, b) => b.count - a.count);
 
   const fieldCounts: Record<string, number> = {};
-  fieldsRes.data?.forEach((cf: Record<string, unknown>) => {
+  fieldsData?.forEach((cf: Record<string, unknown>) => {
     const name = (cf.fields as { name: string } | null)?.name;
     if (name) fieldCounts[name] = (fieldCounts[name] || 0) + 1;
   });
@@ -193,15 +211,7 @@ async function fetchCourses(
   }
 
   if (query) {
-    // Search in multiple fields: title, description, course_code, department, corequisites, university
-    supabaseQuery = supabaseQuery.or(
-      `title.ilike.%${query}%,` +
-      `description.ilike.%${query}%,` +
-      `course_code.ilike.%${query}%,` +
-      `department.ilike.%${query}%,` +
-      `corequisites.ilike.%${query}%,` +
-      `university.ilike.%${query}%`
-    );
+    supabaseQuery = supabaseQuery.textSearch('search_vector', query, { type: 'websearch' });
   }
 
   if (universities.length > 0) {

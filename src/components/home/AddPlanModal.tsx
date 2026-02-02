@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 
 interface AddPlanModalProps {
   isOpen: boolean;
@@ -88,7 +89,7 @@ export default function AddPlanModal({ isOpen, onClose, course, existingPlan }: 
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-gray-900">{existingPlan ? 'Edit Study Plan' : 'Add Study Plan'}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <i className="fa-solid fa-xmark text-xl"></i>
+            <X className="w-5 h-5" />
           </button>
         </div>
 

@@ -60,11 +60,28 @@ describe("StudyCalendar optimistic attendance", () => {
   test("toggles completed state immediately on click", () => {
     render(<StudyCalendar {...makeProps()} />);
 
-    const title = screen.getByText("Course A");
+    const title = screen.getAllByText("Course A")[0];
     expect(title.className).not.toContain("line-through");
 
     fireEvent.click(title);
 
-    expect(screen.getByText("Course A").className).toContain("line-through");
+    expect(screen.getAllByText("Course A")[0].className).toContain("line-through");
+  });
+
+  test("reverts on failure and shows failed status", async () => {
+    const fetchMock = vi.fn(() => Promise.reject(new Error("fail")));
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<StudyCalendar {...makeProps()} />);
+
+    fireEvent.click(screen.getAllByText("Course A")[0]);
+
+    // optimistic first
+    expect(screen.getAllByText("Course A")[0].className).toContain("line-through");
+
+    // failure rolls back + shows failed status
+    await screen.findByText(/failed/i);
+    expect(screen.getAllByText("Course A")[0].className).not.toContain("line-through");
+    expect(screen.getByText(/update failed/i)).toBeDefined();
   });
 });

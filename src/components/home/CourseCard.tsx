@@ -88,105 +88,20 @@ export default function CourseCard({
 
   if (viewMode === "list") {
     return (
-      <div className="group flex items-center gap-6 py-4 px-6 border-b border-gray-100 hover:bg-gray-50 transition-colors">
-        
-        {/* 1. Icon */}
-        <div className="flex-shrink-0">
-          <UniversityIcon 
-            name={course.university} 
-            size={32} 
-            className="bg-white border border-gray-200 rounded"
-          />
-        </div>
+      <div className="group flex flex-col md:flex-row md:items-center gap-3 md:gap-6 py-3 md:py-4 px-4 md:px-6 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+        <div className="flex items-start gap-3 w-full md:w-auto">
+          {/* 1. Icon */}
+          <div className="flex-shrink-0 self-start md:self-center">
+            <UniversityIcon 
+              name={course.university} 
+              size={32} 
+              className="bg-white border border-gray-200 rounded"
+            />
+          </div>
 
-        {/* 2. Main Info: Code & Title */}
-        <div className="w-[30%] flex-shrink-0 min-w-0 pr-4">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">
-                {course.university}
-              </span>
-              <span className="text-[10px] font-mono font-medium text-gray-500">
-                {course.courseCode}
-              </span>
-              {course.level && (
-                <span className="text-gray-500 text-[10px]" title={course.level}>
-                  {course.level.toLowerCase().includes('grad') ? (
-                    <GraduationCap className="w-3 h-3" />
-                  ) : (
-                    <GraduationCap className="w-3 h-3" />
-                  )}
-                </span>
-              )}
-              {course.isInternal && (
-                <span className="text-[9px] font-bold bg-blue-50 text-brand-blue px-1.5 py-0.5 rounded uppercase">
-                    Internal
-                </span>
-              )}
-            </div>
-            <h2 className="text-sm font-bold text-gray-900 leading-snug">
-              <Link href={detailHref} className="hover:text-brand-blue transition-colors">
-                {course.title}
-              </Link>
-            </h2>
-        </div>
-
-        {/* 3. Tags / Fields */}
-        <div className="w-[20%] flex-shrink-0 hidden md:flex flex-wrap gap-1.5">
-             {course.fields?.slice(0, 2).map((f) => (
-                <span
-                  key={f}
-                  className="bg-gray-100/80 text-gray-600 text-[10px] font-medium px-2 py-0.5 rounded-full border border-gray-200 truncate max-w-full"
-                >
-                  {f}
-                </span>
-              ))}
-              {(course.fields?.length || 0) > 2 && (
-                <span className="text-[10px] text-gray-400 font-medium px-1 self-center">
-                  +{course.fields!.length - 2}
-                </span>
-              )}
-        </div>
-
-        {/* 4. Details / Stats */}
-        <div className="flex-grow min-w-0 flex flex-col justify-center gap-1">
-             <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  <Flame className="w-2.5 h-2.5 text-orange-400" />
-                  <span className="text-xs font-semibold text-gray-700">
-                    {course.popularity}
-                  </span>
-                </div>
-                {course.details?.relatedUrls && course.details.relatedUrls.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    {course.details.relatedUrls.slice(0, 2).map((url, i) => {
-                      let hostname = url;
-                      try { hostname = new URL(url).hostname.replace('www.', ''); } catch {}
-                      return (
-                        <a
-                          key={i}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand-blue transition-colors"
-                          title={url}
-                        >
-                          <Globe className="w-2 h-2" />
-                          <span className="truncate max-w-[80px]">{hostname}</span>
-                        </a>
-                      );
-                    })}
-                    {course.details.relatedUrls.length > 2 && (
-                      <span className="text-[10px] text-gray-400">+{course.details.relatedUrls.length - 2}</span>
-                    )}
-                  </div>
-                )}
-             </div>
-        </div>
-
-        {/* 5. Actions */}
-        <div className="flex-shrink-0 flex items-center justify-end gap-3 w-auto min-w-[100px]">
-             <button 
+          {/* 5. Actions (inline on mobile) */}
+          <div className="ml-auto flex-shrink-0 flex items-center justify-end gap-3 md:hidden">
+            <button 
               onClick={handleEnroll}
               disabled={loading}
               className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
@@ -209,16 +124,132 @@ export default function CourseCard({
                 </>
               )}
             </button>
-             <button
-                onClick={handleHide}
-                disabled={loading}
-                className="text-gray-400 hover:text-red-500 text-xs p-1.5 transition-colors"
-                title={dict?.hide || "Hide"}
-              >
-                <EyeOff className="w-3 h-3" />
-              </button>
+            <button
+              onClick={handleHide}
+              disabled={loading}
+              className="text-gray-400 hover:text-red-500 text-xs p-1.5 transition-colors"
+              title={dict?.hide || "Hide"}
+            >
+              <EyeOff className="w-3 h-3" />
+            </button>
+          </div>
         </div>
 
+        {/* 2. Main Info: Title (own row on mobile) */}
+        <div className="w-full md:w-[30%] flex-shrink-0 min-w-0 md:pr-4">
+          <h2 className="text-sm font-bold text-gray-900 leading-snug truncate">
+            <Link href={detailHref} className="block truncate hover:text-brand-blue transition-colors">
+              {course.title}
+            </Link>
+          </h2>
+        </div>
+
+        {/* 3. Meta row */}
+        <div className="flex flex-wrap items-center gap-2 text-[10px] md:text-[11px] text-gray-500">
+          <span className="font-bold uppercase tracking-wider truncate">
+            {course.university}
+          </span>
+          <span className="font-mono font-medium">
+            {course.courseCode}
+          </span>
+          {course.level && (
+            <span className="inline-flex items-center" title={course.level}>
+              <GraduationCap className="w-3 h-3" />
+            </span>
+          )}
+          {course.isInternal && (
+            <span className="text-[9px] font-bold bg-blue-50 text-brand-blue px-1.5 py-0.5 rounded uppercase">
+              Internal
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5">
+            <Flame className="w-2.5 h-2.5 text-orange-400" />
+            <span className="text-xs font-semibold text-gray-700">
+              {course.popularity}
+            </span>
+          </span>
+        </div>
+
+        {/* 3. Tags / Fields */}
+        <div className="w-[20%] flex-shrink-0 hidden md:flex flex-wrap gap-1.5">
+          {course.fields?.slice(0, 2).map((f) => (
+            <span
+              key={f}
+              className="bg-gray-100/80 text-gray-600 text-[10px] font-medium px-2 py-0.5 rounded-full border border-gray-200 truncate max-w-full"
+            >
+              {f}
+            </span>
+          ))}
+          {(course.fields?.length || 0) > 2 && (
+            <span className="text-[10px] text-gray-400 font-medium px-1 self-center">
+              +{course.fields!.length - 2}
+            </span>
+          )}
+        </div>
+
+        {/* 4. Details / Stats */}
+        <div className="flex-grow min-w-0 flex flex-col justify-center gap-1">
+          {course.details?.relatedUrls && course.details.relatedUrls.length > 0 && (
+            <div className="hidden md:flex items-center gap-1.5">
+              {course.details.relatedUrls.slice(0, 2).map((url, i) => {
+                let hostname = url;
+                try { hostname = new URL(url).hostname.replace('www.', ''); } catch {}
+                return (
+                  <a
+                    key={i}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand-blue transition-colors"
+                    title={url}
+                  >
+                    <Globe className="w-2 h-2" />
+                    <span className="truncate max-w-[80px]">{hostname}</span>
+                  </a>
+                );
+              })}
+              {course.details.relatedUrls.length > 2 && (
+                <span className="text-[10px] text-gray-400">+{course.details.relatedUrls.length - 2}</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 5. Actions (desktop) */}
+        <div className="hidden md:flex flex-shrink-0 items-center justify-end gap-3 w-auto min-w-[100px]">
+          <button 
+            onClick={handleEnroll}
+            disabled={loading}
+            className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
+              isEnrolled 
+                ? 'bg-brand-green text-white' 
+                : 'bg-gray-100 text-gray-500 hover:bg-brand-dark hover:text-white'
+            }`}
+          >
+            {loading ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : isEnrolled ? (
+              <>
+                <Check className="w-3 h-3" />
+                <span className="hidden sm:inline">{dict?.enrolled || "Added"}</span>
+              </>
+            ) : (
+              <>
+                <Plus className="w-3 h-3" />
+                <span className="hidden sm:inline">{dict?.enroll || "Join"}</span>
+              </>
+            )}
+          </button>
+          <button
+            onClick={handleHide}
+            disabled={loading}
+            className="text-gray-400 hover:text-red-500 text-xs p-1.5 transition-colors"
+            title={dict?.hide || "Hide"}
+          >
+            <EyeOff className="w-3 h-3" />
+          </button>
+        </div>
       </div>
     );
   }

@@ -2,6 +2,7 @@ import { MIT } from '../lib/scrapers/mit';
 import { Stanford } from '../lib/scrapers/stanford';
 import { CMU } from '../lib/scrapers/cmu';
 import { UCB } from '../lib/scrapers/ucb';
+import { CAU } from '../lib/scrapers/cau';
 import { SupabaseDatabase } from '../lib/supabase/server';
 import { BaseScraper } from '../lib/scrapers/BaseScraper';
 
@@ -32,7 +33,8 @@ async function main() {
     new MIT(),
     new Stanford(),
     new CMU(),
-    new UCB()
+    new UCB(),
+    new CAU()
   ];
 
   console.log(`Starting full scrape for all universities... (Semester: ${semester})`);

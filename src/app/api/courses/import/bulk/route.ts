@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient, getUser } from '@/lib/supabase/server';
 import { ImportRequest } from '@/types';
 import { rateLimit } from '@/lib/rate-limit';
-import { TablesInsert } from '@/lib/supabase/database.types';
+import { TablesInsert, Json } from '@/lib/supabase/database.types';
 
 export async function POST(request: Request) {
   try {
@@ -39,13 +39,23 @@ export async function POST(request: Request) {
           level: course.level || "undergraduate",
           units: course.units || "",
           department: course.department || "",
-          popularity: 0
+          popularity: 0,
+          details: (course.details as Json) || {},
+          corequisites: course.corequisites || "",
+          workload: course.workload || "",
+          difficulty: course.difficulty || 0
         };
 
         const c = course as ImportRequest & { isInternal?: boolean; semester?: string; score?: number | string };
         if (c.isInternal !== undefined) {
           base.is_internal = c.isInternal;
         }
+        
+        const credit = c.credit;
+        if (credit !== undefined) {
+             base.credit = typeof credit === 'string' ? parseFloat(credit) : credit;
+        }
+
         uniqueCoursesMap.set(key, base);
       }
     });
@@ -94,9 +104,9 @@ export async function POST(request: Request) {
       const dbCourse = courseMap.get(`${course.university}-${course.courseCode}`);
       if (!dbCourse) continue;
 
-      const c = course as ImportRequest & { semester?: string; score?: number | string };
+      const c = course as ImportRequest & { semester?: string; score?: number | string; semesters?: { term: string; year: number }[] };
 
-      // Collect semester data
+      // Collect semester data (String format)
       if (c.semester) {
         const parts = c.semester.split(' ');
         if (parts.length >= 2) {
@@ -106,6 +116,17 @@ export async function POST(request: Request) {
           uniqueSemesters.set(semKey, { year, term });
           semesterCourseLinks.push({ semKey, courseId: dbCourse.id });
         }
+      }
+      
+      // Collect semester data (Array format)
+      if (c.semesters && Array.isArray(c.semesters)) {
+          c.semesters.forEach(s => {
+              if (s.year && s.term) {
+                  const semKey = `${s.year}-${s.term}`;
+                  uniqueSemesters.set(semKey, { year: s.year, term: s.term });
+                  semesterCourseLinks.push({ semKey, courseId: dbCourse.id });
+              }
+          });
       }
 
       // Collect enrollment data

@@ -45,6 +45,11 @@ export interface EnrollRequest {
   score?: number;
 }
 
+export interface Semester {
+  year: number;
+  term: string;
+}
+
 export interface ImportRequest {
   university: string;
   courseCode: string;
@@ -56,6 +61,11 @@ export interface ImportRequest {
   units?: string;
   credit?: string | number;
   department?: string;
+  details?: Record<string, unknown>;
+  corequisites?: string;
+  semesters?: Semester[];
+  workload?: string;
+  difficulty?: number;
 }
 
 export interface EnrolledCoursesResponse {

@@ -1,4 +1,5 @@
 import Navbar from "@/components/layout/Navbar";
+import BottomTabBar from "@/components/layout/BottomTabBar";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 
@@ -14,7 +15,16 @@ export default async function DashboardLayout({
   return (
     <>
       <Navbar dict={dict.navbar} />
-      {children}
+      <main className="pb-24 lg:pb-0">
+        {children}
+      </main>
+      <BottomTabBar
+        labels={{
+          courses: dict.navbar?.courses || "Courses",
+          studyPlan: dict.navbar?.roadmap || "Roadmap",
+          profile: dict.navbar?.profile || "Profile",
+        }}
+      />
     </>
   );
 }

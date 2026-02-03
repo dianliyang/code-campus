@@ -3,7 +3,6 @@ import Image from "next/image";
 import { getUser } from "@/lib/supabase/server";
 import LogoutButton from "./LogoutButton";
 import NavLinks from "./NavLinks";
-import MobileMenu from "./MobileMenu";
 import { Dictionary } from "@/lib/dictionary";
 import { User } from "lucide-react";
 
@@ -11,9 +10,9 @@ export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
   const user = await getUser();
 
   return (
-    <nav className="bg-white/95 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50">
+    <nav className="hidden lg:block bg-white/95 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 lg:h-20">
+        <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="group flex items-center gap-2 lg:gap-3">
@@ -63,14 +62,6 @@ export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
             </div>
           </div>
 
-          {/* Mobile Menu */}
-          <MobileMenu
-            dict={dict}
-            user={user ? {
-              name: user.user_metadata?.full_name || user.email?.split('@')[0] || dict?.guest_user || "Guest",
-              email: user.email
-            } : null}
-          />
         </div>
       </div>
     </nav>

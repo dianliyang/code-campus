@@ -196,9 +196,9 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4 hover:border-gray-300 transition-all hover:shadow-lg h-full flex flex-col">
-      <div className="flex gap-6 flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
         {/* Left: Calendar */}
-        <div className="flex-shrink-0 w-80 flex flex-col">
+        <div className="flex-shrink-0 w-full md:w-80 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-black text-gray-900 tracking-tight">
@@ -281,7 +281,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
           <div className="grid grid-cols-7 gap-1 flex-1">
             {calendarDays.map((day, index) => {
               if (day === null) {
-                return <div key={`empty-${index}`} className="w-8 h-8"></div>;
+                return <div key={`empty-${index}`} className="aspect-square"></div>;
               }
 
               const isToday = day === today;
@@ -321,7 +321,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
         </div>
 
         {/* Right: Selected Day Details */}
-        <div className="flex-1 border-l border-gray-100 pl-6 min-w-0 flex flex-col">
+        <div className="flex-1 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6 min-w-0 flex flex-col">
           {selectedDay ? (
             <div className="animate-in fade-in duration-200 h-full flex flex-col">
               <div className="flex items-center justify-between mb-4">
@@ -362,7 +362,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                           onClick={() => toggleComplete(event.planId, event.date)}
                         >
                           <div className="flex items-start justify-between gap-2 mb-0.5">
-                            <span className={`text-sm font-semibold truncate ${event.isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                            <span className={`text-xs font-semibold truncate ${event.isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                               {event.title}
                             </span>
                             {event.isCompleted && <Check className="w-3 h-3 text-gray-400" />}

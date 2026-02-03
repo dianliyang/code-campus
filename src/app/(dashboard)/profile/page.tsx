@@ -106,83 +106,80 @@ export default async function ProfilePage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-16 py-16 border-b border-gray-100">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-16 py-10 md:py-16 border-b border-gray-100">
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.dashboard.profile.stat_depth}</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-7xl font-black text-gray-900 tracking-tighter leading-none">{totalCourses}</span>
-              <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">{dict.dashboard.profile.stat_depth_unit}</span>
+            <span className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-[0.15em] md:tracking-[0.2em] mb-2 md:mb-4">{dict.dashboard.profile.stat_depth}</span>
+            <div className="flex items-baseline gap-1 md:gap-2">
+              <span className="text-4xl md:text-7xl font-black text-gray-900 tracking-tighter leading-none">{totalCourses}</span>
+              <span className="text-[10px] md:text-sm font-bold text-gray-500 uppercase tracking-wider md:tracking-widest">{dict.dashboard.profile.stat_depth_unit}</span>
             </div>
-            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed max-w-[240px]">{dict.dashboard.profile.stat_depth_desc}</p>
+            <p className="hidden md:block text-sm text-gray-600 font-medium mt-6 leading-relaxed max-w-[240px]">{dict.dashboard.profile.stat_depth_desc}</p>
           </div>
 
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.dashboard.profile.stat_mastery}</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-7xl font-black text-brand-green tracking-tighter leading-none">{completedCount}</span>
-              <span className="text-sm font-bold text-green-600 uppercase tracking-widest">{dict.dashboard.profile.stat_mastery_unit}</span>
+            <span className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-[0.15em] md:tracking-[0.2em] mb-2 md:mb-4">{dict.dashboard.profile.stat_mastery}</span>
+            <div className="flex items-baseline gap-1 md:gap-2">
+              <span className="text-4xl md:text-7xl font-black text-brand-green tracking-tighter leading-none">{completedCount}</span>
+              <span className="text-[10px] md:text-sm font-bold text-green-600 uppercase tracking-wider md:tracking-widest">{dict.dashboard.profile.stat_mastery_unit}</span>
             </div>
-            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed max-w-[240px]">{dict.dashboard.profile.stat_mastery_desc}</p>
+            <p className="hidden md:block text-sm text-gray-600 font-medium mt-6 leading-relaxed max-w-[240px]">{dict.dashboard.profile.stat_mastery_desc}</p>
           </div>
 
-          <div className="flex flex-col border-l border-gray-100 pl-12 hidden md:flex">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.dashboard.profile.stat_focus}</span>
-            <div className="h-full flex flex-col justify-center">
-              <h3 className="text-3xl font-black text-gray-900 tracking-tight leading-tight uppercase">
+          <div className="flex flex-col md:border-l md:border-gray-100 md:pl-12">
+            <span className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-[0.15em] md:tracking-[0.2em] mb-2 md:mb-4">{dict.dashboard.profile.stat_focus}</span>
+            <div className="flex flex-col justify-center">
+              <h3 className="text-base md:text-3xl font-black text-gray-900 tracking-tight leading-tight uppercase truncate">
                 {topField}
               </h3>
-              <p className="text-sm text-gray-600 font-medium mt-4 leading-relaxed">{dict.dashboard.profile.stat_focus_desc}</p>
+              <p className="hidden md:block text-sm text-gray-600 font-medium mt-4 leading-relaxed">{dict.dashboard.profile.stat_focus_desc}</p>
             </div>
           </div>
 
-          <div className="flex flex-col border-l border-gray-100 pl-12 hidden md:flex">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{dict.dashboard.profile.stat_diversity}</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-7xl font-black text-brand-blue tracking-tighter leading-none">{universityCount > 0 ? Math.round((universityCount / 4) * 100) : 0}</span>
-              <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">%</span>
+          <div className="flex flex-col md:border-l md:border-gray-100 md:pl-12">
+            <span className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-[0.15em] md:tracking-[0.2em] mb-2 md:mb-4">{dict.dashboard.profile.stat_diversity}</span>
+            <div className="flex items-baseline gap-1 md:gap-2">
+              <span className="text-4xl md:text-7xl font-black text-brand-blue tracking-tighter leading-none">{universityCount > 0 ? Math.round((universityCount / 4) * 100) : 0}</span>
+              <span className="text-[10px] md:text-sm font-bold text-blue-600 uppercase tracking-wider md:tracking-widest">%</span>
             </div>
-            <p className="text-sm text-gray-600 font-medium mt-6 leading-relaxed">{dict.dashboard.profile.stat_diversity_desc}</p>
+            <p className="hidden md:block text-sm text-gray-600 font-medium mt-6 leading-relaxed">{dict.dashboard.profile.stat_diversity_desc}</p>
           </div>
         </div>
 
         {/* Cognitive Fingerprint Visualization */}
-        <div className="py-24 border-b border-gray-100">
-          <div className="flex justify-between items-end mb-20">
+        <div className="py-12 md:py-24 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-10 md:mb-20">
             <div>
-              <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.4em] mb-2">{dict.dashboard.profile.neural_map}</h2>
-              <h3 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">{dict.dashboard.profile.fingerprint}</h3>
+              <h2 className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.3em] md:tracking-[0.4em] mb-2">{dict.dashboard.profile.neural_map}</h2>
+              <h3 className="text-xl md:text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">{dict.dashboard.profile.fingerprint}</h3>
             </div>
-            <div className="text-right hidden md:block">
-              <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] border border-gray-100 px-3 py-1 rounded-lg">DATA_SIG: 0x{user.id.substring(0, 8).toUpperCase()}</span>
+            <div className="text-left sm:text-right">
+              <span className="text-[8px] md:text-[10px] font-black text-gray-300 uppercase tracking-[0.15em] md:tracking-[0.2em] border border-gray-100 px-2 md:px-3 py-1 rounded-lg">DATA_SIG: 0x{user.id.substring(0, 8).toUpperCase()}</span>
             </div>
           </div>
 
-
           {fieldTotal > 0 ? (
-            <div className="space-y-24">
-              {/* Innovative Frequency Pulse - Deterministic Seeded Generation */}
-              <div className="relative h-32 flex items-end gap-[2px] w-full">
+            <div className="space-y-12 md:space-y-24">
+              {/* Frequency Pulse Visualization */}
+              <div className="relative h-24 md:h-32 flex items-end gap-[1px] md:gap-[2px] w-full overflow-hidden rounded-lg">
                 {allFieldStats.map((f, fieldIdx) => {
                   const percentage = (f.count / fieldTotal) * 100;
-                  const tickCount = Math.max(Math.floor(percentage * 2.5), 2);
+                  const tickCount = Math.max(Math.floor(percentage * 1.5), 2);
                   const color = fieldColors[fieldIdx % fieldColors.length];
-                  
+
                   return (
-                    <div key={f.name} className="flex items-end gap-[2px] h-full transition-opacity hover:opacity-100 opacity-80" style={{ width: `${percentage}%` }}>
+                    <div key={f.name} className="flex items-end gap-[1px] md:gap-[2px] h-full transition-opacity hover:opacity-100 opacity-80" style={{ width: `${percentage}%`, minWidth: '8px' }}>
                       {Array.from({ length: tickCount }).map((_, i) => {
-                        // Deterministic height based on user ID, field, and tick index
-                        // Using char codes of UUID for deterministic seed
                         const idSeed = user.id.split('-').reduce((acc, char) => acc + char.charCodeAt(0), 0);
                         const seed = (idSeed * 10000) + (fieldIdx * 1000) + i;
                         const pseudoRandom = Math.abs(Math.sin(seed) * 10000) % 1;
                         const randomHeight = 15 + Math.sin(i * 0.4) * 20 + (pseudoRandom * 65);
-                        const pseudoOpacity = 0.2 + (Math.abs(Math.cos(seed) * 10000) % 1 * 0.8);
-                        
+                        const pseudoOpacity = 0.3 + (Math.abs(Math.cos(seed) * 10000) % 1 * 0.7);
+
                         return (
-                          <div 
-                            key={i} 
-                            className={`w-full ${color} rounded-t-full transition-all duration-1000 ease-out`}
-                            style={{ 
+                          <div
+                            key={i}
+                            className={`w-full min-w-[2px] ${color} rounded-t-sm md:rounded-t-full transition-all duration-1000 ease-out`}
+                            style={{
                               height: `${randomHeight}%`,
                               opacity: pseudoOpacity
                             }}
@@ -192,39 +189,39 @@ export default async function ProfilePage() {
                     </div>
                   );
                 })}
-                
-                {/* Precise Horizontal Baseline */}
+
+                {/* Baseline */}
                 <div className="absolute bottom-0 left-0 right-0 h-px bg-gray-200 -z-10"></div>
               </div>
 
-              {/* Legend Matrix - Perfect Alignment */}
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-12">
+              {/* Legend Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-12">
                 {allFieldStats.map((f, i) => (
                   <div key={f.name} className="group cursor-default flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className={`w-1.5 h-1.5 rounded-full ${fieldColors[i % fieldColors.length]}`}></div>
-                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest truncate">{f.name}</span>
+                      <div className="flex items-center gap-2 mb-2 md:mb-4">
+                        <div className={`w-2 h-2 md:w-1.5 md:h-1.5 rounded-full ${fieldColors[i % fieldColors.length]}`}></div>
+                        <span className="text-[9px] md:text-[10px] font-black text-gray-900 uppercase tracking-wider md:tracking-widest truncate">{f.name}</span>
                       </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-5xl font-black text-gray-900 tracking-tighter group-hover:text-brand-blue transition-colors leading-none">{f.count}</span>
-                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{dict.dashboard.profile.units}</span>
+                      <div className="flex items-baseline gap-1 md:gap-2">
+                        <span className="text-3xl md:text-5xl font-black text-gray-900 tracking-tighter group-hover:text-brand-blue transition-colors leading-none">{f.count}</span>
+                        <span className="text-[8px] md:text-[10px] font-bold text-gray-300 uppercase tracking-wider md:tracking-widest">{dict.dashboard.profile.units}</span>
                       </div>
                     </div>
-                    <div className="mt-6">
-                       <div className="h-px w-full bg-gray-100 relative overflow-hidden">
-                          <div 
-                            className={`absolute inset-0 ${fieldColors[i % fieldColors.length]} transition-transform duration-700 origin-left scale-x-0 group-hover:scale-x-100`}
-                          ></div>
-                       </div>
+                    <div className="mt-3 md:mt-6">
+                      <div className="h-px w-full bg-gray-100 relative overflow-hidden">
+                        <div
+                          className={`absolute inset-0 ${fieldColors[i % fieldColors.length]} transition-transform duration-700 origin-left scale-x-0 group-hover:scale-x-100`}
+                        ></div>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="h-40 bg-gray-50 rounded-3xl flex items-center justify-center border border-dashed border-gray-200">
-              <p className="text-xs font-black text-gray-300 uppercase tracking-[0.3em]">{dict.dashboard.profile.no_data}</p>
+            <div className="h-32 md:h-40 bg-gray-50 rounded-2xl md:rounded-3xl flex items-center justify-center border border-dashed border-gray-200">
+              <p className="text-[10px] md:text-xs font-black text-gray-300 uppercase tracking-[0.2em] md:tracking-[0.3em]">{dict.dashboard.profile.no_data}</p>
             </div>
           )}
         </div>

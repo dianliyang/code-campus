@@ -247,14 +247,15 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
       </div>
 
       {/* Bottom Section: Quick Actions */}
-      <div className="flex items-center gap-2 pt-2 border-t border-gray-50">
-        <div className="flex gap-1.5">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2 pt-3 border-t border-gray-50">
+        {/* Progress Quick Buttons */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {quickIncrements.map((inc) => (
             <button
               key={inc}
               onClick={() => handleProgressChange(inc)}
               disabled={isUpdating}
-              className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border transition-all ${
+              className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border transition-all flex-shrink-0 ${
                 progress === inc
                   ? 'bg-brand-blue text-white border-brand-blue shadow-lg shadow-brand-blue/20'
                   : 'bg-white text-gray-400 border-gray-100 hover:border-brand-blue/30 hover:text-brand-blue'
@@ -264,43 +265,49 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             </button>
           ))}
         </div>
-        <div className="w-px h-4 bg-gray-100 mx-2"></div>
-        {plan ? (
+
+        {/* Divider - hidden on mobile */}
+        <div className="hidden sm:block w-px h-4 bg-gray-100"></div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 flex-1">
+          {plan ? (
+            <button
+              onClick={() => setShowAddPlanModal(true)}
+              className="px-3 py-1.5 rounded-lg border border-teal-100 text-teal-600 bg-teal-50 hover:bg-teal-100 hover:border-teal-200 transition-all flex items-center justify-center gap-2 flex-shrink-0"
+              title="Edit Study Plan"
+            >
+              <CalendarCheck className="w-2.5 h-2.5" />
+              <span className="text-[9px] font-bold uppercase tracking-wider hidden sm:inline">Scheduled</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowAddPlanModal(true)}
+              className="px-3 py-1.5 rounded-lg border border-violet-100 text-violet-500 bg-violet-50 hover:bg-violet-100 hover:border-violet-200 transition-all flex items-center justify-center gap-2 flex-shrink-0"
+              title="Add Study Plan"
+            >
+              <CalendarPlus className="w-2.5 h-2.5" />
+            </button>
+          )}
+          {progress === 100 && (
+            <button
+              onClick={() => handleProgressChange(0)}
+              disabled={isUpdating}
+              className="w-7 h-7 shrink-0 rounded-lg border border-red-200 text-red-500 bg-red-50 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center"
+              title="Mark Incomplete"
+            >
+              <RotateCcw className="w-2.5 h-2.5" />
+            </button>
+          )}
           <button
-            onClick={() => setShowAddPlanModal(true)}
-            className="px-3 py-1.5 rounded-lg border border-teal-100 text-teal-600 bg-teal-50 hover:bg-teal-100 hover:border-teal-200 transition-all flex items-center justify-center gap-2 mr-2"
-            title="Edit Study Plan"
+            onClick={() => handleProgressChange(100)}
+            disabled={isUpdating || progress === 100}
+            className="flex-1 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-brand-green/20 text-brand-green bg-brand-green/5 hover:bg-brand-green hover:text-white disabled:opacity-40 disabled:cursor-default transition-all flex items-center justify-center gap-2"
           >
-            <CalendarCheck className="w-2.5 h-2.5" />
-            <span className="text-[9px] font-bold uppercase tracking-wider hidden sm:inline">Scheduled</span>
+            <Check className="w-2 h-2" />
+            {dict?.mark_complete || "Complete"}
           </button>
-        ) : (
-          <button
-            onClick={() => setShowAddPlanModal(true)}
-            className="px-3 py-1.5 rounded-lg border border-violet-100 text-violet-500 bg-violet-50 hover:bg-violet-100 hover:border-violet-200 transition-all flex items-center justify-center gap-2 mr-2"
-            title="Add Study Plan"
-          >
-            <CalendarPlus className="w-2.5 h-2.5" />
-          </button>
-        )}
-        {progress === 100 && (
-          <button
-            onClick={() => handleProgressChange(0)}
-            disabled={isUpdating}
-            className="w-7 h-7 shrink-0 rounded-lg border border-red-200 text-red-500 bg-red-50 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center"
-            title="Mark Incomplete"
-          >
-            <RotateCcw className="w-2.5 h-2.5" />
-          </button>
-        )}
-        <button
-          onClick={() => handleProgressChange(100)}
-          disabled={isUpdating || progress === 100}
-          className="flex-grow text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-brand-green/20 text-brand-green bg-brand-green/5 hover:bg-brand-green hover:text-white disabled:opacity-40 disabled:cursor-default transition-all flex items-center justify-center gap-2"
-        >
-          <Check className="w-2 h-2" />
-          {dict?.mark_complete || "Complete"}
-        </button>
+        </div>
       </div>
     </div>
   );

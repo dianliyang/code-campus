@@ -74,16 +74,7 @@ export default function AchievementCard({ course }: AchievementCardProps) {
   };
 
   return (
-    <div className="bg-white border border-gray-100 p-4 flex flex-col gap-3 h-full relative group hover:border-brand-green/30 transition-all hover:shadow-xl hover:shadow-brand-green/5 rounded-xl">
-      {/* Edit Trigger */}
-      <button
-        onClick={() => setShowEditModal(true)}
-        className="absolute top-3 right-3 p-1.5 rounded-lg bg-gray-50 text-gray-400 opacity-0 group-hover:opacity-100 transition-all hover:text-brand-blue hover:bg-blue-50 cursor-pointer z-10"
-        title="Update Grade"
-      >
-        <PenSquare className="w-2.5 h-2.5" />
-      </button>
-
+    <div className="bg-white border border-gray-100 p-5 flex flex-col gap-4 h-full relative group hover:border-brand-green/30 transition-all hover:shadow-xl hover:shadow-brand-green/5 rounded-2xl">
       {/* Update Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/20 backdrop-blur-sm animate-in fade-in duration-300">
@@ -145,88 +136,96 @@ export default function AchievementCard({ course }: AchievementCardProps) {
         </div>
       )}
 
-      {/* Tiny Status Dot */}
-      <div className="absolute top-6 right-6 w-2 h-2 bg-brand-green rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)] group-hover:opacity-0 transition-opacity"></div>
-
-      <div className="flex items-center gap-3">
+      {/* Header */}
+      <div className="flex items-start gap-3">
         <UniversityIcon
           name={course.university}
-          size={32}
-          className="bg-gray-50 rounded-lg border border-gray-100 p-1"
+          size={36}
+          className="bg-gray-50 rounded-xl border border-gray-100 p-1.5 flex-shrink-0"
         />
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-[9px] font-black text-brand-green uppercase tracking-[0.2em] leading-none">
+            <span className="text-[9px] font-black text-brand-green uppercase tracking-[0.15em] leading-none">
               {course.university}
             </span>
+            <div className="w-1.5 h-1.5 bg-brand-green rounded-full shadow-[0_0_6px_rgba(34,197,94,0.5)]"></div>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[10px] font-bold text-gray-400 font-mono">
+              {course.courseCode}
+            </span>
             {course.semesters && course.semesters.length > 0 && (
-              <span className="text-[9px] font-bold text-brand-blue/60 uppercase tracking-tighter">
+              <span className="text-[9px] font-medium text-gray-300">
                 • {course.semesters[0]}
               </span>
             )}
           </div>
-          <span className="text-[9px] font-bold text-gray-400 font-mono mt-1">
-            {course.courseCode}
-          </span>
         </div>
       </div>
 
-      <div className="flex-grow space-y-2 flex flex-col">
-        <h3 className="text-sm font-bold text-gray-900 leading-tight tracking-tight line-clamp-2 group-hover:text-brand-green transition-colors min-h-[2.5rem]">
-          {course.title}
-        </h3>
+      {/* Title */}
+      <h3 className="text-sm font-bold text-gray-900 leading-snug tracking-tight line-clamp-2 group-hover:text-brand-green transition-colors">
+        {course.title}
+      </h3>
 
-        <div className="mt-auto">
-          {(course.gpa || course.score || (course.attendance && course.attendance.total > 0) || course.credit) ? (
-            <div className="flex gap-3 items-center bg-gray-50/50 p-2 rounded-lg border border-gray-100/50 overflow-x-auto no-scrollbar">
-              {course.credit && (
-                <div className="flex flex-col flex-shrink-0">
-                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">CREDITS</span>
-                  <span className="text-sm font-black text-gray-900 italic">{course.credit}</span>
-                </div>
-              )}
-              {course.gpa && (
-                <div className={`flex flex-col flex-shrink-0 ${course.credit ? 'border-l border-gray-200 pl-4' : ''}`}>
-                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">GPA</span>
-                  <span className="text-sm font-black text-gray-900 italic">{Number(course.gpa).toFixed(2)}</span>
-                </div>
-              )}
-              {course.score && (
-                <div className={`flex flex-col flex-shrink-0 ${(course.gpa || course.credit) ? 'border-l border-gray-200 pl-4' : ''}`}>
-                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">SCORE</span>
-                  <span className="text-sm font-black text-gray-900 italic">{Number(course.score).toFixed(1)}%</span>
-                </div>
-              )}
-              {course.attendance && course.attendance.total > 0 && (
-                <div className={`flex flex-col flex-shrink-0 ${(course.gpa || course.score || course.credit) ? 'border-l border-gray-200 pl-4' : ''}`}>
-                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">ATTENDANCE</span>
-                  <div className="flex items-baseline gap-0.5">
-                    <span className="text-sm font-black text-gray-900 italic">{course.attendance.attended}</span>
-                    <span className="text-[10px] font-bold text-gray-400">/{course.attendance.total}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex gap-4 items-center bg-gray-50/30 p-3 rounded-xl border border-dashed border-gray-100">
-               <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest italic">No grades recorded</span>
-            </div>
-          )}
-        </div>
+      {/* Stats */}
+      <div className="flex-grow flex flex-col justify-end">
+        {(course.gpa || course.score || (course.attendance && course.attendance.total > 0) || course.credit) ? (
+          <div className="grid grid-cols-2 gap-2">
+            {course.credit && (
+              <div className="bg-gray-50 rounded-lg p-2.5">
+                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Credits</span>
+                <span className="text-base font-black text-gray-900">{course.credit}</span>
+              </div>
+            )}
+            {course.gpa && (
+              <div className="bg-gray-50 rounded-lg p-2.5">
+                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">GPA</span>
+                <span className="text-base font-black text-gray-900">{Number(course.gpa).toFixed(2)}</span>
+              </div>
+            )}
+            {course.score && (
+              <div className="bg-gray-50 rounded-lg p-2.5">
+                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Score</span>
+                <span className="text-base font-black text-gray-900">{Number(course.score).toFixed(0)}%</span>
+              </div>
+            )}
+            {course.attendance && course.attendance.total > 0 && (
+              <div className="bg-gray-50 rounded-lg p-2.5">
+                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Attendance</span>
+                <span className="text-base font-black text-gray-900">{course.attendance.attended}<span className="text-xs font-bold text-gray-400">/{course.attendance.total}</span></span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-gray-50/50 p-3 rounded-lg border border-dashed border-gray-100">
+            <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">No grades recorded</span>
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-gray-50">
-        <span className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.2em] font-mono">
-          CERT_ID: {completionId}
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+        <span className="text-[8px] font-bold text-gray-300 uppercase tracking-[0.15em] font-mono">
+          ID: {completionId}
         </span>
-        <button
-          onClick={handleMarkIncomplete}
-          disabled={isMarkingIncomplete}
-          className="w-7 h-7 shrink-0 rounded-lg border border-red-200 text-red-500 bg-red-50 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center disabled:opacity-50"
-          title="Mark Incomplete"
-        >
-          <RotateCcw className="w-2.5 h-2.5" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="w-7 h-7 rounded-lg border border-gray-200 text-gray-400 bg-white hover:bg-gray-50 hover:text-gray-600 hover:border-gray-300 transition-all flex items-center justify-center"
+            title="Edit Grade"
+          >
+            <PenSquare className="w-3 h-3" />
+          </button>
+          <button
+            onClick={handleMarkIncomplete}
+            disabled={isMarkingIncomplete}
+            className="w-7 h-7 rounded-lg border border-gray-200 text-gray-400 bg-white hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all flex items-center justify-center disabled:opacity-50"
+            title="Mark Incomplete"
+          >
+            <RotateCcw className="w-3 h-3" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -10,7 +10,12 @@
     "scrape": "tsx -r dotenv/config src/scripts/run-all-scrapers.ts dotenv_config_path=.env.local",
     "categorize": "tsx -r dotenv/config src/scripts/categorize-smart.ts dotenv_config_path=.env.local",
     "test": "vitest",
-    "prepare": "husky"
+    "prepare": "husky",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "supabase:reset": "supabase db reset",
+    "generate:icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.24",

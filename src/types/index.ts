@@ -21,6 +21,10 @@ export interface Course {
     prerequisites?: string;
     relatedUrls?: string[];
     crossListedCourses?: string;
+    instructors?: string[];
+    schedule?: Record<string, string[]>;
+    internalId?: string;
+    [key: string]: unknown;
   };
   enrolled?: boolean;
   status?: string;

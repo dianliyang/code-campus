@@ -7,7 +7,7 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { Course } from "@/types";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
-import { ArrowLeft, ListChecks, Link2, GitBranch, Globe, ExternalLink, Zap, Flame } from "lucide-react";
+import { ArrowLeft, ListChecks, Link2, GitBranch, Globe, ExternalLink, Zap, Flame, Clock, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -125,6 +125,46 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
               </p>
             </div>
           </section>
+
+          {fullCourse.details?.schedule && Object.keys(fullCourse.details.schedule).length > 0 && (
+            <section className="bg-blue-50/50 border border-blue-200/50 rounded-2xl p-8">
+              <h3 className="text-xs font-black text-blue-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5" />
+                Schedule
+              </h3>
+              <div className="space-y-6">
+                {Object.entries(fullCourse.details.schedule).map(([type, times]) => (
+                  <div key={type}>
+                    <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 border-b border-blue-100 pb-1">{type}</h4>
+                    <ul className="space-y-3">
+                      {(times as string[]).map((time, idx) => (
+                        <li key={idx} className="text-sm text-gray-700 font-bold leading-relaxed whitespace-pre-wrap flex gap-3">
+                          <div className="w-1 h-1 mt-2 rounded-full bg-blue-300 flex-shrink-0" />
+                          <span>{time}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {fullCourse.details?.instructors && fullCourse.details.instructors.length > 0 && (
+            <section className="bg-indigo-50/50 border border-indigo-200/50 rounded-2xl p-8">
+              <h3 className="text-xs font-black text-indigo-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                <Users className="w-3.5 h-3.5" />
+                Instructors
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {(fullCourse.details.instructors as string[]).map((inst, idx) => (
+                  <span key={idx} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-indigo-100 text-sm font-bold text-indigo-700 shadow-sm">
+                    {inst}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
 
           {fullCourse.details?.prerequisites && (
             <section className="bg-orange-50/50 border border-orange-200/50 rounded-2xl p-8">
@@ -290,6 +330,16 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
                   )}
                 </div>
               </div>
+              {fullCourse.details?.internalId && (
+                <div>
+                  <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
+                    Internal ID
+                  </span>
+                  <span className="text-sm font-bold text-gray-900 uppercase font-mono tracking-tight">
+                    {fullCourse.details.internalId}
+                  </span>
+                </div>
+              )}
               <div>
                 <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
                   {dict.course_detail.global_index}

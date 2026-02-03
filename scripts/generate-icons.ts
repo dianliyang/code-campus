@@ -26,9 +26,20 @@ async function generateIcons() {
     const outputPath = path.join(OUTPUT_DIR, `icon-${size}x${size}.png`);
 
     try {
+      // Add padding around the logo (15% on each side)
+      const padding = Math.round(size * 0.15);
+      const logoSize = size - (padding * 2);
+
       await sharp(SOURCE_SVG)
-        .resize(size, size, {
+        .resize(logoSize, logoSize, {
           fit: 'contain',
+          background: { r: 255, g: 255, b: 255, alpha: 1 }
+        })
+        .extend({
+          top: padding,
+          bottom: padding,
+          left: padding,
+          right: padding,
           background: { r: 255, g: 255, b: 255, alpha: 1 }
         })
         .png()

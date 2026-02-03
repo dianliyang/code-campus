@@ -38,6 +38,11 @@ interface StudyLog {
   notes: string | null;
 }
 
+type OptimisticEntry = {
+  isCompleted: boolean;
+  status: "pending" | "failed";
+};
+
 interface GeneratedEvent {
   planId: number;
   courseId: number;
@@ -57,13 +62,17 @@ interface StudyCalendarProps {
   plans: StudyPlan[];
   logs: StudyLog[];
   dict: Dictionary['dashboard']['roadmap'];
+  initialDate?: Date;
+  onToggleComplete?: (planId: number, date: string) => Promise<void>;
 }
 
-export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalendarProps) {
+export default function StudyCalendar({ courses, plans, logs, dict, initialDate, onToggleComplete }: StudyCalendarProps) {
   const router = useRouter();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDay, setSelectedDay] = useState<number | null>(() => new Date().getDate());
+  const [currentDate, setCurrentDate] = useState(() => initialDate ?? new Date());
+  const [selectedDay, setSelectedDay] = useState<number | null>(() => (initialDate ?? new Date()).getDate());
   const [isGenerating, setIsGenerating] = useState(false);
+  const [optimisticByKey, setOptimisticByKey] = useState<Record<string, OptimisticEntry>>({});
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   // Get weekdays and months from dictionary
   const weekdays = (dict.calendar_weekdays as string[] | undefined) || ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -165,21 +174,47 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
     }
   };
 
-  const toggleComplete = async (planId: number, date: string) => {
+  const eventKey = (planId: number, date: string) => `${planId}:${date}`;
+
+  const toggleComplete = async (planId: number, date: string, currentCompleted: boolean) => {
+    const key = eventKey(planId, date);
+    const nextCompleted = !currentCompleted;
+
+    setGlobalError(null);
+    setOptimisticByKey(prev => ({
+      ...prev,
+      [key]: { isCompleted: nextCompleted, status: "pending" },
+    }));
+
     try {
-      const res = await fetch('/api/schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'toggle_complete',
-          planId,
-          date
-        })
-      });
-      if (res.ok) {
-        router.refresh();
+      if (onToggleComplete) {
+        await onToggleComplete(planId, date);
+      } else {
+        const res = await fetch('/api/schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'toggle_complete',
+            planId,
+            date
+          })
+        });
+        if (!res.ok) {
+          throw new Error("Request failed");
+        }
       }
+      setOptimisticByKey(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      router.refresh();
     } catch (e) {
+      setOptimisticByKey(prev => ({
+        ...prev,
+        [key]: { isCompleted: currentCompleted, status: "failed" },
+      }));
+      setGlobalError("Update failed. Please try again.");
       console.error('Failed to toggle completion:', e);
     }
   };
@@ -342,6 +377,12 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                 )}
               </div>
 
+              {globalError && (
+                <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[10px] font-bold text-rose-700">
+                  {globalError}
+                </div>
+              )}
+
               {isRestDay ? (
                 <div className="text-center py-6 flex-grow flex flex-col items-center justify-center">
                   <Flower2 className="w-8 h-8 text-gray-200 mb-2" />
@@ -353,19 +394,37 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                 <div className="flex-grow overflow-y-auto pr-2">
                   <div className="space-y-2">
                     {selectedDayEvents.map((event, idx) => {
-                      const bgColor = event.isCompleted ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-white border-gray-200 hover:bg-gray-50';
+                      const key = eventKey(event.planId, event.date);
+                      const optimistic = optimisticByKey[key];
+                      const isPending = optimistic?.status === "pending";
+                      const isFailed = optimistic?.status === "failed";
+                      const effectiveCompleted = optimistic?.status === "pending"
+                        ? optimistic.isCompleted
+                        : event.isCompleted;
+                      const bgColor = effectiveCompleted ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-white border-gray-200 hover:bg-gray-50';
 
                       return (
                         <div
                           key={`${event.planId}-${idx}`}
                           className={`rounded-lg border cursor-pointer transition-all flex flex-col px-3 py-1.5 group/item ${bgColor}`}
-                          onClick={() => toggleComplete(event.planId, event.date)}
+                          aria-disabled={isPending}
+                          onClick={() => {
+                            if (isPending) return;
+                            toggleComplete(event.planId, event.date, effectiveCompleted);
+                          }}
                         >
                           <div className="flex items-start justify-between gap-2 mb-0.5">
-                            <span className={`text-xs font-semibold truncate ${event.isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                            <span className={`text-xs font-semibold truncate ${effectiveCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                               {event.title}
                             </span>
-                            {event.isCompleted && <Check className="w-3 h-3 text-gray-400" />}
+                            <div className="flex items-center gap-1">
+                              {isFailed && (
+                                <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
+                                  Failed
+                                </span>
+                              )}
+                              {effectiveCompleted && <Check className="w-3 h-3 text-gray-400" />}
+                            </div>
                           </div>
 
                           <div className="flex items-end justify-between gap-2">
@@ -375,7 +434,7 @@ export default function StudyCalendar({ courses, plans, logs, dict }: StudyCalen
                             </div>
                             <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                               <span className={`text-[8px] font-bold uppercase tracking-wider ${
-                                event.isCompleted
+                                effectiveCompleted
                                   ? 'text-gray-400'
                                   : event.type.toLowerCase().includes('lecture')
                                     ? 'text-violet-600'

@@ -171,29 +171,35 @@ export default function AchievementCard({ course }: AchievementCardProps) {
       {/* Stats */}
       <div className="flex-grow flex flex-col justify-end">
         {(course.gpa || course.score || (course.attendance && course.attendance.total > 0) || course.credit) ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center bg-gray-50/80 rounded-xl px-4 py-3 gap-4">
             {course.credit && (
-              <div className="bg-gray-50 rounded-lg p-2.5">
-                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Credits</span>
-                <span className="text-base font-black text-gray-900">{course.credit}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[7px] font-black text-gray-400 uppercase tracking-[0.2em]">Credits</span>
+                <span className="text-xs font-black text-gray-900">{course.credit}</span>
               </div>
             )}
+            {course.credit && (course.gpa || course.score || (course.attendance && course.attendance.total > 0)) && <div className="w-px h-5 bg-gray-200"></div>}
+            
             {course.gpa && (
-              <div className="bg-gray-50 rounded-lg p-2.5">
-                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">GPA</span>
-                <span className="text-base font-black text-gray-900">{Number(course.gpa).toFixed(2)}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[7px] font-black text-gray-400 uppercase tracking-[0.2em]">GPA</span>
+                <span className="text-xs font-black text-gray-900">{Number(course.gpa).toFixed(2)}</span>
               </div>
             )}
+            {course.gpa && (course.score || (course.attendance && course.attendance.total > 0)) && <div className="w-px h-5 bg-gray-200"></div>}
+
             {course.score && (
-              <div className="bg-gray-50 rounded-lg p-2.5">
-                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Score</span>
-                <span className="text-base font-black text-gray-900">{Number(course.score).toFixed(0)}%</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[7px] font-black text-gray-400 uppercase tracking-[0.2em]">Score</span>
+                <span className="text-xs font-black text-gray-900">{Number(course.score).toFixed(0)}%</span>
               </div>
             )}
+            {course.score && (course.attendance && course.attendance.total > 0) && <div className="w-px h-5 bg-gray-200"></div>}
+
             {course.attendance && course.attendance.total > 0 && (
-              <div className="bg-gray-50 rounded-lg p-2.5">
-                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Attendance</span>
-                <span className="text-base font-black text-gray-900">{course.attendance.attended}<span className="text-xs font-bold text-gray-400">/{course.attendance.total}</span></span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[7px] font-black text-gray-400 uppercase tracking-[0.2em]">Attendance</span>
+                <span className="text-xs font-black text-gray-900">{course.attendance.attended}<span className="text-[10px] text-gray-400">/{course.attendance.total}</span></span>
               </div>
             )}
           </div>

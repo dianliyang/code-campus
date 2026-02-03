@@ -7,7 +7,9 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { Course } from "@/types";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
-import { ArrowLeft, ListChecks, Link2, GitBranch, Globe, ExternalLink, Zap, Flame, Clock, Users } from "lucide-react";
+import { ArrowLeft, Clock, Users, ExternalLink, Globe, Info } from "lucide-react";
+
+import FormattedDescription from "@/components/courses/FormattedDescription";
 
 export const dynamic = "force-dynamic";
 
@@ -41,12 +43,12 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32">
         <Link
           href="/courses"
-          className="inline-flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-[0.3em] hover:text-brand-blue transition-colors mb-12 group"
+          className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-gray-900 transition-colors mb-12"
         >
-          <ArrowLeft className="w-3 h-3 transition-transform group-hover:-translate-x-1" />
+          <ArrowLeft className="w-4 h-4" />
           {dict.dashboard.course_detail.back_to_catalog}
         </Link>
 
@@ -106,314 +108,226 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
   } as Course;
 
   const isEnrolled = !!enrollment;
-  const progress = enrollment?.progress || 0;
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-16 pb-20">
       <CourseDetailHeader course={fullCourse} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 border-t border-gray-100 pt-12">
-        <div className="lg:col-span-2 space-y-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+        
+        {/* MAIN CONTENT (Left Column) */}
+        <div className="lg:col-span-8 space-y-16">
+          
+          {/* Description */}
           <section>
-            <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.4em] mb-6">
-              {dict.course_detail.description_title}
-            </h2>
-            <div className="prose prose-gray max-w-none">
-              <p className="text-lg text-gray-600 leading-relaxed font-medium">
-                {fullCourse.description ||
-                  dict.course_detail.description_empty}
-              </p>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">About this Course</h2>
+            <div className="prose prose-lg prose-gray max-w-none prose-p:text-gray-600 prose-p:leading-8">
+              {fullCourse.description ? (
+                <FormattedDescription text={fullCourse.description} />
+              ) : (
+                <p className="text-gray-500 italic">
+                  {dict.course_detail.description_empty}
+                </p>
+              )}
             </div>
           </section>
 
-          {fullCourse.details?.schedule && Object.keys(fullCourse.details.schedule).length > 0 && (
-            <section className="bg-blue-50/50 border border-blue-200/50 rounded-2xl p-8">
-              <h3 className="text-xs font-black text-blue-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5" />
-                Schedule
-              </h3>
-              <div className="space-y-6">
-                {Object.entries(fullCourse.details.schedule).map(([type, times]) => (
-                  <div key={type}>
-                    <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 border-b border-blue-100 pb-1">{type}</h4>
+          {/* Schedule & Staff */}
+          {(fullCourse.details?.schedule || fullCourse.details?.instructors) && (
+            <section>
+              <h2 className="text-xl font-bold text-gray-900 mb-8 pb-4 border-b border-gray-100">Logistics</h2>
+              <div className="grid sm:grid-cols-2 gap-12">
+                
+                {fullCourse.details?.schedule && Object.keys(fullCourse.details.schedule).length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      Weekly Schedule
+                    </h3>
+                    <div className="space-y-6">
+                      {Object.entries(fullCourse.details.schedule).map(([type, times]) => (
+                        <div key={type}>
+                          <div className="text-xs font-bold text-gray-400 mb-1">{type}</div>
+                          <ul className="space-y-2">
+                            {(times as string[]).map((time, idx) => (
+                              <li key={idx} className="text-sm text-gray-700 leading-snug break-all">
+                                {time}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {fullCourse.details?.instructors && fullCourse.details.instructors.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <Users className="w-4 h-4 text-gray-400" />
+                      Teaching Staff
+                    </h3>
                     <ul className="space-y-3">
-                      {(times as string[]).map((time, idx) => (
-                        <li key={idx} className="text-sm text-gray-700 font-bold leading-relaxed whitespace-pre-wrap flex gap-3">
-                          <div className="w-1 h-1 mt-2 rounded-full bg-blue-300 flex-shrink-0" />
-                          <span>{time}</span>
+                      {(fullCourse.details.instructors as string[]).map((inst, idx) => (
+                        <li key={idx} className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-xs font-bold font-mono">
+                            {inst.charAt(0)}
+                          </div>
+                          <span className="text-base font-medium text-gray-900">{inst}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
-                ))}
+                )}
               </div>
             </section>
           )}
 
-          {fullCourse.details?.instructors && fullCourse.details.instructors.length > 0 && (
-            <section className="bg-indigo-50/50 border border-indigo-200/50 rounded-2xl p-8">
-              <h3 className="text-xs font-black text-indigo-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                <Users className="w-3.5 h-3.5" />
-                Instructors
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {(fullCourse.details.instructors as string[]).map((inst, idx) => (
-                  <span key={idx} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-indigo-100 text-sm font-bold text-indigo-700 shadow-sm">
-                    {inst}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {fullCourse.details?.prerequisites && (
-            <section className="bg-orange-50/50 border border-orange-200/50 rounded-2xl p-8">
-              <h3 className="text-xs font-black text-orange-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                <ListChecks className="w-3.5 h-3.5" />
-                Prerequisites
-              </h3>
-              <p className="text-sm text-gray-700 font-bold leading-relaxed italic">
-                {fullCourse.details.prerequisites}
-              </p>
-            </section>
-          )}
-
-          {fullCourse.corequisites && (
-            <section className="bg-brand-blue/[0.02] border border-brand-blue/10 rounded-2xl p-8">
-              <h3 className="text-xs font-black text-brand-blue uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                <Link2 className="w-3.5 h-3.5" />
-                {dict.course_detail.corequisites_title}
-              </h3>
-              <p className="text-sm text-gray-700 font-bold leading-relaxed italic">
-                {fullCourse.corequisites}
-              </p>
-            </section>
-          )}
-
-          {fullCourse.details?.crossListedCourses && (
-            <section className="bg-purple-50/50 border border-purple-200/50 rounded-2xl p-8">
-              <h3 className="text-xs font-black text-purple-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                <GitBranch className="w-3.5 h-3.5" />
-                Cross-Listed Courses
-              </h3>
-              <p className="text-sm text-gray-700 font-bold leading-relaxed italic">
-                {fullCourse.details.crossListedCourses}
-              </p>
-            </section>
-          )}
-
-          {fullCourse.details?.relatedUrls && fullCourse.details.relatedUrls.length > 0 && (
-            <section className="bg-green-50/50 border border-green-200/50 rounded-2xl p-8">
-              <h3 className="text-xs font-black text-green-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5" />
-                Related Resources
-              </h3>
-              <div className="space-y-3">
-                {fullCourse.details.relatedUrls.map((url: string, index: number) => (
-                  <a
-                    key={index}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center gap-3 text-sm font-bold text-green-700 hover:text-green-800 transition-colors"
-                  >
-                    <ExternalLink className="w-3 h-3 text-green-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    <span className="underline decoration-green-300 group-hover:decoration-green-500 transition-colors break-all">
-                      {url}
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section>
-            <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.4em] mb-6">
-              {dict.course_detail.syllabus_title}
-            </h2>
-            <div className="grid grid-cols-2 gap-8">
-              {fullCourse.department && (
-                <div>
-                  <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
-                    {dict.course_detail.department}
-                  </span>
-                  <span className="text-sm font-bold text-gray-900 uppercase">
-                    {fullCourse.department}
-                  </span>
-                </div>
-              )}
-              <div>
-                <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
-                  {dict.course_detail.level}
-                </span>
-                <span className="text-sm font-bold text-gray-900 uppercase">
-                  {fullCourse.level || dict.course_detail.level_unspecified}
-                </span>
-              </div>
-              {fullCourse.units && (
-                <div className="relative group/units">
-                  <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2 flex items-center gap-1 cursor-help">
-                    Units
-                    <span className="text-[8px] border border-gray-200 rounded-full w-3 h-3 flex items-center justify-center hover:bg-gray-50">?</span>
-                  </span>
-                  <span className="text-sm font-bold text-gray-900 uppercase">
-                    {fullCourse.units}
-                  </span>
-                  
-                  {/* Units Explanation Tooltip */}
-                  <div className="absolute left-0 bottom-full mb-2 w-64 p-4 bg-gray-900 text-white text-xs rounded-xl shadow-xl opacity-0 invisible group-hover/units:opacity-100 group-hover/units:visible transition-all z-50 pointer-events-none">
-                    <p className="font-bold mb-2 text-gray-300 uppercase tracking-widest text-[10px]">Weekly Structure</p>
-                    <p className="mb-2">Format: Lecture-Recitation-Lab</p>
-                    <div className="space-y-1 text-gray-400">
-                      <div className="flex justify-between">
-                        <span>Lecture Hours</span>
-                        <span className="font-mono text-white">X-0-0</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Tutorial/Recitation</span>
-                        <span className="font-mono text-white">0-Y-0</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Lab/Project</span>
-                        <span className="font-mono text-white">0-0-Z</span>
-                      </div>
-                    </div>
-                    <div className="absolute bottom-0 left-4 translate-y-1/2 rotate-45 w-3 h-3 bg-gray-900"></div>
+          {/* Requirements */}
+          {(fullCourse.details?.prerequisites || fullCourse.corequisites) && (
+            <section>
+              <h2 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">Prerequisites</h2>
+              <div className="space-y-8">
+                {fullCourse.details?.prerequisites && (
+                  <div>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wide block mb-2">Required Knowledge</span>
+                    <p className="text-base text-gray-700 leading-relaxed">
+                      {fullCourse.details.prerequisites}
+                    </p>
                   </div>
-                </div>
-              )}
-              {fullCourse.credit && (
-                <div>
-                  <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
-                    Credits
-                  </span>
-                  <span className="text-sm font-bold text-gray-900 uppercase">
-                    {fullCourse.credit}
-                  </span>
-                </div>
-              )}
-              <div>
-                <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
-                  {dict.course_detail.workload}
-                </span>
-                <span className="text-sm font-bold text-gray-900 uppercase">
-                  {fullCourse.workload || dict.course_detail.workload_standard}
+                )}
+                {fullCourse.corequisites && (
+                  <div>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wide block mb-2">Corequisites</span>
+                    <p className="text-base text-gray-700 leading-relaxed">
+                      {fullCourse.corequisites}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* RIGHT COLUMN (Sidebar) */}
+        <aside className="lg:col-span-4 space-y-10">
+          <div className="sticky top-32 space-y-10">
+            
+            {/* Primary Action */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-500">Your Status</span>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full ${isEnrolled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                  {isEnrolled ? 'Enrolled' : 'Not Enrolled'}
                 </span>
               </div>
-              {typeof fullCourse.difficulty === 'number' && fullCourse.difficulty > 0 && (
-                <div>
-                  <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
-                    {dict.course_detail.difficulty}
-                  </span>
-                  <span className="text-sm font-bold text-gray-900 uppercase">
-                    {fullCourse.difficulty.toFixed(1)} / 5.0
-                  </span>
+              <a
+                href={fullCourse.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-full gap-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold py-3.5 rounded-xl transition-colors group"
+              >
+                <span className="text-sm">Visit Course Page</span>
+                <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </a>
+            </div>
+
+            <hr className="border-gray-100" />
+
+            {/* Course Facts */}
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-6">Course Facts</h3>
+              <dl className="space-y-4 text-sm">
+                <div className="flex justify-between py-1">
+                  <dt className="text-gray-500">Credits</dt>
+                  <dd className="font-bold text-gray-900">{fullCourse.credit ? `${fullCourse.credit} ECTS` : '-'}</dd>
                 </div>
-              )}
+                <div className="flex justify-between py-1 overflow-visible relative">
+                  <dt className="text-gray-500 flex-shrink-0 flex items-center gap-1.5 group cursor-help">
+                    Units (L-D-E)
+                    <Info className="w-3.5 h-3.5 text-gray-400" />
+                    
+                    {/* Tooltip */}
+                    <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 w-56 p-4 bg-white text-gray-900 text-xs rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none text-left">
+                      <p className="font-bold mb-2 text-gray-400 uppercase tracking-widest text-[10px]">Weekly Structure</p>
+                      <p className="mb-3 text-gray-600 font-medium">Lecture - Recitation - Lab</p>
+                      <div className="space-y-1.5 text-gray-500 font-medium">
+                        <div className="flex justify-between border-b border-gray-50 pb-1"><span>Lecture</span><span className="font-mono text-gray-900">X-0-0</span></div>
+                        <div className="flex justify-between border-b border-gray-50 pb-1"><span>Recitation</span><span className="font-mono text-gray-900">0-Y-0</span></div>
+                        <div className="flex justify-between border-b border-gray-50 pb-1"><span>Lab/Project</span><span className="font-mono text-gray-900">0-0-Z</span></div>
+                      </div>
+                      {/* Arrow */}
+                      <div className="absolute top-1/2 -translate-y-1/2 -right-1.5 rotate-45 w-3 h-3 bg-white border-r border-t border-gray-100"></div>
+                    </div>
+                  </dt>
+                  <dd className="font-bold text-gray-900 text-right pl-4 break-words">{fullCourse.units || '-'}</dd>
+                </div>
+                <div className="flex justify-between py-1">
+                  <dt className="text-gray-500 flex-shrink-0">Workload</dt>
+                  <dd className="font-bold text-gray-900 text-right pl-4 break-words">{fullCourse.units || '-'}</dd>
+                </div>
+                <div className="flex justify-between py-1">
+                  <dt className="text-gray-500 flex-shrink-0">Level</dt>
+                  <dd className="font-bold text-gray-900 capitalize text-right pl-4 break-words">{fullCourse.level || '-'}</dd>
+                </div>
+                <div className="flex justify-between py-1">
+                  <dt className="text-gray-500 flex-shrink-0">Department</dt>
+                  <dd className="font-bold text-gray-900 text-right pl-4 break-words">
+                    {fullCourse.department || '-'}
+                  </dd>
+                </div>
+                <div className="flex flex-col py-1 gap-2">
+                  <dt className="text-gray-500">Available Terms</dt>
+                  <dd className="font-bold text-gray-900 flex flex-wrap gap-1.5 justify-end">
+                    {fullCourse.semesters.length > 0 ? (
+                      fullCourse.semesters.map((s, idx) => (
+                        <span key={idx} className="bg-gray-50 px-2 py-0.5 rounded border border-gray-100 text-[11px] whitespace-nowrap">
+                          {s}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-400 font-normal italic">Historical</span>
+                    )}
+                  </dd>
+                </div>
+                {fullCourse.details?.internalId && (
+                  <div className="flex justify-between py-1">
+                    <dt className="text-gray-500">ID</dt>
+                    <dd className="font-mono text-gray-400">{fullCourse.details.internalId}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+
+            <hr className="border-gray-100" />
+
+            {/* Relations */}
+            {(fullCourse.details?.crossListedCourses || (fullCourse.details?.relatedUrls && fullCourse.details.relatedUrls.length > 0)) && (
               <div>
-                <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
-                  {dict.course_detail.availability}
-                </span>
-                <div className="flex gap-2 flex-wrap">
-                  {fullCourse.semesters.map((s) => (
-                    <span
-                      key={s}
-                      className="text-xs font-black text-gray-600 bg-gray-100 px-2 py-0.5 rounded"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                  {fullCourse.semesters.length === 0 && (
-                    <span className="text-xs font-bold text-gray-400 italic">
-                      {dict.course_detail.historical}
-                    </span>
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-6">Resources</h3>
+                <div className="space-y-6">
+                  {fullCourse.details?.relatedUrls && fullCourse.details.relatedUrls.length > 0 && (
+                    <ul className="space-y-3">
+                      {fullCourse.details.relatedUrls.map((url: string, i: number) => (
+                        <li key={i}>
+                          <a href={url} target="_blank" rel="noreferrer" className="text-sm font-medium text-brand-blue hover:text-brand-dark hover:underline flex items-start gap-2 break-all">
+                            <Globe className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                            {url}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {fullCourse.details?.crossListedCourses && (
+                    <div>
+                      <span className="text-xs font-bold text-gray-400 block mb-2">Cross-Listed</span>
+                      <p className="text-sm text-gray-600 leading-relaxed">{fullCourse.details.crossListedCourses}</p>
+                    </div>
                   )}
                 </div>
               </div>
-              {fullCourse.details?.internalId && (
-                <div>
-                  <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
-                    Internal ID
-                  </span>
-                  <span className="text-sm font-bold text-gray-900 uppercase font-mono tracking-tight">
-                    {fullCourse.details.internalId}
-                  </span>
-                </div>
-              )}
-              <div>
-                <span className="block text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">
-                  {dict.course_detail.global_index}
-                </span>
-                <span className="text-sm font-bold text-gray-900 uppercase">
-                  #{fullCourse.id}
-                </span>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <aside className="space-y-8">
-          <div className="bg-white border-2 border-gray-900 rounded-3xl p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)] flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-brand-blue mb-6">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-black text-gray-900 tracking-tighter mb-2">
-              {dict.course_detail.enrollment_status}
-            </h3>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-8">
-              {isEnrolled ? dict.course_detail.status_enrolled : dict.course_detail.status_ready}
-            </p>
-
-            <a
-              href={fullCourse.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative w-full flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-brand-dark px-6 py-4 text-sm font-bold tracking-wide text-white shadow-xl shadow-brand-dark/20 transition-all duration-300 hover:bg-gray-800 hover:shadow-brand-dark/40 hover:-translate-y-1 active:scale-95"
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                {dict.course_detail.go_to_page}
-                <ExternalLink className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
-              </span>
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 ease-in-out group-hover:translate-x-full" />
-            </a>
-
-            {isEnrolled && (
-              <div className="w-full mt-4 pt-4 border-t border-gray-100">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                    {dict.course_detail.progress}
-                  </span>
-                  <span className="text-sm font-black text-brand-blue italic">
-                    {progress}%
-                  </span>
-                </div>
-                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-brand-blue transition-all duration-1000"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              </div>
             )}
-          </div>
 
-          <div className="p-8 border border-gray-100 rounded-3xl">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6">
-              {dict.course_detail.impact_stats}
-            </h3>
-            <div className="flex items-center gap-4">
-              <div className="flex-grow">
-                <div className="text-2xl font-black text-gray-900 italic leading-none">
-                  {fullCourse.popularity}
-                </div>
-                <div className="text-[9px] font-black text-gray-300 uppercase tracking-widest mt-1">
-                  {dict.course_detail.global_interest}
-                </div>
-              </div>
-              <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center text-orange-500">
-                <Flame className="w-5 h-5" />
-              </div>
-            </div>
           </div>
         </aside>
       </div>
@@ -423,7 +337,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
 
 function CourseDetailSkeleton() {
   return (
-    <div className="animate-pulse space-y-12">
+    <div className="animate-pulse space-y-12 max-w-7xl mx-auto pt-32 px-4">
       <div className="flex items-center gap-6">
         <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
         <div className="space-y-2 flex-grow">
@@ -431,12 +345,12 @@ function CourseDetailSkeleton() {
           <div className="h-12 bg-gray-100 rounded w-3/4"></div>
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+        <div className="lg:col-span-8 space-y-8">
           <div className="h-40 bg-gray-50 rounded-2xl"></div>
           <div className="h-60 bg-gray-50 rounded-2xl"></div>
         </div>
-        <div className="h-80 bg-gray-50 rounded-3xl"></div>
+        <div className="lg:col-span-4 h-80 bg-gray-50 rounded-3xl"></div>
       </div>
     </div>
   );

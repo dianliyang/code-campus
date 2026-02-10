@@ -21,10 +21,25 @@ export async function GET(request: NextRequest) {
     // 2. Initialize Supabase Admin Client to query the database directly
     const supabase = createAdminClient();
 
-    // 3. Query the courses table with the specified filters
+    // 3. Query CAU courses and attach schedules from study_plans
     const { data, error } = await supabase
       .from('courses')
-      .select('*')
+      .select(`
+        *,
+        study_plans(
+          id,
+          course_id,
+          start_date,
+          end_date,
+          days_of_week,
+          start_time,
+          end_time,
+          location,
+          type,
+          created_at,
+          updated_at
+        )
+      `)
       .eq('university', 'CAU Kiel')
       .eq('is_hidden', false);
 
@@ -36,8 +51,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 4. Return all fields as requested
-    return NextResponse.json(data);
+    const coursesWithSchedule = (data ?? []).map((course) => {
+      const { study_plans, ...courseFields } = course;
+      return {
+        ...courseFields,
+        schedule: study_plans ?? [],
+      };
+    });
+
+    // 4. Return all courses with schedule
+    return NextResponse.json(coursesWithSchedule);
   } catch (error) {
     console.error('API implementation error:', error);
     return NextResponse.json(

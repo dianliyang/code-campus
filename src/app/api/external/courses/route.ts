@@ -57,7 +57,8 @@ export async function GET(request: NextRequest) {
       const details =
         rawDetails && typeof rawDetails === 'object' && !Array.isArray(rawDetails)
           ? (() => {
-              const { schedule: _ignored, ...rest } = rawDetails as Record<string, unknown>;
+              const { schedule, ...rest } = rawDetails as Record<string, unknown>;
+              void schedule;
               return rest;
             })()
           : rawDetails;

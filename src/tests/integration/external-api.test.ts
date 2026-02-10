@@ -25,7 +25,12 @@ describe('GET /api/external/courses', () => {
   });
 
   it('should query Supabase with correct filters', async () => {
-    const mockData = [{ id: 1, title: 'Course 1', study_plans: [{ id: 11, course_id: 1 }] }];
+    const mockData = [{
+      id: 1,
+      title: 'Course 1',
+      details: { schedule: { Lecture: ['Mon 10:00'] }, internalId: 'x1' },
+      study_plans: [{ id: 11, course_id: 1 }]
+    }];
     
     // Setup deep mock for supabase.from().select().eq().eq()
     const mockEq2 = vi.fn().mockResolvedValue({ data: mockData, error: null });
@@ -44,7 +49,12 @@ describe('GET /api/external/courses', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toEqual([{ id: 1, title: 'Course 1', schedule: [{ id: 11, course_id: 1 }] }]);
+    expect(data).toEqual([{
+      id: 1,
+      title: 'Course 1',
+      details: { internalId: 'x1' },
+      schedule: [{ id: 11, course_id: 1 }]
+    }]);
 
     expect(mockFrom).toHaveBeenCalledWith('courses');
     const selectArg = mockSelect.mock.calls[0][0] as string;

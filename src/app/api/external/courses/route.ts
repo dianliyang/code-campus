@@ -53,8 +53,18 @@ export async function GET(request: NextRequest) {
 
     const coursesWithSchedule = (data ?? []).map((course) => {
       const { study_plans, ...courseFields } = course;
+      const rawDetails = courseFields.details;
+      const details =
+        rawDetails && typeof rawDetails === 'object' && !Array.isArray(rawDetails)
+          ? (() => {
+              const { schedule: _ignored, ...rest } = rawDetails as Record<string, unknown>;
+              return rest;
+            })()
+          : rawDetails;
+
       return {
         ...courseFields,
+        details,
         schedule: study_plans ?? [],
       };
     });

@@ -375,6 +375,8 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
     sourceType: string;
     sourceLine: string;
     daysOfWeek: number[];
+    startDate?: string;
+    endDate?: string;
     startTime: string;
     endTime: string;
     location: string;
@@ -447,6 +449,8 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
               sourceType: string;
               sourceLine: string;
               daysOfWeek: number[];
+              startDate?: string;
+              endDate?: string;
               startTime: string;
               endTime: string;
               location: string;
@@ -464,6 +468,8 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
               sourceType: item.sourceType,
               sourceLine: item.sourceLine,
               daysOfWeek: item.daysOfWeek.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6),
+              startDate: typeof item.startDate === "string" ? item.startDate : undefined,
+              endDate: typeof item.endDate === "string" ? item.endDate : undefined,
               startTime: normalizeTimeToken(item.startTime) || item.startTime,
               endTime: normalizeTimeToken(item.endTime) || item.endTime,
               location: item.location || "TBD",
@@ -504,8 +510,8 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
     endTime: p.endTime,
     location: p.location,
     type: p.type,
-    startDate,
-    endDate,
+    startDate: ("startDate" in p && typeof p.startDate === "string" && p.startDate) ? p.startDate : startDate,
+    endDate: ("endDate" in p && typeof p.endDate === "string" && p.endDate) ? p.endDate : endDate,
     alreadyExists: existingKeys.has(planKey(p)),
   }));
 

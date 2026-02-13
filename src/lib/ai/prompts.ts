@@ -30,6 +30,8 @@ Return ONLY a JSON array. Each item must include:
 - sourceType: string
 - sourceLine: string
 - daysOfWeek: number[] (0=Sun, 1=Mon, ..., 6=Sat)
+- startDate: string (YYYY-MM-DD)
+- endDate: string (YYYY-MM-DD)
 - startTime: string (HH:MM:SS, 24h)
 - endTime: string (HH:MM:SS, 24h)
 - location: string

@@ -122,10 +122,10 @@ async function StudyPlanContent({
     .eq('user_id', userId);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const plans = rawPlans?.map((plan: any) => ({
+  const allPlans = rawPlans?.map((plan: any) => ({
     ...plan,
     courses: Array.isArray(plan.courses) ? plan.courses[0] : plan.courses
-  }));
+  })) || [];
 
   // Fetch study logs (exceptions/completions)
   const { data: logs } = await supabase
@@ -133,11 +133,16 @@ async function StudyPlanContent({
     .select('*')
     .eq('user_id', userId);
 
+  const enrolledCourseIds = new Set(enrolledCourses.map((course) => course.id));
+  const plans = allPlans.filter((plan: { course_id: number }) => enrolledCourseIds.has(plan.course_id));
+  const validPlanIds = new Set(plans.map((plan: { id: number }) => plan.id));
+  const filteredLogs = (logs || []).filter((log: { plan_id: number }) => validPlanIds.has(log.plan_id));
+
   const enrolledWithAttendance = enrolledCourses.map(course => {
     const coursePlans = plans?.filter((p: { course_id: number }) => p.course_id === course.id) || [];
     // logs are already filtered by user_id, now filter by plans belonging to this course
     const planIds = coursePlans.map((p: { id: number }) => p.id);
-    const courseLogs = logs?.filter((l: { plan_id: number }) => planIds.includes(l.plan_id)) || [];
+    const courseLogs = filteredLogs.filter((l: { plan_id: number }) => planIds.includes(l.plan_id));
     
     const { attended, total } = calculateAttendance(coursePlans, courseLogs);
 
@@ -212,8 +217,8 @@ async function StudyPlanContent({
           <div className="pl-0 md:pl-20">
             <StudyCalendar
               courses={enrolledCourses}
-              plans={plans || []}
-              logs={logs || []}
+              plans={plans}
+              logs={filteredLogs}
               dict={dict.dashboard.roadmap}
             />
           </div>
@@ -255,7 +260,7 @@ async function StudyPlanContent({
                   key={course.id} 
                   course={course} 
                   initialProgress={course.progress} 
-                  plan={plans?.find((p: { course_id: number }) => p.course_id === course.id)}
+                  plan={plans.find((p: { course_id: number }) => p.course_id === course.id)}
                   dict={dict.dashboard.roadmap} 
                 />
               ))

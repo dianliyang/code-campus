@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS courses (
   description TEXT,
   url TEXT,
   details JSONB,
+  instructors TEXT[] DEFAULT '{}'::text[],
+  prerequisites TEXT,
+  related_urls TEXT[] DEFAULT '{}'::text[],
+  cross_listed_courses TEXT,
   department TEXT,
   corequisites TEXT,
   level TEXT,
@@ -71,6 +75,18 @@ CREATE TABLE IF NOT EXISTS user_courses (
 CREATE INDEX IF NOT EXISTS idx_user_courses_user ON user_courses(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_courses_status ON user_courses(status);
 CREATE INDEX IF NOT EXISTS idx_user_courses_user_status ON user_courses(user_id, status);
+
+-- Profiles Table
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
+  ai_provider TEXT NOT NULL DEFAULT 'perplexity',
+  ai_default_model TEXT NOT NULL DEFAULT 'sonar',
+  ai_web_search_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  ai_prompt_template TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
 -- Semesters Table
 CREATE TABLE IF NOT EXISTS semesters (
@@ -144,6 +160,7 @@ ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fields ENABLE ROW LEVEL SECURITY;
 ALTER TABLE course_fields ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE semesters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE course_semesters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE study_plans ENABLE ROW LEVEL SECURITY;
@@ -161,6 +178,11 @@ CREATE POLICY "Users can view their own enrollments" ON user_courses FOR SELECT 
 CREATE POLICY "Users can insert their own enrollments" ON user_courses FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update their own enrollments" ON user_courses FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete their own enrollments" ON user_courses FOR DELETE USING (auth.uid() = user_id);
+
+-- Policies: Profiles
+CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
 -- Policies: Study Plans
 CREATE POLICY "Users can view their own plans" ON study_plans FOR SELECT USING (auth.uid() = user_id);

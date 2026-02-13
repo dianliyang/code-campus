@@ -61,6 +61,8 @@ export async function fetchUserContext(
         is_internal,
         level,
         corequisites,
+        prerequisites,
+        instructors,
         details
       `)
       .in('id', enrolledCourseIds);
@@ -89,6 +91,8 @@ export async function fetchUserContext(
           semesters: [],
           level: course.level || '',
           corequisites: course.corequisites || '',
+          prerequisites: course.prerequisites || '',
+          instructors: Array.isArray(course.instructors) ? course.instructors : [],
           details: course.details,
           progress: enrollment?.progress || 0,
           status: enrollment?.status || 'in_progress',
@@ -140,6 +144,8 @@ export async function fetchUserContext(
       is_internal,
       level,
       corequisites,
+      prerequisites,
+      instructors,
       details
     `)
     .eq('is_hidden', false)
@@ -169,6 +175,8 @@ export async function fetchUserContext(
     semesters: [],
     level: course.level || '',
     corequisites: course.corequisites || '',
+    prerequisites: course.prerequisites || '',
+    instructors: Array.isArray(course.instructors) ? course.instructors : [],
     details: course.details,
   }));
 
@@ -235,7 +243,7 @@ export function buildSystemPrompt(context: UserLearningContext): string {
     if (c.difficulty) prompt += `- **Difficulty**: ${c.difficulty}/10\n`;
     if (c.workload) prompt += `- **Workload**: ${c.workload}\n`;
     if (c.description) prompt += `- **Description**: ${c.description.slice(0, 100)}...\n`;
-    if (c.details?.prerequisites) prompt += `- **Prerequisites**: ${c.details.prerequisites}\n`;
+    if (c.prerequisites) prompt += `- **Prerequisites**: ${c.prerequisites}\n`;
     prompt += `\n`;
   });
 

@@ -98,7 +98,7 @@ export async function POST(req: Request) {
 
     // Create streaming response
     const result = await streamText({
-      model: perplexity('llama-3.1-sonar-large-128k-online'),
+      model: perplexity.chat('sonar'),
       system: systemPrompt,
       messages: messages.map((msg: { role: string; content: string }) => ({
         role: msg.role as 'user' | 'assistant' | 'system',

@@ -77,6 +77,7 @@ export type Database = {
       courses: {
         Row: {
           corequisites: string | null
+          cross_listed_courses: string | null
           course_code: string
           created_at: string | null
           credit: number | null
@@ -85,10 +86,13 @@ export type Database = {
           details: Json | null
           difficulty: number | null
           id: number
+          instructors: string[] | null
           is_hidden: boolean | null
           is_internal: boolean | null
           level: string | null
           popularity: number | null
+          prerequisites: string | null
+          related_urls: string[] | null
           search_vector: unknown
           title: string
           units: string | null
@@ -98,6 +102,7 @@ export type Database = {
         }
         Insert: {
           corequisites?: string | null
+          cross_listed_courses?: string | null
           course_code: string
           created_at?: string | null
           credit?: number | null
@@ -106,10 +111,13 @@ export type Database = {
           details?: Json | null
           difficulty?: number | null
           id?: number
+          instructors?: string[] | null
           is_hidden?: boolean | null
           is_internal?: boolean | null
           level?: string | null
           popularity?: number | null
+          prerequisites?: string | null
+          related_urls?: string[] | null
           search_vector?: unknown
           title: string
           units?: string | null
@@ -119,6 +127,7 @@ export type Database = {
         }
         Update: {
           corequisites?: string | null
+          cross_listed_courses?: string | null
           course_code?: string
           created_at?: string | null
           credit?: number | null
@@ -127,10 +136,13 @@ export type Database = {
           details?: Json | null
           difficulty?: number | null
           id?: number
+          instructors?: string[] | null
           is_hidden?: boolean | null
           is_internal?: boolean | null
           level?: string | null
           popularity?: number | null
+          prerequisites?: string | null
+          related_urls?: string[] | null
           search_vector?: unknown
           title?: string
           units?: string | null
@@ -152,6 +164,39 @@ export type Database = {
         Update: {
           id?: number
           name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          ai_default_model: string
+          ai_provider: string
+          ai_prompt_template: string | null
+          ai_web_search_enabled: boolean
+          created_at: string
+          email: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          ai_default_model?: string
+          ai_provider?: string
+          ai_prompt_template?: string | null
+          ai_web_search_enabled?: boolean
+          created_at?: string
+          email?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          ai_default_model?: string
+          ai_provider?: string
+          ai_prompt_template?: string | null
+          ai_web_search_enabled?: boolean
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }

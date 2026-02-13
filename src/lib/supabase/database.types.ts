@@ -172,6 +172,7 @@ export type Database = {
           ai_default_model: string
           ai_provider: string
           ai_prompt_template: string | null
+          ai_study_plan_prompt_template: string | null
           ai_web_search_enabled: boolean
           created_at: string
           email: string | null
@@ -182,6 +183,7 @@ export type Database = {
           ai_default_model?: string
           ai_provider?: string
           ai_prompt_template?: string | null
+          ai_study_plan_prompt_template?: string | null
           ai_web_search_enabled?: boolean
           created_at?: string
           email?: string | null
@@ -192,6 +194,7 @@ export type Database = {
           ai_default_model?: string
           ai_provider?: string
           ai_prompt_template?: string | null
+          ai_study_plan_prompt_template?: string | null
           ai_web_search_enabled?: boolean
           created_at?: string
           email?: string | null

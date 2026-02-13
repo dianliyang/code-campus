@@ -3,13 +3,14 @@
 import { useState, useTransition } from "react";
 import { updateAiPreferences } from "@/actions/profile";
 import { AI_PROVIDERS, GEMINI_MODELS, PERPLEXITY_MODELS } from "@/lib/ai/models";
-import { DEFAULT_COURSE_DESCRIPTION_PROMPT } from "@/lib/ai/prompts";
+import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT } from "@/lib/ai/prompts";
 
 interface AISettingsCardProps {
   initialProvider: string;
   initialModel: string;
   initialWebSearchEnabled: boolean;
   initialPromptTemplate: string;
+  initialStudyPlanPromptTemplate: string;
 }
 
 export default function AISettingsCard({
@@ -17,6 +18,7 @@ export default function AISettingsCard({
   initialModel,
   initialWebSearchEnabled,
   initialPromptTemplate,
+  initialStudyPlanPromptTemplate,
 }: AISettingsCardProps) {
   const [provider, setProvider] = useState(
     initialProvider === "gemini" ? "gemini" : "perplexity",
@@ -24,6 +26,7 @@ export default function AISettingsCard({
   const [defaultModel, setDefaultModel] = useState(initialModel);
   const [webSearchEnabled, setWebSearchEnabled] = useState(initialWebSearchEnabled);
   const [promptTemplate, setPromptTemplate] = useState(initialPromptTemplate);
+  const [studyPlanPromptTemplate, setStudyPlanPromptTemplate] = useState(initialStudyPlanPromptTemplate);
   const [message, setMessage] = useState<string>("");
   const [isPending, startTransition] = useTransition();
 
@@ -31,7 +34,7 @@ export default function AISettingsCard({
     setMessage("");
     startTransition(async () => {
       try {
-        await updateAiPreferences({ provider, defaultModel, webSearchEnabled, promptTemplate });
+        await updateAiPreferences({ provider, defaultModel, webSearchEnabled, promptTemplate, studyPlanPromptTemplate });
         setMessage("Saved.");
       } catch (error) {
         console.error(error);
@@ -63,6 +66,21 @@ export default function AISettingsCard({
               </option>
             ))}
           </select>
+        </label>
+
+        <label className="block">
+          <span className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Study plan prompt template</span>
+          <textarea
+            value={studyPlanPromptTemplate}
+            onChange={(e) => setStudyPlanPromptTemplate(e.target.value)}
+            rows={8}
+            className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"
+            placeholder={"Use placeholder {{schedule_lines}}"}
+            disabled={isPending}
+          />
+          <p className="mt-2 text-xs text-gray-500">
+            Leave empty to use the built-in default study plan prompt.
+          </p>
         </label>
 
         <label className="block">
@@ -121,6 +139,23 @@ export default function AISettingsCard({
           </div>
           <pre className="w-full bg-gray-900 text-gray-100 border border-gray-800 rounded-lg px-3 py-3 text-xs overflow-auto whitespace-pre-wrap">
             {DEFAULT_COURSE_DESCRIPTION_PROMPT}
+          </pre>
+        </div>
+
+        <div className="block">
+          <div className="flex items-center justify-between mb-2">
+            <span className="block text-xs font-bold text-gray-600 uppercase tracking-wider">Default Study Plan Prompt</span>
+            <button
+              type="button"
+              onClick={() => setStudyPlanPromptTemplate(DEFAULT_STUDY_PLAN_PROMPT)}
+              disabled={isPending}
+              className="text-xs font-bold uppercase tracking-wider text-brand-blue disabled:opacity-50"
+            >
+              Use default
+            </button>
+          </div>
+          <pre className="w-full bg-gray-900 text-gray-100 border border-gray-800 rounded-lg px-3 py-3 text-xs overflow-auto whitespace-pre-wrap">
+            {DEFAULT_STUDY_PLAN_PROMPT}
           </pre>
         </div>
 

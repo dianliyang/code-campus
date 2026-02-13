@@ -88,16 +88,42 @@ export default function CourseDetailTopSection({
 
   const [editablePlans, setEditablePlans] = useState<EditableStudyPlan[]>(studyPlans);
   const [removedPlanIds, setRemovedPlanIds] = useState<number[]>([]);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>(course.fields || []);
+  const [topicInput, setTopicInput] = useState("");
 
   const allTopicOptions = useMemo(
     () => Array.from(new Set([...(availableTopics || []), ...(course.fields || [])])).sort(),
     [availableTopics, course.fields],
   );
 
-  const allSemesterOptions = useMemo(
-    () => Array.from(new Set([...(availableSemesters || []), ...(course.semesters || [])])).sort(),
-    [availableSemesters, course.semesters],
-  );
+  const semestersPlaceholder = useMemo(() => {
+    const seeds = Array.from(new Set([...(availableSemesters || []), ...(course.semesters || [])])).slice(0, 2);
+    return seeds.length > 0 ? seeds.join(", ") : "Fall 2025, Spring 2026";
+  }, [availableSemesters, course.semesters]);
+
+  const syncTopics = (topics: string[]) => {
+    const normalized = Array.from(new Set(topics.map((t) => t.trim()).filter((t) => t.length > 0)));
+    setSelectedTopics(normalized);
+    setFormData((p) => ({ ...p, topicsText: normalized.join(", ") }));
+  };
+
+  const addTopic = (topic: string) => {
+    const value = topic.trim();
+    if (!value) return;
+    syncTopics([...selectedTopics, value]);
+  };
+
+  const removeTopic = (topic: string) => {
+    syncTopics(selectedTopics.filter((t) => t !== topic));
+  };
+
+  const toggleTopic = (topic: string) => {
+    if (selectedTopics.includes(topic)) {
+      removeTopic(topic);
+    } else {
+      addTopic(topic);
+    }
+  };
 
   const handleToggleEdit = () => {
     onEditingChange(!isEditing);
@@ -317,13 +343,66 @@ export default function CourseDetailTopSection({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Topics (course_fields)</label>
-                <input
-                  value={formData.topicsText}
-                  onChange={(e) => setFormData((p) => ({ ...p, topicsText: e.target.value }))}
-                  className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                  placeholder="Machine Learning, Algorithms"
-                />
-                <p className="text-[11px] text-gray-400">Available: {allTopicOptions.join(", ") || "-"}</p>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      value={topicInput}
+                      onChange={(e) => setTopicInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === ",") {
+                          e.preventDefault();
+                          addTopic(topicInput);
+                          setTopicInput("");
+                        }
+                      }}
+                      className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                      placeholder="Type a topic and press Enter"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addTopic(topicInput);
+                        setTopicInput("");
+                      }}
+                      className="px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold uppercase tracking-wider text-gray-600 hover:bg-gray-50"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {selectedTopics.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTopics.map((topic) => (
+                        <span key={topic} className="inline-flex items-center gap-1.5 bg-brand-blue/10 text-brand-blue px-2.5 py-1 rounded-full text-xs font-semibold">
+                          {topic}
+                          <button type="button" onClick={() => removeTopic(topic)} className="text-brand-blue/70 hover:text-brand-blue" title={`Remove ${topic}`}>
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {allTopicOptions.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {allTopicOptions.map((topic) => {
+                        const active = selectedTopics.includes(topic);
+                        return (
+                          <button
+                            key={topic}
+                            type="button"
+                            onClick={() => toggleTopic(topic)}
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                              active ? "bg-brand-blue text-white border-brand-blue" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                            }`}
+                          >
+                            {topic}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Semesters (course_semesters)</label>
@@ -331,9 +410,8 @@ export default function CourseDetailTopSection({
                   value={formData.semestersText}
                   onChange={(e) => setFormData((p) => ({ ...p, semestersText: e.target.value }))}
                   className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                  placeholder="Fall 2025, Spring 2026"
+                  placeholder={semestersPlaceholder}
                 />
-                <p className="text-[11px] text-gray-400">Available: {allSemesterOptions.join(", ") || "-"}</p>
               </div>
             </div>
 

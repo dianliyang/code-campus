@@ -4,7 +4,7 @@ import { createAdminClient, getUser } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
-import { DEFAULT_COURSE_DESCRIPTION_PROMPT } from "@/lib/ai/prompts";
+import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT } from "@/lib/ai/prompts";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? "");
@@ -287,6 +287,15 @@ function planKey(plan: {
   ].join("|");
 }
 
+function extractJsonArray(text: string) {
+  const trimmed = text.trim();
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    return trimmed;
+  }
+  const match = trimmed.match(/\[[\s\S]*\]/);
+  return match?.[0] || null;
+}
+
 export interface SchedulePlanPreview {
   sourceType: string;
   sourceLine: string;
@@ -327,8 +336,14 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
   }
 
   const scheduleEntries = Object.entries(rawSchedule as Record<string, unknown>);
+  const originalSchedule = scheduleEntries.flatMap(([kind, values]) =>
+    Array.isArray(values)
+      ? values.filter((v): v is string => typeof v === "string").map((line) => ({ type: kind, line }))
+      : [],
+  );
+
   const { startDate, endDate } = defaultPlanDateRange();
-  const parsedCandidates = scheduleEntries.flatMap(([kind, values]) => {
+  const fallbackParsed = scheduleEntries.flatMap(([kind, values]) => {
     if (!Array.isArray(values)) return [];
     return values.flatMap((entry) => {
       if (typeof entry !== "string") return [];
@@ -339,6 +354,130 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
       .filter((v): v is NonNullable<typeof v> => v !== null);
   });
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_study_plan_prompt_template")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
+  const selectedModel = (profile?.ai_default_model || "sonar").trim();
+  const model = provider === "gemini"
+    ? (GEMINI_MODEL_SET.has(selectedModel) ? selectedModel : "gemini-2.0-flash")
+    : (PERPLEXITY_MODEL_SET.has(selectedModel) ? selectedModel : "sonar");
+  const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
+  const promptTemplate = (profile?.ai_study_plan_prompt_template || "").trim() || DEFAULT_STUDY_PLAN_PROMPT;
+  const prompt = applyPromptTemplate(promptTemplate, {
+    schedule_lines: originalSchedule.map((s) => `- ${s.type}: ${s.line}`).join("\n"),
+  });
+
+  let aiParsed: Array<{
+    sourceType: string;
+    sourceLine: string;
+    daysOfWeek: number[];
+    startTime: string;
+    endTime: string;
+    location: string;
+    type: string;
+  }> = [];
+
+  try {
+    const response = provider === "gemini"
+      ? await (async () => {
+          if (!process.env.GEMINI_API_KEY) throw new Error("missing gemini key");
+          return fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                system_instruction: { parts: [{ text: "Return only valid JSON array." }] },
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.1, maxOutputTokens: 1400 },
+                tools: webSearchEnabled ? [{ google_search: {} }] : undefined,
+              }),
+            },
+          );
+        })()
+      : await (async () => {
+          if (!process.env.PERPLEXITY_API_KEY) throw new Error("missing perplexity key");
+          return fetch("https://api.perplexity.ai/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: "system", content: "Return only a valid JSON array." },
+                { role: "user", content: prompt },
+              ],
+              temperature: 0.1,
+              max_tokens: 1400,
+              disable_search: !webSearchEnabled,
+              return_images: false,
+              return_related_questions: false,
+            }),
+          });
+        })();
+
+    if (response.ok) {
+      const json = (await response.json()) as
+        | { choices?: Array<{ message?: { content?: string } }> }
+        | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+
+      const aiText = provider === "gemini"
+        ? (
+            (json as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> })
+              .candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("\n")
+              .trim() || ""
+          )
+        : (
+            (json as { choices?: Array<{ message?: { content?: string } }> })
+              .choices?.[0]?.message?.content?.trim() || ""
+          );
+
+      const maybeArray = extractJsonArray(aiText);
+      if (maybeArray) {
+        const parsed = JSON.parse(maybeArray) as unknown;
+        if (Array.isArray(parsed)) {
+          aiParsed = parsed
+            .filter((item): item is {
+              sourceType: string;
+              sourceLine: string;
+              daysOfWeek: number[];
+              startTime: string;
+              endTime: string;
+              location: string;
+              type: string;
+            } =>
+              !!item &&
+              typeof item === "object" &&
+              Array.isArray((item as { daysOfWeek?: unknown }).daysOfWeek) &&
+              typeof (item as { startTime?: unknown }).startTime === "string" &&
+              typeof (item as { endTime?: unknown }).endTime === "string" &&
+              typeof (item as { sourceLine?: unknown }).sourceLine === "string" &&
+              typeof (item as { sourceType?: unknown }).sourceType === "string",
+            )
+            .map((item) => ({
+              sourceType: item.sourceType,
+              sourceLine: item.sourceLine,
+              daysOfWeek: item.daysOfWeek.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6),
+              startTime: normalizeTimeToken(item.startTime) || item.startTime,
+              endTime: normalizeTimeToken(item.endTime) || item.endTime,
+              location: item.location || "TBD",
+              type: item.type || item.sourceType || "class",
+            }))
+            .filter((item) => item.daysOfWeek.length > 0 && !!item.startTime && !!item.endTime);
+        }
+      }
+    }
+  } catch {
+    // fallback parser below
+  }
+
+  const parsedCandidates = aiParsed.length > 0 ? aiParsed : fallbackParsed;
   if (parsedCandidates.length === 0) {
     throw new Error("Schedule exists but could not parse meeting times");
   }
@@ -370,14 +509,7 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
     alreadyExists: existingKeys.has(planKey(p)),
   }));
 
-  return {
-    originalSchedule: scheduleEntries.flatMap(([kind, values]) =>
-      Array.isArray(values)
-        ? values.filter((v): v is string => typeof v === "string").map((line) => ({ type: kind, line }))
-        : [],
-    ),
-    generatedPlans,
-  };
+  return { originalSchedule, generatedPlans };
 }
 
 export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans: Array<{

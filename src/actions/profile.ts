@@ -9,6 +9,7 @@ export async function updateAiPreferences(input: {
   defaultModel: string;
   webSearchEnabled: boolean;
   promptTemplate: string;
+  studyPlanPromptTemplate: string;
 }) {
   const user = await getUser();
   if (!user) {
@@ -26,6 +27,10 @@ export async function updateAiPreferences(input: {
   if (promptTemplate.length > 6000) {
     throw new Error("Prompt template is too long");
   }
+  const studyPlanPromptTemplate = input.studyPlanPromptTemplate.trim();
+  if (studyPlanPromptTemplate.length > 6000) {
+    throw new Error("Study plan prompt template is too long");
+  }
 
   const supabase = await createClient();
   const now = new Date().toISOString();
@@ -38,6 +43,7 @@ export async function updateAiPreferences(input: {
       ai_default_model: input.defaultModel,
       ai_web_search_enabled: input.webSearchEnabled,
       ai_prompt_template: promptTemplate || null,
+      ai_study_plan_prompt_template: studyPlanPromptTemplate || null,
       updated_at: now,
     },
     { onConflict: "id" },
@@ -60,11 +66,17 @@ export async function updateAiPreferences(input: {
     if (error.code === "PGRST204" && error.message?.includes("'ai_prompt_template'")) {
       throw new Error("Database column `profiles.ai_prompt_template` is missing. Please run the prompt template migration.");
     }
+    if (error.code === "PGRST204" && error.message?.includes("'ai_study_plan_prompt_template'")) {
+      throw new Error("Database column `profiles.ai_study_plan_prompt_template` is missing. Please run the study plan prompt migration.");
+    }
     if (error.message?.includes("column \"ai_provider\"")) {
       throw new Error("Database column `profiles.ai_provider` is missing. Please run the latest AI settings migration.");
     }
     if (error.message?.includes("column \"ai_prompt_template\"")) {
       throw new Error("Database column `profiles.ai_prompt_template` is missing. Please run the prompt template migration.");
+    }
+    if (error.message?.includes("column \"ai_study_plan_prompt_template\"")) {
+      throw new Error("Database column `profiles.ai_study_plan_prompt_template` is missing. Please run the study plan prompt migration.");
     }
     throw new Error("Failed to update AI settings");
   }

@@ -24,7 +24,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template")
+    .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -39,6 +39,7 @@ export default async function SettingsPage() {
         initialModel={profile?.ai_default_model || "sonar"}
         initialWebSearchEnabled={profile?.ai_web_search_enabled ?? false}
         initialPromptTemplate={profile?.ai_prompt_template || ""}
+        initialStudyPlanPromptTemplate={profile?.ai_study_plan_prompt_template || ""}
       />
       <SecurityIdentitySection dict={dict.dashboard.profile} />
     </main>

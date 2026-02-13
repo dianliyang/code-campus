@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   ai_default_model TEXT NOT NULL DEFAULT 'sonar',
   ai_web_search_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   ai_prompt_template TEXT,
+  ai_study_plan_prompt_template TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -19,3 +19,24 @@ Requirements:
 - no URLs
 - keep it concise
 `.trim();
+
+export const DEFAULT_STUDY_PLAN_PROMPT = `
+You are generating structured study plan entries from course schedule lines.
+
+Input schedule lines:
+{{schedule_lines}}
+
+Return ONLY a JSON array. Each item must include:
+- sourceType: string
+- sourceLine: string
+- daysOfWeek: number[] (0=Sun, 1=Mon, ..., 6=Sat)
+- startTime: string (HH:MM:SS, 24h)
+- endTime: string (HH:MM:SS, 24h)
+- location: string
+- type: string
+
+Rules:
+- Do not add markdown or explanation text.
+- If a line is ambiguous and cannot be parsed safely, skip it.
+- Keep sourceType and sourceLine exactly matching input meaning.
+`.trim();

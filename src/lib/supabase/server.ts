@@ -274,10 +274,20 @@ export function mapCourseFromRow(
     cmu: "https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/search",
   };
 
-  const parsedDetails =
-    typeof row.details === "string"
-      ? JSON.parse(row.details)
-      : row.details || {};
+  let parsedDetails: Record<string, unknown> = {};
+  if (typeof row.details === "string") {
+    try {
+      const parsed = JSON.parse(row.details);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        parsedDetails = parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Ignore malformed JSON in legacy rows and fall back to empty object.
+      parsedDetails = {};
+    }
+  } else if (row.details && typeof row.details === "object" && !Array.isArray(row.details)) {
+    parsedDetails = row.details as Record<string, unknown>;
+  }
 
   return {
     id: Number(row.id),

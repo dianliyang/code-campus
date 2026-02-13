@@ -22,11 +22,29 @@ export default async function SettingsPage() {
     );
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template")
-    .eq("id", user.id)
-    .maybeSingle();
+  const selectVariants = [
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template",
+    "ai_default_model, ai_web_search_enabled, ai_prompt_template",
+    "ai_web_search_enabled, ai_prompt_template",
+    "id",
+  ];
+
+  let profile: Record<string, unknown> | null = null;
+  for (const selectColumns of selectVariants) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(selectColumns)
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!error) {
+      profile = (data as Record<string, unknown> | null) ?? null;
+      break;
+    }
+
+    console.error("[settings] profile select failed:", error.message);
+  }
 
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
@@ -35,11 +53,11 @@ export default async function SettingsPage() {
         <p className="text-sm text-gray-500 mt-2">Configure your default AI behavior for course generation.</p>
       </div>
       <AISettingsCard
-        initialProvider={profile?.ai_provider || "perplexity"}
-        initialModel={profile?.ai_default_model || "sonar"}
-        initialWebSearchEnabled={profile?.ai_web_search_enabled ?? false}
-        initialPromptTemplate={profile?.ai_prompt_template || ""}
-        initialStudyPlanPromptTemplate={profile?.ai_study_plan_prompt_template || ""}
+        initialProvider={(profile?.ai_provider as string) || "perplexity"}
+        initialModel={(profile?.ai_default_model as string) || "sonar"}
+        initialWebSearchEnabled={(profile?.ai_web_search_enabled as boolean | undefined) ?? false}
+        initialPromptTemplate={(profile?.ai_prompt_template as string) || ""}
+        initialStudyPlanPromptTemplate={(profile?.ai_study_plan_prompt_template as string) || ""}
       />
       <SecurityIdentitySection dict={dict.dashboard.profile} />
     </main>

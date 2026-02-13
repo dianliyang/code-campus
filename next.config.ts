@@ -4,6 +4,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
+    dangerouslyAllowLocalIP: true,
     dangerouslyAllowSVG: true,
     contentDispositionType: "inline",
     remotePatterns: [

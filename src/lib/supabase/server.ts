@@ -2,7 +2,8 @@ import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { Course } from "../scrapers/types";
+import { Course as ScrapedCourse } from "../scrapers/types";
+import type { Course as AppCourse } from "@/types";
 import { Database, Json } from "./database.types";
 
 export async function getBaseUrl() {
@@ -71,7 +72,7 @@ export const getUser = cache(async () => {
 });
 
 export class SupabaseDatabase {
-  async saveCourses(courses: Course[]): Promise<void> {
+  async saveCourses(courses: ScrapedCourse[]): Promise<void> {
     if (courses.length === 0) return;
 
     const university = formatUniversityName(courses[0].university);
@@ -261,7 +262,7 @@ export function formatUniversityName(name: string): string {
 
 export function mapCourseFromRow(
   row: Record<string, unknown>
-): Course & { id: number; url: string } {
+): AppCourse {
   const university = formatUniversityName(String(row.university || ""));
   const courseCode = String(row.course_code || row.course_code || "");
   const code = encodeURIComponent(courseCode);
@@ -273,11 +274,18 @@ export function mapCourseFromRow(
     cmu: "https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/search",
   };
 
+  const parsedDetails =
+    typeof row.details === "string"
+      ? JSON.parse(row.details)
+      : row.details || {};
+
   return {
     id: Number(row.id),
     university,
     courseCode,
     title: String(row.title || ""),
+    fields: [],
+    semesters: [],
     units: String(row.units || ""),
     credit: typeof row.credit === 'number' ? row.credit : undefined,
     description: String(row.description || ""),
@@ -285,14 +293,16 @@ export function mapCourseFromRow(
     department: String(row.department || ""),
     corequisites: String(row.corequisites || ""),
     level: String(row.level || ""),
+    prerequisites: String(row.prerequisites || ""),
+    relatedUrls: Array.isArray(row.related_urls) ? (row.related_urls as string[]) : [],
+    crossListedCourses: String(row.cross_listed_courses || ""),
     difficulty: Number(row.difficulty || 0),
-    details:
-      typeof row.details === "string"
-        ? JSON.parse(row.details)
-        : row.details || {},
+    details: parsedDetails,
+    instructors: Array.isArray(row.instructors) ? (row.instructors as string[]) : [],
     popularity: Number(row.popularity || 0),
     workload: String(row.workload || ""),
     isHidden: Boolean(row.is_hidden),
     isInternal: Boolean(row.is_internal),
+    createdAt: typeof row.created_at === "string" ? row.created_at : undefined,
   };
 }

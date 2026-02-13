@@ -2,6 +2,13 @@
 
 import { createAdminClient, getUser } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { rateLimit } from "@/lib/rate-limit";
+import { GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
+import { DEFAULT_COURSE_DESCRIPTION_PROMPT } from "@/lib/ai/prompts";
+
+function applyPromptTemplate(template: string, values: Record<string, string>) {
+  return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? "");
+}
 
 export async function updateCourse(courseId: number, data: {
   university: string;
@@ -18,11 +25,10 @@ export async function updateCourse(courseId: number, data: {
   workload: string;
   isHidden: boolean;
   isInternal: boolean;
-  details?: {
-    prerequisites?: string;
-    relatedUrls?: string[];
-    crossListedCourses?: string;
-  };
+  prerequisites?: string;
+  relatedUrls?: string[];
+  crossListedCourses?: string;
+  details?: Record<string, unknown>;
 }) {
   const user = await getUser();
   if (!user) {
@@ -31,22 +37,23 @@ export async function updateCourse(courseId: number, data: {
 
   const supabase = createAdminClient();
 
-  // Merge new details with existing details to preserve scraper data (sections, terms, etc.)
-  let mergedDetails: Record<string, unknown> | undefined;
-  if (data.details) {
-    const { data: existing } = await supabase
-      .from("courses")
-      .select("details")
-      .eq("id", courseId)
-      .single();
+  let mergedDetails: Record<string, unknown> = {};
+  const { data: existing } = await supabase
+    .from("courses")
+    .select("details")
+    .eq("id", courseId)
+    .single();
 
-    const existingDetails =
-      typeof existing?.details === "string"
-        ? JSON.parse(existing.details)
-        : existing?.details || {};
+  const existingDetails =
+    typeof existing?.details === "string"
+      ? JSON.parse(existing.details)
+      : existing?.details || {};
 
-    mergedDetails = { ...existingDetails, ...data.details };
-  }
+  mergedDetails = { ...existingDetails, ...(data.details || {}) };
+  delete mergedDetails.prerequisites;
+  delete mergedDetails.relatedUrls;
+  delete mergedDetails.crossListedCourses;
+  delete mergedDetails.instructors;
 
   const { error } = await supabase
     .from("courses")
@@ -65,7 +72,10 @@ export async function updateCourse(courseId: number, data: {
       workload: data.workload,
       is_hidden: data.isHidden,
       is_internal: data.isInternal,
-      ...(mergedDetails && { details: JSON.stringify(mergedDetails) }),
+      prerequisites: data.prerequisites || null,
+      related_urls: data.relatedUrls || [],
+      cross_listed_courses: data.crossListedCourses || null,
+      details: JSON.stringify(mergedDetails),
     })
     .eq("id", courseId);
 
@@ -97,4 +107,605 @@ export async function deleteCourse(courseId: number) {
   }
 
   revalidatePath("/courses");
+}
+
+export async function updateCourseDescription(courseId: number, description: string) {
+  const user = await getUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("courses")
+    .update({ description })
+    .eq("id", courseId);
+
+  if (error) {
+    console.error("Failed to update course description:", error);
+    throw new Error("Failed to update course description");
+  }
+
+  revalidatePath(`/courses/${courseId}`);
+  revalidatePath("/courses");
+}
+
+interface EditableStudyPlanInput {
+  id?: number;
+  startDate: string;
+  endDate: string;
+  daysOfWeek: number[];
+  startTime: string;
+  endTime: string;
+  location: string;
+  type: string;
+}
+
+interface UpdateCourseFullInput {
+  university: string;
+  courseCode: string;
+  title: string;
+  units: string;
+  credit: number | null;
+  description: string;
+  url: string;
+  department: string;
+  corequisites: string;
+  level: string;
+  difficulty: number;
+  popularity: number;
+  workload: string;
+  isHidden: boolean;
+  isInternal: boolean;
+  prerequisites: string;
+  relatedUrls: string[];
+  crossListedCourses: string;
+  detailsJson: string;
+  instructors: string[];
+  topics: string[];
+  semesters: string[];
+  studyPlans: EditableStudyPlanInput[];
+  removedStudyPlanIds: number[];
+}
+
+function parseSemesterLabel(label: string): { term: string; year: number } | null {
+  const trimmed = label.trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(/^([A-Za-z]+)\s+(\d{4})$/);
+  if (!match) return null;
+  return {
+    term: match[1],
+    year: Number(match[2]),
+  };
+}
+
+const DAY_NAME_MAP: Array<{ regex: RegExp; day: number }> = [
+  { regex: /\bmon(?:day)?\b/gi, day: 1 },
+  { regex: /\btue(?:s|sday)?\b/gi, day: 2 },
+  { regex: /\bwed(?:nesday)?\b/gi, day: 3 },
+  { regex: /\bthu(?:r|rs|rsday)?\b/gi, day: 4 },
+  { regex: /\bfri(?:day)?\b/gi, day: 5 },
+  { regex: /\bsat(?:urday)?\b/gi, day: 6 },
+  { regex: /\bsun(?:day)?\b/gi, day: 0 },
+];
+
+function toIsoDate(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function defaultPlanDateRange() {
+  const start = new Date();
+  const end = new Date();
+  end.setDate(end.getDate() + 90);
+  return {
+    startDate: toIsoDate(start),
+    endDate: toIsoDate(end),
+  };
+}
+
+function normalizeTimeToken(raw: string, fallbackSuffix?: "am" | "pm") {
+  const trimmed = raw.trim().toLowerCase().replace(/\s+/g, "");
+  const explicitSuffixMatch = trimmed.match(/(am|pm)$/);
+  const suffix = (explicitSuffixMatch?.[1] as "am" | "pm" | undefined) || fallbackSuffix;
+  const numeric = trimmed.replace(/(am|pm)$/i, "");
+  const [h, m] = numeric.split(":");
+  let hour = Number(h);
+  const minute = Number(m ?? "0");
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  if (suffix === "pm" && hour < 12) hour += 12;
+  if (suffix === "am" && hour === 12) hour = 0;
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+}
+
+function parseDays(prefix: string) {
+  const found = new Set<number>();
+  DAY_NAME_MAP.forEach(({ regex, day }) => {
+    if (regex.test(prefix)) found.add(day);
+  });
+
+  const compact = prefix.match(/\b[MTWRFSU]{2,7}\b/i)?.[0]?.toUpperCase();
+  if (compact) {
+    for (const ch of compact) {
+      if (ch === "M") found.add(1);
+      if (ch === "T") found.add(2);
+      if (ch === "W") found.add(3);
+      if (ch === "R") found.add(4);
+      if (ch === "F") found.add(5);
+      if (ch === "S") found.add(6);
+      if (ch === "U") found.add(0);
+    }
+  }
+
+  return Array.from(found).sort((a, b) => a - b);
+}
+
+function parseScheduleLine(line: string, fallbackType: string) {
+  const text = line.trim();
+  if (!text) return null;
+
+  const timeMatch = text.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*(?:-|–|—|to)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
+  if (!timeMatch || typeof timeMatch.index !== "number") return null;
+
+  const beforeTime = text.slice(0, timeMatch.index).trim();
+  const days = parseDays(beforeTime || text);
+  if (days.length === 0) return null;
+
+  const firstSuffix = timeMatch[1].toLowerCase().includes("pm")
+    ? "pm"
+    : timeMatch[1].toLowerCase().includes("am")
+      ? "am"
+      : undefined;
+  const startTime = normalizeTimeToken(timeMatch[1], firstSuffix);
+  const endTime = normalizeTimeToken(timeMatch[2], firstSuffix);
+  if (!startTime || !endTime) return null;
+
+  const location = (text.match(/(?:@|in|room)\s+([^,;]+)$/i)?.[1] || "").trim();
+  return {
+    daysOfWeek: days,
+    startTime,
+    endTime,
+    location: location || "TBD",
+    type: fallbackType || "class",
+  };
+}
+
+export async function generateStudyPlansFromCourseSchedule(courseId: number) {
+  const user = await getUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const supabase = createAdminClient();
+  const { data: courseRow, error: courseError } = await supabase
+    .from("courses")
+    .select("details")
+    .eq("id", courseId)
+    .single();
+
+  if (courseError || !courseRow) {
+    throw new Error("Course not found");
+  }
+
+  const details =
+    typeof courseRow.details === "string"
+      ? (JSON.parse(courseRow.details) as Record<string, unknown>)
+      : (courseRow.details as Record<string, unknown> | null) || {};
+  const rawSchedule = details.schedule;
+  if (!rawSchedule || typeof rawSchedule !== "object" || Array.isArray(rawSchedule)) {
+    throw new Error("No schedule found in course details");
+  }
+
+  const scheduleEntries = Object.entries(rawSchedule as Record<string, unknown>);
+  const { startDate, endDate } = defaultPlanDateRange();
+  const parsedCandidates = scheduleEntries.flatMap(([kind, values]) => {
+    if (!Array.isArray(values)) return [];
+    return values
+      .map((entry) => (typeof entry === "string" ? parseScheduleLine(entry, kind) : null))
+      .filter((v): v is NonNullable<typeof v> => v !== null);
+  });
+
+  if (parsedCandidates.length === 0) {
+    throw new Error("Schedule exists but could not parse meeting times");
+  }
+
+  const { data: existingPlans } = await supabase
+    .from("study_plans")
+    .select("days_of_week, start_time, end_time, location, type")
+    .eq("user_id", user.id)
+    .eq("course_id", courseId);
+
+  const existingKeys = new Set(
+    (existingPlans || []).map((p) => [
+      (p.days_of_week || []).join(","),
+      p.start_time || "",
+      p.end_time || "",
+      p.location || "",
+      p.type || "",
+    ].join("|")),
+  );
+
+  const dedupe = new Set<string>();
+  const toInsert = parsedCandidates
+    .map((p) => ({
+      user_id: user.id,
+      course_id: courseId,
+      start_date: startDate,
+      end_date: endDate,
+      days_of_week: p.daysOfWeek,
+      start_time: p.startTime,
+      end_time: p.endTime,
+      location: p.location,
+      type: p.type,
+    }))
+    .filter((plan) => {
+      const key = [
+        (plan.days_of_week || []).join(","),
+        plan.start_time,
+        plan.end_time,
+        plan.location || "",
+        plan.type || "",
+      ].join("|");
+      if (existingKeys.has(key) || dedupe.has(key)) return false;
+      dedupe.add(key);
+      return true;
+    });
+
+  if (toInsert.length === 0) {
+    return { created: 0, parsed: parsedCandidates.length };
+  }
+
+  const { error: insertError } = await supabase.from("study_plans").insert(toInsert);
+  if (insertError) {
+    console.error("Failed to generate study plans from schedule:", insertError);
+    throw new Error("Failed to generate study plans");
+  }
+
+  revalidatePath(`/courses/${courseId}`);
+  revalidatePath("/study-plan");
+  return { created: toInsert.length, parsed: parsedCandidates.length };
+}
+
+export async function updateCourseFull(courseId: number, input: UpdateCourseFullInput) {
+  const user = await getUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const supabase = createAdminClient();
+
+  let parsedDetails: Record<string, unknown> = {};
+  try {
+    parsedDetails = input.detailsJson.trim() ? JSON.parse(input.detailsJson) : {};
+  } catch {
+    throw new Error("Invalid details JSON");
+  }
+
+  delete parsedDetails.instructors;
+  delete parsedDetails.prerequisites;
+  delete parsedDetails.relatedUrls;
+  delete parsedDetails.crossListedCourses;
+
+  const { error: courseError } = await supabase
+    .from("courses")
+    .update({
+      university: input.university,
+      course_code: input.courseCode,
+      title: input.title,
+      units: input.units,
+      credit: input.credit,
+      description: input.description,
+      url: input.url,
+      department: input.department,
+      corequisites: input.corequisites,
+      level: input.level,
+      difficulty: input.difficulty,
+      popularity: input.popularity,
+      workload: input.workload,
+      is_hidden: input.isHidden,
+      is_internal: input.isInternal,
+      prerequisites: input.prerequisites || null,
+      related_urls: input.relatedUrls || [],
+      cross_listed_courses: input.crossListedCourses || null,
+      details: JSON.stringify(parsedDetails),
+      instructors: input.instructors,
+    })
+    .eq("id", courseId);
+
+  if (courseError) {
+    console.error("Failed to update course:", courseError);
+    throw new Error("Failed to update course");
+  }
+
+  const topicNames = Array.from(
+    new Set(input.topics.map((name) => name.trim()).filter((name) => name.length > 0)),
+  );
+
+  if (topicNames.length > 0) {
+    const { error: insertFieldsError } = await supabase
+      .from("fields")
+      .upsert(topicNames.map((name) => ({ name })), { onConflict: "name", ignoreDuplicates: true });
+    if (insertFieldsError) {
+      console.error("Failed to upsert fields:", insertFieldsError);
+      throw new Error("Failed to update topics");
+    }
+  }
+
+  const { data: topicRows, error: topicFetchError } = await supabase
+    .from("fields")
+    .select("id, name")
+    .in("name", topicNames.length > 0 ? topicNames : ["__no_topic__"]);
+  if (topicFetchError) {
+    console.error("Failed to fetch topic ids:", topicFetchError);
+    throw new Error("Failed to update topics");
+  }
+
+  const { error: clearTopicsError } = await supabase
+    .from("course_fields")
+    .delete()
+    .eq("course_id", courseId);
+  if (clearTopicsError) {
+    console.error("Failed to clear course topics:", clearTopicsError);
+    throw new Error("Failed to update topics");
+  }
+
+  if ((topicRows || []).length > 0) {
+    const { error: insertCourseFieldsError } = await supabase
+      .from("course_fields")
+      .insert((topicRows || []).map((row) => ({ course_id: courseId, field_id: row.id })));
+    if (insertCourseFieldsError) {
+      console.error("Failed to update course topics:", insertCourseFieldsError);
+      throw new Error("Failed to update topics");
+    }
+  }
+
+  const semesterPairs = Array.from(
+    new Set(input.semesters.map((label) => label.trim()).filter((label) => label.length > 0)),
+  )
+    .map(parseSemesterLabel)
+    .filter((v): v is { term: string; year: number } => v !== null);
+
+  if (semesterPairs.length > 0) {
+    const { error: upsertSemestersError } = await supabase
+      .from("semesters")
+      .upsert(semesterPairs, { onConflict: "term,year", ignoreDuplicates: true });
+    if (upsertSemestersError) {
+      console.error("Failed to upsert semesters:", upsertSemestersError);
+      throw new Error("Failed to update semesters");
+    }
+  }
+
+  const { error: clearSemestersError } = await supabase
+    .from("course_semesters")
+    .delete()
+    .eq("course_id", courseId);
+  if (clearSemestersError) {
+    console.error("Failed to clear course semesters:", clearSemestersError);
+    throw new Error("Failed to update semesters");
+  }
+
+  for (const sem of semesterPairs) {
+    const { data: semRow, error: semFetchError } = await supabase
+      .from("semesters")
+      .select("id")
+      .eq("term", sem.term)
+      .eq("year", sem.year)
+      .single();
+    if (semFetchError || !semRow) {
+      console.error("Failed to fetch semester id:", semFetchError);
+      throw new Error("Failed to update semesters");
+    }
+
+    const { error: linkError } = await supabase
+      .from("course_semesters")
+      .insert({ course_id: courseId, semester_id: semRow.id });
+    if (linkError) {
+      console.error("Failed to link course semester:", linkError);
+      throw new Error("Failed to update semesters");
+    }
+  }
+
+  if (input.removedStudyPlanIds.length > 0) {
+    const { error: removePlansError } = await supabase
+      .from("study_plans")
+      .delete()
+      .in("id", input.removedStudyPlanIds)
+      .eq("user_id", user.id)
+      .eq("course_id", courseId);
+    if (removePlansError) {
+      console.error("Failed to remove study plans:", removePlansError);
+      throw new Error("Failed to update study plans");
+    }
+  }
+
+  for (const plan of input.studyPlans) {
+    const payload = {
+      user_id: user.id,
+      course_id: courseId,
+      start_date: plan.startDate,
+      end_date: plan.endDate,
+      days_of_week: plan.daysOfWeek,
+      start_time: plan.startTime,
+      end_time: plan.endTime,
+      location: plan.location,
+      type: plan.type || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (plan.id) {
+      const { error: updatePlanError } = await supabase
+        .from("study_plans")
+        .update(payload)
+        .eq("id", plan.id)
+        .eq("user_id", user.id)
+        .eq("course_id", courseId);
+      if (updatePlanError) {
+        console.error("Failed to update study plan:", updatePlanError);
+        throw new Error("Failed to update study plans");
+      }
+    } else {
+      const { error: insertPlanError } = await supabase
+        .from("study_plans")
+        .insert(payload);
+      if (insertPlanError) {
+        console.error("Failed to create study plan:", insertPlanError);
+        throw new Error("Failed to update study plans");
+      }
+    }
+  }
+
+  revalidatePath(`/courses/${courseId}`);
+  revalidatePath("/courses");
+  revalidatePath("/study-plan");
+}
+
+export async function regenerateCourseDescription(courseId: number) {
+  const user = await getUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const { success: withinLimit } = rateLimit(`ai:course-description:${user.id}`, 5, 60_000);
+  if (!withinLimit) {
+    throw new Error("Rate limit exceeded. Please try again shortly.");
+  }
+
+  const supabase = createAdminClient();
+  const { data: row, error } = await supabase
+    .from("courses")
+    .select("title, course_code, university, level, prerequisites, corequisites, description")
+    .eq("id", courseId)
+    .single();
+
+  if (error || !row) {
+    throw new Error("Course not found");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
+  const selectedModel = (profile?.ai_default_model || "sonar").trim();
+  const model = provider === "gemini"
+    ? (GEMINI_MODEL_SET.has(selectedModel) ? selectedModel : "gemini-2.0-flash")
+    : (PERPLEXITY_MODEL_SET.has(selectedModel) ? selectedModel : "sonar");
+  const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
+  const customTemplate = (profile?.ai_prompt_template || "").trim();
+  const template = customTemplate || DEFAULT_COURSE_DESCRIPTION_PROMPT;
+  const prompt = applyPromptTemplate(template, {
+    title: row.title || "",
+    course_code: row.course_code || "",
+    university: row.university || "",
+    level: row.level || "",
+    prerequisites: row.prerequisites || "",
+    corequisites: row.corequisites || "",
+    description: row.description || "",
+  });
+
+  const response = provider === "gemini"
+    ? await (async () => {
+        if (!process.env.GEMINI_API_KEY) {
+          throw new Error("AI service is not configured. Please set GEMINI_API_KEY.");
+        }
+
+        return fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_instruction: {
+                parts: [{ text: "You are a precise university catalog editor." }],
+              },
+              contents: [
+                {
+                  role: "user",
+                  parts: [{ text: prompt }],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.5,
+                maxOutputTokens: 700,
+              },
+              tools: webSearchEnabled
+                ? [{ google_search: {} }]
+                : undefined,
+            }),
+          },
+        );
+      })()
+    : await (async () => {
+        if (!process.env.PERPLEXITY_API_KEY) {
+          throw new Error("AI service is not configured. Please set PERPLEXITY_API_KEY.");
+        }
+
+        return fetch("https://api.perplexity.ai/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: "You are a precise university catalog editor." },
+              { role: "user", content: prompt },
+            ],
+            temperature: 0.5,
+            max_tokens: 700,
+            return_images: false,
+            return_related_questions: false,
+            disable_search: !webSearchEnabled,
+            stream_mode: "concise",
+          }),
+        });
+      })();
+
+  if (!response.ok) {
+    const body = await response.text();
+    if (provider === "gemini" && response.status === 429) {
+      let retryHint = "";
+      try {
+        const parsed = JSON.parse(body) as { error?: { status?: string; message?: string } };
+        const message = parsed.error?.message || "";
+        const retryMatch = message.match(/retry in\s+([\d.]+)s/i);
+        if (retryMatch?.[1]) {
+          retryHint = ` Please retry in about ${Math.ceil(Number(retryMatch[1]))} seconds.`;
+        }
+        if (parsed.error?.status === "RESOURCE_EXHAUSTED" || message.toLowerCase().includes("quota")) {
+          throw new Error(
+            `Gemini quota exceeded for this API key/project. Check Gemini billing/quota settings or switch provider to Perplexity.${retryHint}`,
+          );
+        }
+      } catch (error) {
+        if (error instanceof Error) throw error;
+      }
+      throw new Error("Gemini rate limit reached. Please try again shortly or switch provider to Perplexity.");
+    }
+    throw new Error(`AI generation failed (${response.status}): ${body || "No response body"}`);
+  }
+
+  const parsedJson = (await response.json()) as
+    | { choices?: Array<{ message?: { content?: string } }> }
+    | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+
+  const rawText = provider === "gemini"
+    ? (
+        (parsedJson as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> })
+          .candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("\n")
+          .trim() || ""
+      )
+    : (
+        (parsedJson as { choices?: Array<{ message?: { content?: string } }> })
+          .choices?.[0]?.message?.content?.trim() || ""
+      );
+  const text = rawText.trim();
+  if (!text) {
+    throw new Error("AI returned an empty description");
+  }
+  return text;
 }

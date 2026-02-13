@@ -189,9 +189,9 @@ export default function CourseCard({
 
         {/* 4. Details / Stats */}
         <div className="flex-grow min-w-0 flex flex-col justify-center gap-1">
-          {course.details?.relatedUrls && course.details.relatedUrls.length > 0 && (
+          {course.relatedUrls && course.relatedUrls.length > 0 && (
             <div className="hidden md:flex items-center gap-1.5">
-              {course.details.relatedUrls.slice(0, 2).map((url, i) => {
+              {course.relatedUrls.slice(0, 2).map((url, i) => {
                 let hostname = url;
                 try { hostname = new URL(url).hostname.replace('www.', ''); } catch {}
                 return (
@@ -209,8 +209,8 @@ export default function CourseCard({
                   </a>
                 );
               })}
-              {course.details.relatedUrls.length > 2 && (
-                <span className="text-[10px] text-gray-400">+{course.details.relatedUrls.length - 2}</span>
+              {course.relatedUrls.length > 2 && (
+                <span className="text-[10px] text-gray-400">+{course.relatedUrls.length - 2}</span>
               )}
             </div>
           )}
@@ -324,9 +324,9 @@ export default function CourseCard({
         ))}
       </div>
 
-      {course.details?.relatedUrls && course.details.relatedUrls.length > 0 && (
+      {course.relatedUrls && course.relatedUrls.length > 0 && (
         <div className="flex items-center gap-2 mb-4 flex-wrap">
-          {course.details.relatedUrls.slice(0, 2).map((url, i) => {
+          {course.relatedUrls.slice(0, 2).map((url, i) => {
             let hostname = url;
             try { hostname = new URL(url).hostname.replace('www.', ''); } catch {}
             return (
@@ -344,8 +344,8 @@ export default function CourseCard({
               </a>
             );
           })}
-          {course.details.relatedUrls.length > 2 && (
-            <span className="text-[10px] text-gray-400">+{course.details.relatedUrls.length - 2}</span>
+          {course.relatedUrls.length > 2 && (
+            <span className="text-[10px] text-gray-400">+{course.relatedUrls.length - 2}</span>
           )}
         </div>
       )}

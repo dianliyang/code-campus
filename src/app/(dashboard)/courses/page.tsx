@@ -171,20 +171,29 @@ async function fetchCourses(
 ) {
   const supabase = await createClient();
   
-  let selectString = `
+  const modernSelectString = `
+    id, university, course_code, title, units, url, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
+    fields:course_fields(fields(name)),
+    semesters:course_semesters(semesters(term, year))
+  `;
+  const legacySelectString = `
     id, university, course_code, title, units, url, details, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
     fields:course_fields(fields(name)),
     semesters:course_semesters(semesters(term, year))
   `;
 
-  if (enrolledOnly) {
-    selectString += `, user_courses!inner(user_id, status)`;
-  }
+  const buildQuery = (selectString: string) => {
+    let s = selectString;
+    if (enrolledOnly) {
+      s += `, user_courses!inner(user_id, status)`;
+    }
+    return supabase
+      .from('courses')
+      .select(s, { count: 'exact' })
+      .eq('is_hidden', false);
+  };
 
-  let supabaseQuery = supabase
-    .from('courses')
-    .select(selectString, { count: 'exact' })
-    .eq('is_hidden', false);
+  let supabaseQuery = buildQuery(modernSelectString);
 
   // Parallelize hidden course and field filter queries
   const needsHiddenFilter = !enrolledOnly && !!userId;
@@ -236,8 +245,56 @@ async function fetchCourses(
   else if (sort === 'title') supabaseQuery = supabaseQuery.order('title', { ascending: true });
   else supabaseQuery = supabaseQuery.order('id', { ascending: false });
 
-  const { data, count, error } = await supabaseQuery
-    .range(offset, offset + size - 1);
+  let { data, count, error } = await supabaseQuery.range(offset, offset + size - 1);
+
+  const errorMessage = `${error?.message || ""} ${error?.details || ""}`.toLowerCase();
+  const shouldFallbackToLegacy =
+    !!error &&
+    (errorMessage.includes("column") &&
+      (errorMessage.includes("instructors") ||
+        errorMessage.includes("prerequisites") ||
+        errorMessage.includes("related_urls") ||
+        errorMessage.includes("cross_listed_courses")));
+
+  if (shouldFallbackToLegacy) {
+    let fallbackQuery = buildQuery(legacySelectString);
+
+    if (enrolledOnly) {
+      if (!userId) return { items: [], total: 0, pages: 0 };
+      fallbackQuery = fallbackQuery.eq('user_courses.user_id', userId);
+      fallbackQuery = fallbackQuery.neq('user_courses.status', 'hidden');
+    } else if (needsHiddenFilter) {
+      const hiddenIds = hiddenResult.data?.map(h => h.course_id) || [];
+      if (hiddenIds.length > 0) {
+        fallbackQuery = fallbackQuery.not('id', 'in', `(${hiddenIds.join(',')})`);
+      }
+    }
+
+    if (query) {
+      fallbackQuery = fallbackQuery.textSearch('search_vector', query, { type: 'websearch' });
+    }
+    if (universities.length > 0) {
+      fallbackQuery = fallbackQuery.in('university', universities);
+    }
+    if (needsFieldFilter) {
+      const fieldCourseIds = (fieldFilterResult.data || [])
+        .flatMap(f => (f.course_fields as { course_id: number }[] | null || []).map(cf => cf.course_id));
+      if (fieldCourseIds.length === 0) return { items: [], total: 0, pages: 0 };
+      fallbackQuery = fallbackQuery.in('id', fieldCourseIds);
+    }
+    if (levels.length > 0) {
+      fallbackQuery = fallbackQuery.in('level', levels);
+    }
+    if (sort === 'popularity') fallbackQuery = fallbackQuery.order('popularity', { ascending: false });
+    else if (sort === 'newest') fallbackQuery = fallbackQuery.order('created_at', { ascending: false });
+    else if (sort === 'title') fallbackQuery = fallbackQuery.order('title', { ascending: true });
+    else fallbackQuery = fallbackQuery.order('id', { ascending: false });
+
+    const fallbackResult = await fallbackQuery.range(offset, offset + size - 1);
+    data = fallbackResult.data;
+    count = fallbackResult.count;
+    error = fallbackResult.error;
+  }
 
   if (error) {
     console.error("[Supabase] Fetch error:", error);

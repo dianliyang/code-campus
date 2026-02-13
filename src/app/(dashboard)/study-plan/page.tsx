@@ -72,7 +72,7 @@ async function StudyPlanContent({
   const { data: enrolledRows, error } = await supabase
     .from('courses')
     .select(`
-      id, university, course_code, title, units, credit, url, description, details, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal,
+      id, university, course_code, title, units, credit, url, description, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal,
       uc:user_courses!inner(status, progress, updated_at, gpa, score),
       fields:course_fields(fields(name)),
       semesters:course_semesters(semesters(term, year))

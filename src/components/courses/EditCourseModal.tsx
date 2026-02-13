@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Course } from "@/types";
 import { updateCourse, deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
-import { X, Loader2, Check, Trash2 } from "lucide-react";
+import { Loader2, Check, Trash2 } from "lucide-react";
 
 interface EditCourseModalProps {
   course: Course;
@@ -25,17 +25,15 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
     url: course.url || "",
     department: course.department || "",
     corequisites: course.corequisites || "",
+    prerequisites: course.prerequisites || "",
+    relatedUrls: course.relatedUrls?.join('\n') || "",
+    crossListedCourses: course.crossListedCourses || "",
     level: course.level || "undergraduate",
     difficulty: course.difficulty || 0,
     popularity: course.popularity || 0,
     workload: course.workload || "",
     isHidden: course.isHidden || false,
     isInternal: course.isInternal || false,
-    details: {
-      prerequisites: course.details?.prerequisites || "",
-      relatedUrls: course.details?.relatedUrls?.join('\n') || "",
-      crossListedCourses: course.details?.crossListedCourses || "",
-    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,13 +42,11 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
     try {
       const updateData = {
         ...formData,
-        details: {
-          prerequisites: formData.details.prerequisites || undefined,
-          relatedUrls: formData.details.relatedUrls
-            ? formData.details.relatedUrls.split('\n').map(url => url.trim()).filter(url => url.length > 0)
-            : undefined,
-          crossListedCourses: formData.details.crossListedCourses || undefined,
-        },
+        prerequisites: formData.prerequisites || undefined,
+        relatedUrls: formData.relatedUrls
+          ? formData.relatedUrls.split('\n').map(url => url.trim()).filter(url => url.length > 0)
+          : undefined,
+        crossListedCourses: formData.crossListedCourses || undefined,
       };
       await updateCourse(course.id, updateData);
       onClose();
@@ -87,21 +83,7 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl p-6 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 flex flex-col">
-        <div className="flex items-center justify-between mb-6 shrink-0">
-          <h2 className="text-xl font-bold text-gray-900 tracking-tight">
-            Edit Course
-          </h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex-1 space-y-6">
+    <form onSubmit={handleSubmit} className="pt-2 space-y-6 max-w-4xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Core Info - Full Width */}
@@ -110,8 +92,8 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Prerequisites</label>
                 <textarea
                   rows={2}
-                  value={formData.details.prerequisites}
-                  onChange={(e) => setFormData({ ...formData, details: { ...formData.details, prerequisites: e.target.value } })}
+                  value={formData.prerequisites}
+                  onChange={(e) => setFormData({ ...formData, prerequisites: e.target.value })}
                   className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
                   placeholder="e.g., CS101, MATH202"
                 />
@@ -120,8 +102,8 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Related URLs (one per line)</label>
                 <textarea
                   rows={3}
-                  value={formData.details.relatedUrls}
-                  onChange={(e) => setFormData({ ...formData, details: { ...formData.details, relatedUrls: e.target.value } })}
+                  value={formData.relatedUrls}
+                  onChange={(e) => setFormData({ ...formData, relatedUrls: e.target.value })}
                   className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm font-mono focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
                 />
               </div>
@@ -132,8 +114,8 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Cross-Listed</label>
               <input
                 type="text"
-                value={formData.details.crossListedCourses}
-                onChange={(e) => setFormData({ ...formData, details: { ...formData.details, crossListedCourses: e.target.value } })}
+                value={formData.crossListedCourses}
+                onChange={(e) => setFormData({ ...formData, crossListedCourses: e.target.value })}
                 className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brand-blue outline-none"
               />
             </div>
@@ -258,7 +240,5 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
             </div>
           </div>
         </form>
-      </div>
-    </div>
   );
 }

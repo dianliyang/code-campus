@@ -13,10 +13,15 @@ export interface Course {
   workload: string;
   isHidden: boolean;
   isInternal?: boolean;
+  createdAt?: string;
   fields: string[];
   semesters: string[];
   level?: string;
   corequisites?: string;
+  instructors?: string[];
+  prerequisites?: string;
+  relatedUrls?: string[];
+  crossListedCourses?: string;
   details?: {
     prerequisites?: string;
     relatedUrls?: string[];

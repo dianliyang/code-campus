@@ -25,7 +25,28 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from('courses')
       .select(`
-        *,
+        id,
+        university,
+        course_code,
+        title,
+        units,
+        credit,
+        description,
+        url,
+        details,
+        instructors,
+        prerequisites,
+        related_urls,
+        cross_listed_courses,
+        department,
+        corequisites,
+        level,
+        difficulty,
+        popularity,
+        workload,
+        is_hidden,
+        is_internal,
+        created_at,
         study_plans(
           id,
           course_id,
@@ -57,8 +78,19 @@ export async function GET(request: NextRequest) {
       const details =
         rawDetails && typeof rawDetails === 'object' && !Array.isArray(rawDetails)
           ? (() => {
-              const { schedule, ...rest } = rawDetails as Record<string, unknown>;
+              const {
+                schedule,
+                prerequisites,
+                relatedUrls,
+                crossListedCourses,
+                instructors,
+                ...rest
+              } = rawDetails as Record<string, unknown>;
               void schedule;
+              void prerequisites;
+              void relatedUrls;
+              void crossListedCourses;
+              void instructors;
               return rest;
             })()
           : rawDetails;

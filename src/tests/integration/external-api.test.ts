@@ -28,7 +28,16 @@ describe('GET /api/external/courses', () => {
     const mockData = [{
       id: 1,
       title: 'Course 1',
-      details: { schedule: { Lecture: ['Mon 10:00'] }, internalId: 'x1' },
+      instructors: ['Prof A'],
+      prerequisites: 'Math 101',
+      related_urls: ['https://example.com'],
+      cross_listed_courses: 'CS-101',
+      details: {
+        schedule: { Lecture: ['Mon 10:00'] },
+        internalId: 'x1',
+        relatedUrls: ['legacy-url'],
+        prerequisites: 'legacy-prereq',
+      },
       study_plans: [{ id: 11, course_id: 1 }]
     }];
     
@@ -52,6 +61,10 @@ describe('GET /api/external/courses', () => {
     expect(data).toEqual([{
       id: 1,
       title: 'Course 1',
+      instructors: ['Prof A'],
+      prerequisites: 'Math 101',
+      related_urls: ['https://example.com'],
+      cross_listed_courses: 'CS-101',
       details: { internalId: 'x1' },
       schedule: [{ id: 11, course_id: 1 }]
     }]);

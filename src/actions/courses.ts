@@ -271,7 +271,36 @@ function parseScheduleLine(line: string, fallbackType: string) {
   };
 }
 
-export async function generateStudyPlansFromCourseSchedule(courseId: number) {
+function planKey(plan: {
+  daysOfWeek: number[];
+  startTime: string;
+  endTime: string;
+  location: string;
+  type: string;
+}) {
+  return [
+    (plan.daysOfWeek || []).join(","),
+    plan.startTime,
+    plan.endTime,
+    plan.location || "",
+    plan.type || "",
+  ].join("|");
+}
+
+export interface SchedulePlanPreview {
+  sourceType: string;
+  sourceLine: string;
+  daysOfWeek: number[];
+  startTime: string;
+  endTime: string;
+  location: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  alreadyExists: boolean;
+}
+
+export async function previewStudyPlansFromCourseSchedule(courseId: number) {
   const user = await getUser();
   if (!user) {
     throw new Error("Unauthorized");
@@ -301,8 +330,12 @@ export async function generateStudyPlansFromCourseSchedule(courseId: number) {
   const { startDate, endDate } = defaultPlanDateRange();
   const parsedCandidates = scheduleEntries.flatMap(([kind, values]) => {
     if (!Array.isArray(values)) return [];
-    return values
-      .map((entry) => (typeof entry === "string" ? parseScheduleLine(entry, kind) : null))
+    return values.flatMap((entry) => {
+      if (typeof entry !== "string") return [];
+      const parsed = parseScheduleLine(entry, kind);
+      if (!parsed) return [];
+      return [{ ...parsed, sourceType: kind, sourceLine: entry }];
+    })
       .filter((v): v is NonNullable<typeof v> => v !== null);
   });
 
@@ -316,23 +349,77 @@ export async function generateStudyPlansFromCourseSchedule(courseId: number) {
     .eq("user_id", user.id)
     .eq("course_id", courseId);
 
-  const existingKeys = new Set(
-    (existingPlans || []).map((p) => [
-      (p.days_of_week || []).join(","),
-      p.start_time || "",
-      p.end_time || "",
-      p.location || "",
-      p.type || "",
-    ].join("|")),
-  );
+  const existingKeys = new Set((existingPlans || []).map((p) => planKey({
+    daysOfWeek: p.days_of_week || [],
+    startTime: p.start_time || "",
+    endTime: p.end_time || "",
+    location: p.location || "",
+    type: p.type || "",
+  })));
+
+  const generatedPlans: SchedulePlanPreview[] = parsedCandidates.map((p) => ({
+    sourceType: p.sourceType,
+    sourceLine: p.sourceLine,
+    daysOfWeek: p.daysOfWeek,
+    startTime: p.startTime,
+    endTime: p.endTime,
+    location: p.location,
+    type: p.type,
+    startDate,
+    endDate,
+    alreadyExists: existingKeys.has(planKey(p)),
+  }));
+
+  return {
+    originalSchedule: scheduleEntries.flatMap(([kind, values]) =>
+      Array.isArray(values)
+        ? values.filter((v): v is string => typeof v === "string").map((line) => ({ type: kind, line }))
+        : [],
+    ),
+    generatedPlans,
+  };
+}
+
+export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans: Array<{
+  daysOfWeek: number[];
+  startTime: string;
+  endTime: string;
+  location: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+}>) {
+  const user = await getUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  if (!Array.isArray(selectedPlans) || selectedPlans.length === 0) {
+    return { created: 0 };
+  }
+
+  const supabase = createAdminClient();
+  const { data: existingPlans } = await supabase
+    .from("study_plans")
+    .select("days_of_week, start_time, end_time, location, type")
+    .eq("user_id", user.id)
+    .eq("course_id", courseId);
+
+  const existingKeys = new Set((existingPlans || []).map((p) => planKey({
+    daysOfWeek: p.days_of_week || [],
+    startTime: p.start_time || "",
+    endTime: p.end_time || "",
+    location: p.location || "",
+    type: p.type || "",
+  })));
 
   const dedupe = new Set<string>();
-  const toInsert = parsedCandidates
+  const toInsert = selectedPlans
     .map((p) => ({
       user_id: user.id,
       course_id: courseId,
-      start_date: startDate,
-      end_date: endDate,
+      start_date: p.startDate,
+      end_date: p.endDate,
       days_of_week: p.daysOfWeek,
       start_time: p.startTime,
       end_time: p.endTime,
@@ -340,20 +427,20 @@ export async function generateStudyPlansFromCourseSchedule(courseId: number) {
       type: p.type,
     }))
     .filter((plan) => {
-      const key = [
-        (plan.days_of_week || []).join(","),
-        plan.start_time,
-        plan.end_time,
-        plan.location || "",
-        plan.type || "",
-      ].join("|");
+      const key = planKey({
+        daysOfWeek: plan.days_of_week || [],
+        startTime: plan.start_time,
+        endTime: plan.end_time,
+        location: plan.location || "",
+        type: plan.type || "",
+      });
       if (existingKeys.has(key) || dedupe.has(key)) return false;
       dedupe.add(key);
       return true;
     });
 
   if (toInsert.length === 0) {
-    return { created: 0, parsed: parsedCandidates.length };
+    return { created: 0, selected: selectedPlans.length };
   }
 
   const { error: insertError } = await supabase.from("study_plans").insert(toInsert);
@@ -364,7 +451,7 @@ export async function generateStudyPlansFromCourseSchedule(courseId: number) {
 
   revalidatePath(`/courses/${courseId}`);
   revalidatePath("/study-plan");
-  return { created: toInsert.length, parsed: parsedCandidates.length };
+  return { created: toInsert.length, selected: selectedPlans.length };
 }
 
 export async function updateCourseFull(courseId: number, input: UpdateCourseFullInput) {

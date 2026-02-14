@@ -54,7 +54,7 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
         >
           <Filter className="w-5 h-5 group-hover:scale-110 transition-transform" />
           {totalFilters > 0 && (
-            <span className="absolute -top-1 -left-1 bg-gray-900 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+            <span className="absolute -top-1 -left-1 bg-gray-900 text-white text-[10px] font-semibold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
               {totalFilters}
             </span>
           )}
@@ -81,7 +81,7 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
         </div>
 
         <div className="flex items-center justify-between md:hidden mb-10">
-          <h2 className="text-xl font-black uppercase tracking-tighter text-gray-900">Filters</h2>
+          <h2 className="text-xl font-semibold uppercase tracking-tighter text-gray-900">Filters</h2>
           <button 
             onClick={() => setIsOpen(false)}
             className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400"
@@ -93,7 +93,7 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
         <div className="space-y-12">
           {/* Category Section */}
           <div>
-            <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-8">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em] mb-8">
               {dict?.sidebar_categories || "Category"}
             </h3>
             <div className="grid grid-cols-1 gap-5 md:block md:space-y-4 md:pr-4">
@@ -106,11 +106,11 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
                       checked={selectedCategories.includes(cat.name)}
                       onChange={() => updateParams("categories", handleToggle(selectedCategories, cat.name))}
                     />
-                    <span className={`text-[15px] md:text-sm font-bold md:font-normal tracking-tight transition-colors ${selectedCategories.includes(cat.name) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                    <span className={`text-[15px] md:text-sm font-medium md:font-normal tracking-tight transition-colors ${selectedCategories.includes(cat.name) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
                       {cat.name}
                     </span>
                   </div>
-                  <span className={`text-[11px] font-black transition-colors ${selectedCategories.includes(cat.name) ? 'text-brand-blue' : 'text-gray-400'}`}>
+                  <span className={`text-[11px] font-semibold transition-colors ${selectedCategories.includes(cat.name) ? 'text-brand-blue' : 'text-gray-400'}`}>
                     {cat.count}
                   </span>
                 </label>
@@ -119,7 +119,7 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
               {categories.length > INITIAL_CATEGORY_LIMIT && (
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-blue hover:text-blue-700 transition-colors pt-4 md:pt-2"
+                  className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-brand-blue hover:text-blue-700 transition-colors pt-4 md:pt-2"
                 >
                   {isExpanded ? (
                     <>Show Less <ChevronUp className="w-3 h-3" /></>
@@ -133,7 +133,7 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
 
           {/* Day of Week Section */}
           <div>
-            <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-8 md:mb-6">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em] mb-8 md:mb-6">
               {dict?.sidebar_days || "Day of Week"}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-1 gap-5 md:space-y-4">
@@ -145,7 +145,7 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
                     checked={selectedDays.includes(day)}
                     onChange={() => updateParams("days", handleToggle(selectedDays, day))}
                   />
-                  <span className={`text-[15px] md:text-sm font-bold md:font-normal tracking-tight transition-colors ${selectedDays.includes(day) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                  <span className={`text-[15px] md:text-sm font-medium md:font-normal tracking-tight transition-colors ${selectedDays.includes(day) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
                     {day}
                   </span>
                 </label>
@@ -155,7 +155,7 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
 
           {/* Booking Status Section */}
           <div>
-            <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-8 md:mb-6">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em] mb-8 md:mb-6">
               {dict?.sidebar_status || "Status"}
             </h3>
             <div className="grid grid-cols-1 gap-5 md:block md:space-y-4">
@@ -180,11 +180,11 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
                         checked={selectedStatuses.includes(s.name)}
                         onChange={() => updateParams("status", handleToggle(selectedStatuses, s.name))}
                       />
-                      <span className={`text-[15px] md:text-sm font-bold md:font-normal tracking-tight transition-colors ${selectedStatuses.includes(s.name) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                      <span className={`text-[15px] md:text-sm font-medium md:font-normal tracking-tight transition-colors ${selectedStatuses.includes(s.name) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
                         {label}
                       </span>
                     </div>
-                    <span className={`text-[11px] font-black transition-colors ${selectedStatuses.includes(s.name) ? 'text-brand-blue' : 'text-gray-400'}`}>
+                    <span className={`text-[11px] font-semibold transition-colors ${selectedStatuses.includes(s.name) ? 'text-brand-blue' : 'text-gray-400'}`}>
                       {s.count}
                     </span>
                   </label>

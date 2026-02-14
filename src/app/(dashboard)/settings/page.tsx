@@ -49,7 +49,7 @@ export default async function SettingsPage() {
   }
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen bg-white">
       <div className="mb-6">
         <h1 className="text-xl font-black text-gray-900 tracking-tight uppercase tracking-[0.1em]">{dict.dashboard.profile.settings}</h1>
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Configure system intelligence and account parameters</p>

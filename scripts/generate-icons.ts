@@ -10,7 +10,7 @@ import sharp from 'sharp';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const ICON_SIZES = [72, 96, 128, 144, 152, 192, 384, 512];
+const ICON_SIZES = [72, 96, 128, 144, 152, 180, 192, 384, 512];
 const SOURCE_SVG = path.join(process.cwd(), 'public/code-campus-logo.svg');
 const OUTPUT_DIR = path.join(process.cwd(), 'public/icons');
 

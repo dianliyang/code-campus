@@ -1,5 +1,7 @@
 import AISettingsCard from "@/components/profile/AISettingsCard";
 import SecurityIdentitySection from "@/components/profile/SecurityIdentitySection";
+import SystemMaintenanceCard from "@/components/profile/SystemMaintenanceCard";
+import LogoutButton from "@/components/layout/LogoutButton";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
@@ -47,10 +49,10 @@ export default async function SettingsPage() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-      <div className="mb-8">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">{dict.dashboard.profile.settings}</h1>
-        <p className="text-sm text-gray-500 mt-2">Configure your default AI behavior for course generation.</p>
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      <div className="mb-6">
+        <h1 className="text-xl font-black text-gray-900 tracking-tight uppercase tracking-[0.1em]">{dict.dashboard.profile.settings}</h1>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Configure system intelligence and account parameters</p>
       </div>
       <AISettingsCard
         initialProvider={(profile?.ai_provider as string) || "perplexity"}
@@ -59,7 +61,14 @@ export default async function SettingsPage() {
         initialPromptTemplate={(profile?.ai_prompt_template as string) || ""}
         initialStudyPlanPromptTemplate={(profile?.ai_study_plan_prompt_template as string) || ""}
       />
-      <SecurityIdentitySection dict={dict.dashboard.profile} />
+      
+      <SystemMaintenanceCard />
+
+      <SecurityIdentitySection dict={dict.dashboard.profile} provider={user.app_metadata.provider} />
+
+      <div className="mt-12 pt-8 border-t border-gray-100">
+        <LogoutButton showLabel={true} dict={dict} fullWidth={true} />
+      </div>
     </main>
   );
 }

@@ -23,36 +23,55 @@ export default function CourseListHeader({ totalItems, viewMode, setViewMode, di
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
+  const sortOptions = [
+    { value: "relevance", label: dict?.sort_relevance || "Match" },
+    { value: "popularity", label: dict?.sort_popularity || "Hot" },
+    { value: "newest", label: dict?.sort_newest || "New" },
+    { value: "title", label: dict?.sort_title || "A-Z" },
+  ];
+
   return (
-    <div className="flex justify-between items-center mb-4">
-      <span className="text-sm text-gray-500 font-mono">
-        {dict?.found_prefix || "Found"} {totalItems} {dict?.found_suffix || "courses..."}
-      </span>
-      <div className="flex items-center gap-4">
-        <div className="flex bg-gray-100 rounded p-1 gap-1">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex items-center justify-between md:justify-start gap-4">
+        <span className="text-[11px] text-gray-400 font-black uppercase tracking-[0.2em] whitespace-nowrap">
+          {totalItems} {dict?.found_suffix || "courses..."}
+        </span>
+        
+        {/* View Mode Switcher */}
+        <div className="flex bg-gray-50 border border-gray-100 rounded-lg p-0.5 gap-0.5">
           <button 
             onClick={() => setViewMode("list")} 
-            className={`p-1 px-2 rounded text-xs ${viewMode === "list" ? "bg-white shadow-sm text-brand-blue" : "text-gray-400"}`}
+            className={`p-1.5 rounded-md transition-all ${viewMode === "list" ? "bg-white shadow-sm text-brand-blue" : "text-gray-400 hover:text-gray-600"}`}
+            title="List View"
           >
             <List className="w-3.5 h-3.5" />
           </button>
           <button 
             onClick={() => setViewMode("grid")} 
-            className={`p-1 px-2 rounded text-xs ${viewMode === "grid" ? "bg-white shadow-sm text-brand-blue" : "text-gray-400"}`}
+            className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-white shadow-sm text-brand-blue" : "text-gray-400 hover:text-gray-600"}`}
+            title="Grid View"
           >
             <LayoutGrid className="w-3.5 h-3.5" />
           </button>
         </div>
-        <select 
-          value={sortBy} 
-          onChange={(e) => handleSortChange(e.target.value)} 
-          className="text-sm border-none bg-transparent font-bold focus:ring-0 cursor-pointer outline-none"
-        >
-          <option value="relevance">{dict?.sort_relevance || "Relevance"}</option>
-          <option value="popularity">{dict?.sort_popularity || "Popularity"}</option>
-          <option value="newest">{dict?.sort_newest || "Newest"}</option>
-          <option value="title">{dict?.sort_title || "Title (A-Z)"}</option>
-        </select>
+      </div>
+
+      {/* Modern Pill Sort UI */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+        <span className="hidden md:inline text-[10px] font-black text-gray-400 uppercase tracking-widest mr-2">Sort:</span>
+        {sortOptions.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => handleSortChange(opt.value)}
+            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
+              sortBy === opt.value
+                ? "bg-gray-900 text-white border-gray-900 shadow-md"
+                : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
     </div>
   );

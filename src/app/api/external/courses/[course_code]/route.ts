@@ -29,14 +29,14 @@ function courseLastUpdatedAt(course: Record<string, unknown>): number | null {
 }
 
 /**
- * External API for CAU Kiel courses.
- * 
- * Provides course data to other services.
- * Filters: university=CAU Kiel, is_hidden=false
- * Auth: Requires x-api-key header
+ * External API for a single CAU Kiel course by course_code.
+ *
+ * Auth: Requires x-api-key header when INTERNAL_API_KEY is set.
  */
-export async function GET(request: NextRequest) {
-  // 1. Authenticate the incoming request
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ course_code: string }> }
+) {
   const authHeader = request.headers.get('x-api-key');
   const internalKey = process.env.INTERNAL_API_KEY;
 
@@ -44,11 +44,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { course_code: courseCode } = await params;
+  if (!courseCode) {
+    return NextResponse.json({ error: 'Invalid course_code' }, { status: 400 });
+  }
+
   try {
-    // 2. Initialize Supabase Admin Client to query the database directly
     const supabase = createAdminClient();
 
-    // 3. Query CAU courses and attach schedules from study_plans
     const { data, error } = await supabase
       .from('courses')
       .select(`
@@ -92,7 +95,8 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq('university', 'CAU Kiel')
-      .eq('is_hidden', false);
+      .eq('is_hidden', false)
+      .eq('course_code', courseCode);
 
     if (error) {
       console.error('Supabase query error:', error);
@@ -102,13 +106,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const lastUpdatedMs = (data ?? []).reduce<number | null>((maxTime, course) => {
-      const candidate = courseLastUpdatedAt(course as Record<string, unknown>);
-      if (candidate === null) return maxTime;
-      if (maxTime === null || candidate > maxTime) return candidate;
-      return maxTime;
-    }, null);
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
 
+    const course = Array.isArray(data) ? data[0] : data;
+    const lastUpdatedMs = courseLastUpdatedAt(course as Record<string, unknown>);
     const clientLastUpdate = parseTimestamp(request.headers.get('if-modified-since'));
     if (
       lastUpdatedMs !== null &&
@@ -124,58 +127,61 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const coursesWithSchedule = (data ?? []).map((course) => {
-      const { study_plans, course_fields, ...courseFields } = course;
-      const publicCourseFields = { ...courseFields } as Record<string, unknown>;
-      delete publicCourseFields.is_hidden;
-      delete publicCourseFields.is_internal;
-      const topics = Array.isArray(course_fields)
-        ? course_fields
-            .map((item) => item?.fields?.name)
-            .filter((name): name is string => typeof name === 'string' && name.length > 0)
-        : [];
-      const rawDetails = courseFields.details;
-      const details =
-        rawDetails && typeof rawDetails === 'object' && !Array.isArray(rawDetails)
-          ? (() => {
-              const {
-                schedule,
-                prerequisites,
-                relatedUrls,
-                crossListedCourses,
-                instructors,
-                ...rest
-              } = rawDetails as Record<string, unknown>;
-              void schedule;
-              void prerequisites;
-              void relatedUrls;
-              void crossListedCourses;
-              void instructors;
-              return rest;
-            })()
-          : rawDetails;
+    const { study_plans, course_fields, ...courseFields } = course;
+    const publicCourseFields = { ...courseFields } as Record<string, unknown>;
+    delete publicCourseFields.is_hidden;
+    delete publicCourseFields.is_internal;
 
-      return {
+    const topics = Array.isArray(course_fields)
+      ? course_fields
+          .map((item) => item?.fields?.name)
+          .filter((name): name is string => typeof name === 'string' && name.length > 0)
+      : [];
+
+    const rawDetails = courseFields.details;
+    const details =
+      rawDetails && typeof rawDetails === 'object' && !Array.isArray(rawDetails)
+        ? (() => {
+            const {
+              schedule,
+              prerequisites,
+              relatedUrls,
+              crossListedCourses,
+              instructors,
+              ...rest
+            } = rawDetails as Record<string, unknown>;
+            void schedule;
+            void prerequisites;
+            void relatedUrls;
+            void crossListedCourses;
+            void instructors;
+            return rest;
+          })()
+        : rawDetails;
+
+    return NextResponse.json(
+      {
         ...publicCourseFields,
         details,
         topics,
         schedule: study_plans ?? [],
-      };
-    });
-
-    // 4. Return all courses with schedule
-    return NextResponse.json(coursesWithSchedule, {
-      headers: {
-        'Cache-Control': EXTERNAL_API_CACHE_CONTROL,
-        ...(lastUpdatedMs !== null
-          ? { [LAST_MODIFIED_HEADER]: new Date(lastUpdatedMs).toUTCString() }
-          : {}),
       },
-    });
+      {
+        headers: {
+          'Cache-Control': EXTERNAL_API_CACHE_CONTROL,
+          ...(lastUpdatedMs !== null
+            ? { [LAST_MODIFIED_HEADER]: new Date(lastUpdatedMs).toUTCString() }
+            : {}),
+        },
+      }
+    );
   } catch (error) {
     console.error('API implementation error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

@@ -12,97 +12,115 @@ interface StudyPlanHeaderProps {
 }
 
 export default function StudyPlanHeader({ enrolledCount, completedCount, totalCredits, averageProgress, attendance, dict }: StudyPlanHeaderProps) {
+  const attendanceRate = attendance && attendance.total > 0 
+    ? Math.round((attendance.attended / attendance.total) * 100) 
+    : 0;
+
   return (
-    <div className="relative mb-32">
-      <div className="absolute -left-12 top-0 bottom-0 w-px bg-gray-100 hidden lg:block"></div>
-      
-      <div className="flex flex-col lg:flex-row lg:items-end gap-16 lg:gap-32">
-        <div>
-          <h1 className="text-6xl font-black text-gray-900 tracking-tighter leading-none uppercase">
-            {dict?.title?.split(' ')[0] || "Study"} <br /> <span className="text-brand-blue">{dict?.title?.split(' ')[1] || "Path"}</span>
-          </h1>
+    <div className="relative mb-24 w-full">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 md:gap-12">
+        <div className="space-y-1 md:space-y-2">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="w-1.5 md:w-2 h-8 md:h-10 bg-gray-900 rounded-full"></div>
+            <h1 className="text-4xl md:text-7xl font-black text-gray-900 tracking-tighter leading-none uppercase">
+              {dict?.title?.split(' ')[0] || "STUDY"} <br /> 
+              <span className="text-brand-blue tracking-[-0.05em]">{dict?.title?.split(' ')[1] || "PLAN"}</span>
+            </h1>
+          </div>
+          <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] md:tracking-[0.4em] ml-3 md:ml-5">
+            {dict?.learning_sequence || "ACADEMIC_TRAJECTORY_v2.0"}
+          </p>
         </div>
 
-        <div className="flex-grow flex flex-col xl:flex-row gap-12 xl:items-end relative z-10 min-w-0 w-full">
-          <div className="relative pt-10 flex-grow min-w-0">
-            <span className="absolute top-0 left-0 text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
-              {dict?.learning_sequence || "Learning Sequence"}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-10 flex-grow max-w-4xl">
+          {/* Metric Node 01 */}
+          <div className="relative group">
+            <span className="absolute -top-5 md:-top-6 left-0 text-[8px] md:text-[9px] font-black text-gray-300 uppercase tracking-widest group-hover:text-brand-blue transition-colors">
+              01_CAPACITY
             </span>
-            <div className={`flex ${enrolledCount > 30 ? 'gap-1' : 'gap-2'} items-end h-16 mb-6 overflow-x-auto no-scrollbar pb-2`}>
-              {Array.from({ length: Math.max(enrolledCount, 12) }).map((_, i) => (
-                <div 
-                  key={i} 
-                  className={`${enrolledCount > 30 ? 'w-1' : 'w-1.5'} flex-shrink-0 rounded-full transition-all duration-700 ${
-                    i < completedCount 
-                      ? 'h-16 bg-brand-green shadow-[0_0_15px_rgba(16,185,129,0.5)]' 
-                      : i < enrolledCount 
-                        ? 'h-10 bg-brand-blue/40' 
-                        : 'h-3 bg-gray-100'
-                  }`}
-                ></div>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-8">
-              <div className="flex flex-col">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block truncate">
-                  {dict?.header_total || "Total Tracks"}
-                </span>
-                <span className="text-3xl font-black text-gray-900 leading-none">{enrolledCount}</span>
-              </div>
-              <div className="flex flex-col sm:border-l-2 sm:border-gray-100 sm:pl-6">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block truncate">
-                  {dict?.header_mastered || "Mastered"}
-                </span>
-                <span className="text-3xl font-black text-brand-green leading-none">{completedCount}</span>
-              </div>
-              <div className="flex flex-col sm:border-l-2 sm:border-gray-100 sm:pl-6">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block truncate">
-                  Credits
-                </span>
-                <span className="text-3xl font-black text-violet-600 leading-none">{totalCredits}</span>
-              </div>
-              {attendance && attendance.total > 0 && (
-                <div className="flex flex-col sm:border-l-2 sm:border-gray-100 sm:pl-6">
-                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest h-4 mb-2 block truncate">
-                    Attendance
-                  </span>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black text-gray-900 leading-none">{attendance.attended}</span>
-                    <span className="text-lg font-bold text-gray-300">/{attendance.total}</span>
-                  </div>
-                </div>
-              )}
+            <div className="flex flex-col">
+              <span className="text-3xl md:text-5xl font-black text-gray-900 tracking-tighter leading-none mb-1 md:mb-2">
+                {enrolledCount}
+              </span>
+              <span className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                {dict?.header_total || "Active Tracks"}
+              </span>
             </div>
           </div>
 
-          <div className="relative pt-10 xl:ml-auto flex-shrink-0">
-            <span className="absolute top-0 left-0 text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">
-              {dict?.header_efficiency || "Core Efficiency"}
+          {/* Metric Node 02 */}
+          <div className="relative group border-l border-gray-100 pl-4 md:pl-8">
+            <span className="absolute -top-5 md:-top-6 left-4 md:left-8 text-[8px] md:text-[9px] font-black text-gray-300 uppercase tracking-widest group-hover:text-brand-green transition-colors">
+              02_MASTERY
             </span>
-            <div className="flex items-center gap-6">
-              <div className="relative w-24 h-24 flex items-center justify-center">
-                <svg className="w-full h-full -rotate-90">
-                  <circle cx="48" cy="48" r="44" fill="transparent" stroke="currentColor" strokeWidth="2" className="text-gray-100" />
-                  <circle 
-                    cx="48" cy="48" r="44" fill="transparent" stroke="currentColor" strokeWidth="6" 
-                    strokeDasharray={276.46}
-                    strokeDashoffset={276.46 - (276.46 * averageProgress) / 100}
-                    className="text-brand-blue transition-all duration-1000 ease-out shadow-lg"
-                  />
-                </svg>
-                <span className="absolute text-xl font-black text-gray-900 italic tracking-tighter">
-                  {averageProgress}%
-                </span>
-              </div>
-              <div className="max-w-[160px]">
-                <p className="text-xs text-gray-400 font-bold leading-relaxed uppercase tracking-widest">
-                  {dict?.efficiency_desc || "Curriculum absorption rate across active tracks."}
-                </p>
-              </div>
+            <div className="flex flex-col">
+              <span className="text-3xl md:text-5xl font-black text-brand-green tracking-tighter leading-none mb-1 md:mb-2">
+                {completedCount}
+              </span>
+              <span className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                {dict?.header_mastered || "Completed"}
+              </span>
             </div>
           </div>
+
+          {/* Metric Node 03 */}
+          <div className="relative group md:border-l border-gray-100 md:pl-8">
+            <span className="absolute -top-5 md:-top-6 left-0 md:left-8 text-[8px] md:text-[9px] font-black text-gray-300 uppercase tracking-widest group-hover:text-violet-500 transition-colors">
+              03_CREDITS
+            </span>
+            <div className="flex flex-col">
+              <span className="text-3xl md:text-5xl font-black text-violet-600 tracking-tighter leading-none mb-1 md:mb-2">
+                {totalCredits}
+              </span>
+              <span className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Total Units
+              </span>
+            </div>
+          </div>
+
+          {/* Metric Node 04 */}
+          <div className="relative group border-l border-gray-100 pl-4 md:pl-8">
+            <span className="absolute -top-5 md:-top-6 left-4 md:left-8 text-[8px] md:text-[9px] font-black text-gray-300 uppercase tracking-widest group-hover:text-brand-blue transition-colors">
+              04_RELIABILITY
+            </span>
+            <div className="flex flex-col">
+              <div className="flex items-baseline gap-1 mb-1 md:mb-2">
+                <span className="text-3xl md:text-5xl font-black text-gray-900 tracking-tighter leading-none">
+                  {attendanceRate}
+                </span>
+                <span className="text-base md:text-xl font-black text-gray-300 italic">%</span>
+              </div>
+              <span className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Attendance
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Visual Sequence Bar */}
+      <div className="mt-16 relative">
+        <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gray-100 -z-10"></div>
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2">
+          {Array.from({ length: Math.max(enrolledCount, 24) }).map((_, i) => {
+            const isFilled = i < enrolledCount;
+            const isCompleted = i < completedCount;
+            return (
+              <div 
+                key={i}
+                className={`flex-shrink-0 transition-all duration-700 ${
+                  isCompleted 
+                    ? "w-2.5 h-6 bg-brand-green" 
+                    : isFilled 
+                      ? "w-2.5 h-4 bg-brand-blue/30" 
+                      : "w-2.5 h-1.5 bg-gray-100"
+                } ${i === completedCount && isFilled ? "animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.5)]" : ""}`}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
+

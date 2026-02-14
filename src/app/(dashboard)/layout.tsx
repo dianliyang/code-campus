@@ -22,7 +22,9 @@ export default async function DashboardLayout({
         labels={{
           courses: dict.navbar?.courses || "Courses",
           studyPlan: dict.navbar?.roadmap || "Roadmap",
+          workouts: dict.navbar?.workouts || "Workouts",
           profile: dict.navbar?.profile || "Profile",
+          settings: dict.navbar?.settings || "Settings",
         }}
       />
     </>

@@ -348,6 +348,96 @@ export type Database = {
           },
         ]
       }
+      workouts: {
+        Row: {
+          id: number
+          source: string
+          course_code: string
+          category: string
+          category_en: string | null
+          title: string
+          title_en: string | null
+          day_of_week: string | null
+          start_time: string | null
+          end_time: string | null
+          location: string | null
+          location_en: string | null
+          instructor: string | null
+          start_date: string | null
+          end_date: string | null
+          price_student: number | null
+          price_staff: number | null
+          price_external: number | null
+          price_external_reduced: number | null
+          booking_status: string | null
+          booking_url: string | null
+          url: string | null
+          semester: string | null
+          details: Json | null
+          search_vector: unknown
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: number
+          source: string
+          course_code: string
+          category: string
+          category_en?: string | null
+          title: string
+          title_en?: string | null
+          day_of_week?: string | null
+          start_time?: string | null
+          end_time?: string | null
+          location?: string | null
+          location_en?: string | null
+          instructor?: string | null
+          start_date?: string | null
+          end_date?: string | null
+          price_student?: number | null
+          price_staff?: number | null
+          price_external?: number | null
+          price_external_reduced?: number | null
+          booking_status?: string | null
+          booking_url?: string | null
+          url?: string | null
+          semester?: string | null
+          details?: Json | null
+          search_vector?: unknown
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: number
+          source?: string
+          course_code?: string
+          category?: string
+          category_en?: string | null
+          title?: string
+          title_en?: string | null
+          day_of_week?: string | null
+          start_time?: string | null
+          end_time?: string | null
+          location?: string | null
+          location_en?: string | null
+          instructor?: string | null
+          start_date?: string | null
+          end_date?: string | null
+          price_student?: number | null
+          price_staff?: number | null
+          price_external?: number | null
+          price_external_reduced?: number | null
+          booking_status?: string | null
+          booking_url?: string | null
+          url?: string | null
+          semester?: string | null
+          details?: Json | null
+          search_vector?: unknown
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_courses: {
         Row: {
           course_id: number

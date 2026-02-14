@@ -95,6 +95,33 @@ export interface AILearningPathRequest {
   }>;
 }
 
+export interface Workout {
+  id: number;
+  source: string;
+  courseCode: string;
+  category: string;
+  categoryEn: string | null;
+  title: string;
+  titleEn: string | null;
+  dayOfWeek: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  location: string | null;
+  locationEn: string | null;
+  instructor: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  priceStudent: number | null;
+  priceStaff: number | null;
+  priceExternal: number | null;
+  priceExternalReduced: number | null;
+  bookingStatus: string | null;
+  bookingUrl: string | null;
+  url: string | null;
+  semester: string | null;
+  details: Record<string, unknown> | null;
+}
+
 export interface CourseRecommendation {
   courseId: number;
   title: string;

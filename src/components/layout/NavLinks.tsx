@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Dictionary } from "@/lib/dictionary";
-import { Info, Network, Layers, Tag, BookOpen, MapPin, UserCog, type LucideIcon } from "lucide-react";
+import { Info, Network, Layers, Tag, BookOpen, MapPin, UserCog, Dumbbell, Settings, type LucideIcon } from "lucide-react";
 
 export default function NavLinks({ 
   variant = "light", 
@@ -34,7 +34,9 @@ export default function NavLinks({
     return [
       { name: dict?.courses || "Courses", href: "/courses", icon: BookOpen },
       { name: dict?.roadmap || "Study Roadmap", href: "/study-plan", icon: MapPin },
-      { name: dict?.profile || "My Profile", href: "/profile", icon: UserCog }
+      { name: dict?.workouts || "Workouts", href: "/workouts", icon: Dumbbell },
+      { name: dict?.profile || "Profile", href: "/profile", icon: UserCog },
+      { name: dict?.settings || "Settings", href: "/settings", icon: Settings }
     ];
   }, [mode, dict]);
 
@@ -64,8 +66,8 @@ export default function NavLinks({
       ref={navRef}
       className={`hidden lg:flex items-center relative transition-all duration-500 ${
         collapsed 
-          ? 'gap-3 bg-transparent border-none' 
-          : `gap-1 p-1.5 rounded-full border ${isDark ? 'bg-black/40 border-white/5 shadow-2xl' : 'bg-gray-50 border-slate-200/60'}`
+          ? 'gap-2 bg-transparent border-none' 
+          : `gap-0.5 p-1 rounded-full border ${isDark ? 'bg-black/40 border-white/5 shadow-2xl' : 'bg-gray-50 border-slate-200/60'}`
       }`}
     >
       {/* Smooth Sliding Background Indicator */}
@@ -77,9 +79,9 @@ export default function NavLinks({
           style={{
             transform: `translateX(${indicatorStyle.left}px)`,
             width: `${indicatorStyle.width}px`,
-            height: 'calc(100% - 12px)',
+            height: 'calc(100% - 8px)',
             opacity: indicatorStyle.opacity,
-            top: '6px'
+            top: '4px'
           }}
         />
       )}
@@ -93,8 +95,8 @@ export default function NavLinks({
             ref={(el) => { linksRef.current[idx] = el; }}
             className={`group relative flex items-center justify-center transition-all duration-500 z-10 ${
               collapsed 
-                ? 'w-10 h-10 rounded-full hover:bg-white/10 text-gray-400 hover:text-white' 
-                : `px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-[0.2em] gap-3 ${
+                ? 'w-8 h-8 rounded-full hover:bg-white/10 text-gray-400 hover:text-white' 
+                : `px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] gap-2 ${
                     isActive 
                       ? (isDark ? 'text-gray-950' : 'text-white') 
                       : (isDark ? 'text-gray-400 hover:text-white' : 'text-slate-500 hover:text-slate-900')
@@ -102,7 +104,7 @@ export default function NavLinks({
             }`}
             title={collapsed ? item.name : undefined}
           >
-            <item.icon className={`w-3.5 h-3.5 transition-all duration-500 ${
+            <item.icon className={`w-3 h-3 transition-all duration-500 ${
               isActive ? 'opacity-100' : 'opacity-40 group-hover:opacity-100'
             }`} />
             

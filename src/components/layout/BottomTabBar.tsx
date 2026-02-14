@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CalendarDays, User } from "lucide-react";
+import { BookOpen, CalendarDays, User, Dumbbell, Settings } from "lucide-react";
 
 interface BottomTabBarProps {
   labels?: {
     courses?: string;
     studyPlan?: string;
+    workouts?: string;
     profile?: string;
+    settings?: string;
   };
 }
 
@@ -29,16 +31,28 @@ export default function BottomTabBar({ labels }: BottomTabBarProps) {
       isActive: pathname === "/study-plan",
     },
     {
+      name: labels?.workouts || "Workouts",
+      href: "/workouts",
+      icon: Dumbbell,
+      isActive: pathname === "/workouts",
+    },
+    {
       name: labels?.profile || "Profile",
       href: "/profile",
       icon: User,
       isActive: pathname === "/profile",
     },
+    {
+      name: labels?.settings || "Settings",
+      href: "/settings",
+      icon: Settings,
+      isActive: pathname === "/settings",
+    },
   ];
 
   return (
     <div className="lg:hidden fixed left-0 right-0 z-50 px-4 bottom-[calc(env(safe-area-inset-bottom,0px)+4px)]">
-      <nav className="mx-auto w-full max-w-[520px] rounded-[26px] border border-gray-200/80 bg-white shadow-[0_2px_16px_rgba(15,23,42,0.08)]">
+      <nav className="mx-auto w-full max-w-[600px] rounded-[26px] border border-gray-200/80 bg-white shadow-[0_2px_16px_rgba(15,23,42,0.08)]">
         <div className="flex items-center justify-around h-[56px] px-2">
           {tabs.map((tab) => (
             <Link

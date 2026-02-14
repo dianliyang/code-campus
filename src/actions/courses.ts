@@ -1,10 +1,11 @@
 "use server";
 
-import { createAdminClient, getUser } from "@/lib/supabase/server";
+import { createAdminClient, getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
 import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT } from "@/lib/ai/prompts";
+import { Course } from "@/types";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? "");
@@ -933,4 +934,105 @@ export async function regenerateCourseDescription(courseId: number) {
     throw new Error("AI returned an empty description");
   }
   return text;
+}
+
+export async function fetchCoursesAction({
+  page = 1,
+  size = 12,
+  query = "",
+  sort = "title",
+  enrolledOnly = false,
+  universities = [] as string[],
+  fields = [] as string[],
+  levels = [] as string[],
+  userId = null as string | null
+}) {
+  const supabase = await createClient(); // This needs to be checked, original used createAdminClient
+  const offset = (page - 1) * size;
+  
+  const modernSelectString = `
+    id, university, course_code, title, units, url, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
+    fields:course_fields(fields(name)),
+    semesters:course_semesters(semesters(term, year))
+  `;
+
+  const buildQuery = () => {
+    let s = modernSelectString;
+    if (enrolledOnly) {
+      s += `, user_courses!inner(user_id, status)`;
+    }
+    return supabase
+      .from('courses')
+      .select(s, { count: 'exact' })
+      .eq('is_hidden', false);
+  };
+
+  let supabaseQuery = buildQuery();
+
+  const needsHiddenFilter = !enrolledOnly && !!userId;
+  const needsFieldFilter = fields.length > 0;
+
+  const [hiddenResult, fieldFilterResult] = await Promise.all([
+    needsHiddenFilter
+      ? supabase.from('user_courses').select('course_id').eq('user_id', userId!).eq('status', 'hidden')
+      : Promise.resolve({ data: null }),
+    needsFieldFilter
+      ? supabase.from('fields').select('course_fields(course_id)').in('name', fields)
+      : Promise.resolve({ data: null }),
+  ]);
+
+  if (enrolledOnly) {
+    if (!userId) return { items: [], total: 0, pages: 0 };
+    supabaseQuery = supabaseQuery.eq('user_courses.user_id', userId);
+    supabaseQuery = supabaseQuery.neq('user_courses.status', 'hidden');
+  } else if (needsHiddenFilter) {
+    const hiddenIds = hiddenResult.data?.map(h => h.course_id) || [];
+    if (hiddenIds.length > 0) {
+      supabaseQuery = supabaseQuery.not('id', 'in', `(${hiddenIds.join(',')})`);
+    }
+  }
+
+  if (query) {
+    supabaseQuery = supabaseQuery.textSearch('search_vector', query, { type: 'websearch' });
+  }
+
+  if (universities.length > 0) {
+    supabaseQuery = supabaseQuery.in('university', universities);
+  }
+
+  if (needsFieldFilter) {
+    const fieldCourseIds = (fieldFilterResult.data || [])
+      .flatMap(f => (f.course_fields as { course_id: number }[] | null || []).map(cf => cf.course_id));
+    if (fieldCourseIds.length === 0) return { items: [], total: 0, pages: 0 };
+    supabaseQuery = supabaseQuery.in('id', fieldCourseIds);
+  }
+
+  if (levels.length > 0) {
+    supabaseQuery = supabaseQuery.in('level', levels);
+  }
+
+  // Sorting
+  if (sort === 'popularity') supabaseQuery = supabaseQuery.order('popularity', { ascending: false });
+  else if (sort === 'newest') supabaseQuery = supabaseQuery.order('created_at', { ascending: false });
+  else if (sort === 'title') supabaseQuery = supabaseQuery.order('title', { ascending: true });
+  else supabaseQuery = supabaseQuery.order('id', { ascending: false });
+
+  const { data, count, error } = await supabaseQuery.range(offset, offset + size - 1);
+
+  if (error) {
+    console.error("[fetchCoursesAction] Error:", error);
+    return { items: [], total: 0, pages: 0 };
+  }
+
+  const items = (data || []).map((row) => {
+    const course = mapCourseFromRow(row as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const fieldNames = ((row as any).fields as any[] | null)?.map((f) => f.fields.name) || []; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const semesterNames = ((row as any).semesters as any[] | null)?.map((s) => `${s.semesters.term} ${s.semesters.year}`) || []; // eslint-disable-line @typescript-eslint/no-explicit-any
+    return { ...course, fields: fieldNames, semesters: semesterNames } as Course;
+  });
+
+  const total = count || 0;
+  const pages = Math.max(1, Math.ceil(total / size));
+
+  return { items, total, pages };
 }

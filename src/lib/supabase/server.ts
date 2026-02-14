@@ -3,7 +3,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Course as ScrapedCourse } from "../scrapers/types";
-import type { Course as AppCourse } from "@/types";
+import type { WorkoutCourse } from "../scrapers/cau-sport";
+import type { Course as AppCourse, Workout } from "@/types";
 import { Database, Json } from "./database.types";
 
 export async function getBaseUrl() {
@@ -192,6 +193,89 @@ export class SupabaseDatabase {
     }
   }
 
+  async saveWorkouts(workouts: WorkoutCourse[]): Promise<void> {
+    if (workouts.length === 0) return;
+
+    const source = workouts[0].source;
+    console.log(`[Supabase] Saving ${workouts.length} workouts for ${source}...`);
+
+    const supabase = createAdminClient();
+
+    // Parse date strings like "27.10." into proper DATE values for the current academic year
+    const parseGermanDate = (dateStr: string, semester: string): string | null => {
+      if (!dateStr) return null;
+      const match = dateStr.match(/(\d{1,2})\.(\d{1,2})\./);
+      if (!match) return null;
+      const day = parseInt(match[1]);
+      const month = parseInt(match[2]);
+      // Determine year from semester: WiSe 25/26 → Oct-Dec = 2025, Jan-Apr = 2026
+      const semMatch = semester.match(/(\d{2})\/(\d{2})/);
+      if (semMatch) {
+        const startYear = 2000 + parseInt(semMatch[1]);
+        const endYear = 2000 + parseInt(semMatch[2]);
+        const year = month >= 8 ? startYear : endYear;
+        return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      }
+      return null;
+    };
+
+    const parseTime = (timeStr: string): string | null => {
+      if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) return null;
+      return timeStr + ":00";
+    };
+
+    const toUpsertRaw = workouts.map((w) => ({
+      source: w.source,
+      course_code: w.courseCode,
+      category: w.category,
+      category_en: w.categoryEn || null,
+      title: w.title,
+      title_en: w.titleEn || null,
+      day_of_week: w.dayOfWeek || null,
+      start_time: parseTime(w.startTime),
+      end_time: parseTime(w.endTime),
+      location: w.location || null,
+      location_en: w.locationEn || null,
+      instructor: w.instructor || null,
+      start_date: parseGermanDate(w.startDate, w.semester),
+      end_date: parseGermanDate(w.endDate, w.semester),
+      price_student: w.priceStudent,
+      price_staff: w.priceStaff,
+      price_external: w.priceExternal,
+      price_external_reduced: w.priceExternalReduced,
+      booking_status: w.bookingStatus,
+      booking_url: w.bookingUrl || null,
+      url: w.url || null,
+      semester: w.semester || null,
+      details: (w.details && Object.keys(w.details).length > 0 ? w.details : {}) as Json,
+      updated_at: new Date().toISOString(),
+    }));
+
+    // Deduplicate based on source and course_code to avoid Postgres error 21000
+    const deduplicatedMap = new Map();
+    toUpsertRaw.forEach(item => {
+      const key = `${item.source}-${item.course_code}`;
+      deduplicatedMap.set(key, item);
+    });
+    const toUpsert = Array.from(deduplicatedMap.values());
+
+    // Batch upsert in chunks of 500
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < toUpsert.length; i += BATCH_SIZE) {
+      const batch = toUpsert.slice(i, i + BATCH_SIZE);
+      const { error } = await supabase
+        .from("workouts")
+        .upsert(batch, { onConflict: "source,course_code" });
+
+      if (error) {
+        console.error(`[Supabase] Error saving workouts batch ${i / BATCH_SIZE + 1}:`, error);
+        throw error;
+      }
+    }
+
+    console.log(`[Supabase] Saved ${toUpsert.length} workouts for ${source}.`);
+  }
+
   async clearUniversity(university: string): Promise<void> {
     const supabase = createAdminClient();
     const { error } = await supabase
@@ -314,5 +398,34 @@ export function mapCourseFromRow(
     isHidden: Boolean(row.is_hidden),
     isInternal: Boolean(row.is_internal),
     createdAt: typeof row.created_at === "string" ? row.created_at : undefined,
+  };
+}
+
+export function mapWorkoutFromRow(row: any): Workout { // eslint-disable-line @typescript-eslint/no-explicit-any
+  return {
+    id: Number(row.id),
+    source: String(row.source || ""),
+    courseCode: String(row.course_code || ""),
+    category: String(row.category || ""),
+    categoryEn: row.category_en ? String(row.category_en) : null,
+    title: String(row.title || ""),
+    titleEn: row.title_en ? String(row.title_en) : null,
+    dayOfWeek: row.day_of_week ? String(row.day_of_week) : null,
+    startTime: row.start_time ? String(row.start_time) : null,
+    endTime: row.end_time ? String(row.end_time) : null,
+    location: row.location ? String(row.location) : null,
+    locationEn: row.location_en ? String(row.location_en) : null,
+    instructor: row.instructor ? String(row.instructor) : null,
+    startDate: row.start_date ? String(row.start_date) : null,
+    endDate: row.end_date ? String(row.end_date) : null,
+    priceStudent: row.price_student != null ? Number(row.price_student) : null,
+    priceStaff: row.price_staff != null ? Number(row.price_staff) : null,
+    priceExternal: row.price_external != null ? Number(row.price_external) : null,
+    priceExternalReduced: row.price_external_reduced != null ? Number(row.price_external_reduced) : null,
+    bookingStatus: row.booking_status ? String(row.booking_status) : null,
+    bookingUrl: row.booking_url ? String(row.booking_url) : null,
+    url: row.url ? String(row.url) : null,
+    semester: row.semester ? String(row.semester) : null,
+    details: row.details as Record<string, unknown> | null,
   };
 }

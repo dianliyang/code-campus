@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Course, EnrolledCoursesResponse } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
 import CourseCard from "./CourseCard";
 import CourseListHeader from "./CourseListHeader";
 import Pagination from "./Pagination";
 import Toast from "../common/Toast";
-import { Radio } from "lucide-react";
+import { Radio, Loader2 } from "lucide-react";
+import { fetchCoursesAction } from "@/actions/courses";
+import { useSearchParams } from "next/navigation";
+import VirtualCard from "../common/VirtualCard";
 
 interface CourseListProps {
   initialCourses: Course[];
@@ -26,10 +29,14 @@ export default function CourseList({
   initialEnrolledIds,
   dict
 }: CourseListProps) {
+  const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [enrolledIds, setEnrolledIds] = useState<number[]>(initialEnrolledIds);
   const [courses, setCourses] = useState<Course[]>(initialCourses);
+  const [page, setPage] = useState(currentPage);
+  const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   // Load view mode from localStorage on mount
   useEffect(() => {
@@ -37,10 +44,11 @@ export default function CourseList({
     if (savedMode) setViewMode(savedMode);
   }, []);
 
-  // Sync courses when initialCourses changes (e.g., page change, filter change)
+  // Sync courses when initialCourses changes (e.g., page change, filter change via URL)
   useEffect(() => {
     setCourses(initialCourses);
-  }, [initialCourses]);
+    setPage(currentPage);
+  }, [initialCourses, currentPage]);
 
   // Save view mode to localStorage whenever it changes
   const handleViewModeChange = (mode: "list" | "grid") => {
@@ -55,12 +63,65 @@ export default function CourseList({
   };
 
   const handleHide = (courseId: number) => {
-    // Immediately remove from UI
     setCourses(prev => prev.filter(c => c.id !== courseId));
-
-    // Show success notification
     setToast({ message: "Course hidden successfully", type: "success" });
   };
+
+  const loadMore = useCallback(async () => {
+    if (isLoading || page >= totalPages) return;
+
+    setIsLoading(true);
+    try {
+      const query = searchParams.get("q") || "";
+      const sort = searchParams.get("sort") || "title";
+      const enrolledOnly = searchParams.get("enrolled") === "true";
+      const universities = searchParams.get("universities")?.split(",").filter(Boolean) || [];
+      const fields = searchParams.get("fields")?.split(",").filter(Boolean) || [];
+      const levels = searchParams.get("levels")?.split(",").filter(Boolean) || [];
+
+      const nextData = await fetchCoursesAction({
+        page: page + 1,
+        query,
+        sort,
+        enrolledOnly,
+        universities,
+        fields,
+        levels
+      });
+
+      if (nextData.items.length > 0) {
+        setCourses(prev => {
+          const existingIds = new Set(prev.map(c => c.id));
+          const newItems = nextData.items.filter(c => !existingIds.has(c.id));
+          return [...prev, ...newItems];
+        });
+        setPage(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error("[CourseList] Failed to load more:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, totalPages, isLoading, searchParams]);
+
+  // Intersection Observer for Infinite Scroll (Mobile Only)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const isMobile = window.innerWidth < 768;
+        if (entries[0].isIntersecting && isMobile && !isLoading) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loadMore, isLoading]);
 
   return (
     <main className="flex-grow space-y-4 min-w-0">
@@ -90,15 +151,16 @@ export default function CourseList({
           </div>
         )}
         {courses?.map((course) => (
-          <CourseCard
-            key={course.id}
-            course={course}
-            isInitialEnrolled={enrolledIds.includes(course.id)}
-            onEnrollToggle={fetchEnrolled}
-            onHide={handleHide}
-            dict={dict}
-            viewMode={viewMode}
-          />
+          <VirtualCard key={course.id} id={course.id} initialHeight={viewMode === 'list' ? "60px" : "200px"}>
+            <CourseCard
+              course={course}
+              isInitialEnrolled={enrolledIds.includes(course.id)}
+              onEnrollToggle={fetchEnrolled}
+              onHide={handleHide}
+              dict={dict}
+              viewMode={viewMode}
+            />
+          </VirtualCard>
         ))}
         {courses?.length === 0 && (
           <div className="text-center py-32 bg-white rounded-2xl border border-gray-100 relative overflow-hidden group">
@@ -125,7 +187,17 @@ export default function CourseList({
         )}
       </div>
 
-      <Pagination totalPages={totalPages} currentPage={currentPage} />
+      {/* Infinite Scroll Loader / Target */}
+      <div ref={observerTarget} className="md:hidden py-10 flex justify-center">
+        {isLoading && <Loader2 className="w-6 h-6 text-brand-blue animate-spin" />}
+        {!isLoading && page >= totalPages && courses.length > 0 && (
+          <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">End of catalog</span>
+        )}
+      </div>
+
+      <div className="hidden md:block">
+        <Pagination totalPages={totalPages} currentPage={currentPage} />
+      </div>
     </main>
   );
 }

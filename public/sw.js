@@ -6,7 +6,9 @@ const PRECACHE_ASSETS = [
   '/',
   '/offline',
   '/code-campus-logo.svg',
-  '/manifest.json'
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
 // Install event - cache essential assets

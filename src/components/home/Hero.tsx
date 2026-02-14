@@ -55,10 +55,11 @@ export default function Hero({ dict }: { dict?: any }) {
       
       params.set("page", "1");
       
-      const newUrl = `/courses?${params.toString()}`;
+      const targetPath = pathname === "/workouts" ? "/workouts" : "/courses";
+      const newUrl = `${targetPath}?${params.toString()}`;
       lastPushedQuery.current = query;
-      // Avoid scroll jump if already on courses page
-      router.push(newUrl, { scroll: pathname !== '/courses' });
+      // Avoid scroll jump if already on target page
+      router.push(newUrl, { scroll: pathname !== targetPath });
     }, 500);
 
     return () => clearTimeout(timer);
@@ -69,7 +70,7 @@ export default function Hero({ dict }: { dict?: any }) {
   };
 
   return (
-    <div className="bg-slate-50 border-b border-slate-200 py-16 relative overflow-hidden">
+    <div className="bg-slate-50 border-b border-slate-200 py-10 relative overflow-hidden">
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none">
         <div className="absolute inset-0 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:20px_20px]"></div>
@@ -77,16 +78,16 @@ export default function Hero({ dict }: { dict?: any }) {
 
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-3xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center text-brand-blue border border-brand-blue/20">
-              <Search className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-6 h-6 rounded-md bg-brand-blue/10 flex items-center justify-center text-brand-blue border border-brand-blue/20">
+              <Search className="w-3 h-3" />
             </div>
-            <h1 className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em]">
+            <h1 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
               {dict?.search?.label || "Course Registry Search"}
             </h1>
           </div>
 
-          <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-8">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-6">
             {dict?.search?.title ? (
               dict.search.title.includes("learn") ? (
                 <>
@@ -111,30 +112,33 @@ export default function Hero({ dict }: { dict?: any }) {
           </h2>
 
           <div className="relative group">
-            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
               <span className="text-slate-400 font-mono text-sm group-focus-within:text-brand-blue transition-colors">/</span>
             </div>
             <input
               ref={inputRef}
               type="text"
               placeholder={dict?.search?.placeholder || "Search by course name, code, or university..."}
-              className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-20 py-5 text-lg font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/5 transition-all"
+              className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-20 py-3.5 text-base font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/5 transition-all"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none">
-              <kbd className="hidden sm:inline-flex h-6 items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 font-sans text-[10px] font-bold text-slate-400">
+            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+              <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-slate-200 bg-slate-50 px-1.5 font-sans text-[9px] font-bold text-slate-400">
                 <span className="text-xs">⌘</span> K
               </kbd>
             </div>
           </div>
           
-          <div className="mt-6 flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-slate-400 flex-wrap">
-            <span className="mr-2 opacity-60">{dict?.search?.popular || "Popular Nodes"}:</span>
-            {["AI", "Systems", "Algorithms", "ML"].map((tag) => (
+          <div className="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 flex-wrap">
+            <span className="mr-1 opacity-60">{dict?.search?.popular || "Popular"}:</span>
+            {(pathname === "/workouts" 
+              ? ["Yoga", "Swimming", "Fitness", "Football"]
+              : ["AI", "Systems", "Algorithms", "ML"]
+            ).map((tag) => (
               <button 
                 key={tag} 
-                className={`px-3 py-1 rounded-full border transition-all ${
+                className={`px-2.5 py-0.5 rounded-full border transition-all ${
                   query === tag 
                     ? 'bg-brand-blue text-white border-brand-blue' 
                     : 'bg-white border-slate-200 hover:border-slate-400 text-slate-500 hover:text-slate-900'

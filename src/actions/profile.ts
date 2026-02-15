@@ -2,7 +2,7 @@
 
 import { createClient, getUser } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { AI_PROVIDERS } from "@/lib/ai/models";
+import { AI_PROVIDERS, GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
 
 export async function updateAiPreferences(input: {
   provider: string;
@@ -18,8 +18,6 @@ export async function updateAiPreferences(input: {
     throw new Error("Invalid provider");
   }
 
-  // Re-importing sets to ensure we have the latest from models.ts
-  const { GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } = await import("@/lib/ai/models");
   const validModelSet = input.provider === "gemini" ? GEMINI_MODEL_SET : PERPLEXITY_MODEL_SET;
   
   if (!validModelSet.has(input.defaultModel)) {

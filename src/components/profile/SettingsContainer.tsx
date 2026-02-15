@@ -58,6 +58,7 @@ export default function SettingsContainer({ user, profile, dict }: SettingsConta
           {activeTab === "ai" && (
             <div className="space-y-12">
               <AISettingsCard
+                key={profile ? JSON.stringify(profile) : 'default-ai'}
                 initialProvider={(profile?.ai_provider as string) || "perplexity"}
                 initialModel={(profile?.ai_default_model as string) || "sonar"}
                 initialWebSearchEnabled={(profile?.ai_web_search_enabled as boolean | undefined) ?? false}
@@ -67,10 +68,14 @@ export default function SettingsContainer({ user, profile, dict }: SettingsConta
             </div>
           )}
           {activeTab === "security" && (
-            <SecurityIdentitySection dict={dict.dashboard.profile} provider={user.app_metadata.provider} />
+            <SecurityIdentitySection 
+              key="security-section"
+              dict={dict.dashboard.profile} 
+              provider={user.app_metadata.provider} 
+            />
           )}
           {activeTab === "maintenance" && (
-            <SystemMaintenanceCard />
+            <SystemMaintenanceCard key="maintenance-section" />
           )}
         </div>
         

@@ -39,7 +39,8 @@ export default async function SettingsPage() {
       .maybeSingle();
 
     if (!error) {
-      profile = (data as Record<string, unknown> | null) ?? null;
+      // Ensure we have a plain object and handle null properly
+      profile = data ? JSON.parse(JSON.stringify(data)) : null;
       break;
     }
 

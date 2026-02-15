@@ -68,11 +68,15 @@ export class MIT extends BaseScraper {
                    if (termPath) termPath = "/" + termPath;
                    console.log(`[${this.name}] Found dynamic archive path: ${termPath}`);
                  }
+               } else {
+                 console.log(`[${this.name}] Semester "${searchTitle}" not found in current listing or archives.`);
+                 return []; // Terminate early and return 0 links
                }
           }
         }
       } catch (error) {
         console.error(`[${this.name}] Failed to discover dynamic links:`, error);
+        return [];
       }
     }
 

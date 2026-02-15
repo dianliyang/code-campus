@@ -290,17 +290,14 @@ export class CAUSport extends BaseScraper {
 
   async links(): Promise<string[]> {
     const sem = this.getSemesterParam();
-    let url = `https://server.sportzentrum.uni-kiel.de/angebote/${sem}/index.html`;
-    let html = await this.fetchPage(url);
+    const url = `https://server.sportzentrum.uni-kiel.de/angebote/${sem}/index.html`;
+    const html = await this.fetchPage(url);
     
-    // Fallback to current period if specific semester not found
-    if (!html && sem !== "aktueller_zeitraum") {
-      console.log(`[${this.name}] Semester ${sem} not found, falling back to current period...`);
-      url = `https://server.sportzentrum.uni-kiel.de/angebote/aktueller_zeitraum/index.html`;
-      html = await this.fetchPage(url);
+    if (!html) {
+      console.log(`[${this.name}] Semester ${sem} not found or not yet published. Skipping.`);
+      return [];
     }
 
-    if (!html) return [];
     const $ = cheerio.load(html);
     const categoryLinks: string[] = [];
     const currentSemPath = url.substring(0, url.lastIndexOf('/'));

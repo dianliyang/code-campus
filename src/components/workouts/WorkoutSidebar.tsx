@@ -93,24 +93,24 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
         <div className="space-y-12">
           {/* Category Section */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em] mb-8">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
               {dict?.sidebar_categories || "Category"}
             </h3>
-            <div className="grid grid-cols-1 gap-5 md:block md:space-y-4 md:pr-4">
+            <div className="grid grid-cols-1 gap-3 md:gap-2.5">
               {displayedCategories.map((cat) => (
                 <label key={cat.name} className="flex items-center justify-between group cursor-pointer">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <input
                       type="checkbox"
-                      className="w-5 h-5 md:w-4 md:h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
+                      className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
                       checked={selectedCategories.includes(cat.name)}
                       onChange={() => updateParams("categories", handleToggle(selectedCategories, cat.name))}
                     />
-                    <span className={`text-[15px] md:text-sm font-medium md:font-normal tracking-tight transition-colors ${selectedCategories.includes(cat.name) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                    <span className={`text-[13px] md:text-[12px] font-semibold tracking-tight transition-colors ${selectedCategories.includes(cat.name) ? 'text-brand-blue' : 'text-gray-600 group-hover:text-brand-blue'}`}>
                       {cat.name}
                     </span>
                   </div>
-                  <span className={`text-[11px] font-semibold transition-colors ${selectedCategories.includes(cat.name) ? 'text-brand-blue' : 'text-gray-400'}`}>
+                  <span className={`text-[10px] font-black transition-colors ${selectedCategories.includes(cat.name) ? 'text-brand-blue' : 'text-gray-300'}`}>
                     {cat.count}
                   </span>
                 </label>
@@ -133,19 +133,19 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
 
           {/* Day of Week Section */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em] mb-8 md:mb-6">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
               {dict?.sidebar_days || "Day of Week"}
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-1 gap-5 md:space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-1 gap-3 md:gap-2.5">
               {DAY_OPTIONS.map((day) => (
-                <label key={day} className="flex items-center gap-4 group cursor-pointer">
+                <label key={day} className="flex items-center gap-3 group cursor-pointer">
                   <input
                     type="checkbox"
-                    className="w-5 h-5 md:w-4 md:h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
+                    className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
                     checked={selectedDays.includes(day)}
                     onChange={() => updateParams("days", handleToggle(selectedDays, day))}
                   />
-                  <span className={`text-[15px] md:text-sm font-medium md:font-normal tracking-tight transition-colors ${selectedDays.includes(day) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                  <span className={`text-[13px] md:text-[12px] font-semibold tracking-tight transition-colors ${selectedDays.includes(day) ? 'text-brand-blue' : 'text-gray-600 group-hover:text-brand-blue'}`}>
                     {day}
                   </span>
                 </label>
@@ -155,10 +155,10 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
 
           {/* Booking Status Section */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em] mb-8 md:mb-6">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
               {dict?.sidebar_status || "Status"}
             </h3>
-            <div className="grid grid-cols-1 gap-5 md:block md:space-y-4">
+            <div className="grid grid-cols-1 gap-3 md:gap-2.5">
               {statuses.map((s) => {
                 const statusKey = Object.entries({
                   available: "status_available",
@@ -173,18 +173,18 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
 
                 return (
                   <label key={s.name} className="flex items-center justify-between group cursor-pointer">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
-                        className="w-5 h-5 md:w-4 md:h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
+                        className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
                         checked={selectedStatuses.includes(s.name)}
                         onChange={() => updateParams("status", handleToggle(selectedStatuses, s.name))}
                       />
-                      <span className={`text-[15px] md:text-sm font-medium md:font-normal tracking-tight transition-colors ${selectedStatuses.includes(s.name) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                      <span className={`text-[13px] md:text-[12px] font-semibold tracking-tight transition-colors ${selectedStatuses.includes(s.name) ? 'text-brand-blue' : 'text-gray-600 group-hover:text-brand-blue'}`}>
                         {label}
                       </span>
                     </div>
-                    <span className={`text-[11px] font-semibold transition-colors ${selectedStatuses.includes(s.name) ? 'text-brand-blue' : 'text-gray-400'}`}>
+                    <span className={`text-[10px] font-black transition-colors ${selectedStatuses.includes(s.name) ? 'text-brand-blue' : 'text-gray-300'}`}>
                       {s.count}
                     </span>
                   </label>

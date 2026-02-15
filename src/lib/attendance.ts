@@ -1,4 +1,4 @@
-import { addDays, isSameDay, getDay, parseISO, startOfDay, isAfter } from "date-fns";
+import { addDays, getDay, parseISO, startOfDay, isAfter } from "date-fns";
 
 interface Plan {
   id: number;
@@ -20,32 +20,31 @@ export function calculateAttendance(plans: Plan[], logs: Log[]) {
 
   const today = startOfDay(new Date());
 
+  // Optimize log lookup by creating a map of planId -> date -> is_completed
+  const logsMap = new Map<number, Map<string, boolean>>();
+  for (const log of logs) {
+    if (!logsMap.has(log.plan_id)) {
+      logsMap.set(log.plan_id, new Map());
+    }
+    const dateStr = log.log_date.split('T')[0]; // Ensure we only have YYYY-MM-DD
+    logsMap.get(log.plan_id)?.set(dateStr, log.is_completed ?? false);
+  }
+
   for (const plan of plans) {
     const startDate = parseISO(plan.start_date);
     const endDate = parseISO(plan.end_date);
-    
-    // Determine the effective end date for calculation (cannot be in the future for "past sessions")
-    // If the plan ends before today, use plan end date.
-    // If the plan ends after today, use today.
     const effectiveEndDate = isAfter(endDate, today) ? today : endDate;
+    const planLogs = logsMap.get(plan.id);
 
-    // Iterate through days
     let currentDate = startDate;
     while (currentDate <= effectiveEndDate) {
-      const dayOfWeek = getDay(currentDate); // 0 = Sunday
+      const dayOfWeek = getDay(currentDate);
 
       if (plan.days_of_week.includes(dayOfWeek)) {
         total++;
 
-        // Check for log
-        // Note: Logs are stored as YYYY-MM-DD strings usually, or Date objects.
-        // Assuming log_date is YYYY-MM-DD string from Supabase.
-        const log = logs.find(l => 
-          l.plan_id === plan.id && 
-          isSameDay(parseISO(l.log_date), currentDate)
-        );
-
-        if (log && log.is_completed) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        if (planLogs?.get(dateStr)) {
           attended++;
         }
       }

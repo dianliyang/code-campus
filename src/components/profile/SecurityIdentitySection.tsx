@@ -72,25 +72,15 @@ export default function SecurityIdentitySection({ dict, provider }: SecurityIden
   const isGoogle = provider === "google";
 
   return (
-    <section id="security" className="bg-white border border-gray-200 rounded-3xl overflow-hidden mt-8">
-      <div className="flex flex-col md:flex-row">
-        {/* Sidebar Label */}
-        <aside className="w-full md:w-72 bg-gray-50 border-r border-gray-100 p-6">
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-3 mb-4">Identity Protocol</h3>
-          <div className="px-3 py-4 rounded-2xl bg-white border border-gray-100">
-            <div className="flex items-center gap-3 text-brand-blue mb-2">
-              <ShieldCheck className="w-4 h-4" />
-              <span className="text-xs font-black uppercase tracking-tight">{dict.security_title}</span>
-            </div>
-            <p className="text-[10px] font-medium text-gray-400 leading-relaxed">
-              Manage your authentication vectors and system access credentials.
-            </p>
-          </div>
-        </aside>
+    <section id="security" className="bg-white border border-gray-100 rounded-2xl overflow-hidden mt-8 shadow-sm">
+      <div className="p-6 md:p-10">
+        <header className="mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-1">Identity & Security</h2>
+          <p className="text-xs text-gray-400">Manage your authentication methods and account security.</p>
+        </header>
 
-        {/* Content Area */}
-        <div className="flex-grow p-8 md:p-10 space-y-8">
-          <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <IdentityCard 
               title={dict.github_title}
               desc={dict.github_desc}
@@ -114,17 +104,15 @@ export default function SecurityIdentitySection({ dict, provider }: SecurityIden
             />
           </div>
 
-          <div className="pt-8 border-t border-gray-100">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="max-w-md">
-                <h4 className="text-sm font-black text-gray-900 uppercase tracking-tight mb-1">{dict.delete_title}</h4>
-                <p className="text-[11px] text-gray-400 font-medium leading-relaxed">
-                  {dict.delete_desc} This action is irreversible and will purge all academic data signatures.
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <DeleteAccount dict={dict} />
-              </div>
+          <div className="pt-10 mt-10 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="max-w-md">
+              <h4 className="text-sm font-bold text-gray-900 mb-1">{dict.delete_title}</h4>
+              <p className="text-[11px] text-gray-400 leading-relaxed">
+                {dict.delete_desc} This action is irreversible and will purge all personal data.
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <DeleteAccount dict={dict} />
             </div>
           </div>
         </div>

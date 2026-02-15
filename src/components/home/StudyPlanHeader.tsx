@@ -11,7 +11,7 @@ interface StudyPlanHeaderProps {
   dict: Dictionary['dashboard']['roadmap'];
 }
 
-export default function StudyPlanHeader({ enrolledCount, completedCount, totalCredits, averageProgress, attendance, dict }: StudyPlanHeaderProps) {
+export default function StudyPlanHeader({ enrolledCount, completedCount, totalCredits, attendance, dict }: Omit<StudyPlanHeaderProps, 'averageProgress'>) {
   const attendanceRate = attendance && attendance.total > 0 
     ? Math.round((attendance.attended / attendance.total) * 100) 
     : 0;

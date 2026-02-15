@@ -7,7 +7,7 @@ import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
 import AddPlanModal from "./AddPlanModal";
-import { ExternalLink, Trophy, CheckCheck, CalendarCheck, CalendarPlus, RotateCcw, Check, Clock } from "lucide-react";
+import { ExternalLink, Trophy, CheckCheck, CalendarCheck, CalendarPlus, Check, Clock } from "lucide-react";
 
 interface ActiveCourseTrackProps {
   course: Course;

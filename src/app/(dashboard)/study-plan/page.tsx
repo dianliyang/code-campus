@@ -70,23 +70,52 @@ async function StudyPlanContent({
   dict: Dictionary;
 }) {
   const supabase = await createClient();
-  const { data: enrolledRows, error } = await supabase
-    .from('courses')
-    .select(`
-      id, university, course_code, title, units, credit, url, description, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal,
-      uc:user_courses!inner(status, progress, updated_at, gpa, score),
-      fields:course_fields(fields(name)),
-      semesters:course_semesters(semesters(term, year))
-    `)
-    .eq('user_courses.user_id', userId)
-    .neq('user_courses.status', 'hidden')
-    .order('updated_at', { foreignTable: 'user_courses', ascending: false });
 
-  if (error) {
-    console.error("[Supabase] Study plan fetch error:", error);
+  // Parallelize all DB fetches
+  const [coursesRes, plansRes, logsRes] = await Promise.all([
+    supabase
+      .from('courses')
+      .select(`
+        id, university, course_code, title, units, credit, url, description, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal,
+        uc:user_courses!inner(status, progress, updated_at, gpa, score),
+        fields:course_fields(fields(name)),
+        semesters:course_semesters(semesters(term, year))
+      `)
+      .eq('user_courses.user_id', userId)
+      .neq('user_courses.status', 'hidden')
+      .order('updated_at', { foreignTable: 'user_courses', ascending: false }),
+    
+    supabase
+      .from('study_plans')
+      .select(`
+        id,
+        course_id,
+        start_date,
+        end_date,
+        days_of_week,
+        start_time,
+        end_time,
+        location,
+        type,
+        courses(id, title, course_code, university)
+      `)
+      .eq('user_id', userId),
+
+    supabase
+      .from('study_logs')
+      .select('*')
+      .eq('user_id', userId)
+  ]);
+
+  if (coursesRes.error) {
+    console.error("[Supabase] Study plan courses fetch error:", coursesRes.error);
   }
 
-  const enrolledCourses: EnrolledCourse[] = (enrolledRows || []).map((row: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const enrolledRows = coursesRes.data || [];
+  const rawPlans = plansRes.data || [];
+  const logs = logsRes.data || [];
+
+  const enrolledCourses: EnrolledCourse[] = enrolledRows.map((row: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const course = mapCourseFromRow(row);
     const fieldNames = (row.fields as { fields: { name: string } }[] | null)?.map((f) => f.fields.name) || [];
     const semesterNames = (row.semesters as { semesters: { term: string; year: number } }[] | null)?.map((s) => `${s.semesters.term} ${s.semesters.year}`) || [];
@@ -105,34 +134,11 @@ async function StudyPlanContent({
     } as EnrolledCourse;
   });
 
-  // Fetch study plans
-  const { data: rawPlans } = await supabase
-    .from('study_plans')
-    .select(`
-      id,
-      course_id,
-      start_date,
-      end_date,
-      days_of_week,
-      start_time,
-      end_time,
-      location,
-      type,
-      courses(id, title, course_code, university)
-    `)
-    .eq('user_id', userId);
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const allPlans = rawPlans?.map((plan: any) => ({
+  const allPlans = rawPlans.map((plan: any) => ({
     ...plan,
     courses: Array.isArray(plan.courses) ? plan.courses[0] : plan.courses
-  })) || [];
-
-  // Fetch study logs (exceptions/completions)
-  const { data: logs } = await supabase
-    .from('study_logs')
-    .select('*')
-    .eq('user_id', userId);
+  }));
 
   const enrolledCourseIds = new Set(enrolledCourses.map((course) => course.id));
   const plans = allPlans.filter((plan: { course_id: number }) => enrolledCourseIds.has(plan.course_id));
@@ -195,7 +201,6 @@ async function StudyPlanContent({
           enrolledCount={enrolledCourses.length}
           completedCount={completed.length}
           totalCredits={totalCredits}
-          averageProgress={enrolledCourses.length > 0 ? Math.round(enrolledCourses.reduce((acc, curr) => acc + curr.progress, 0) / enrolledCourses.length) : 0}
           attendance={{ attended: totalAttended, total: totalSessions }}
           dict={dict.dashboard.roadmap}
         />

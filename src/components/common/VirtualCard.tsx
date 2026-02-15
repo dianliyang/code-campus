@@ -16,31 +16,39 @@ export default function VirtualCard({ children, id, initialHeight = "60px" }: Vi
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // When it becomes visible, render the content
         if (entry.isIntersecting) {
           setIsVisible(true);
         } else {
-          // When it goes out of view, we save the current height to prevent jump
-          // and then we can "unmount" the content if it's far enough
-          // For simplicity, we unmount whenever it's not intersecting
-          if (containerRef.current) {
+          if (containerRef.current && containerRef.current.offsetHeight > 0) {
             setHeight(containerRef.current.offsetHeight);
           }
           setIsVisible(false);
         }
       },
       {
-        rootMargin: "600px 0px", // Pre-render 600px before it enters/leaves
+        rootMargin: "400px 0px",
         threshold: 0,
       }
     );
 
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.height > 0 && isVisible) {
+          setHeight(entry.target.getBoundingClientRect().height);
+        }
+      }
+    });
+
     if (containerRef.current) {
       observer.observe(containerRef.current);
+      resizeObserver.observe(containerRef.current);
     }
 
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      observer.disconnect();
+      resizeObserver.disconnect();
+    };
+  }, [isVisible]);
 
   return (
     <div 

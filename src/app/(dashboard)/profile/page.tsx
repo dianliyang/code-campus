@@ -1,7 +1,6 @@
 import { getUser, createClient } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
-import { Clock, GraduationCap } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -158,7 +157,7 @@ export default async function ProfilePage() {
               <h2 className="text-[10px] font-black text-brand-blue uppercase tracking-[0.4em]">{dict.dashboard.profile.neural_map}</h2>
               <h3 className="text-4xl font-black text-gray-900 tracking-tighter uppercase italic leading-none">{dict.dashboard.profile.fingerprint}</h3>
             </div>
-            <div className="flex items-center gap-4 bg-gray-50 px-5 py-3 rounded-2xl border border-gray-100">
+            <div className="flex items-center gap-4 bg-gray-50 px-5 py-3 rounded-none border border-gray-100">
               <div className="flex flex-col">
                 <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1">DATA_STREAM_AUTH</span>
                 <span className="text-[10px] font-black text-gray-900 font-mono tracking-wider">0x{user.id.substring(0, 12).toUpperCase()}</span>
@@ -169,7 +168,7 @@ export default async function ProfilePage() {
           {fieldTotal > 0 ? (
             <div className="space-y-12 md:space-y-24">
               {/* Frequency Pulse Visualization */}
-              <div className="relative h-24 md:h-32 flex items-end gap-[1px] md:gap-[2px] w-full overflow-hidden rounded-lg">
+              <div className="relative h-24 md:h-32 flex items-end gap-[1px] md:gap-[2px] w-full overflow-hidden">
                 {allFieldStats.map((f, fieldIdx) => {
                   const percentage = (f.count / fieldTotal) * 100;
                   const tickCount = Math.max(Math.floor(percentage * 1.5), 2);
@@ -187,7 +186,7 @@ export default async function ProfilePage() {
                         return (
                           <div
                             key={i}
-                            className={`w-full min-w-[2px] ${color} rounded-t-sm md:rounded-t-full transition-all duration-1000 ease-out`}
+                            className={`w-full min-w-[2px] ${color} rounded-none transition-all duration-1000 ease-out`}
                             style={{
                               height: `${randomHeight}%`,
                               opacity: pseudoOpacity

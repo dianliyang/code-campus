@@ -3,7 +3,11 @@
     "allow": [
       "Bash(ls:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npx tsx:*)",
+      "Bash(curl:*)",
+      "Bash(iconv:*)",
+      "WebFetch(domain:univis.uni-kiel.de)"
     ]
   }
 }

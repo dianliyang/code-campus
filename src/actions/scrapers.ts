@@ -7,7 +7,7 @@ import { CMU } from "@/lib/scrapers/cmu";
 import { UCB } from "@/lib/scrapers/ucb";
 import { CAU } from "@/lib/scrapers/cau";
 import { BaseScraper } from "@/lib/scrapers/BaseScraper";
-import { SupabaseDatabase, createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
+import { SupabaseDatabase, createClient, createAdminClient, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getUser } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -55,7 +55,7 @@ export async function runManualScraperAction({
     if (items.length > 0) {
       // Force update: clear existing data for this university before saving
       if (forceUpdate) {
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const uniName = scraper.name === 'cau' ? 'CAU Kiel'
           : scraper.name === 'mit' ? 'MIT'
           : scraper.name === 'stanford' ? 'Stanford'
@@ -202,7 +202,7 @@ export async function clearCAUCoursesAction() {
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { count: courseCount } = await supabase
     .from('courses')

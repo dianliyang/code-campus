@@ -173,7 +173,7 @@ export default function CourseDetailContent({
                                         {plan.daysOfWeek.join(",")} • {plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}
                                         {plan.startDate && plan.endDate && (
                                           <span className="text-xs text-gray-400 ml-2">
-                                            ({new Date(plan.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-{new Date(plan.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                                            ({new Date(plan.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}-{new Date(plan.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})
                                           </span>
                                         )}
                                       </div>

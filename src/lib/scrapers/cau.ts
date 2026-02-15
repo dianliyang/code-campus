@@ -19,8 +19,8 @@ export class CAU extends BaseScraper {
 
   async links(): Promise<string[]> {
     const sem = this.getSemesterParam();
-    // Use stable direct search for English-taught CS department courses
-    return [`https://univis.uni-kiel.de/prg?search=lectures&department=080110000&spec=englisch:ja&sem=${sem}&show=long`];
+    // Use form-based URL for CS master program lectures (full listing)
+    return [`https://univis.uni-kiel.de/form?__s=2&dsc=anew/tlecture&showhow=long&anonymous=1&lang=en&sem=${sem}&tdir=techn/infora/master&tlecture_all=1&__e=499`];
   }
 
   async fetchPage(url: string, retries = 3): Promise<string> {
@@ -46,8 +46,10 @@ export class CAU extends BaseScraper {
     const term = semParam.endsWith('w') ? "Winter" : "Spring";
 
     $("tr[valign=top]").each((_, tr) => {
-      const td = $(tr).find("td").first();
-      const titleA = td.find("a[href*='key=']").first();
+      const td = $(tr).find("td[width='100%']").first().length > 0
+        ? $(tr).find("td[width='100%']").first()
+        : $(tr).find("td").first();
+      const titleA = td.find("a[href*='key='], a[href*='lecture_view']").first();
       if (titleA.length > 0) {
         const fullText = td.text().replace(/\s+/g, " ").trim();
         const bracketMatch = fullText.match(/\[([a-zA-ZÜÖÄüöä0-9._\s-]+)\]/);
@@ -104,14 +106,15 @@ export class CAU extends BaseScraper {
             if (label.includes("dozent") || label.includes("lecturer")) {
               (course.details as any).instructors = value.split(",").map(i => i.trim()).filter(i => i && i !== "N.N." && i !== "N. N."); // eslint-disable-line @typescript-eslint/no-explicit-any
             } else if (label.includes("angaben") || label.includes("details")) {
-              const typeMatch = value.match(/^(Vorlesung|Übung|Seminar|Praktikum|Kolloquium|Projekt)/i);
+              const typeMatch = value.match(/^(Vorlesung|Übung|Seminar|Praktikum|Kolloquium|Projekt|Lecture|Exercise[^,]*|Practical[^,]*|Colloquium|Project)/i);
               if (typeMatch) {
                   const t = typeMatch[1].toLowerCase();
-                  if (t === 'vorlesung') type = "Lecture";
-                  else if (t === 'übung') type = "Exercise";
-                  else if (t === 'praktikum') type = "Practical";
+                  if (t === 'vorlesung' || t === 'lecture') type = "Lecture";
+                  else if (t === 'übung' || t.startsWith('exercise')) type = "Exercise";
+                  else if (t === 'praktikum' || t.startsWith('practical')) type = "Practical";
                   else if (t === 'seminar') type = "Seminar";
-                  else if (t === 'projekt') type = "Project";
+                  else if (t === 'projekt' || t === 'project') type = "Project";
+                  else if (t === 'kolloquium' || t === 'colloquium') type = "Colloquium";
                   (course.details as any).type = type; // eslint-disable-line @typescript-eslint/no-explicit-any
               }
               const ectsMatch = value.match(/(?:ECTS|Credits):\s*(\d+)/i);

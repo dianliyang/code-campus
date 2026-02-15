@@ -208,7 +208,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             {plan && (
               <div className="flex items-center gap-1 text-[8px] font-medium text-gray-400">
                 <Clock className="w-2.5 h-2.5" />
-                <span>{plan.days_of_week.map(d => weekdaysShort[d].toUpperCase()).join('/')} • {plan.start_time.slice(0, 5)}</span>
+                <span>{plan.days_of_week.map(d => weekdaysShort[d].toUpperCase()).join('/')} • {plan.start_time.slice(0, 5)} • {new Date(plan.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-{new Date(plan.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
               </div>
             )}
           </div>

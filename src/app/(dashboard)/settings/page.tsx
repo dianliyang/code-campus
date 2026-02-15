@@ -55,7 +55,7 @@ export default async function SettingsPage() {
         </p>
       </div>
       
-      <SettingsContainer user={user} profile={profile} dict={dict} />
+      <SettingsContainer user={user} profile={profile} />
     </main>
   );
 }

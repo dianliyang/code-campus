@@ -7,9 +7,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 interface PaginationProps {
   totalPages: number;
   currentPage: number;
+  totalItems?: number;
+  perPage?: number;
 }
 
-export default function Pagination({ totalPages, currentPage }: PaginationProps) {
+export default function Pagination({ totalPages, currentPage, totalItems, perPage }: PaginationProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -27,8 +29,17 @@ export default function Pagination({ totalPages, currentPage }: PaginationProps)
 
   if (totalPages <= 1) return null;
 
+  const showingStart = totalItems && perPage ? (currentPage - 1) * perPage + 1 : undefined;
+  const showingEnd = totalItems && perPage ? Math.min(currentPage * perPage, totalItems) : undefined;
+
   return (
-    <div className="flex justify-center items-center gap-2 mt-12 flex-wrap">
+    <div className="flex flex-col items-center gap-4 mt-12">
+      {totalItems !== undefined && showingStart !== undefined && showingEnd !== undefined && (
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          {showingStart}-{showingEnd} of {totalItems}
+        </span>
+      )}
+      <div className="flex items-center gap-2 flex-wrap">
       <button
         onClick={() => updatePage(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1}
@@ -60,6 +71,7 @@ export default function Pagination({ totalPages, currentPage }: PaginationProps)
       >
         <ChevronRight className="w-3 h-3" />
       </button>
+      </div>
     </div>
   );
 }

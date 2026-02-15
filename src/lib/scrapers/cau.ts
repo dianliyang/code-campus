@@ -50,13 +50,15 @@ export class CAU extends BaseScraper {
       const titleA = td.find("a[href*='key=']").first();
       if (titleA.length > 0) {
         const fullText = td.text().replace(/\s+/g, " ").trim();
-        const bracketMatch = fullText.match(/\[([a-zA-Z0-9._-]+)\]/);
+        const bracketMatch = fullText.match(/\[([a-zA-ZÜÖÄüöä0-9._\s-]+)\]/);
         const startMatch = fullText.match(/^([a-zA-Z0-9._-]+):/);
         const internalIdMatch = fullText.match(/\((\d{6})\)/);
-        
+
         if (internalIdMatch) {
           const internalId = internalIdMatch[1];
-          let courseCode = bracketMatch ? bracketMatch[1] : (startMatch ? startMatch[1] : internalId);
+          let courseCode = bracketMatch ? bracketMatch[1].trim() : (startMatch ? startMatch[1] : internalId);
+          // Strip Ü/Ö prefix from exercise codes (e.g. "ÜinfCN-01a" → "infCN-01a", "Ü infFGA-01a" → "infFGA-01a")
+          courseCode = courseCode.replace(/^[ÜÖüö]\s*/i, "");
           if (['exercise', 'übung', 'praktikum', 'practical', 'projekt', 'project', 'tutorium', 'tutorial', 'workshop'].includes(courseCode.toLowerCase())) {
               courseCode = internalId;
           }
@@ -100,7 +102,7 @@ export class CAU extends BaseScraper {
             const dd = $(dt).next("dd");
             const value = dd.text().trim();
             if (label.includes("dozent") || label.includes("lecturer")) {
-              (course.details as any).instructors = value.split(",").map(i => i.trim()); // eslint-disable-line @typescript-eslint/no-explicit-any
+              (course.details as any).instructors = value.split(",").map(i => i.trim()).filter(i => i && i !== "N.N." && i !== "N. N."); // eslint-disable-line @typescript-eslint/no-explicit-any
             } else if (label.includes("angaben") || label.includes("details")) {
               const typeMatch = value.match(/^(Vorlesung|Übung|Seminar|Praktikum|Kolloquium|Projekt)/i);
               if (typeMatch) {
@@ -173,9 +175,13 @@ export class CAU extends BaseScraper {
     
     const normalizeTitle = (title: string) => {
         let t = title.trim();
-        t = t.replace(/^[a-zA-Z0-9._-]+[:\s]+/, "");
+        // Strip course code prefixes (alphanumeric codes containing digits/dots/hyphens like "infIoT-01a:")
+        t = t.replace(/^[a-zA-Z0-9._-]*[\d._][a-zA-Z0-9._-]*[:\s]+/, "");
+        // Strip exercise/practical prefixes
         const prefixes = /^(übung|.?bung|exercise|practical exercise|practice|tutorial|lab|projekt|project|workshop|fyord workshop|begleitseminar|oberseminar|tutorium)( zu| to)?[:\s]+/i;
         while (prefixes.test(t)) { t = t.replace(prefixes, ""); }
+        // Strip leftover connectors from partial prefix removal
+        t = t.replace(/^(zu|to)[:\s]+/i, "");
         return t.trim().toLowerCase();
     };
 
@@ -185,7 +191,14 @@ export class CAU extends BaseScraper {
                /^(übung|.?bung|exercise|practical|practice|tutorial|lab|projekt|project|workshop)( zu| to)?:\s*/i.test(c.title);
     };
 
-    const sorted = [...items].sort((a, b) => {
+    // Deduplicate items by courseCode + internalId (same course appears in multiple page sections)
+    const deduped = new Map<string, Course>();
+    for (const item of items) {
+        const key = `${item.courseCode}__${(item.details as any).internalId}`; // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (!deduped.has(key)) deduped.set(key, item);
+    }
+
+    const sorted = [...deduped.values()].sort((a, b) => {
         const secA = isSecondary(a); const secB = isSecondary(b);
         if (secA === secB) return 0;
         return secA ? 1 : -1;
@@ -194,7 +207,6 @@ export class CAU extends BaseScraper {
     for (const item of sorted) {
       const itemNormTitle = normalizeTitle(item.title);
       let targetCode: string | undefined;
-
       if (courseMap.has(item.courseCode)) targetCode = item.courseCode;
       else if (item.courseCode.startsWith("PE") && courseMap.has(item.courseCode.substring(2))) targetCode = item.courseCode.substring(2);
       else if ((item.courseCode.startsWith("E") || item.courseCode.startsWith("P")) && courseMap.has(item.courseCode.substring(1))) targetCode = item.courseCode.substring(1);
@@ -220,7 +232,10 @@ export class CAU extends BaseScraper {
       if (!targetCode) {
         for (const [code, existing] of courseMap.entries()) {
              const existingNormTitle = normalizeTitle(existing.title);
-             if (existingNormTitle.length > 5 && (existingNormTitle.includes(itemNormTitle) || itemNormTitle.includes(existingNormTitle)) && !isSecondary(existing)) {
+             // Require the shorter title to be at least 60% of the longer title's length to avoid false matches
+             const shorter = existingNormTitle.length < itemNormTitle.length ? existingNormTitle : itemNormTitle;
+             const longer = existingNormTitle.length < itemNormTitle.length ? itemNormTitle : existingNormTitle;
+             if (shorter.length > 5 && longer.includes(shorter) && shorter.length >= longer.length * 0.6 && !isSecondary(existing)) {
                  targetCode = code; break;
              }
         }
@@ -229,10 +244,10 @@ export class CAU extends BaseScraper {
       if (targetCode && courseMap.has(targetCode)) {
         const existing = courseMap.get(targetCode)!;
         const isNewCodeBetter = /^[a-zA-Z]/.test(item.courseCode) && /^\d/.test(existing.courseCode);
-        
+
         const target = isNewCodeBetter ? item : existing;
         const source = isNewCodeBetter ? existing : item;
-        
+
         if (isNewCodeBetter) {
             courseMap.delete(existing.courseCode);
             courseMap.set(item.courseCode, item);
@@ -259,8 +274,8 @@ export class CAU extends BaseScraper {
         }
         tDetails.schedule = tSched;
 
-        const sInstr = sDetails.instructors || [];
-        const tInstr = tDetails.instructors || [];
+        const sInstr = (sDetails.instructors || []).filter((i: string) => i && i !== "N.N." && i !== "N. N.");
+        const tInstr = (tDetails.instructors || []).filter((i: string) => i && i !== "N.N." && i !== "N. N.");
         sInstr.forEach((i: string) => { if (!tInstr.includes(i)) tInstr.push(i); });
         tDetails.instructors = tInstr;
 

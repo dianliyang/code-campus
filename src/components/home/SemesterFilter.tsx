@@ -32,7 +32,7 @@ export default function SemesterFilter({ availableSemesters, selectedSemester }:
         onChange={(e) => handleChange(e.target.value)}
         className="w-full bg-gray-50 border border-gray-100 text-gray-900 text-[10px] font-medium uppercase tracking-widest rounded-xl focus:ring-brand-green focus:border-brand-green block p-2.5 pl-9 appearance-none cursor-pointer transition-all hover:border-gray-200"
       >
-        <option value="all">All Eras</option>
+        <option value="all">All Semesters</option>
         {availableSemesters.map((sem) => (
           <option key={sem} value={sem}>
             {sem}

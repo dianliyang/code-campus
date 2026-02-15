@@ -3,17 +3,14 @@
 import AISettingsCard from "./AISettingsCard";
 import SecurityIdentitySection from "./SecurityIdentitySection";
 import SystemMaintenanceCard from "./SystemMaintenanceCard";
-import LogoutButton from "@/components/layout/LogoutButton";
-import { Dictionary } from "@/lib/dictionary";
 import { User } from "@supabase/supabase-js";
 
 interface SettingsContainerProps {
   user: User;
   profile: Record<string, unknown> | null;
-  dict: Dictionary;
 }
 
-export default function SettingsContainer({ user, profile, dict }: SettingsContainerProps) {
+export default function SettingsContainer({ user, profile }: SettingsContainerProps) {
   return (
     <div className="max-w-4xl space-y-16 pb-24">
       {/* 1. Intelligence Section */}
@@ -55,17 +52,6 @@ export default function SettingsContainer({ user, profile, dict }: SettingsConta
         <SystemMaintenanceCard key="maintenance-section" />
       </section>
 
-      {/* 4. Exit Section */}
-      <section className="pt-16 border-t border-gray-100 flex justify-center">
-        <div className="w-full max-w-xs">
-          <LogoutButton 
-            showLabel={true} 
-            dict={dict} 
-            fullWidth={true} 
-            className="h-11 bg-gray-900 text-white rounded-lg font-black text-[11px] uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-3 shadow-sm" 
-          />
-        </div>
-      </section>
     </div>
   );
 }

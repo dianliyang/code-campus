@@ -201,7 +201,7 @@ export default function CourseList({
       </div>
 
       <div className="hidden md:block">
-        <Pagination totalPages={totalPages} currentPage={currentPage} />
+        <Pagination totalPages={totalPages} currentPage={currentPage} totalItems={totalItems} perPage={Math.ceil(totalItems / Math.max(totalPages, 1))} />
       </div>
     </main>
   );

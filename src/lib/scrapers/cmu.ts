@@ -1,12 +1,19 @@
 import * as cheerio from "cheerio";
 import { BaseScraper } from "./BaseScraper";
 import { Course } from "./types";
-import { fetch } from "undici";
+import { fetch, Agent } from "undici";
 import { parseCMUSemester } from "./utils/semester";
 
 export class CMU extends BaseScraper {
+  private agent: Agent;
+
   constructor() {
     super("cmu");
+    this.agent = new Agent({
+      connect: {
+        rejectUnauthorized: false
+      }
+    });
   }
 
   links(): string[] {
@@ -37,11 +44,41 @@ export class CMU extends BaseScraper {
     return `${cmuTerm}${shortYear}`;
   }
 
+  async fetchPage(url: string, retries = 3): Promise<string> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`[${this.name}] Fetching ${url} (attempt ${attempt})...`);
+        const response = await fetch(url, { dispatcher: this.agent });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        }
+        return await response.text();
+      } catch (error) {
+        console.error(`[${this.name}] Attempt ${attempt} failed for ${url}:`, error);
+        if (attempt < retries) {
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    return "";
+  }
+
   async retrieve(): Promise<Course[]> {
     const url = "https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/search";
     const cmuSemester = this.getSemesterParam();
+    const { term, year } = parseCMUSemester(cmuSemester);
 
     console.log(`[${this.name}] Using semester code: ${cmuSemester}`);
+
+    // Get existing courses to skip detailed fetching
+    const existingCodes = this.db 
+      ? await this.db.getExistingCourseCodes("CMU", term, year)
+      : new Set<string>();
+    
+    if (existingCodes.size > 0) {
+      console.log(`[${this.name}] Found ${existingCodes.size} existing courses in DB. These will skip detail fetching.`);
+    }
 
     const params = new URLSearchParams();
     params.append("SEMESTER", cmuSemester);
@@ -57,7 +94,7 @@ export class CMU extends BaseScraper {
 
     const html = await this.fetchWithBody(url, params);
     if (html) {
-      return await this.parser(html);
+      return await this.parser(html, existingCodes);
     }
     return [];
   }
@@ -72,6 +109,7 @@ export class CMU extends BaseScraper {
           "Content-Type": "application/x-www-form-urlencoded",
         } : {},
         body: body,
+        dispatcher: this.agent,
       });
 
       if (!response.ok) {
@@ -157,7 +195,7 @@ export class CMU extends BaseScraper {
     }
   }
 
-  async parser(html: string): Promise<Course[]> {
+  async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {
     const $ = cheerio.load(html);
     const courses: Course[] = [];
 
@@ -199,8 +237,24 @@ export class CMU extends BaseScraper {
             courses.push(currentCourse);
           }
 
+          // Check if we should skip detail fetching
+          const shouldSkip = existingCodes.has(rawId);
+          
+          let detailsInfo: {
+            description: string;
+            prerequisites: string;
+            corequisites: string;
+            relatedUrls: string[];
+            crossListedCourses: string;
+          } = {
+            description: "",
+            prerequisites: "",
+            corequisites: "",
+            relatedUrls: [],
+            crossListedCourses: ""
+          };
+
           // Extract URL from onclick attribute if present
-          // openModal('#course-detail-modal', '...', '/open/SOC/SOCServlet/courseDetails?COURSE=15050&SEMESTER=F25', ...)
           const onclick = $(cols[0]).find('a').attr('onclick') || '';
           const urlMatch = onclick.match(/openModal\('[^']+',\s*'[^']+',\s*'([^']+)'/);
           let courseUrl = "";
@@ -208,8 +262,10 @@ export class CMU extends BaseScraper {
             courseUrl = `https://enr-apps.as.cmu.edu${urlMatch[1]}`.replace(/&amp;/g, "&");
           }
 
-          // Fetch detailed course information
-          const { description, prerequisites, corequisites, relatedUrls, crossListedCourses } = await this.fetchDetail(rawId, semesterCode);
+          if (!shouldSkip) {
+            // Fetch detailed course information
+            detailsInfo = await this.fetchDetail(rawId, semesterCode);
+          }
 
           // Determine Level: CMU levels are like 15-112.
           // 100-500 are Undergraduate, 600+ are Graduate.
@@ -230,17 +286,18 @@ export class CMU extends BaseScraper {
             courseCode: rawId,
             title: getText(1),
             units: getText(2),
-            description: description,
+            description: detailsInfo.description,
             url: courseUrl,
             department: department,
-            corequisites: corequisites,
+            corequisites: detailsInfo.corequisites,
             level: level,
             semesters: [{ term: term, year: year }],
             details: {
               sections: [],
-              prerequisites: prerequisites,
-              relatedUrls: relatedUrls,
-              crossListedCourses: crossListedCourses,
+              prerequisites: detailsInfo.prerequisites,
+              relatedUrls: detailsInfo.relatedUrls,
+              crossListedCourses: detailsInfo.crossListedCourses,
+              is_partially_scraped: shouldSkip // Flag to indicate details were skipped
             },
           };
         }

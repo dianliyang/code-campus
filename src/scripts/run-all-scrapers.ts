@@ -59,6 +59,7 @@ async function main() {
 
   for (const scraper of scrapers) {
     scraper.semester = semester;
+    scraper.db = db;
     await runScraper(scraper, db);
   }
 

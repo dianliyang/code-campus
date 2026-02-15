@@ -83,30 +83,60 @@ export class SupabaseDatabase {
 
     const supabase = createAdminClient();
 
-    // Bulk upsert based on university and course_code
-    const toUpsert = courses.map((c) => ({
-      university: university,
-      course_code: c.courseCode,
-      title: c.title,
-      units: c.units,
-      credit: c.credit,
-      description: c.description,
-      url: c.url,
-      details: c.details as Json,
-      department: c.department,
-      corequisites: c.corequisites,
-      level: c.level,
-      difficulty: c.difficulty,
-      popularity: c.popularity || 0,
-      workload: c.workload,
-      is_hidden: c.isHidden || false,
-      is_internal: c.isInternal || false,
-    }));
+    // Separate courses into those that need full update and those that are partially scraped
+    const toUpsert = courses.map((c) => {
+      const payload: {
+        university: string;
+        course_code: string;
+        title: string;
+        units?: string;
+        credit?: number;
+        url?: string;
+        department?: string;
+        corequisites?: string;
+        level?: string;
+        difficulty?: number;
+        popularity: number;
+        workload?: string;
+        is_hidden: boolean;
+        is_internal: boolean;
+        description?: string;
+        details?: Json;
+        latest_semester?: Json;
+      } = {
+        university: university,
+        course_code: c.courseCode,
+        title: c.title,
+        units: c.units,
+        credit: c.credit,
+        url: c.url,
+        department: c.department,
+        corequisites: c.corequisites,
+        level: c.level,
+        difficulty: c.difficulty,
+        popularity: c.popularity || 0,
+        workload: c.workload,
+        is_hidden: c.isHidden || false,
+        is_internal: c.isInternal || false,
+      };
 
-    // 1. Upsert Courses (Ignore duplicates to preserve existing details)
+      // If NOT partially scraped, we include description and details and update latest_semester
+      // If IT IS partially scraped, we skip these to avoid overwriting existing data
+      if (!c.details?.is_partially_scraped) {
+        payload.description = c.description;
+        payload.details = c.details as Json;
+        if (c.semesters && c.semesters.length > 0) {
+          payload.latest_semester = { term: c.semesters[0].term, year: c.semesters[0].year };
+        }
+      }
+
+      return payload;
+    });
+
+    // 1. Upsert Courses
     const { error } = await supabase
       .from("courses")
-      .upsert(toUpsert, { onConflict: 'university,course_code', ignoreDuplicates: true });
+      .upsert(toUpsert, { onConflict: 'university,course_code' });
       
     if (error) {
       console.error(
@@ -287,6 +317,22 @@ export class SupabaseDatabase {
       console.error(`[Supabase] Error clearing ${university}:`, error);
       throw error;
     }
+  }
+
+  async getExistingCourseCodes(university: string, term: string, year: number): Promise<Set<string>> {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from('courses')
+      .select('course_code')
+      .eq('university', university)
+      .contains('latest_semester', { term, year });
+
+    if (error) {
+      console.error(`[Supabase] Error fetching existing course codes for ${university}:`, error);
+      return new Set();
+    }
+
+    return new Set((data || []).map(row => row.course_code));
   }
 }
 

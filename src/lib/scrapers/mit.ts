@@ -110,7 +110,7 @@ export class MIT extends BaseScraper {
     );
   }
 
-  async parser(html: string): Promise<Course[]> {
+  async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {
     const $ = cheerio.load(html);
     const courses: Course[] = [];
     const h3Tags = $('h3');
@@ -130,6 +130,18 @@ export class MIT extends BaseScraper {
 
       const courseId = match[1];
       const courseTitle = match[2];
+
+      // OPTIMIZATION: If course already exists for this semester, skip parsing details
+      if (existingCodes.has(courseId)) {
+        courses.push({
+          university: this.name,
+          courseCode: courseId,
+          title: courseTitle,
+          semesters: [{ term: termName, year: fullYear }],
+          details: { is_partially_scraped: true }
+        });
+        return;
+      }
 
       const details: Record<string, string | string[] | undefined> = {};
       const descriptionParts: string[] = [];

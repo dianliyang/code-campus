@@ -59,6 +59,12 @@ export class Stanford extends BaseScraper {
     );
 
     for (const { term, year } of termsToScrape) {
+      // Get existing courses for this specific term/year
+      const dbTerm = term === "Autumn" ? "Fall" : term;
+      const existingCodes = this.db 
+        ? await this.db.getExistingCourseCodes("Stanford", dbTerm, year)
+        : new Set<string>();
+
       for (const dept of DEPTS) {
         const academicYear = this.getAcademicYear(term, year);
         const baseUrl = "https://explorecourses.stanford.edu/print";
@@ -73,7 +79,7 @@ export class Stanford extends BaseScraper {
         const html = await this.fetchPage(url);
         if (html) {
           const dbTerm = term === "Autumn" ? "Fall" : term;
-          const courses = await this.parser(html, { term: dbTerm, year });
+          const courses = await this.parser(html, existingCodes, { term: dbTerm, year });
 
           // Filter to ensure we only get courses from the target department
           // (Stanford search can be fuzzy)
@@ -92,6 +98,7 @@ export class Stanford extends BaseScraper {
       const response = await fetch(url, {
         headers: {
           Cookie: "jsenabled=1",
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
       });
       if (!response.ok) {
@@ -108,6 +115,7 @@ export class Stanford extends BaseScraper {
 
   async parser(
     html: string,
+    existingCodes: Set<string> = new Set(),
     semesterInfo?: { term: string; year: number }
   ): Promise<Course[]> {
     const $ = cheerio.load(html);
@@ -133,6 +141,15 @@ export class Stanford extends BaseScraper {
         if (numberSpan.length > 0) {
           const rawCode = numberSpan.text().trim().replace(/:$/, "");
           course.courseCode = rawCode;
+
+          // OPTIMIZATION: If course already exists for this semester, skip parsing details
+          if (existingCodes.has(rawCode)) {
+            const titleSpan = courseInfo.find(".courseTitle");
+            course.title = titleSpan.text().trim();
+            course.details = { is_partially_scraped: true };
+            courses.push(course);
+            return;
+          }
 
           // Determine level from course number
           const match = rawCode.match(/\d+/);

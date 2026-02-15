@@ -16,9 +16,48 @@ export class CAU extends BaseScraper {
     super("cau");
   }
 
-  links(): string[] {
+  getSemesterParam(): string {
+    if (!this.semester) return "2025w"; // Default to Winter 2025/26
+
+    const input = this.semester.toLowerCase();
+    const yearNum = parseInt(input.replace(/\D/g, "")) || 25;
+    const year = 2000 + yearNum;
+
+    if (input.includes('fa') || input.includes('fall')) {
+      return `${year}w`;
+    } else if (input.includes('sp') || input.includes('spring')) {
+      return `${year}s`;
+    }
+
+    return `${year}w`;
+  }
+
+  async links(): Promise<string[]> {
+    const sem = this.getSemesterParam();
+    try {
+      // 1. Visit index to get a fresh session if possible, or just use the known pattern
+      // UnivIS links are often ephemeral. The most reliable way is to find the current directory path.
+      const baseUrl = "https://univis.uni-kiel.de/form";
+      const indexHtml = await this.fetchPage(`${baseUrl}?__s=2&dsc=anew/tlecture&anonymous=1&lang=en&sem=${sem}`);
+      const $ = cheerio.load(indexHtml);
+      
+      // Look for the specific department link in the index
+      // techn/infora/master/wahlpf
+      const deptLink = $('a:contains("Computer Science")').attr('href') || 
+                       $('a[href*="techn/infora"]').attr('href');
+      
+      if (deptLink) {
+        const fullUrl = deptLink.startsWith('http') ? deptLink : `https://univis.uni-kiel.de/${deptLink.replace(/^\//, '')}`;
+        console.log(`[${this.name}] Discovered dynamic link: ${fullUrl}`);
+        return [fullUrl];
+      }
+    } catch (e) {
+      console.warn(`[${this.name}] Session discovery failed, falling back to static link pattern.`, e);
+    }
+
+    // Fallback to the pattern we know, but it might be brittle due to __s session param
     return [
-      "https://univis.uni-kiel.de/form?__s=2&dsc=anew/tlecture&showhow=long&anonymous=1&lang=en&sem=2026s&tdir=techn/infora/master/wahlpf&__e=487",
+      `https://univis.uni-kiel.de/form?__s=2&dsc=anew/tlecture&showhow=long&anonymous=1&lang=en&sem=${sem}&tdir=techn/infora/master/wahlpf&__e=487`,
     ];
   }
 
@@ -45,9 +84,14 @@ export class CAU extends BaseScraper {
     return "";
   }
 
-  async parser(html: string): Promise<Course[]> {
+  async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {
     const $ = cheerio.load(html);
     const allEnglishCourses: Course[] = [];
+
+    // Parse current semester info for DB lookup consistency
+    const semParam = this.getSemesterParam();
+    const year = parseInt(semParam.substring(0, 4));
+    const term = semParam.endsWith('w') ? "Fall" : "Spring";
 
     // 1. Collect all English courses first
     $("tr[valign=top]").each((_, tr) => {
@@ -67,6 +111,18 @@ export class CAU extends BaseScraper {
             let title = titleA.text().trim();
             if (metaMatch[1]) {
                  title = title.replace(new RegExp(`^${metaMatch[1]}:\\s*`), "");
+            }
+
+            // OPTIMIZATION: If course already exists for this semester, skip parsing details
+            if (existingCodes.has(courseCode)) {
+              allEnglishCourses.push({
+                university: "CAU Kiel",
+                courseCode: courseCode,
+                title: title,
+                semesters: [{ term, year }],
+                details: { is_partially_scraped: true }
+              });
+              return;
             }
 
             // Determine Type for Unit Breakdown

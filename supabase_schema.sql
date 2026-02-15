@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS courses (
   workload TEXT,
   is_hidden BOOLEAN DEFAULT FALSE,
   is_internal BOOLEAN DEFAULT FALSE,
+  latest_semester JSONB,
   created_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE(university, course_code)
 );

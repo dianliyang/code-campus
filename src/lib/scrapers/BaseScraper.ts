@@ -1,9 +1,12 @@
 import { Course } from './types';
 import pLimit from 'p-limit';
+import { SupabaseDatabase } from '../supabase/server';
+import { parseSemesterCode } from './utils/semester';
 
 export abstract class BaseScraper {
   name: string;
   semester?: string;
+  db?: SupabaseDatabase;
 
   constructor(name: string) {
     this.name = name;
@@ -20,13 +23,19 @@ export abstract class BaseScraper {
 
   abstract links(): string[] | Promise<string[]>;
 
-  abstract parser(html: string): Course[] | Promise<Course[]>;
+  abstract parser(html: string, existingCodes?: Set<string>): Course[] | Promise<Course[]>;
 
   async fetchPage(url: string, retries = 3): Promise<string> {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+    };
+
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         console.log(`[${this.name}] Fetching ${url} (attempt ${attempt})...`);
-        const response = await fetch(url);
+        const response = await fetch(url, { headers });
         if (!response.ok) {
           throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }
@@ -47,13 +56,29 @@ export abstract class BaseScraper {
     const links = await this.links();
     console.log(`[${this.name}] Processing ${links.length} links...`);
 
+    let existingCodes = new Set<string>();
+    if (this.db && this.semester) {
+      const { term, year } = parseSemesterCode(this.semester);
+      // Map "mit" -> "MIT", "stanford" -> "Stanford" etc for DB query
+      const dbUniName = this.name === 'mit' ? 'MIT' : 
+                        this.name === 'stanford' ? 'Stanford' : 
+                        this.name === 'cmu' ? 'CMU' : 
+                        this.name === 'ucb' ? 'UC Berkeley' : 
+                        this.name === 'cau' ? 'CAU Kiel' : this.name;
+      
+      existingCodes = await this.db.getExistingCourseCodes(dbUniName, term, year);
+      if (existingCodes.size > 0) {
+        console.log(`[${this.name}] Found ${existingCodes.size} existing courses in DB for ${term} ${year}.`);
+      }
+    }
+
     const limit = pLimit(5);
     const results = await Promise.all(
       links.map(link =>
         limit(async () => {
           const html = await this.fetchPage(link);
           if (html) {
-            return this.parser(html);
+            return this.parser(html, existingCodes);
           }
           return [];
         })

@@ -8,31 +8,29 @@ export class UCB extends BaseScraper {
   }
 
   getSemesterParam(): string {
-    if (!this.semester) return "2258"; // Default to Fall 2025 (approx/example code)
-    
-    // UCB uses numeric term codes. 
-    // Logic to map fa25/sp25 to specific codes would go here.
-    // For now, we'll just check for basic patterns or allow direct code input.
-    // Example: Spring 2025 -> 2252, Fall 2025 -> 2258
+    if (!this.semester) return "2262"; // Default to Spring 2026
     
     const input = this.semester.toLowerCase();
     
-    // Simple mock mapping for the purpose of the example
-    if (input.includes('sp25') || input.includes('spring25')) return "2252";
-    if (input.includes('fa25') || input.includes('fall25')) return "2258"; // 8 = Fall
-    if (input.includes('su25') || input.includes('summer25')) return "2255";
+    // UCB Term codes: 2 + Last 2 of year + (2=Spring, 5=Summer, 8=Fall)
+    const yearMatch = input.match(/\d{2}/);
+    const yearCode = yearMatch ? yearMatch[0] : "26";
     
-    // Fallback to existing hardcoded if unknown
-    return "8573"; 
+    let termSuffix = "2"; // Spring
+    if (input.includes('fa') || input.includes('fall')) termSuffix = "8";
+    if (input.includes('su') || input.includes('summer')) termSuffix = "5";
+    
+    return `2${yearCode}${termSuffix}`;
   }
 
   links(maxPages: number = 10): string[] {
     const termCode = this.getSemesterParam();
     const links: string[] = [];
-    ["5582", "5475"].map((i) => {
+    // Using mnemonic subject areas which are more stable
+    ["COMPSCI", "EECS", "EL ENG"].map((subject) => {
       for (let page = 0; page < maxPages; page++) {
         links.push(
-          `https://classes.berkeley.edu/search/class?f%5B0%5D=term%3A${termCode}&f%5B1%5D=subject_area%3A${i}&page=${page}`
+          `https://classes.berkeley.edu/search/class?f%5B0%5D=term%3A${termCode}&f%5B1%5D=subject_area%3A${subject}&page=${page}`
         );
       }
     });
@@ -40,7 +38,7 @@ export class UCB extends BaseScraper {
     return links;
   }
 
-  async parser(html: string): Promise<Course[]> {
+  async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {
     const $ = cheerio.load(html);
     const courses: Course[] = [];
     const rows = $("div.views-row");
@@ -50,11 +48,22 @@ export class UCB extends BaseScraper {
       const article = row.find("article.st");
       if (article.length === 0) return;
 
+      const sectionNameSpan = article.find("span.st--section-name");
+      const courseCode = sectionNameSpan.text().trim();
+
       const titleDiv = article.find("div.st--title");
       const title = titleDiv.find("h2").text().trim();
 
-      const sectionNameSpan = article.find("span.st--section-name");
-      const courseCode = sectionNameSpan.text().trim();
+      // OPTIMIZATION: If course already exists for this semester, skip parsing details
+      if (existingCodes.has(courseCode)) {
+        courses.push({
+          university: this.name,
+          courseCode: courseCode,
+          title: title,
+          details: { is_partially_scraped: true }
+        });
+        return;
+      }
 
       const urlPath = article
         .find("div.st--section-name-wraper a")

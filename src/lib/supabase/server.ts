@@ -319,20 +319,23 @@ export class SupabaseDatabase {
     }
   }
 
-  async getExistingCourseCodes(university: string, term: string, year: number): Promise<Set<string>> {
+  async getExistingCourseCodes(university: string): Promise<Map<string, { term: string, year: number } | null>> {
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from('courses')
-      .select('course_code')
-      .eq('university', university)
-      .contains('latest_semester', { term, year });
+      .select('course_code, latest_semester')
+      .eq('university', university);
 
     if (error) {
       console.error(`[Supabase] Error fetching existing course codes for ${university}:`, error);
-      return new Set();
+      return new Map();
     }
 
-    return new Set((data || []).map(row => row.course_code));
+    const map = new Map<string, { term: string, year: number } | null>();
+    (data || []).forEach(row => {
+      map.set(row.course_code, row.latest_semester as { term: string, year: number } | null);
+    });
+    return map;
   }
 }
 

@@ -28,3 +28,19 @@ export function parseSemesterCode(code: string): { term: string; year: number } 
   
   return { term, year };
 }
+
+export function compareSemesters(
+  a: { term: string; year: number },
+  b: { term: string; year: number }
+): number {
+  if (a.year !== b.year) return a.year - b.year;
+
+  const termOrder: Record<string, number> = {
+    'Spring': 1,
+    'Summer': 2,
+    'Fall': 3,
+    'Winter': 4,
+  };
+
+  return (termOrder[a.term] || 0) - (termOrder[b.term] || 0);
+}

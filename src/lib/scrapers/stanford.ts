@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import { BaseScraper } from "./BaseScraper";
 import { Course } from "./types";
-import { parseSemesterCode } from "./utils/semester";
+import { parseSemesterCode, compareSemesters } from "./utils/semester";
 
 export class Stanford extends BaseScraper {
   constructor() {
@@ -61,9 +61,15 @@ export class Stanford extends BaseScraper {
     for (const { term, year } of termsToScrape) {
       // Get existing courses for this specific term/year
       const dbTerm = term === "Autumn" ? "Fall" : term;
-      const existingCodes = this.db 
-        ? await this.db.getExistingCourseCodes("Stanford", dbTerm, year)
-        : new Set<string>();
+      const upToDateCodes = new Set<string>();
+      if (this.db) {
+        const existingMap = await this.db.getExistingCourseCodes("Stanford");
+        for (const [code, latest] of existingMap.entries()) {
+          if (latest && compareSemesters(latest, { term: dbTerm, year }) >= 0) {
+            upToDateCodes.add(code);
+          }
+        }
+      }
 
       for (const dept of DEPTS) {
         const academicYear = this.getAcademicYear(term, year);
@@ -78,8 +84,7 @@ export class Stanford extends BaseScraper {
         const url = `${baseUrl}?${params.toString()}`;
         const html = await this.fetchPage(url);
         if (html) {
-          const dbTerm = term === "Autumn" ? "Fall" : term;
-          const courses = await this.parser(html, existingCodes, { term: dbTerm, year });
+          const courses = await this.parser(html, upToDateCodes, { term: dbTerm, year });
 
           // Filter to ensure we only get courses from the target department
           // (Stanford search can be fuzzy)
@@ -254,5 +259,3 @@ export class Stanford extends BaseScraper {
     return courses;
   }
 }
-
-// https://bulletin.stanford.edu/courses?college=ENGR%20-%20School%20of%20Engineering&subjectCode=CS&cq=&page=1

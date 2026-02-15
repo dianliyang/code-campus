@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import { BaseScraper } from "./BaseScraper";
 import { Course } from "./types";
 import { fetch, Agent } from "undici";
-import { parseCMUSemester } from "./utils/semester";
+import { parseCMUSemester, compareSemesters } from "./utils/semester";
 
 export class CMU extends BaseScraper {
   private agent: Agent;
@@ -14,10 +14,6 @@ export class CMU extends BaseScraper {
         rejectUnauthorized: false
       }
     });
-  }
-
-  links(): string[] {
-    return ["https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/search"];
   }
 
   getSemesterParam(): string {
@@ -56,12 +52,16 @@ export class CMU extends BaseScraper {
       } catch (error) {
         console.error(`[${this.name}] Attempt ${attempt} failed for ${url}:`, error);
         if (attempt < retries) {
-          const delay = Math.pow(2, attempt - 1) * 1000;
+          const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
     }
     return "";
+  }
+
+  async links(): Promise<string[]> {
+    return ["https://enr-apps.as.cmu.edu/open/SOC/SOCServlet/search"];
   }
 
   async retrieve(): Promise<Course[]> {
@@ -71,13 +71,18 @@ export class CMU extends BaseScraper {
 
     console.log(`[${this.name}] Using semester code: ${cmuSemester}`);
 
-    // Get existing courses to skip detailed fetching
-    const existingCodes = this.db 
-      ? await this.db.getExistingCourseCodes("CMU", term, year)
-      : new Set<string>();
+    const upToDateCodes = new Set<string>();
+    if (this.db) {
+      const existingMap = await this.db.getExistingCourseCodes("CMU");
+      for (const [code, latest] of existingMap.entries()) {
+        if (latest && compareSemesters(latest, { term, year }) >= 0) {
+          upToDateCodes.add(code);
+        }
+      }
+    }
     
-    if (existingCodes.size > 0) {
-      console.log(`[${this.name}] Found ${existingCodes.size} existing courses in DB. These will skip detail fetching.`);
+    if (upToDateCodes.size > 0) {
+      console.log(`[${this.name}] Found ${upToDateCodes.size} up-to-date courses in DB. These will skip detail fetching.`);
     }
 
     const params = new URLSearchParams();
@@ -94,7 +99,7 @@ export class CMU extends BaseScraper {
 
     const html = await this.fetchWithBody(url, params);
     if (html) {
-      return await this.parser(html, existingCodes);
+      return await this.parser(html, upToDateCodes);
     }
     return [];
   }

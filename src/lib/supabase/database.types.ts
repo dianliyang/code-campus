@@ -89,6 +89,7 @@ export type Database = {
           instructors: string[] | null
           is_hidden: boolean | null
           is_internal: boolean | null
+          latest_semester: Json | null
           level: string | null
           popularity: number | null
           prerequisites: string | null
@@ -114,6 +115,7 @@ export type Database = {
           instructors?: string[] | null
           is_hidden?: boolean | null
           is_internal?: boolean | null
+          latest_semester?: Json | null
           level?: string | null
           popularity?: number | null
           prerequisites?: string | null
@@ -139,6 +141,7 @@ export type Database = {
           instructors?: string[] | null
           is_hidden?: boolean | null
           is_internal?: boolean | null
+          latest_semester?: Json | null
           level?: string | null
           popularity?: number | null
           prerequisites?: string | null

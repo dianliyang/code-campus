@@ -424,6 +424,9 @@ export class CAUSport extends BaseScraper {
       if (btnValue === "ausgebucht") bookingStatus = "fully_booked";
       else if (btnValue === "buchen") bookingStatus = "available";
 
+      // Filter out fully booked and expired courses during scraping
+      if (bookingStatus === "fully_booked" || bookingStatus === "expired") return;
+
       const bookingUrl = bookingTd.find("a[href]").attr("href") || "";
       const scheduleEntries = days.map((day, i) => ({
         day: DAY_MAP[day] || day,

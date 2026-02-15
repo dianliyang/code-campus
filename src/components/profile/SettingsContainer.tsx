@@ -62,7 +62,7 @@ export default function SettingsContainer({ user, profile, dict }: SettingsConta
             showLabel={true} 
             dict={dict} 
             fullWidth={true} 
-            className="h-11 rounded-xl bg-white text-gray-900 border border-gray-200 font-bold text-sm hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm" 
+            className="h-12 bg-black text-white rounded-none font-black text-[11px] uppercase tracking-[0.3em] hover:bg-gray-800 transition-all flex items-center justify-center gap-3" 
           />
         </div>
       </section>

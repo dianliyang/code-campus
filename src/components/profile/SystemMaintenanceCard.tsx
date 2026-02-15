@@ -165,7 +165,7 @@ export default function SystemMaintenanceCard() {
             className="accent-red-500 w-3.5 h-3.5"
           />
           <span className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-500 group-hover:text-gray-700 transition-colors">
-            Force Update <span className="text-gray-400 normal-case tracking-normal font-bold">(clear existing data before sync)</span>
+            Force Update <span className="text-gray-400 normal-case tracking-normal font-bold">(override existing course data)</span>
           </span>
         </label>
         <button

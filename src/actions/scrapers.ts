@@ -53,25 +53,19 @@ export async function runManualScraperAction({
     const items = await scraper.retrieve();
 
     if (items.length > 0) {
-      // Force update: clear existing data for this university before saving
-      if (forceUpdate) {
-        const supabase = createAdminClient();
-        const uniName = scraper.name === 'cau' ? 'CAU Kiel'
-          : scraper.name === 'mit' ? 'MIT'
-          : scraper.name === 'stanford' ? 'Stanford'
-          : scraper.name === 'cmu' ? 'CMU'
-          : scraper.name === 'ucb' ? 'UC Berkeley'
-          : university;
-        await supabase.from('courses').delete().eq('university', uniName);
-        if (scraper.name === 'cau') {
-          await supabase.from('projects_seminars').delete().eq('university', uniName);
-        }
-        console.log(`[Manual Scrape] Force cleared existing data for ${uniName}`);
-      }
       if (scraper.name === 'cau') {
         const standardCategoryLabels = ['Standard Course', 'Compulsory elective modules in Computer Science'];
         const standardCourses = items.filter(item => standardCategoryLabels.includes((item.details as any)?.category)); // eslint-disable-line @typescript-eslint/no-explicit-any
         const projectsSeminars = items.filter(item => !standardCategoryLabels.includes((item.details as any)?.category)); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+        // Force update: mark all courses as fully scraped so upsert overwrites all fields
+        if (forceUpdate) {
+          for (const item of items) {
+            if (item.details && (item.details as any).is_partially_scraped) { // eslint-disable-line @typescript-eslint/no-explicit-any
+              delete (item.details as any).is_partially_scraped; // eslint-disable-line @typescript-eslint/no-explicit-any
+            }
+          }
+        }
 
         if (standardCourses.length > 0) await db.saveCourses(standardCourses);
         if (projectsSeminars.length > 0) await db.saveProjectsSeminars(projectsSeminars);

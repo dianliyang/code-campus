@@ -2,239 +2,196 @@ import * as cheerio from "cheerio";
 import { BaseScraper } from "./BaseScraper";
 import { Course } from "./types";
 
-interface CAUDetails {
-  internalId: string;
-  schedule: Record<string, string[]>;
-  type?: string;
-  rawUnits?: number;
-  breakdown?: [number, number, number];
-  instructors?: string[];
-}
-
 export class CAU extends BaseScraper {
   constructor() {
     super("cau");
   }
 
   getSemesterParam(): string {
-    if (!this.semester) return "2025w"; // Default to Winter 2025/26
-
+    if (!this.semester) return "2025w";
     const input = this.semester.toLowerCase();
     const yearNum = parseInt(input.replace(/\D/g, "")) || 25;
     const year = 2000 + yearNum;
-
-    if (input.includes('fa') || input.includes('fall') || input.includes('wi') || input.includes('winter')) {
-      return `${year}w`;
-    } else if (input.includes('sp') || input.includes('spring')) {
-      // Spring 2026 is part of Winter 2025/26
-      return `${year - 1}w`;
-    } else if (input.includes('su') || input.includes('summer')) {
-      return `${year}s`;
-    }
-
+    if (input.includes('wi') || input.includes('winter') || input.includes('fa') || input.includes('fall')) return `${year}w`;
+    if (input.includes('sp') || input.includes('spring') || input.includes('su') || input.includes('summer')) return `${year}s`;
     return `${year}w`;
   }
 
   async links(): Promise<string[]> {
     const sem = this.getSemesterParam();
-    try {
-      // 1. Visit index to get a fresh session if possible, or just use the known pattern
-      // UnivIS links are often ephemeral. The most reliable way is to find the current directory path.
-      const baseUrl = "https://univis.uni-kiel.de/form";
-      const indexHtml = await this.fetchPage(`${baseUrl}?__s=2&dsc=anew/tlecture&anonymous=1&lang=en&sem=${sem}`);
-      const $ = cheerio.load(indexHtml);
-      
-      // Look for the specific department link in the index
-      // techn/infora/master/wahlpf
-      const deptLink = $('a:contains("Computer Science")').attr('href') || 
-                       $('a[href*="techn/infora"]').attr('href');
-      
-      if (deptLink) {
-        const fullUrl = deptLink.startsWith('http') ? deptLink : `https://univis.uni-kiel.de/${deptLink.replace(/^\//, '')}`;
-        console.log(`[${this.name}] Discovered dynamic link: ${fullUrl}`);
-        return [fullUrl];
-      }
-    } catch (e) {
-      console.warn(`[${this.name}] Session discovery failed, falling back to static link pattern.`, e);
-    }
-
-    // Fallback to the pattern we know, but it might be brittle due to __s session param
-    return [
-      `https://univis.uni-kiel.de/form?__s=2&dsc=anew/tlecture&showhow=long&anonymous=1&lang=en&sem=${sem}&tdir=techn/infora/master/wahlpf&__e=487`,
-    ];
+    // Use stable direct search for ALL CS department courses
+    return [`https://univis.uni-kiel.de/prg?search=lectures&department=080110000&sem=${sem}&show=long`];
   }
 
   async fetchPage(url: string, retries = 3): Promise<string> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        console.log(`[${this.name}] Fetching ${url} (attempt ${attempt})...`);
         const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status} ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const buffer = await response.arrayBuffer();
-        const decoder = new TextDecoder("windows-1252");
-        return decoder.decode(buffer);
-      } catch (error) {
-        console.error(`[${this.name}] Attempt ${attempt} failed for ${url}:`, error);
-        if (attempt < retries) {
-          const delay = Math.pow(2, attempt - 1) * 1000;
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
+        return new TextDecoder("windows-1252").decode(buffer);
+      } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+        if (attempt === retries) return "";
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
-    console.error(`[${this.name}] All ${retries} attempts failed for ${url}`);
     return "";
   }
 
   async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {
     const $ = cheerio.load(html);
-    const allEnglishCourses: Course[] = [];
-
-    // Parse current semester info for DB lookup consistency
+    const courses: Course[] = [];
     const semParam = this.getSemesterParam();
     const year = parseInt(semParam.substring(0, 4));
     const term = semParam.endsWith('w') ? "Winter" : "Spring";
 
-    // 1. Collect all English courses first
     $("tr[valign=top]").each((_, tr) => {
-      const tds = $(tr).find("td");
-      if (tds.length >= 2) {
-        const contentTd = $(tds[1]);
-        const titleA = contentTd.find("a").first();
-        if (titleA.length > 0) {
-          const fullText = contentTd.text().replace(/\s+/g, " ");
-          
-          const metaMatch = fullText.match(/(?:\[([\w-]+)\])?\s*\((\d{6})\)/);
-          
-          if (metaMatch) {
-            const internalId = metaMatch[2];
-            const courseCode = metaMatch[1] || internalId;
-            
-            let title = titleA.text().trim();
-            if (metaMatch[1]) {
-                 title = title.replace(new RegExp(`^${metaMatch[1]}:\\s*`), "");
-            }
+      const td = $(tr).find("td").first();
+      const titleA = td.find("a[href*='key=']").first();
+      if (titleA.length > 0) {
+        const fullText = td.text().replace(/\s+/g, " ");
+        // Pattern: [Code] Title [ShortTitle] (Number)
+        const metaMatch = fullText.match(/(?:\[?([\w.-]+)\]?)?\s*(.+?)\s*(?:\[.+?\])?\s*\((\d{6})\)/);
+        
+        if (metaMatch) {
+          const internalId = metaMatch[3];
+          const courseCode = metaMatch[1] || internalId;
+          const title = titleA.text().trim();
 
-            // OPTIMIZATION: If course already exists for this semester, skip parsing details
-            if (existingCodes.has(courseCode)) {
-              allEnglishCourses.push({
-                university: "CAU Kiel",
-                courseCode: courseCode,
-                title: title,
-                semesters: [{ term, year }],
-                details: { is_partially_scraped: true }
-              });
-              return;
-            }
-
-            // Determine Type for Unit Breakdown
-            let type = "Lecture";
-            const titleLower = title.toLowerCase();
-            if (courseCode.startsWith("PE") || titleLower.startsWith("practical")) {
-                type = "Practical";
-            } else if (courseCode.startsWith("E") || courseCode.startsWith("P") || 
-                       titleLower.startsWith("exercise") || titleLower.startsWith("practice") ||
-                       titleLower.includes("bung")) {
-                type = "Exercise";
-            } else if (titleLower.includes("seminar")) {
-                type = "Seminar";
-            }
-
-            const course: Course = {
-              university: "CAU Kiel",
-              courseCode: courseCode,
-              title: title,
-              department: "Computer Science",
-              semesters: [{ term: "Spring", year: 2026 }],
-              level: "graduate",
-              details: {
-                internalId: internalId,
-                schedule: {} as Record<string, string[]>,
-                type: type, // Store type for merging logic
-                rawUnits: 0 // Store raw numeric units
-              } as unknown as Record<string, unknown>
-            };
-
-            let isEnglish = false;
-            contentTd.find("dl dt").each((_, dt) => {
-              const label = $(dt).text().trim().toLowerCase();
-              const dd = $(dt).next("dd");
-              const value = dd.text().trim();
-
-              if (label.includes("lecturer")) {
-                (course.details as unknown as CAUDetails).instructors = value.split(",").map(i => i.trim());
-              } else if (label.includes("details")) {
-                const ectsMatch = value.match(/ECTS:\s*(\d+)/);
-                if (ectsMatch) course.credit = parseInt(ectsMatch[1]);
-                
-                const unitsMatch = value.match(/(\d+)\s*cred\.h/);
-                if (unitsMatch) {
-                    const u = parseInt(unitsMatch[1]);
-                    course.units = u.toString(); // Keep string for now
-                    (course.details as unknown as CAUDetails).rawUnits = u;
-                }
-                
-                if (value.toLowerCase().includes("language of lecture is english")) isEnglish = true;
-              } else if (label.includes("prerequisites")) {
-                course.corequisites = value;
-              } else if (label.includes("contents")) {
-                course.description = value;
-              } else if (label.includes("dates")) {
-                if (value) {
-                    const sched = (course.details as unknown as CAUDetails).schedule;
-                    if (!sched[type]) sched[type] = [];
-                    sched[type].push(value);
-                }
-              }
+          if (existingCodes.has(courseCode)) {
+            courses.push({
+              university: "CAU Kiel", courseCode, title, semesters: [{ term, year }],
+              details: { is_partially_scraped: true } as any // eslint-disable-line @typescript-eslint/no-explicit-any
             });
+            return;
+          }
 
-            if (isEnglish) {
-              const rawUrl = titleA.attr("href");
-              if (rawUrl) course.url = `https://univis.uni-kiel.de/${rawUrl.replace(/&amp;/g, "&")}`;
-              allEnglishCourses.push(course);
+          const type = "Lecture";
+          let category = "General";
+          const titleLower = title.toLowerCase();
+
+          // Categorization logic based on title and metadata
+          if (titleLower.includes("advanced project") || titleLower.includes("oberprojekt") || titleLower.includes("advanced computer science project")) category = "Advanced Project";
+          else if (titleLower.includes("seminar") && !titleLower.includes("supervision")) category = "Seminar";
+          else if (titleLower.includes("colloquium") || titleLower.includes("kolloquium") || titleLower.includes("study group")) category = "Colloquia and study groups";
+          else if (titleLower.includes("theoretical") || titleLower.includes("theoretische")) category = "Theoretical Computer Science";
+          else if (titleLower.includes("involvement") || titleLower.includes("mitarbeit")) category = "Involvement in a working group";
+          else if (titleLower.includes("thesis supervision") || titleLower.includes("begleitseminar zur masterarbeit")) category = "Master Thesis Supervision Seminar";
+          else if (titleLower.includes("elective") || titleLower.includes("wahlpflicht")) category = "Compulsory elective modules in Computer Science";
+          else if (titleLower.includes("open elective") || titleLower.includes("freie wahl")) category = "Open Elective";
+          else category = "Standard Course";
+
+          const course: Course = {
+            university: "CAU Kiel", courseCode, title, department: "Computer Science",
+            semesters: [{ term, year }], level: "graduate",
+            details: { internalId, schedule: {}, category, type, rawUnits: 0 } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          td.find("dl dt").each((_, dt) => {
+            const label = $(dt).text().trim().toLowerCase();
+            const dd = $(dt).next("dd");
+            const value = dd.text().trim();
+
+            if (label.includes("dozent") || label.includes("lecturer")) {
+              (course.details as any).instructors = value.split(",").map(i => i.trim()); // eslint-disable-line @typescript-eslint/no-explicit-any
+            } else if (label.includes("angaben") || label.includes("details")) {
+              const typeMatch = value.match(/^(Vorlesung|Übung|Seminar|Praktikum|Kolloquium|Projekt)/i);
+              if (typeMatch) {
+                  const t = typeMatch[1].toLowerCase();
+                  if (t === 'vorlesung') (course.details as any).type = "Lecture"; // eslint-disable-line @typescript-eslint/no-explicit-any
+                  else if (t === 'übung') (course.details as any).type = "Exercise"; // eslint-disable-line @typescript-eslint/no-explicit-any
+                  else if (t === 'praktikum') (course.details as any).type = "Practical"; // eslint-disable-line @typescript-eslint/no-explicit-any
+                  else if (t === 'seminar') (course.details as any).type = "Seminar"; // eslint-disable-line @typescript-eslint/no-explicit-any
+                  else if (t === 'projekt') (course.details as any).type = "Project"; // eslint-disable-line @typescript-eslint/no-explicit-any
+              }
+
+              const ectsMatch = value.match(/(?:ECTS|Credits):\s*(\d+)/i);
+              if (ectsMatch) course.credit = parseInt(ectsMatch[1]);
+              const unitsMatch = value.match(/(\d+)\s*(?:cred\.h|SWS)/i);
+              if (unitsMatch) {
+                  const u = parseInt(unitsMatch[1]);
+                  course.units = u.toString();
+                  (course.details as any).rawUnits = u; // eslint-disable-line @typescript-eslint/no-explicit-any
+              }
+              if (value.toLowerCase().includes("englisch") || value.toLowerCase().includes("english")) (course.details as any).isEnglish = true; // eslint-disable-line @typescript-eslint/no-explicit-any
+            } else if (label.includes("voraussetzungen") || label.includes("prerequisites")) {
+              course.corequisites = value;
+            } else if (label.includes("inhalt") || label.includes("contents")) {
+              course.description = value;
+            } else if (label.includes("termine") || label.includes("dates")) {
+              if (value) {
+                  const cType = (course.details as any).type || "Lecture"; // eslint-disable-line @typescript-eslint/no-explicit-any
+                  const sched = (course.details as any).schedule; // eslint-disable-line @typescript-eslint/no-explicit-any
+                  if (!sched[cType]) sched[cType] = [];
+                  sched[cType].push(value);
+              }
             }
+          });
+
+          // Heuristic for English if not explicit
+          const isEnglish = (course.details as any).isEnglish || // eslint-disable-line @typescript-eslint/no-explicit-any
+                            (!/[äöüß]/i.test(title) && ['computer', 'data', 'science', 'network', 'system', 'software', 'intelligence', 'security', 'advanced', 'distributed', 'introduction', 'foundation', 'logic', 'machine', 'learning', 'cloud', 'robotics'].some(word => titleLower.includes(word)));
+
+          if (isEnglish || category !== "General") {
+            const rawUrl = titleA.attr("href");
+            if (rawUrl) course.url = rawUrl.startsWith('http') ? rawUrl : `https://univis.uni-kiel.de/${rawUrl.replace(/&amp;/g, "&")}`;
+            courses.push(course);
           }
         }
       }
     });
 
-    // 2. Merge Exercises into Main Courses
+    return courses;
+  }
+
+  async retrieve(): Promise<Course[]> {
+    const links = await this.links();
+    console.log(`[${this.name}] Scraping ${links.length} departments...`);
+    const allItems: Course[] = [];
+    for (const link of links) {
+      const html = await this.fetchPage(link);
+      if (html) {
+        const batch = await this.parser(html, new Set());
+        allItems.push(...batch);
+      }
+    }
+
+    const merged = this.mergeCourses(allItems);
+    console.log(`[${this.name}] Found ${merged.length} total academic items after merging.`);
+    return merged;
+  }
+
+  private mergeCourses(items: Course[]): Course[] {
     const courseMap = new Map<string, Course>();
     
-    // Sort: Process potential "Main" courses first
+    // Helper to identify if an item is a secondary component (Exercise, Practical, etc.)
     const isSecondary = (c: Course) => {
-        const titleLower = c.title.toLowerCase();
-        return c.courseCode.startsWith("E") || 
-               c.courseCode.startsWith("P") || 
-               titleLower.startsWith("exercise") || 
-               titleLower.startsWith("practical") ||
-               titleLower.includes("bung");
+        const type = (c.details as any).type; // eslint-disable-line @typescript-eslint/no-explicit-any
+        return type === "Exercise" || type === "Practical" || type === "Project" ||
+               /^(übung|bung|exercise|practical|practice|tutorial|lab|projekt|project)( zu)?:\s*/i.test(c.title);
     };
 
-    const sortedCourses = [...allEnglishCourses].sort((a, b) => {
+    // Sort items so primary components (Lectures, Seminars) are processed first
+    const sorted = [...items].sort((a, b) => {
         const secA = isSecondary(a);
         const secB = isSecondary(b);
         if (secA === secB) return 0;
-        return secA ? 1 : -1; 
+        return secA ? 1 : -1;
     });
 
-    for (const course of sortedCourses) {
-      const cleanTitle = course.title
-        .replace(/^(.?bung|Exercise|Practical Exercise|Practice|Tutorial)( zu)?:\s*/i, "")
-        .trim();
-
+    for (const item of sorted) {
+      // Normalize title for matching: remove prefixes like "Übung zu: "
+      const cleanTitle = item.title.replace(/^(.?bung|Exercise|Practical Exercise|Practice|Tutorial|Lab|Projekt|Project)( zu)?:\s*/i, "").trim();
       let targetCode: string | undefined;
+      
+      // Try to find matching primary course by code (e.g., E123 -> 123)
+      if (item.courseCode.startsWith("PE") && courseMap.has(item.courseCode.substring(2))) targetCode = item.courseCode.substring(2);
+      else if ((item.courseCode.startsWith("E") || item.courseCode.startsWith("P")) && courseMap.has(item.courseCode.substring(1))) targetCode = item.courseCode.substring(1);
 
-      if (course.courseCode.startsWith("PE") && courseMap.has(course.courseCode.substring(2))) {
-        targetCode = course.courseCode.substring(2);
-      } else if ((course.courseCode.startsWith("E") || course.courseCode.startsWith("P")) && courseMap.has(course.courseCode.substring(1))) {
-        targetCode = course.courseCode.substring(1);
-      }
-
+      // Try to find matching primary course by cleaned title
       if (!targetCode) {
         for (const [code, existing] of courseMap.entries()) {
-             if (existing.title === cleanTitle && !isSecondary(existing)) {
+             if (existing.title.toLowerCase() === cleanTitle.toLowerCase() && !isSecondary(existing)) {
                  targetCode = code;
                  break;
              }
@@ -242,58 +199,50 @@ export class CAU extends BaseScraper {
       }
 
       const existing = targetCode ? courseMap.get(targetCode) : undefined;
-      const target = existing || course;
-
-      // Initialize breakdown if needed: [Lecture, Discussion, Exercise/Practical]
-      if (!(target.details as unknown as CAUDetails).breakdown) {
-          (target.details as unknown as CAUDetails).breakdown = [0, 0, 0];
-      }
-
-      // Add units to breakdown
-      const u = (course.details as unknown as CAUDetails).rawUnits || 0;
-      const type = (course.details as unknown as CAUDetails).type;
+      const target = existing || item;
+      const details = target.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any
       
-      const bd = (target.details as unknown as CAUDetails).breakdown!;
-      if (type === "Lecture") {
-          bd[0] += u;
-      } else if (type === "Seminar") {
-          bd[1] += u;
-      } else { // Exercise, Practical
-          bd[2] += u;
-      }
+      if (!details.breakdown) details.breakdown = [0, 0, 0, 0]; // L, S, E, P/Proj
+      
+      const u = (item.details as any).rawUnits || 0; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const type = (item.details as any).type; // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (type === "Lecture") details.breakdown[0] += u;
+      else if (type === "Seminar") details.breakdown[1] += u;
+      else if (type === "Exercise") details.breakdown[2] += u;
+      else if (type === "Practical" || type === "Project") details.breakdown[3] += u;
 
       if (existing) {
-        // Merge Schedule
-        const sourceSched = (course.details as unknown as CAUDetails).schedule;
-        const targetSched = (existing.details as unknown as CAUDetails).schedule;
-        for (const [t, dates] of Object.entries(sourceSched)) {
-            if (!targetSched[t]) targetSched[t] = [];
-            (dates as string[]).forEach(d => {
-                if (!targetSched[t].includes(d)) targetSched[t].push(d);
-            });
+        // Merge schedule
+        const sSched = (item.details as any).schedule || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const tSched = details.schedule || {};
+        for (const [t, d] of Object.entries(sSched)) {
+            if (!tSched[t]) tSched[t] = [];
+            (d as string[]).forEach(x => { if (!tSched[t].includes(x)) tSched[t].push(x); });
         }
-        // Merge metadata
-        if (!existing.description && course.description) existing.description = course.description;
-        if (!existing.corequisites && course.corequisites) existing.corequisites = course.corequisites;
+        details.schedule = tSched;
+        
+        // Merge description if missing
+        if (!target.description && item.description) target.description = item.description;
+        
+        // Merge instructors
+        const sInstr = (item.details as any).instructors || []; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const tInstr = details.instructors || [];
+        sInstr.forEach((i: string) => { if (!tInstr.includes(i)) tInstr.push(i); });
+        details.instructors = tInstr;
       } else {
-        courseMap.set(course.courseCode, course);
+        courseMap.set(item.courseCode, item);
       }
     }
 
-    const mergedCourses = Array.from(courseMap.values());
-    
-    // Finalize units string "L-D-E"
-    mergedCourses.forEach(c => {
-        const details = c.details as unknown as CAUDetails;
-        if (details.breakdown) {
-            c.units = `${details.breakdown[0]}-${details.breakdown[1]}-${details.breakdown[2]}`;
-            delete details.breakdown; // Clean up
-            delete details.rawUnits;
-            delete details.type;
+    const result = Array.from(courseMap.values());
+    result.forEach(c => {
+        const d = c.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (d.breakdown) {
+            // Format units as L-S-E-P components
+            c.units = `${d.breakdown[0]}-${d.breakdown[1]}-${d.breakdown[2]}-${d.breakdown[3]}`;
+            delete d.breakdown; delete d.rawUnits; delete d.type;
         }
     });
-
-    console.log(`[${this.name}] Found ${mergedCourses.length} merged English courses`);
-    return mergedCourses;
+    return result;
   }
 }

@@ -306,6 +306,38 @@ export class SupabaseDatabase {
     console.log(`[Supabase] Saved ${toUpsert.length} workouts for ${source}.`);
   }
 
+  async saveProjectsSeminars(items: ScrapedCourse[]): Promise<void> {
+    if (items.length === 0) return;
+
+    const university = formatUniversityName(items[0].university);
+    console.log(`[Supabase] Saving ${items.length} projects/seminars for ${university}...`);
+
+    const supabase = createAdminClient();
+
+    const toUpsert = items.map((c) => ({
+      university: university,
+      course_code: c.courseCode,
+      category: (c.details as any)?.category || "Other", // eslint-disable-line @typescript-eslint/no-explicit-any
+      title: c.title,
+      description: c.description,
+      url: c.url,
+      instructors: (c.details as any)?.instructors || ([] as string[]), // eslint-disable-line @typescript-eslint/no-explicit-any
+      credit: c.credit,
+      latest_semester: c.semesters?.[0] ? { term: c.semesters[0].term, year: c.semesters[0].year } : null,
+      details: c.details as Json,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { error } = await supabase
+      .from("projects_seminars")
+      .upsert(toUpsert, { onConflict: 'university,course_code' });
+
+    if (error) {
+      console.error(`[Supabase] Error saving projects/seminars for ${university}:`, error);
+      throw error;
+    }
+  }
+
   async clearUniversity(university: string): Promise<void> {
     const supabase = createAdminClient();
     const { error } = await supabase

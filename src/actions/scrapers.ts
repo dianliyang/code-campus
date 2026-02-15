@@ -1,9 +1,79 @@
 "use server";
 
 import { CAUSport } from "@/lib/scrapers/cau-sport";
+import { MIT } from "@/lib/scrapers/mit";
+import { Stanford } from "@/lib/scrapers/stanford";
+import { CMU } from "@/lib/scrapers/cmu";
+import { UCB } from "@/lib/scrapers/ucb";
+import { CAU } from "@/lib/scrapers/cau";
+import { BaseScraper } from "@/lib/scrapers/BaseScraper";
 import { SupabaseDatabase, createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getUser } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+
+export async function runManualScraperAction({
+  university,
+  semester
+}: {
+  university: string;
+  semester: string;
+}) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  try {
+    const db = new SupabaseDatabase();
+    let scraper: BaseScraper | null = null;
+
+    if (university === 'mit') scraper = new MIT();
+    else if (university === 'stanford') scraper = new Stanford();
+    else if (university === 'cmu') scraper = new CMU();
+    else if (university === 'ucb') scraper = new UCB();
+    else if (university === 'cau') scraper = new CAU();
+    else if (university === 'cau-sport') {
+        const sportScraper = new CAUSport();
+        sportScraper.semester = semester;
+        const workouts = await sportScraper.retrieveWorkouts();
+        if (workouts.length > 0) {
+            await db.saveWorkouts(workouts);
+            revalidatePath("/workouts");
+            return { success: true, count: workouts.length };
+        }
+        return { success: true, count: 0 };
+    }
+
+    if (!scraper) throw new Error(`University "${university}" not found.`);
+
+    scraper.semester = semester;
+    scraper.db = db;
+
+    console.log(`[Manual Scrape] Running ${scraper.name} for ${semester}...`);
+    const items = await scraper.retrieve();
+
+    if (items.length > 0) {
+      if (scraper.name === 'cau') {
+        const standardCategoryLabels = ['Standard Course', 'Compulsory elective modules in Computer Science'];
+        const standardCourses = items.filter(item => standardCategoryLabels.includes((item.details as any)?.category)); // eslint-disable-line @typescript-eslint/no-explicit-any
+        const projectsSeminars = items.filter(item => !standardCategoryLabels.includes((item.details as any)?.category)); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+        if (standardCourses.length > 0) await db.saveCourses(standardCourses);
+        if (projectsSeminars.length > 0) await db.saveProjectsSeminars(projectsSeminars);
+      } else {
+        await db.saveCourses(items);
+      }
+      revalidatePath("/courses");
+      return { success: true, count: items.length };
+    }
+
+    return { success: true, count: 0 };
+  } catch (error) {
+    console.error(`[Manual Scrape] Failed for ${university}:`, error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Unknown error occurred" 
+    };
+  }
+}
 
 export async function fetchWorkoutsAction({
   page = 1,

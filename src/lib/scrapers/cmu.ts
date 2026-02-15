@@ -21,21 +21,18 @@ export class CMU extends BaseScraper {
     if (!this.semester) return "F25";
 
     const input = this.semester.toLowerCase();
-    const year = input.replace(/\D/g, "");
-    const term = input.replace(/[\d\s]/g, ""); // Remove digits and whitespace
+    const yearMatch = input.match(/\d{2,4}/);
+    const year = yearMatch ? yearMatch[0] : "25";
     
-    const termMap: Record<string, string> = {
-      'fa': 'F',
-      'fall': 'F',
-      'sp': 'S',
-      'spring': 'S',
-      'su': 'M',
-      'summer': 'M'
-    };
+    // Term detection
+    let cmuTerm = 'F';
+    if (input.includes('fa') || input.includes('fall')) cmuTerm = 'F';
+    else if (input.includes('sp') || input.includes('spring')) cmuTerm = 'S';
+    else if (input.includes('wi') || input.includes('winter')) cmuTerm = 'S'; // Winter maps to Spring at CMU
+    else if (input.includes('su') || input.includes('summer')) cmuTerm = 'M';
     
-    const cmuTerm = termMap[term] || 'F';
     // Use last 2 digits of year
-    const shortYear = year.length === 4 ? year.slice(2) : (year || '25');
+    const shortYear = year.length === 4 ? year.slice(2) : year;
     
     return `${cmuTerm}${shortYear}`;
   }
@@ -202,7 +199,7 @@ export class CMU extends BaseScraper {
 
   async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {
     const $ = cheerio.load(html);
-    const courses: Course[] = [];
+    const rawCourses: Course[] = [];
 
     // Parse semester code (e.g., "F25" -> "Fall", 2025)
     const semesterCode = this.getSemesterParam();
@@ -214,6 +211,7 @@ export class CMU extends BaseScraper {
     ];
 
     const tables = $("table#search-results-table");
+    let currentCourse: Course | null = null;
     
     for (const tableElement of tables.toArray()) {
       const table = $(tableElement);
@@ -226,7 +224,6 @@ export class CMU extends BaseScraper {
       const tbody = table.find("tbody");
       if (tbody.length === 0) continue;
 
-      let currentCourse: Course | null = null;
       const rows = tbody.find("tr").toArray();
 
       for (const trElement of rows) {
@@ -239,37 +236,18 @@ export class CMU extends BaseScraper {
         // CMU course IDs usually look like "15-112" or "15112"
         if (rawId && (/\d{2}-\d{3}/.test(rawId) || /^\d{5}$/.test(rawId))) {
           if (currentCourse) {
-            courses.push(currentCourse);
+            rawCourses.push(currentCourse);
           }
 
           // Check if we should skip detail fetching
           const shouldSkip = existingCodes.has(rawId);
           
-          let detailsInfo: {
-            description: string;
-            prerequisites: string;
-            corequisites: string;
-            relatedUrls: string[];
-            crossListedCourses: string;
-          } = {
-            description: "",
-            prerequisites: "",
-            corequisites: "",
-            relatedUrls: [],
-            crossListedCourses: ""
-          };
-
           // Extract URL from onclick attribute if present
           const onclick = $(cols[0]).find('a').attr('onclick') || '';
           const urlMatch = onclick.match(/openModal\('[^']+',\s*'[^']+',\s*'([^']+)'/);
           let courseUrl = "";
           if (urlMatch) {
             courseUrl = `https://enr-apps.as.cmu.edu${urlMatch[1]}`.replace(/&amp;/g, "&");
-          }
-
-          if (!shouldSkip) {
-            // Fetch detailed course information
-            detailsInfo = await this.fetchDetail(rawId, semesterCode);
           }
 
           // Determine Level: CMU levels are like 15-112.
@@ -291,17 +269,17 @@ export class CMU extends BaseScraper {
             courseCode: rawId,
             title: getText(1),
             units: getText(2),
-            description: detailsInfo.description,
+            description: "", // Populated later
             url: courseUrl,
             department: department,
-            corequisites: detailsInfo.corequisites,
+            corequisites: "", // Populated later
             level: level,
             semesters: [{ term: term, year: year }],
             details: {
               sections: [],
-              prerequisites: detailsInfo.prerequisites,
-              relatedUrls: detailsInfo.relatedUrls,
-              crossListedCourses: detailsInfo.crossListedCourses,
+              prerequisites: "",
+              relatedUrls: [],
+              crossListedCourses: "",
               is_partially_scraped: shouldSkip // Flag to indicate details were skipped
             },
           };
@@ -316,15 +294,14 @@ export class CMU extends BaseScraper {
             location: getText(8),
           };
 
+          const details = currentCourse.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any
           if (rawId || secId) {
             const section = {
               id: secId,
               meetings: [meeting],
             };
-            const details = currentCourse.details as { sections: { id: string; meetings: { days: string; begin: string; end: string; location: string }[] }[] };
             details.sections.push(section);
           } else {
-            const details = currentCourse.details as { sections: { id: string; meetings: { days: string; begin: string; end: string; location: string }[] }[] };
             const sections = details.sections;
             if (sections.length > 0) {
               sections[sections.length - 1].meetings.push(meeting);
@@ -334,10 +311,34 @@ export class CMU extends BaseScraper {
       }
       
       if (currentCourse) {
-        courses.push(currentCourse);
+        rawCourses.push(currentCourse);
+        currentCourse = null;
       }
     }
 
-    return courses;
+    // Now fetch details for rawCourses concurrently
+    const pLimit = (await import("p-limit")).default;
+    const limit = pLimit(10); // 10 concurrent detail fetches
+
+    const toFetch = rawCourses.filter(c => !c.details?.is_partially_scraped);
+    console.log(`[${this.name}] Starting concurrent detail retrieval for ${toFetch.length} courses...`);
+
+    await Promise.all(toFetch.map(course => limit(async () => {
+       try {
+         const details = await this.fetchDetail(course.courseCode, semesterCode);
+         course.description = details.description;
+         course.corequisites = details.corequisites;
+         if (course.details) {
+           const d = course.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+           d.prerequisites = details.prerequisites;
+           d.relatedUrls = details.relatedUrls;
+           d.crossListedCourses = details.crossListedCourses;
+         }
+       } catch (error) {
+         console.error(`[${this.name}] Failed to fetch details for ${course.courseCode}:`, error);
+       }
+    })));
+
+    return rawCourses;
   }
 }

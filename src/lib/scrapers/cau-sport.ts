@@ -250,14 +250,21 @@ export class CAUSport extends BaseScraper {
     const yearMatch = input.match(/\d{2}/);
     const yearNum = parseInt(yearMatch ? yearMatch[0] : "25");
 
+    // Current logic based on server structure:
+    // 1. If it's the current/upcoming transition (WiSe 25/26), use "aktueller_zeitraum"
+    if ((input.includes("wi") || input.includes("winter") || input.includes("fa") || input.includes("fall")) && yearNum === 25) {
+      return "aktueller_zeitraum";
+    }
+    if ((input.includes("sp") || input.includes("spring")) && yearNum === 26) {
+      return "aktueller_zeitraum";
+    }
+
+    // 2. Future or past semesters use the named directory format
     if (input.includes("wi") || input.includes("winter") || input.includes("fa") || input.includes("fall")) {
-      // fa25/wi25 -> wintersemester_25_26
       return `wintersemester_${yearNum}_${yearNum + 1}`;
     } else if (input.includes("sp") || input.includes("spring")) {
-      // sp26 -> wintersemester_25_26 (Second half)
       return `wintersemester_${yearNum - 1}_${yearNum}`;
     } else if (input.includes("su") || input.includes("summer")) {
-      // su26 -> sommersemester_26
       return `sommersemester_${yearNum}`;
     }
 
@@ -272,15 +279,22 @@ export class CAUSport extends BaseScraper {
       try {
         console.log(`[${this.name}] Fetching ${url} (attempt ${attempt})...`);
         const response = await fetch(url, { headers });
+        
+        if (response.status === 404) {
+          console.log(`[${this.name}] Page not found (404): ${url}`);
+          return "";
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }
         const buffer = await response.arrayBuffer();
         return new TextDecoder("iso-8859-1").decode(buffer);
-      } catch (error) {
-        console.error(`[${this.name}] Attempt ${attempt} failed for ${url}:`, error);
-        if (attempt < retries) {
-          const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+      } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+        if (attempt === retries) {
+          console.error(`[${this.name}] Failed to fetch ${url} after ${retries} attempts.`);
+        } else {
+          const delay = Math.pow(2, attempt - 1) * 1000;
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }

@@ -9,7 +9,7 @@ export class UCB extends BaseScraper {
   }
 
   getSemesterParam(): string {
-    if (!this.semester) return "2265"; // Default to Spring 2026
+    if (!this.semester) return "2262"; // Default to Spring 2026
 
     const { term, year } = parseSemesterCode(this.semester);
     const yearCode = year.toString().substring(2);

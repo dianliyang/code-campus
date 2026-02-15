@@ -10,11 +10,32 @@ import { BaseScraper } from '../lib/scrapers/BaseScraper';
 async function runScraper(scraper: BaseScraper, db: SupabaseDatabase) {
   try {
     console.log(`\n=== Running Scraper: ${scraper.name.toUpperCase()} ===`);
-    const courses = await scraper.retrieve();
-    console.log(`Successfully scraped ${courses.length} courses from ${scraper.name}.`);
+    const items = await scraper.retrieve();
+    console.log(`Successfully scraped ${items.length} items from ${scraper.name}.`);
 
-    if (courses.length > 0) {
-      await db.saveCourses(courses);
+    if (items.length > 0) {
+      if (scraper.name === 'cau') {
+        // Partition CAU items into Projects/Seminars vs standard Courses
+        // "Standard Course" and "Compulsory elective modules in Computer Science" go to 'courses'
+        // Everything else (Seminar, Advanced Project, etc.) goes to 'projects_seminars'
+        const standardCategoryLabels = ['Standard Course', 'Compulsory elective modules in Computer Science'];
+        
+        const standardCourses = items.filter(item => {
+          const cat = (item.details as any)?.category || ""; // eslint-disable-line @typescript-eslint/no-explicit-any
+          return standardCategoryLabels.includes(cat);
+        });
+        const projectsSeminars = items.filter(item => {
+          const cat = (item.details as any)?.category || ""; // eslint-disable-line @typescript-eslint/no-explicit-any
+          return !standardCategoryLabels.includes(cat);
+        });
+
+        console.log(`[cau] Partitioned into ${standardCourses.length} standard courses and ${projectsSeminars.length} projects/seminars.`);
+        
+        if (standardCourses.length > 0) await db.saveCourses(standardCourses);
+        if (projectsSeminars.length > 0) await db.saveProjectsSeminars(projectsSeminars);
+      } else {
+        await db.saveCourses(items);
+      }
       console.log(`Completed ${scraper.name}.`);
     }
   } catch (error) {
@@ -47,7 +68,10 @@ async function main() {
   const semesterArg = args.find(arg => arg.startsWith('--semester='));
   const semester = semesterArg ? semesterArg.split('=')[1] : 'fa25';
 
-  const scrapers: BaseScraper[] = [
+  const universityArg = args.find(arg => arg.startsWith('--university='));
+  const targetUniversity = universityArg ? universityArg.split('=')[1].toLowerCase() : null;
+
+  let scrapers: BaseScraper[] = [
     new MIT(),
     new Stanford(),
     new CMU(),
@@ -55,7 +79,15 @@ async function main() {
     new CAU()
   ];
 
-  console.log(`Starting full scrape for all universities... (Semester: ${semester})`);
+  if (targetUniversity) {
+    scrapers = scrapers.filter(s => s.name.toLowerCase() === targetUniversity);
+    if (scrapers.length === 0 && targetUniversity !== 'cau-sport') {
+      console.error(`University "${targetUniversity}" not found.`);
+      process.exit(1);
+    }
+  }
+
+  console.log(`Starting scrape... (Semester: ${semester}${targetUniversity ? `, University: ${targetUniversity}` : ''})`);
   console.log(`Target: Supabase Database`);
 
   for (const scraper of scrapers) {
@@ -64,10 +96,12 @@ async function main() {
     await runScraper(scraper, db);
   }
 
-  // Run workout scraper (separate table)
-  await runWorkoutScraper(db, semester);
+  // Run workout scraper if no filter or if explicitly requested
+  if (!targetUniversity || targetUniversity === 'cau-sport') {
+    await runWorkoutScraper(db, semester);
+  }
 
-  console.log("\nAll scrapers finished.");
+  console.log("\nAll requested scrapers finished.");
 }
 
 main();

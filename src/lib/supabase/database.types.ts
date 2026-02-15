@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -77,10 +97,10 @@ export type Database = {
       courses: {
         Row: {
           corequisites: string | null
-          cross_listed_courses: string | null
           course_code: string
           created_at: string | null
           credit: number | null
+          cross_listed_courses: string | null
           department: string | null
           description: string | null
           details: Json | null
@@ -103,10 +123,10 @@ export type Database = {
         }
         Insert: {
           corequisites?: string | null
-          cross_listed_courses?: string | null
           course_code: string
           created_at?: string | null
           credit?: number | null
+          cross_listed_courses?: string | null
           department?: string | null
           description?: string | null
           details?: Json | null
@@ -129,10 +149,10 @@ export type Database = {
         }
         Update: {
           corequisites?: string | null
-          cross_listed_courses?: string | null
           course_code?: string
           created_at?: string | null
           credit?: number | null
+          cross_listed_courses?: string | null
           department?: string | null
           description?: string | null
           details?: Json | null
@@ -173,8 +193,8 @@ export type Database = {
       profiles: {
         Row: {
           ai_default_model: string
-          ai_provider: string
           ai_prompt_template: string | null
+          ai_provider: string
           ai_study_plan_prompt_template: string | null
           ai_web_search_enabled: boolean
           created_at: string
@@ -184,8 +204,8 @@ export type Database = {
         }
         Insert: {
           ai_default_model?: string
-          ai_provider?: string
           ai_prompt_template?: string | null
+          ai_provider?: string
           ai_study_plan_prompt_template?: string | null
           ai_web_search_enabled?: boolean
           created_at?: string
@@ -195,14 +215,65 @@ export type Database = {
         }
         Update: {
           ai_default_model?: string
-          ai_provider?: string
           ai_prompt_template?: string | null
+          ai_provider?: string
           ai_study_plan_prompt_template?: string | null
           ai_web_search_enabled?: boolean
           created_at?: string
           email?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      projects_seminars: {
+        Row: {
+          category: string
+          course_code: string
+          created_at: string | null
+          credit: number | null
+          description: string | null
+          details: Json | null
+          id: number
+          instructors: string[] | null
+          latest_semester: Json | null
+          search_vector: unknown
+          title: string
+          university: string
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          category: string
+          course_code: string
+          created_at?: string | null
+          credit?: number | null
+          description?: string | null
+          details?: Json | null
+          id?: number
+          instructors?: string[] | null
+          latest_semester?: Json | null
+          search_vector?: unknown
+          title: string
+          university: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          category?: string
+          course_code?: string
+          created_at?: string | null
+          credit?: number | null
+          description?: string | null
+          details?: Json | null
+          id?: number
+          instructors?: string[] | null
+          latest_semester?: Json | null
+          search_vector?: unknown
+          title?: string
+          university?: string
+          updated_at?: string | null
+          url?: string | null
         }
         Relationships: []
       }
@@ -214,7 +285,7 @@ export type Database = {
           error: string | null
           id: number
           started_at: string | null
-          status: string
+          status: string | null
           university: string
         }
         Insert: {
@@ -224,7 +295,7 @@ export type Database = {
           error?: string | null
           id?: number
           started_at?: string | null
-          status?: string
+          status?: string | null
           university: string
         }
         Update: {
@@ -234,7 +305,7 @@ export type Database = {
           error?: string | null
           id?: number
           started_at?: string | null
-          status?: string
+          status?: string | null
           university?: string
         }
         Relationships: []
@@ -304,11 +375,11 @@ export type Database = {
           created_at: string | null
           days_of_week: number[]
           end_date: string
-          end_time: string
+          end_time: string | null
           id: number
           location: string | null
           start_date: string
-          start_time: string
+          start_time: string | null
           type: string | null
           updated_at: string | null
           user_id: string
@@ -318,11 +389,11 @@ export type Database = {
           created_at?: string | null
           days_of_week: number[]
           end_date: string
-          end_time?: string
+          end_time?: string | null
           id?: number
           location?: string | null
           start_date: string
-          start_time?: string
+          start_time?: string | null
           type?: string | null
           updated_at?: string | null
           user_id: string
@@ -332,11 +403,11 @@ export type Database = {
           created_at?: string | null
           days_of_week?: number[]
           end_date?: string
-          end_time?: string
+          end_time?: string | null
           id?: number
           location?: string | null
           start_date?: string
-          start_time?: string
+          start_time?: string | null
           type?: string | null
           updated_at?: string | null
           user_id?: string
@@ -350,96 +421,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      workouts: {
-        Row: {
-          id: number
-          source: string
-          course_code: string
-          category: string
-          category_en: string | null
-          title: string
-          title_en: string | null
-          day_of_week: string | null
-          start_time: string | null
-          end_time: string | null
-          location: string | null
-          location_en: string | null
-          instructor: string | null
-          start_date: string | null
-          end_date: string | null
-          price_student: number | null
-          price_staff: number | null
-          price_external: number | null
-          price_external_reduced: number | null
-          booking_status: string | null
-          booking_url: string | null
-          url: string | null
-          semester: string | null
-          details: Json | null
-          search_vector: unknown
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: number
-          source: string
-          course_code: string
-          category: string
-          category_en?: string | null
-          title: string
-          title_en?: string | null
-          day_of_week?: string | null
-          start_time?: string | null
-          end_time?: string | null
-          location?: string | null
-          location_en?: string | null
-          instructor?: string | null
-          start_date?: string | null
-          end_date?: string | null
-          price_student?: number | null
-          price_staff?: number | null
-          price_external?: number | null
-          price_external_reduced?: number | null
-          booking_status?: string | null
-          booking_url?: string | null
-          url?: string | null
-          semester?: string | null
-          details?: Json | null
-          search_vector?: unknown
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: number
-          source?: string
-          course_code?: string
-          category?: string
-          category_en?: string | null
-          title?: string
-          title_en?: string | null
-          day_of_week?: string | null
-          start_time?: string | null
-          end_time?: string | null
-          location?: string | null
-          location_en?: string | null
-          instructor?: string | null
-          start_date?: string | null
-          end_date?: string | null
-          price_student?: number | null
-          price_staff?: number | null
-          price_external?: number | null
-          price_external_reduced?: number | null
-          booking_status?: string | null
-          booking_url?: string | null
-          url?: string | null
-          semester?: string | null
-          details?: Json | null
-          search_vector?: unknown
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       user_courses: {
         Row: {
@@ -485,12 +466,104 @@ export type Database = {
           },
         ]
       }
+      workouts: {
+        Row: {
+          booking_status: string | null
+          booking_url: string | null
+          category: string
+          category_en: string | null
+          course_code: string
+          created_at: string | null
+          day_of_week: string | null
+          details: Json | null
+          end_date: string | null
+          end_time: string | null
+          id: number
+          instructor: string | null
+          location: string | null
+          location_en: string | null
+          price_external: number | null
+          price_external_reduced: number | null
+          price_staff: number | null
+          price_student: number | null
+          search_vector: unknown
+          semester: string | null
+          source: string
+          start_date: string | null
+          start_time: string | null
+          title: string
+          title_en: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          booking_status?: string | null
+          booking_url?: string | null
+          category: string
+          category_en?: string | null
+          course_code: string
+          created_at?: string | null
+          day_of_week?: string | null
+          details?: Json | null
+          end_date?: string | null
+          end_time?: string | null
+          id?: number
+          instructor?: string | null
+          location?: string | null
+          location_en?: string | null
+          price_external?: number | null
+          price_external_reduced?: number | null
+          price_staff?: number | null
+          price_student?: number | null
+          search_vector?: unknown
+          semester?: string | null
+          source: string
+          start_date?: string | null
+          start_time?: string | null
+          title: string
+          title_en?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          booking_status?: string | null
+          booking_url?: string | null
+          category?: string
+          category_en?: string | null
+          course_code?: string
+          created_at?: string | null
+          day_of_week?: string | null
+          details?: Json | null
+          end_date?: string | null
+          end_time?: string | null
+          id?: number
+          instructor?: string | null
+          location?: string | null
+          location_en?: string | null
+          price_external?: number | null
+          price_external_reduced?: number | null
+          price_staff?: number | null
+          price_student?: number | null
+          search_vector?: unknown
+          semester?: string | null
+          source?: string
+          start_date?: string | null
+          start_time?: string | null
+          title?: string
+          title_en?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      decrement_popularity: { Args: { row_id: number }; Returns: undefined }
       increment_popularity: { Args: { row_id: number }; Returns: undefined }
+      seed_user_data: { Args: { p_user_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
@@ -619,7 +692,11 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
 } as const
+

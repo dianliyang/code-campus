@@ -16,6 +16,7 @@ interface WorkoutListProps {
   totalItems: number;
   totalPages: number;
   currentPage: number;
+  perPage: number;
   dict: Dictionary['dashboard']['workouts'];
   lastUpdated: string | null;
 }
@@ -25,6 +26,7 @@ export default function WorkoutList({
   totalItems,
   totalPages,
   currentPage,
+  perPage,
   dict,
   lastUpdated
 }: WorkoutListProps) {
@@ -66,6 +68,7 @@ export default function WorkoutList({
 
       const nextData = await fetchWorkoutsAction({
         page: page + 1,
+        size: perPage,
         query,
         sort,
         categories,
@@ -178,7 +181,7 @@ export default function WorkoutList({
 
       {/* Desktop Pagination */}
       <div className="hidden md:block">
-        <Pagination totalPages={totalPages} currentPage={currentPage} />
+        <Pagination totalPages={totalPages} currentPage={currentPage} totalItems={totalItems} perPage={perPage} />
       </div>
     </main>
   );

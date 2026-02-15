@@ -77,7 +77,9 @@ async function WorkoutListData({ params, dict }: {
   dict: Dictionary['dashboard']['workouts'] 
 }) {
   const page = parseInt((params.page as string) || "1");
-  const size = 12;
+  const ALLOWED_PER_PAGE = [12, 24, 48];
+  const rawPerPage = parseInt((params.perPage as string) || "12");
+  const size = ALLOWED_PER_PAGE.includes(rawPerPage) ? rawPerPage : 12;
   const offset = (page - 1) * size;
   const query = (params.q as string) || "";
   const sort = (params.sort as string) || "title";
@@ -97,6 +99,7 @@ async function WorkoutListData({ params, dict }: {
       totalItems={dbWorkouts.total}
       totalPages={dbWorkouts.pages}
       currentPage={page}
+      perPage={size}
       dict={dict}
       lastUpdated={lastUpdated}
     />

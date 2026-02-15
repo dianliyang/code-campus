@@ -155,7 +155,9 @@ async function CourseListData({ params, dict }: {
 }) {
   const user = await getUser();
   const page = parseInt((params.page as string) || "1");
-  const size = 12;
+  const ALLOWED_PER_PAGE = [12, 24, 48];
+  const rawPerPage = parseInt((params.perPage as string) || "12");
+  const size = ALLOWED_PER_PAGE.includes(rawPerPage) ? rawPerPage : 12;
   const offset = (page - 1) * size;
   const query = (params.q as string) || "";
   const sort = (params.sort as string) || "title";
@@ -185,6 +187,7 @@ async function CourseListData({ params, dict }: {
       totalItems={dbCourses.total}
       totalPages={dbCourses.pages}
       currentPage={page}
+      perPage={size}
       initialEnrolledIds={initialEnrolledIds}
       dict={dict}
     />

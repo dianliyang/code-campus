@@ -17,6 +17,7 @@ interface CourseListProps {
   totalItems: number;
   totalPages: number;
   currentPage: number;
+  perPage: number;
   initialEnrolledIds: number[];
   dict: Dictionary['dashboard']['courses'];
 }
@@ -26,6 +27,7 @@ export default function CourseList({
   totalItems,
   totalPages,
   currentPage,
+  perPage,
   initialEnrolledIds,
   dict
 }: CourseListProps) {
@@ -81,6 +83,7 @@ export default function CourseList({
 
       const nextData = await fetchCoursesAction({
         page: page + 1,
+        size: perPage,
         query,
         sort,
         enrolledOnly,
@@ -201,7 +204,7 @@ export default function CourseList({
       </div>
 
       <div className="hidden md:block">
-        <Pagination totalPages={totalPages} currentPage={currentPage} totalItems={totalItems} perPage={Math.ceil(totalItems / Math.max(totalPages, 1))} />
+        <Pagination totalPages={totalPages} currentPage={currentPage} totalItems={totalItems} perPage={perPage} />
       </div>
     </main>
   );

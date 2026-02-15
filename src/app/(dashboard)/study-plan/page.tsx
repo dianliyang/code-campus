@@ -145,6 +145,18 @@ async function StudyPlanContent({
   const validPlanIds = new Set(plans.map((plan: { id: number }) => plan.id));
   const filteredLogs = (logs || []).filter((log: { plan_id: number }) => validPlanIds.has(log.plan_id));
 
+  // Identify CAU courses that have schedule data but no study plans yet
+  const courseIdsWithPlans = new Set(plans.map((p: { course_id: number }) => p.course_id));
+  const coursesWithoutPlans = enrolledCourses
+    .filter(c =>
+      c.university === 'CAU Kiel' &&
+      !courseIdsWithPlans.has(c.id) &&
+      c.details?.schedule &&
+      typeof c.details.schedule === 'object' &&
+      Object.keys(c.details.schedule as Record<string, unknown>).length > 0
+    )
+    .map(c => ({ id: c.id, courseCode: c.courseCode, title: c.title }));
+
   const enrolledWithAttendance = enrolledCourses.map(course => {
     const coursePlans = plans?.filter((p: { course_id: number }) => p.course_id === course.id) || [];
     // logs are already filtered by user_id, now filter by plans belonging to this course
@@ -226,6 +238,7 @@ async function StudyPlanContent({
               plans={plans}
               logs={filteredLogs}
               dict={dict.dashboard.roadmap}
+              coursesWithoutPlans={coursesWithoutPlans}
             />
           </div>
         </section>

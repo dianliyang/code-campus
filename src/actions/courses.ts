@@ -593,6 +593,44 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
   return { created: toInsert.length, selected: selectedPlans.length };
 }
 
+export interface BulkCoursePreview {
+  courseId: number;
+  courseCode: string;
+  courseTitle: string;
+  originalSchedule: Array<{ type: string; line: string }>;
+  generatedPlans: SchedulePlanPreview[];
+}
+
+export async function bulkPreviewStudyPlans(courseIds: number[]): Promise<BulkCoursePreview[]> {
+  if (!courseIds.length) return [];
+
+  const results: BulkCoursePreview[] = [];
+
+  for (const courseId of courseIds) {
+    try {
+      const preview = await previewStudyPlansFromCourseSchedule(courseId);
+      const supabase = createAdminClient();
+      const { data: courseRow } = await supabase
+        .from("courses")
+        .select("course_code, title")
+        .eq("id", courseId)
+        .single();
+
+      results.push({
+        courseId,
+        courseCode: courseRow?.course_code || String(courseId),
+        courseTitle: courseRow?.title || "Unknown",
+        originalSchedule: preview.originalSchedule,
+        generatedPlans: preview.generatedPlans,
+      });
+    } catch (err) {
+      console.warn(`[bulkPreview] Skipping course ${courseId}:`, err instanceof Error ? err.message : err);
+    }
+  }
+
+  return results;
+}
+
 export async function updateCourseFull(courseId: number, input: UpdateCourseFullInput) {
   const user = await getUser();
   if (!user) {

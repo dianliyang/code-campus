@@ -4,7 +4,8 @@ import { useState, useMemo } from "react";
 import { Course } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Loader2, Sparkles, Clock, Moon, Flower2, Check, MapPin, CalendarDays, CalendarCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Sparkles, Clock, Moon, Flower2, Check, MapPin, CalendarDays, CalendarCheck, WandSparkles, X } from "lucide-react";
+import { bulkPreviewStudyPlans, confirmGeneratedStudyPlans, type BulkCoursePreview, type SchedulePlanPreview } from "@/actions/courses";
 
 interface EnrolledCourse extends Course {
   status: string;
@@ -64,15 +65,20 @@ interface StudyCalendarProps {
   dict: Dictionary['dashboard']['roadmap'];
   initialDate?: Date;
   onToggleComplete?: (planId: number, date: string) => Promise<void>;
+  coursesWithoutPlans?: Array<{ id: number; courseCode: string; title: string }>;
 }
 
-export default function StudyCalendar({ courses, plans, logs, dict, initialDate, onToggleComplete }: StudyCalendarProps) {
+export default function StudyCalendar({ courses, plans, logs, dict, initialDate, onToggleComplete, coursesWithoutPlans = [] }: StudyCalendarProps) {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(() => initialDate ?? new Date());
   const [selectedDay, setSelectedDay] = useState<number | null>(() => (initialDate ?? new Date()).getDate());
   const [isGenerating, setIsGenerating] = useState(false);
   const [optimisticByKey, setOptimisticByKey] = useState<Record<string, OptimisticEntry>>({});
   const [globalError, setGlobalError] = useState<string | null>(null);
+  const [isBulkGenerating, setIsBulkGenerating] = useState(false);
+  const [isConfirmingBulk, setIsConfirmingBulk] = useState(false);
+  const [bulkPreview, setBulkPreview] = useState<BulkCoursePreview[] | null>(null);
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Record<number, string[]>>({});
 
   // Get weekdays and months from dictionary
   const weekdays = (dict.calendar_weekdays as string[] | undefined) || ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -229,6 +235,70 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
   const hasPlans = plans.length > 0;
   const needsScheduleGeneration = inProgressCourses.length > 0 && !hasPlans;
 
+  const handleBulkGenerate = async () => {
+    setIsBulkGenerating(true);
+    try {
+      const previews = await bulkPreviewStudyPlans(coursesWithoutPlans.map(c => c.id));
+      if (previews.length === 0) {
+        alert("No parseable schedules found for the remaining courses.");
+        return;
+      }
+      setBulkPreview(previews);
+      const initialSelected: Record<number, string[]> = {};
+      previews.forEach(p => {
+        initialSelected[p.courseId] = p.generatedPlans
+          .map((_, i) => String(i))
+          .filter(i => !p.generatedPlans[Number(i)].alreadyExists);
+      });
+      setBulkSelectedIds(initialSelected);
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : "Failed to generate study plans");
+    } finally {
+      setIsBulkGenerating(false);
+    }
+  };
+
+  const handleBulkConfirm = async () => {
+    if (!bulkPreview) return;
+    setIsConfirmingBulk(true);
+    try {
+      let totalCreated = 0;
+      for (const cp of bulkPreview) {
+        const selected = (bulkSelectedIds[cp.courseId] || [])
+          .map(i => cp.generatedPlans[Number(i)])
+          .filter(p => p && !p.alreadyExists)
+          .map(p => ({
+            daysOfWeek: p.daysOfWeek,
+            startTime: p.startTime,
+            endTime: p.endTime,
+            location: p.location,
+            type: p.type,
+            startDate: p.startDate,
+            endDate: p.endDate,
+          }));
+        if (selected.length > 0) {
+          const result = await confirmGeneratedStudyPlans(cp.courseId, selected);
+          totalCreated += result.created;
+        }
+      }
+      alert(`Created ${totalCreated} study plan(s).`);
+      setBulkPreview(null);
+      setBulkSelectedIds({});
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : "Failed to save study plans");
+    } finally {
+      setIsConfirmingBulk(false);
+    }
+  };
+
+  const handleBulkDiscard = () => {
+    setBulkPreview(null);
+    setBulkSelectedIds({});
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4 hover:border-gray-300 transition-all hover:shadow-lg h-full flex flex-col">
       <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
@@ -262,6 +332,16 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
               >
                 <ChevronRight className="w-3 h-3" />
               </button>
+              {coursesWithoutPlans.length > 0 && (
+                <button
+                  onClick={handleBulkGenerate}
+                  disabled={isBulkGenerating}
+                  className="w-6 h-6 rounded-md bg-violet-50 flex items-center justify-center text-violet-500 hover:text-violet-700 hover:bg-violet-100 transition-all disabled:opacity-50"
+                  title={`Generate study plans for ${coursesWithoutPlans.length} course(s)`}
+                >
+                  {isBulkGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <WandSparkles className="w-3 h-3" />}
+                </button>
+              )}
             </div>
           </div>
 
@@ -480,6 +560,100 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
           )}
         </div>
       </div>
+
+      {/* Bulk Preview Modal */}
+      {bulkPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={handleBulkDiscard}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 space-y-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black uppercase tracking-[0.15em] text-gray-900">AI Study Plan Preview</h3>
+              <button onClick={handleBulkDiscard} className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-all">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {bulkPreview.map(cp => (
+              <div key={cp.courseId} className="rounded-xl border border-gray-200 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-violet-600 bg-violet-50 px-2 py-0.5 rounded">{cp.courseCode}</span>
+                  <span className="text-xs font-bold text-gray-900 truncate">{cp.courseTitle}</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Original Schedule</p>
+                    <ul className="space-y-0.5 text-xs text-gray-600">
+                      {cp.originalSchedule.map((item, idx) => (
+                        <li key={idx}><span className="font-semibold">{item.type}:</span> {item.line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Generated Plans</p>
+                    <ul className="space-y-1.5">
+                      {cp.generatedPlans.map((plan, idx) => {
+                        const id = String(idx);
+                        const disabled = plan.alreadyExists;
+                        const checked = (bulkSelectedIds[cp.courseId] || []).includes(id);
+                        return (
+                          <li key={id} className="flex items-start gap-2 text-xs text-gray-700">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={disabled || isConfirmingBulk}
+                              onChange={e => {
+                                setBulkSelectedIds(prev => ({
+                                  ...prev,
+                                  [cp.courseId]: e.target.checked
+                                    ? [...(prev[cp.courseId] || []), id]
+                                    : (prev[cp.courseId] || []).filter(v => v !== id),
+                                }));
+                              }}
+                              className="mt-0.5 accent-violet-600"
+                            />
+                            <div>
+                              <div>
+                                {plan.daysOfWeek.join(",")} • {plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}
+                                {plan.startDate && plan.endDate && (
+                                  <span className="text-[10px] text-gray-400 ml-1">
+                                    ({new Date(plan.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}-{new Date(plan.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-gray-500">
+                                {plan.type} @ {plan.location}{disabled ? " (already exists)" : ""}
+                              </div>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+              <button
+                onClick={handleBulkConfirm}
+                disabled={isConfirmingBulk || Object.values(bulkSelectedIds).every(ids => ids.length === 0)}
+                className="px-5 py-2.5 bg-gray-900 text-white text-[10px] font-black uppercase tracking-[0.15em] rounded-lg hover:bg-black transition-all disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                {isConfirmingBulk ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                Confirm
+              </button>
+              <button
+                onClick={handleBulkDiscard}
+                disabled={isConfirmingBulk}
+                className="px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] text-gray-500 hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                <X className="w-3 h-3" />
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

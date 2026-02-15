@@ -41,7 +41,7 @@ export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, d
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
       <div className="flex items-center justify-between md:justify-start gap-6">
-        <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+        <div className="flex flex-col gap-1">
           <span className="text-[11px] text-gray-400 font-black uppercase tracking-[0.2em] whitespace-nowrap">
             {totalItems} {dict?.found_suffix || "workouts..."}
           </span>

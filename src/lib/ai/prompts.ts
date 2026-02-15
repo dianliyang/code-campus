@@ -41,4 +41,6 @@ Rules:
 - Do not add markdown or explanation text.
 - If a line is ambiguous and cannot be parsed safely, skip it.
 - Keep sourceType and sourceLine exactly matching input meaning.
+- If exam dates are present in the schedule data, include them as entries with type "Exam".
+- For exam entries, set daysOfWeek to the day of the exam date.
 `.trim();

@@ -103,6 +103,7 @@ export class SupabaseDatabase {
         description?: string;
         details?: Json;
         latest_semester?: Json;
+        instructors?: string[];
       } = {
         university: university,
         course_code: c.courseCode,
@@ -119,6 +120,12 @@ export class SupabaseDatabase {
         is_hidden: c.isHidden || false,
         is_internal: c.isInternal || false,
       };
+
+      // Extract instructors from details into top-level column
+      const detailsInstructors = (c.details as Record<string, unknown>)?.instructors;
+      if (Array.isArray(detailsInstructors) && detailsInstructors.length > 0) {
+        payload.instructors = detailsInstructors as string[];
+      }
 
       // If NOT partially scraped, we include description and details and update latest_semester
       // If IT IS partially scraped, we skip these to avoid overwriting existing data

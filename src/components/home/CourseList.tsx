@@ -151,7 +151,12 @@ export default function CourseList({
           </div>
         )}
         {courses?.map((course) => (
-          <VirtualCard key={`${course.id}-${viewMode}`} id={course.id} initialHeight={viewMode === 'list' ? "60px" : "200px"}>
+          <VirtualCard 
+            key={`${course.id}-${viewMode}`} 
+            id={course.id} 
+            initialHeight={viewMode === 'list' ? "64px" : "240px"}
+            className={viewMode === 'list' ? "border-b border-gray-100" : ""}
+          >
             <CourseCard
               course={course}
               isInitialEnrolled={enrolledIds.includes(course.id)}

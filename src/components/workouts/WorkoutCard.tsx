@@ -70,10 +70,10 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict }: Workou
 
   if (viewMode === "list") {
     return (
-      <div className="group flex items-center gap-3 py-2.5 md:py-4 px-3 md:px-6 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+      <div className="group flex items-center gap-6 py-2 md:py-3 px-3 md:px-6 hover:bg-gray-50 transition-colors h-full">
         {/* Title + Category */}
-        <div className="flex-grow min-w-0 flex flex-col justify-center">
-          <h2 className="text-[13px] md:text-sm font-semibold md:font-bold text-gray-900 leading-tight truncate">
+        <div className="w-[30%] flex-shrink-0 min-w-0 flex flex-col justify-center">
+          <h2 className="text-[13px] md:text-[13px] font-bold text-gray-900 leading-tight truncate">
             {workout.url ? (
               <a href={workout.url} target="_blank" rel="noopener noreferrer" className="hover:text-brand-blue transition-colors">
                 {displayTitle}
@@ -81,24 +81,20 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict }: Workou
             ) : displayTitle}
           </h2>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[9px] md:text-[10px] font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">
+            <span className="text-[9px] md:text-[9px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">
               {displayCategory}
-            </span>
-            <span className="hidden sm:inline w-0.5 h-0.5 bg-gray-200 rounded-full flex-shrink-0"></span>
-            <span className="hidden sm:inline text-[10px] text-gray-400 truncate max-w-[150px]">
-              {displayLocation}
             </span>
           </div>
         </div>
 
         {/* Desktop Schedule (Hidden on mobile) */}
-        <div className="hidden md:flex flex-col gap-1 text-[11px] text-gray-500 w-[20%] flex-shrink-0">
+        <div className="hidden md:flex flex-col justify-center gap-0.5 text-[10px] text-gray-500 w-[20%] flex-shrink-0">
           <div className="flex items-center gap-2">
             {workout.dayOfWeek && (
-              <span className="font-bold uppercase tracking-wider">{workout.dayOfWeek}</span>
+              <span className="font-bold uppercase tracking-wider text-gray-700">{workout.dayOfWeek}</span>
             )}
             {workout.startTime && (
-              <span className="flex items-center gap-1 font-mono">
+              <span className="flex items-center gap-1 font-mono text-[9px]">
                 <Clock className="w-3 h-3" />
                 {workout.startTime.slice(0, 5)}
                 {workout.endTime && <>–{workout.endTime.slice(0, 5)}</>}
@@ -113,8 +109,16 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict }: Workou
           )}
         </div>
 
+        {/* Location / Instructor */}
+        <div className="flex-grow min-w-0 hidden md:flex flex-col justify-center">
+           <div className="text-[11px] text-gray-600 truncate max-w-full font-medium">{displayLocation}</div>
+           {workout.instructor && (
+             <div className="text-[9px] text-gray-400 truncate max-w-full uppercase font-bold tracking-tighter">{workout.instructor}</div>
+           )}
+        </div>
+
         {/* Right Side Group for Mobile (Schedule + Status) */}
-        <div className="md:hidden flex items-center gap-3 flex-shrink-0">
+        <div className="md:hidden flex items-center gap-3 flex-shrink-0 ml-auto">
           <div className="flex flex-col items-end text-right w-[45px]">
              <span className="text-[9px] font-bold text-gray-900 uppercase leading-none truncate w-full">
                {workout.dayOfWeek?.split(',')[0] || '-'}
@@ -128,38 +132,38 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict }: Workou
           </div>
         </div>
 
+        {/* Desktop Price (Hidden on mobile) */}
+        <div className="hidden md:flex flex-shrink-0 w-16 justify-center">
+          <PriceDisplay workout={workout} dict={dict} />
+        </div>
+
         {/* Desktop Status (Hidden on mobile) */}
         <div className="hidden md:flex flex-shrink-0 w-24 justify-center">
           <StatusBadge status={workout.bookingStatus} dict={dict} />
         </div>
 
-        {/* Desktop Price & Links (Hidden on mobile) */}
-        <div className="hidden md:flex items-center gap-6">
-          <div className="w-16 text-center">
-            <PriceDisplay workout={workout} dict={dict} />
-          </div>
-          <div className="w-16 flex items-center justify-end gap-1 pr-2">
-            {workout.url && (
-              <a
-                href={workout.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-brand-blue transition-colors p-1"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            )}
-            {workout.bookingUrl && (
-              <a
-                href={workout.bookingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-brand-blue hover:text-blue-700 transition-colors p-1"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            )}
-          </div>
+        {/* Desktop Links (Hidden on mobile) */}
+        <div className="hidden md:flex items-center w-16 flex-shrink-0 justify-end gap-1 pr-2">
+          {workout.url && (
+            <a
+              href={workout.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-brand-blue transition-colors p-1"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+          {workout.bookingUrl && (
+            <a
+              href={workout.bookingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-blue hover:text-blue-700 transition-colors p-1"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
         </div>
       </div>
     );

@@ -146,7 +146,7 @@ export class CAU extends BaseScraper {
           const englishKeywords = ['computer', 'data', 'science', 'network', 'system', 'software', 'intelligence', 'security', 'advanced', 'distributed', 'introduction', 'foundation', 'logic', 'machine', 'learning', 'cloud', 'robotics', 'project', 'seminar', 'vision', 'rendering', 'parallel', 'algorithm', 'things', 'wireless', 'matlab', 'mining'];
           const hasEnglishKeywords = englishKeywords.some(word => titleLower.includes(word));
           
-          if (hasEnglishTag || (hasEnglishKeywords && !hasGermanChars) || (type !== 'Lecture' && hasEnglishKeywords)) {
+          if (hasEnglishTag || (hasEnglishKeywords && !hasGermanChars)) {
             const rawUrl = titleA.attr("href");
             if (rawUrl) course.url = rawUrl.startsWith('http') ? rawUrl : `https://univis.uni-kiel.de/${rawUrl.replace(/&amp;/g, "&")}`;
             courses.push(course);

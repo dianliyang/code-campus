@@ -24,7 +24,7 @@ const SEMESTERS = [
 export default function SystemMaintenanceCard() {
   const [isPending, startTransition] = useTransition();
   const [selectedUnis, setSelectedUnis] = useState<string[]>(["cau"]);
-  const [selectedSem, setSelectedSem] = useState(SEMESTERS[2].id);
+  const [selectedSems, setSelectedSems] = useState<string[]>([SEMESTERS[2].id]);
   const [status, setStatus] = useState<{ type: "idle" | "success" | "error"; message?: string }>({ type: "idle" });
 
   const toggleUni = (id: string) => {
@@ -37,6 +37,16 @@ export default function SystemMaintenanceCard() {
     }
   };
 
+  const toggleSem = (id: string) => {
+    if (selectedSems.includes(id)) {
+      if (selectedSems.length > 1) {
+        setSelectedSems(selectedSems.filter(s => s !== id));
+      }
+    } else {
+      setSelectedSems([...selectedSems, id]);
+    }
+  };
+
   const handleRunScrapers = () => {
     setStatus({ type: "idle" });
     startTransition(async () => {
@@ -46,9 +56,10 @@ export default function SystemMaintenanceCard() {
         const errors: string[] = [];
 
         for (const uni of selectedUnis) {
+          for (const sem of selectedSems) {
           const result = await runManualScraperAction({
             university: uni,
-            semester: selectedSem
+            semester: sem
           });
           
           if (result.success) {
@@ -57,6 +68,7 @@ export default function SystemMaintenanceCard() {
           } else {
             errors.push(`${uni.toUpperCase()}: ${result.error}`);
           }
+        }
         }
         
         if (successCount === selectedUnis.length) {
@@ -121,19 +133,20 @@ export default function SystemMaintenanceCard() {
         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Target Semester</label>
         <div className="flex flex-wrap gap-2">
           {SEMESTERS.map((sem) => {
-            const isSelected = selectedSem === sem.id;
+            const isSelected = selectedSems.includes(sem.id);
             return (
               <button
                 key={sem.id}
-                onClick={() => setSelectedSem(sem.id)}
+                onClick={() => toggleSem(sem.id)}
                 disabled={isPending}
-                className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg border transition-all ${
+                className={`flex items-center justify-between px-4 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-lg border-2 transition-all ${
                   isSelected 
-                    ? "bg-gray-50 border-gray-900 text-gray-900 shadow-sm" 
-                    : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
+                    ? "bg-gray-900 border-gray-900 text-white shadow-sm" 
+                    : "bg-white border-gray-100 text-gray-400 hover:border-gray-200 hover:text-gray-700"
                 } disabled:opacity-50`}
               >
                 {sem.name}
+                {isSelected && <Check className="w-3 h-3 ml-2" />}
               </button>
             );
           })}

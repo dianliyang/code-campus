@@ -127,7 +127,7 @@ export default function WorkoutList({
           </div>
         )}
         {workouts?.map((workout) => (
-          <VirtualCard key={workout.id} id={workout.id} initialHeight={viewMode === 'list' ? "60px" : "300px"}>
+          <VirtualCard key={`${workout.id}-${viewMode}`} id={workout.id} initialHeight={viewMode === 'list' ? "60px" : "300px"}>
             <WorkoutCard
               workout={workout}
               viewMode={viewMode}

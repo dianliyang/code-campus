@@ -1,7 +1,4 @@
-import AISettingsCard from "@/components/profile/AISettingsCard";
-import SecurityIdentitySection from "@/components/profile/SecurityIdentitySection";
-import SystemMaintenanceCard from "@/components/profile/SystemMaintenanceCard";
-import LogoutButton from "@/components/layout/LogoutButton";
+import SettingsContainer from "@/components/profile/SettingsContainer";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
@@ -49,26 +46,13 @@ export default async function SettingsPage() {
   }
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen bg-white">
-      <div className="mb-6">
-        <h1 className="text-xl font-black text-gray-900 tracking-tight uppercase tracking-[0.1em]">{dict.dashboard.profile.settings}</h1>
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Configure system intelligence and account parameters</p>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full min-h-screen bg-white">
+      <div className="mb-10">
+        <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">{dict.dashboard.profile.settings}</h1>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-2">Manage your academic engine parameters</p>
       </div>
-      <AISettingsCard
-        initialProvider={(profile?.ai_provider as string) || "perplexity"}
-        initialModel={(profile?.ai_default_model as string) || "sonar"}
-        initialWebSearchEnabled={(profile?.ai_web_search_enabled as boolean | undefined) ?? false}
-        initialPromptTemplate={(profile?.ai_prompt_template as string) || ""}
-        initialStudyPlanPromptTemplate={(profile?.ai_study_plan_prompt_template as string) || ""}
-      />
       
-      <SystemMaintenanceCard />
-
-      <SecurityIdentitySection dict={dict.dashboard.profile} provider={user.app_metadata.provider} />
-
-      <div className="mt-12 pt-8 border-t border-gray-100">
-        <LogoutButton showLabel={true} dict={dict} fullWidth={true} />
-      </div>
+      <SettingsContainer user={user} profile={profile} dict={dict} />
     </main>
   );
 }

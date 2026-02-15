@@ -21,40 +21,43 @@ export default function SettingsContainer({ user, profile, dict }: SettingsConta
   const [activeTab, setActiveTab] = useState<TabId>("ai");
 
   const tabs = [
-    { id: "ai", label: "AI Config", icon: Bot },
-    { id: "security", label: "Account", icon: Shield },
-    { id: "maintenance", label: "System", icon: Wrench },
+    { id: "ai", label: "01_INTELLIGENCE", icon: Bot },
+    { id: "security", label: "02_IDENTITY", icon: Shield },
+    { id: "maintenance", label: "03_OPERATIONS", icon: Wrench },
   ];
 
   return (
-    <div className="flex flex-col md:flex-row gap-12">
-      {/* Universal Sidebar */}
-      <aside className="w-full md:w-48 flex-shrink-0">
-        <nav className="flex md:flex-col gap-1 overflow-x-auto no-scrollbar pb-4 md:pb-0">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as TabId)}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-md transition-all whitespace-nowrap md:w-full text-sm font-medium ${
-                activeTab === tab.id 
-                  ? "bg-gray-100 text-gray-900" 
-                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50/50"
-              }`}
-            >
-              <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? "text-gray-900" : "text-gray-400"}`} />
-              {tab.label}
-            </button>
-          ))}
-          <div className="hidden md:block my-4 border-t border-gray-100"></div>
-          <div className="hidden md:block px-3">
-            <LogoutButton showLabel={true} dict={dict} />
-          </div>
-        </nav>
+    <div className="flex flex-col lg:flex-row gap-16">
+      {/* Radical Sidebar */}
+      <aside className="w-full lg:w-64 flex-shrink-0">
+        <div className="space-y-1">
+          <span className="text-[8px] font-black text-gray-300 uppercase tracking-[0.3em] ml-4 mb-4 block italic">SELECT_PROTOCOL</span>
+          <nav className="flex lg:flex-col gap-1 overflow-x-auto no-scrollbar pb-4 lg:pb-0">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabId)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-none transition-all whitespace-nowrap lg:w-full text-[10px] font-black uppercase tracking-widest border-l-2 ${
+                  activeTab === tab.id 
+                    ? "bg-gray-950 text-white border-brand-blue" 
+                    : "text-gray-400 border-transparent hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <tab.icon className={`w-3.5 h-3.5 ${activeTab === tab.id ? "text-brand-blue" : "text-gray-300"}`} />
+                {tab.label}
+              </button>
+            ))}
+            <div className="hidden lg:block my-8 border-t border-gray-100 mx-4"></div>
+            <div className="hidden lg:block px-1">
+              <LogoutButton showLabel={true} dict={dict} />
+            </div>
+          </nav>
+        </div>
       </aside>
 
       {/* Content Area */}
-      <div className="flex-grow max-w-2xl">
-        <div className="animate-in fade-in duration-300">
+      <div className="flex-grow min-w-0">
+        <div className="animate-in fade-in duration-500">
           {activeTab === "ai" && (
             <div className="space-y-12">
               <AISettingsCard
@@ -79,7 +82,7 @@ export default function SettingsContainer({ user, profile, dict }: SettingsConta
           )}
         </div>
         
-        <div className="mt-12 md:hidden">
+        <div className="mt-16 lg:hidden">
            <LogoutButton showLabel={true} dict={dict} fullWidth={true} />
         </div>
       </div>

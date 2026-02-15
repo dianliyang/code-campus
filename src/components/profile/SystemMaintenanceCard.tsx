@@ -140,7 +140,7 @@ export default function SystemMaintenanceCard() {
         <button
           onClick={handleRunScrapers}
           disabled={isPending}
-          className="flex items-center justify-center gap-2.5 h-11 bg-brand-blue text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50 shadow-sm w-full sm:w-auto sm:px-12"
+          className="flex items-center justify-center gap-2.5 h-11 bg-gray-900 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-black transition-all disabled:opacity-50 shadow-sm w-full sm:w-auto sm:px-12"
         >
           {isPending ? (
             <>
@@ -150,7 +150,7 @@ export default function SystemMaintenanceCard() {
           ) : (
             <>
               <Play className="w-3 h-3 fill-current" />
-              Execute Sync
+              Execute Sync Pattern
             </>
           )}
         </button>

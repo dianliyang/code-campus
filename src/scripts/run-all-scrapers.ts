@@ -54,6 +54,12 @@ async function runWorkoutScraper(db: SupabaseDatabase, semester: string) {
     console.log(`Successfully scraped ${workouts.length} workouts from ${scraper.name}.`);
 
     if (workouts.length > 0) {
+      // Always override: clear existing workouts for this source first
+      console.log(`[Supabase] Overriding existing workouts for ${scraper.name}...`);
+      const { createAdminClient } = await import('../lib/supabase/server');
+      const supabase = createAdminClient();
+      await supabase.from('workouts').delete().eq('source', 'CAU Kiel Sportzentrum');
+
       await db.saveWorkouts(workouts);
       console.log(`Completed ${scraper.name}.`);
     }

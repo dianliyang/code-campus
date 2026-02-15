@@ -139,7 +139,7 @@ export default function AISettingsCard({
                     onClick={() => setDefaultModel(m)}
                     className={`h-9 px-3 rounded-lg border transition-all text-[10px] font-black uppercase tracking-tighter ${
                       defaultModel === m
-                        ? "bg-gray-50 border-gray-900 text-gray-900"
+                        ? "bg-gray-50 border-gray-900 text-gray-900 shadow-sm"
                         : "bg-white border-gray-100 text-gray-400 hover:border-gray-300"
                     }`}
                   >
@@ -169,7 +169,7 @@ export default function AISettingsCard({
               <button
                 onClick={saveProviderSettings}
                 disabled={isPending}
-                className="w-full flex items-center justify-center gap-2.5 h-11 rounded-xl bg-brand-blue text-white text-[11px] font-black uppercase tracking-[0.2em] hover:bg-blue-700 transition-all disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2.5 h-11 rounded-lg bg-gray-900 text-white text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-50 shadow-sm"
               >
                 {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Sync Engine
@@ -215,7 +215,7 @@ export default function AISettingsCard({
             <button
               onClick={saveDescriptionPrompt}
               disabled={isPending}
-              className="flex items-center justify-center gap-2.5 h-11 rounded-xl bg-gray-900 text-white px-8 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-2.5 h-11 rounded-lg bg-gray-900 text-white px-8 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-50 shadow-sm"
             >
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Push Metadata Logic
@@ -254,7 +254,7 @@ export default function AISettingsCard({
             <button
               onClick={saveStudyPlanPrompt}
               disabled={isPending}
-              className="flex items-center justify-center gap-2.5 h-11 rounded-xl bg-gray-900 text-white px-8 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-2.5 h-11 rounded-lg bg-gray-900 text-white px-8 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-50 shadow-sm"
             >
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Push Schedule Logic

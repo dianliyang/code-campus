@@ -161,6 +161,10 @@ export async function runManualSportScraper() {
     const workouts = await scraper.retrieveWorkouts();
     
     if (workouts.length > 0) {
+      // Always override: clear existing workouts for this source first
+      const supabase = await createClient();
+      await supabase.from('workouts').delete().eq('source', scraper.name === 'cau-sport' ? 'CAU Kiel Sportzentrum' : scraper.name);
+
       await db.saveWorkouts(workouts);
       console.log(`[Manual Scrape] Successfully saved ${workouts.length} workouts.`);
       revalidatePath("/workouts");

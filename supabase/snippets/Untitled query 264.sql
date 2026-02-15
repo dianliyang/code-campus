@@ -1,1 +1,0 @@
-SELECT seed_user_data('14282cc0-2a26-4c76-a2df-624ad7438a75')

@@ -23,9 +23,12 @@ export class CAU extends BaseScraper {
     const yearNum = parseInt(input.replace(/\D/g, "")) || 25;
     const year = 2000 + yearNum;
 
-    if (input.includes('fa') || input.includes('fall')) {
+    if (input.includes('fa') || input.includes('fall') || input.includes('wi') || input.includes('winter')) {
       return `${year}w`;
     } else if (input.includes('sp') || input.includes('spring')) {
+      // Spring 2026 is part of Winter 2025/26
+      return `${year - 1}w`;
+    } else if (input.includes('su') || input.includes('summer')) {
       return `${year}s`;
     }
 

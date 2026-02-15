@@ -249,13 +249,15 @@ export class CAUSport extends BaseScraper {
     const input = this.semester.toLowerCase();
     const yearMatch = input.match(/\d{2}/);
     const yearNum = parseInt(yearMatch ? yearMatch[0] : "25");
-    const nextYearNum = yearNum + 1;
 
-    if (input.includes("fa") || input.includes("fall")) {
-      return `wintersemester_${yearNum}_${nextYearNum}`;
+    if (input.includes("wi") || input.includes("winter") || input.includes("fa") || input.includes("fall")) {
+      // fa25/wi25 -> wintersemester_25_26
+      return `wintersemester_${yearNum}_${yearNum + 1}`;
     } else if (input.includes("sp") || input.includes("spring")) {
-      return `sommersemester_${yearNum}`;
+      // sp26 -> wintersemester_25_26 (Second half)
+      return `wintersemester_${yearNum - 1}_${yearNum}`;
     } else if (input.includes("su") || input.includes("summer")) {
+      // su26 -> sommersemester_26
       return `sommersemester_${yearNum}`;
     }
 
@@ -278,7 +280,7 @@ export class CAUSport extends BaseScraper {
       } catch (error) {
         console.error(`[${this.name}] Attempt ${attempt} failed for ${url}:`, error);
         if (attempt < retries) {
-          const delay = Math.pow(2, attempt - 1) * 1000;
+          const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
@@ -324,10 +326,10 @@ export class CAUSport extends BaseScraper {
       const raw = classMatch[1].toLowerCase();
       if (raw.includes("winter")) {
         const parts = raw.match(/wintersemester_(\d{2})_(\d{2})/);
-        return parts ? `Winter ${parts[1]}/${parts[2]}` : "Winter";
+        return parts ? `Winter 20${parts[1]}` : "Winter";
       } else {
         const parts = raw.match(/sommersemester_(\d{2})/);
-        return parts ? `Summer ${parts[1]}` : "Summer";
+        return parts ? `Summer 20${parts[1]}` : "Summer";
       }
     }
     return "Current Period";

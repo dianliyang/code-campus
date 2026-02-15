@@ -49,7 +49,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 w-full">
         <Suspense fallback={<StudyPlanSkeleton />}>
           <StudyPlanContent
             userId={user.id}
@@ -206,7 +206,7 @@ async function StudyPlanContent({
         />
       </div>
 
-      <div className="relative space-y-32">
+      <div className="relative space-y-20 md:space-y-24">
         <div className="absolute left-[21px] top-0 bottom-0 w-0.5 bg-gray-100 hidden md:block"></div>
 
         {/* Calendar Section - At Top */}
@@ -267,7 +267,6 @@ async function StudyPlanContent({
                   course={course} 
                   initialProgress={course.progress} 
                   plan={plans.find((p: { course_id: number }) => p.course_id === course.id)}
-                  dict={dict.dashboard.roadmap} 
                 />
               ))
             ) : (

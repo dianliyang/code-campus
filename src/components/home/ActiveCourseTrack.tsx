@@ -7,7 +7,7 @@ import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
 import AddPlanModal from "./AddPlanModal";
-import { ExternalLink, Trophy, CheckCheck, CalendarCheck, CalendarPlus, Check, Clock } from "lucide-react";
+import { ExternalLink, Trophy, CheckCheck, CalendarCheck, CalendarPlus, Check, Clock, Loader2 } from "lucide-react";
 
 interface ActiveCourseTrackProps {
   course: Course;
@@ -25,7 +25,7 @@ interface ActiveCourseTrackProps {
   dict: Dictionary['dashboard']['roadmap'];
 }
 
-export default function ActiveCourseTrack({ course, initialProgress, plan, onUpdate, dict }: ActiveCourseTrackProps) {
+export default function ActiveCourseTrack({ course, initialProgress, plan, onUpdate }: Omit<ActiveCourseTrackProps, 'dict'>) {
   const router = useRouter();
   const [progress, setProgress] = useState(initialProgress);
   const [isUpdating, setIsInUpdating] = useState(false);
@@ -97,8 +97,8 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
   const weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="bg-white border border-gray-100 rounded-3xl p-5 flex flex-col gap-6 group hover:border-brand-blue/30 transition-all">
-      {/* Completion Modal Overlay */}
+    <div className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col gap-4 group hover:border-brand-blue/30 transition-all shadow-sm">
+      {/* Modals */}
       {showAddPlanModal && (
         <AddPlanModal
           isOpen={showAddPlanModal}
@@ -110,41 +110,41 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
 
       {showCompleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/10 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white border border-gray-200 rounded-[2.5rem] p-8 w-full max-w-md animate-in zoom-in-95 duration-300">
-            <div className="flex flex-col items-center text-center mb-8">
-              <div className="w-16 h-16 bg-brand-green/10 rounded-[1.5rem] flex items-center justify-center text-brand-green mb-6">
-                <Trophy className="w-6 h-6" />
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-300 shadow-2xl">
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-12 h-12 bg-brand-green/10 rounded-xl flex items-center justify-center text-brand-green mb-4">
+                <Trophy className="w-5 h-5" />
               </div>
-              <h3 className="text-2xl font-black text-gray-900 tracking-tighter mb-2 uppercase italic">Mission_Complete</h3>
-              <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] leading-relaxed">
-                DATA_SIGNATURE_VERIFIED <br /> <span className="text-gray-900">{course.title}</span>
+              <h3 className="text-xl font-black text-gray-900 tracking-tighter mb-1 uppercase italic">Complete_Module</h3>
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.1em] leading-relaxed">
+                Log final academic performance for: <br /> <span className="text-gray-900">{course.title}</span>
               </p>
             </div>
 
-            <div className="space-y-6 mb-10">
+            <div className="space-y-4 mb-8">
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">GPA_VAL</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">GPA</label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     max="5"
                     placeholder="0.00"
-                    className="bg-gray-50 border border-gray-100 focus:border-brand-blue rounded-2xl px-4 py-3 outline-none font-black text-xl transition-all"
+                    className="bg-gray-50 border border-gray-100 focus:border-brand-blue rounded-xl px-4 py-2.5 outline-none font-black text-lg transition-all"
                     value={gpa}
                     onChange={(e) => setGpa(e.target.value)}
                   />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">SCORE_PCT</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Score %</label>
                   <input
                     type="number"
                     step="0.1"
                     min="0"
                     max="100"
                     placeholder="0.0"
-                    className="bg-gray-50 border border-gray-100 focus:border-brand-blue rounded-2xl px-4 py-3 outline-none font-black text-xl transition-all"
+                    className="bg-gray-50 border border-gray-100 focus:border-brand-blue rounded-xl px-4 py-2.5 outline-none font-black text-lg transition-all"
                     value={score}
                     onChange={(e) => setScore(e.target.value)}
                   />
@@ -152,18 +152,18 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <button
                 onClick={executeCompletion}
-                className="w-full bg-gray-900 text-white py-4 rounded-2xl flex items-center justify-center gap-3 text-[11px] font-black uppercase tracking-widest hover:bg-black transition-all"
+                className="w-full bg-gray-900 text-white py-3.5 rounded-xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all"
               >
-                LOG_ACHIEVEMENT <CheckCheck className="w-3 h-3" />
+                COMMIT_DATA <CheckCheck className="w-3 h-3" />
               </button>
               <button
                 onClick={() => setShowCompleteModal(false)}
-                className="w-full text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] hover:text-gray-900 transition-colors py-2"
+                className="w-full text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors py-2"
               >
-                ABORT_ACTION
+                Abort
               </button>
             </div>
           </div>
@@ -171,20 +171,20 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
       )}
 
       {/* Top Section */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4 min-w-0">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
           <UniversityIcon
             name={course.university}
-            size={36}
-            className="flex-shrink-0 bg-gray-50 rounded-xl border border-gray-100 p-1.5"
+            size={32}
+            className="flex-shrink-0 bg-gray-50 rounded-lg border border-gray-100 p-1"
           />
           <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[9px] font-black text-brand-blue uppercase tracking-widest leading-none">{course.university}</span>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-[8px] font-black text-brand-blue uppercase tracking-widest leading-none">{course.university}</span>
               <span className="w-0.5 h-0.5 bg-gray-200 rounded-full"></span>
-              <span className="text-[9px] font-bold text-gray-300 font-mono">{course.courseCode}</span>
+              <span className="text-[8px] font-bold text-gray-300 font-mono">{course.courseCode}</span>
             </div>
-            <h3 className="text-base font-black text-gray-900 tracking-tight leading-tight group-hover:text-brand-blue transition-colors line-clamp-1 italic uppercase">
+            <h3 className="text-sm font-bold text-gray-900 tracking-tight leading-tight group-hover:text-brand-blue transition-colors line-clamp-1 uppercase">
               <Link href={detailHref}>{course.title}</Link>
             </h3>
           </div>
@@ -194,36 +194,36 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           href={course.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-300 hover:text-brand-blue hover:bg-blue-50 transition-all border border-transparent hover:border-brand-blue/20 flex-shrink-0"
+          className="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-300 hover:text-brand-blue hover:bg-blue-50 transition-all border border-transparent hover:border-brand-blue/20 flex-shrink-0"
         >
           <ExternalLink className="w-3 h-3" />
         </a>
       </div>
 
-      {/* Middle Section: Technical Progress */}
-      <div className="space-y-3">
-        <div className="flex items-end justify-between mb-1">
+      {/* Progress Section */}
+      <div className="space-y-2">
+        <div className="flex items-end justify-between">
           <div className="flex flex-col">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-0.5">Absorption_Rate</span>
+            <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Focus_Intensity</span>
             {plan && (
-              <div className="flex items-center gap-1.5 text-[8px] font-bold text-gray-400">
-                <Clock className="w-2 h-2" />
+              <div className="flex items-center gap-1 text-[8px] font-medium text-gray-400">
+                <Clock className="w-2.5 h-2.5" />
                 <span>{plan.days_of_week.map(d => weekdaysShort[d].toUpperCase()).join('/')} • {plan.start_time.slice(0, 5)}</span>
               </div>
             )}
           </div>
-          <span className={`text-xl font-black italic tracking-tighter transition-colors ${isUpdating ? 'text-brand-blue animate-pulse' : 'text-gray-900'}`}>
+          <span className={`text-lg font-black italic tracking-tighter transition-colors ${isUpdating ? 'text-brand-blue animate-pulse' : 'text-gray-900'}`}>
             {progress}%
           </span>
         </div>
         
-        <div className="relative h-6 flex items-center">
-          <div className="absolute inset-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
+        <div className="relative h-4 flex items-center">
+          <div className="absolute inset-0 bg-gray-50 rounded-md overflow-hidden border border-gray-100">
             <div
               className={`h-full bg-brand-blue transition-all duration-500 relative ${isUpdating ? 'animate-pulse' : ''}`}
               style={{ width: `${progress}%` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10"></div>
             </div>
           </div>
 
@@ -240,18 +240,18 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
         </div>
       </div>
 
-      {/* Bottom Section: Rapid Actions */}
-      <div className="flex items-center gap-2 pt-4 border-t border-gray-50">
+      {/* Actions */}
+      <div className="flex items-center gap-2 pt-3 border-t border-gray-50">
         <div className="flex gap-1">
           {quickIncrements.map((inc) => (
             <button
               key={inc}
               onClick={() => handleProgressChange(inc)}
               disabled={isUpdating}
-              className={`text-[8px] font-black uppercase tracking-widest w-9 py-2 rounded-lg border transition-all ${
+              className={`text-[8px] font-bold w-8 h-7 flex items-center justify-center rounded-md border transition-all ${
                 progress === inc
-                  ? 'bg-gray-900 text-white border-gray-900'
-                  : 'bg-white text-gray-400 border-gray-100 hover:border-gray-200 hover:text-gray-600'
+                  ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
+                  : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600'
               }`}
             >
               {inc}
@@ -259,12 +259,10 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           ))}
         </div>
 
-        <div className="w-px h-4 bg-gray-100 mx-1"></div>
-
-        <div className="flex items-center gap-1.5 flex-1">
+        <div className="flex items-center gap-1.5 flex-1 justify-end">
           <button
             onClick={() => setShowAddPlanModal(true)}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+            className={`w-7 h-7 rounded-md flex items-center justify-center transition-all ${
               plan 
                 ? "bg-teal-50 text-teal-600 border border-teal-100" 
                 : "bg-violet-50 text-violet-500 border border-violet-100 hover:bg-violet-100"
@@ -276,10 +274,10 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           <button
             onClick={() => handleProgressChange(100)}
             disabled={isUpdating || progress === 100}
-            className="flex-1 h-8 text-[9px] font-black uppercase tracking-widest rounded-lg bg-brand-green text-white hover:bg-green-600 disabled:opacity-30 transition-all flex items-center justify-center gap-1.5"
+            className="px-3 h-7 text-[9px] font-bold uppercase tracking-widest rounded-md bg-brand-green text-white hover:bg-green-600 disabled:opacity-30 transition-all flex items-center justify-center gap-1.5"
           >
-            <Check className="w-2.5 h-2.5" />
-            <span className="hidden sm:inline">{dict?.mark_complete || "FINALIZE"}</span>
+            {isUpdating ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Check className="w-2.5 h-2.5" />}
+            <span className="hidden sm:inline">Finalize</span>
           </button>
         </div>
       </div>

@@ -62,12 +62,12 @@ export default function SystemMaintenanceCard() {
         if (successCount === selectedUnis.length) {
           setStatus({ 
             type: "success", 
-            message: `Successfully processed ${totalCount} records across ${successCount} institutions.` 
+            message: `Synchronization complete. ${totalCount} records processed across ${successCount} institutions.` 
           });
         } else if (successCount > 0) {
           setStatus({ 
             type: "error", 
-            message: `Partial success. Processed ${totalCount} records, but ${errors.length} failed: ${errors.join(", ")}` 
+            message: `Partial success. ${totalCount} records processed, but ${errors.length} failed: ${errors.join(", ")}` 
           });
         } else {
           setStatus({ 
@@ -85,102 +85,91 @@ export default function SystemMaintenanceCard() {
   };
 
   return (
-    <section id="maintenance" className="pt-12 border-t border-gray-100">
-      <div className="max-w-3xl">
-        <header className="mb-8">
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">System Operations</h3>
-          <p className="text-sm text-gray-500">Synchronize academic catalogs and manage data integrity.</p>
-        </header>
-
-        <div className="space-y-8">
-          {/* Institution Selection */}
-          <div className="space-y-3">
-            <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-tight">Target Institutions</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {UNIVERSITIES.map((uni) => {
-                const isSelected = selectedUnis.includes(uni.id);
-                return (
-                  <button
-                    key={uni.id}
-                    onClick={() => toggleUni(uni.id)}
-                    disabled={isPending}
-                    className={`flex items-center justify-between px-4 py-2.5 text-xs font-medium border transition-all ${
-                      isSelected 
-                        ? "bg-black border-black text-white" 
-                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-900"
-                    } disabled:opacity-50`}
-                  >
-                    {uni.name}
-                    {isSelected && <Check className="w-3 h-3 ml-2" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Semester Selection */}
-          <div className="space-y-3">
-            <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-tight">Target Semester</label>
-            <div className="flex flex-wrap gap-2">
-              {SEMESTERS.map((sem) => {
-                const isSelected = selectedSem === sem.id;
-                return (
-                  <button
-                    key={sem.id}
-                    onClick={() => setSelectedSem(sem.id)}
-                    disabled={isPending}
-                    className={`px-4 py-2 text-xs font-medium border transition-all ${
-                      isSelected 
-                        ? "bg-black border-black text-white" 
-                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-900"
-                    } disabled:opacity-50`}
-                  >
-                    {sem.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Action Area */}
-          <div className="pt-4 flex flex-col gap-4">
-            <button
-              onClick={handleRunScrapers}
-              disabled={isPending}
-              className="group flex items-center justify-center gap-3 h-11 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-all disabled:opacity-50 w-full sm:w-auto sm:px-12"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Syncing_Catalogs...
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  Initialize_Scrape
-                </>
-              )}
-            </button>
-
-            {status.type !== "idle" && (
-              <div className={`p-4 border font-mono text-[10px] leading-tight ${
-                status.type === "success" 
-                  ? "bg-gray-50 border-gray-900 text-gray-900" 
-                  : "bg-red-50 border-red-200 text-red-800"
-              } animate-in fade-in slide-in-from-top-1 duration-300`}>
-                <div className="flex items-start gap-3">
-                  {status.type === "success" ? (
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  )}
-                  <span>{status.message}</span>
-                </div>
-              </div>
-            )}
-          </div>
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm space-y-8">
+      {/* Institution Selection */}
+      <div className="space-y-4">
+        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Target Institutions</label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {UNIVERSITIES.map((uni) => {
+            const isSelected = selectedUnis.includes(uni.id);
+            return (
+              <button
+                key={uni.id}
+                onClick={() => toggleUni(uni.id)}
+                disabled={isPending}
+                className={`flex items-center justify-between px-4 py-2.5 text-xs font-bold rounded-xl border transition-all ${
+                  isSelected 
+                    ? "bg-gray-900 border-gray-900 text-white shadow-sm" 
+                    : "bg-white border-gray-100 text-gray-500 hover:border-gray-200 hover:text-gray-700"
+                } disabled:opacity-50`}
+              >
+                {uni.name}
+                {isSelected && <Check className="w-3.5 h-3.5 ml-2" />}
+              </button>
+            );
+          })}
         </div>
       </div>
-    </section>
+
+      {/* Semester Selection */}
+      <div className="space-y-4">
+        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Target Semester</label>
+        <div className="flex flex-wrap gap-2">
+          {SEMESTERS.map((sem) => {
+            const isSelected = selectedSem === sem.id;
+            return (
+              <button
+                key={sem.id}
+                onClick={() => setSelectedSem(sem.id)}
+                disabled={isPending}
+                className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all ${
+                  isSelected 
+                    ? "bg-gray-50 border-gray-900 text-gray-900" 
+                    : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
+                } disabled:opacity-50`}
+              >
+                {sem.name}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Action Area */}
+      <div className="pt-6 border-t border-gray-50 flex flex-col gap-4">
+        <button
+          onClick={handleRunScrapers}
+          disabled={isPending}
+          className="flex items-center justify-center gap-2.5 h-11 bg-brand-blue text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50 shadow-sm w-full sm:w-auto sm:px-12"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Processing Sequential Sync...
+            </>
+          ) : (
+            <>
+              <Play className="w-3.5 h-3.5 fill-current" />
+              Execute Sync Pattern
+            </>
+          )}
+        </button>
+
+        {status.type !== "idle" && (
+          <div className={`p-4 rounded-xl border text-xs font-medium flex items-start gap-3 ${
+            status.type === "success" 
+              ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
+              : "bg-red-50 border-red-100 text-red-700"
+          } animate-in fade-in slide-in-from-top-1 duration-300`}>
+            {status.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            )}
+            <span>{status.message}</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

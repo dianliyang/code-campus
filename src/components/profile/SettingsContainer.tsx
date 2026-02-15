@@ -15,12 +15,12 @@ interface SettingsContainerProps {
 
 export default function SettingsContainer({ user, profile, dict }: SettingsContainerProps) {
   return (
-    <div className="max-w-4xl mx-auto space-y-24 pb-24">
+    <div className="max-w-4xl space-y-16 pb-24">
       {/* 1. Intelligence Section */}
-      <section id="intelligence">
-        <header className="mb-8">
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">Intelligence Preference</h3>
-          <p className="text-sm text-gray-500 font-mono">Configure AI providers and prompt behavioral patterns.</p>
+      <section id="intelligence" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <header>
+          <h3 className="text-lg font-bold text-gray-900 tracking-tight">Intelligence Preference</h3>
+          <p className="text-sm text-gray-500">Configure AI providers and prompt behavioral patterns.</p>
         </header>
         
         <AISettingsCard
@@ -34,10 +34,10 @@ export default function SettingsContainer({ user, profile, dict }: SettingsConta
       </section>
 
       {/* 2. Identity & Security Section */}
-      <section id="security" className="pt-12 border-t border-gray-100">
-        <header className="mb-8">
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">Identity & Security</h3>
-          <p className="text-sm text-gray-500 font-mono">Manage account access, authentication, and privacy.</p>
+      <section id="security" className="pt-16 border-t border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <header>
+          <h3 className="text-lg font-bold text-gray-900 tracking-tight">Identity & Security</h3>
+          <p className="text-sm text-gray-500">Manage account access, authentication, and privacy.</p>
         </header>
         
         <SecurityIdentitySection 
@@ -47,12 +47,23 @@ export default function SettingsContainer({ user, profile, dict }: SettingsConta
       </section>
 
       {/* 3. System Maintenance Section */}
-      <SystemMaintenanceCard key="maintenance-section" />
+      <section id="maintenance" className="pt-16 border-t border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <header>
+          <h3 className="text-lg font-bold text-gray-900 tracking-tight">System Operations</h3>
+          <p className="text-sm text-gray-500">Synchronize academic catalogs and manage data integrity.</p>
+        </header>
+        <SystemMaintenanceCard key="maintenance-section" />
+      </section>
 
       {/* 4. Exit Section */}
-      <section className="pt-12 border-t-2 border-black flex justify-center">
+      <section className="pt-16 border-t border-gray-100 flex justify-center">
         <div className="w-full max-w-xs">
-          <LogoutButton showLabel={true} dict={dict} fullWidth={true} className="h-14 !bg-white !text-black border-2 border-black !font-black !uppercase !tracking-[0.3em] hover:!bg-black hover:!text-white transition-all" />
+          <LogoutButton 
+            showLabel={true} 
+            dict={dict} 
+            fullWidth={true} 
+            className="h-11 rounded-xl bg-white text-gray-900 border border-gray-200 font-bold text-sm hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm" 
+          />
         </div>
       </section>
     </div>

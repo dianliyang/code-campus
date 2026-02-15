@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { BaseScraper } from "./BaseScraper";
 import { Course } from "./types";
+import { parseSemesterCode } from "./utils/semester";
 
 export class UCB extends BaseScraper {
   constructor() {
@@ -43,6 +44,10 @@ export class UCB extends BaseScraper {
     const courses: Course[] = [];
     const rows = $("div.views-row");
 
+    // Parse requested semester
+    const input = this.semester?.toLowerCase() || "";
+    const { term: termName, year: fullYear } = parseSemesterCode(input);
+
     rows.each((_, rowElement) => {
       const row = $(rowElement);
       const article = row.find("article.st");
@@ -60,6 +65,7 @@ export class UCB extends BaseScraper {
           university: this.name,
           courseCode: courseCode,
           title: title,
+          semesters: [{ term: termName, year: fullYear }],
           details: { is_partially_scraped: true }
         });
         return;
@@ -148,6 +154,7 @@ export class UCB extends BaseScraper {
         department: department,
         level: level,
         corequisites: corequisites,
+        semesters: [{ term: termName, year: fullYear }],
         details: {
           section: fullSection,
           days: days,

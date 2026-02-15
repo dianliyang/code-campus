@@ -151,6 +151,7 @@ export class Stanford extends BaseScraper {
           if (existingCodes.has(rawCode)) {
             const titleSpan = courseInfo.find(".courseTitle");
             course.title = titleSpan.text().trim();
+            course.semesters = semesterInfo ? [semesterInfo] : [];
             course.details = { is_partially_scraped: true };
             courses.push(course);
             return;

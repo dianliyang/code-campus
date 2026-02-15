@@ -936,6 +936,54 @@ export async function regenerateCourseDescription(courseId: number) {
   return text;
 }
 
+export async function hideCourseAction(courseId: number) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('user_courses')
+    .upsert({ 
+      user_id: user.id, 
+      course_id: courseId, 
+      status: 'hidden', 
+      updated_at: new Date().toISOString()
+    });
+    
+  if (error) throw error;
+  revalidatePath('/courses');
+}
+
+export async function toggleCourseEnrollmentAction(courseId: number, isEnrolled: boolean) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const supabase = await createClient();
+  if (isEnrolled) {
+    // Unenroll
+    const { error } = await supabase
+      .from('user_courses')
+      .delete()
+      .match({ user_id: user.id, course_id: courseId });
+    if (error) throw error;
+  } else {
+    // Enroll
+    const { error } = await supabase
+      .from('user_courses')
+      .upsert({ 
+        user_id: user.id, 
+        course_id: courseId, 
+        status: 'in_progress', 
+        progress: 0,
+        updated_at: new Date().toISOString()
+      });
+    if (error) throw error;
+  }
+
+  revalidatePath('/courses');
+  revalidatePath('/study-plan');
+}
+
 export async function fetchCoursesAction({
   page = 1,
   size = 12,
@@ -947,7 +995,10 @@ export async function fetchCoursesAction({
   levels = [] as string[],
   userId = null as string | null
 }) {
-  const supabase = await createClient(); // This needs to be checked, original used createAdminClient
+  // Ensure this is treated as a dynamic action to prevent caching stale hidden status
+  await getUser(); 
+  
+  const supabase = await createClient(); 
   const offset = (page - 1) * size;
   
   const modernSelectString = `

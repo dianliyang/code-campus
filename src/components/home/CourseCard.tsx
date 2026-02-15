@@ -7,6 +7,7 @@ import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
 import { GraduationCap, Loader2, Check, Plus, EyeOff, Flame } from "lucide-react";
+import { toggleCourseEnrollmentAction, hideCourseAction } from "@/actions/courses";
 
 interface CourseCardProps {
   course: Course;
@@ -39,19 +40,10 @@ export default function CourseCard({
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch("/api/courses/enroll", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          courseId: course.id,
-          action: isEnrolled ? "unenroll" : "enroll",
-        }),
-      });
-      if (response.ok) {
-        setIsEnrolled(!isEnrolled);
-        onEnrollToggle?.();
-        router.refresh();
-      }
+      await toggleCourseEnrollmentAction(course.id, isEnrolled);
+      setIsEnrolled(!isEnrolled);
+      onEnrollToggle?.();
+      router.refresh();
     } catch (e) {
       console.error("Enrollment failed:", e);
     } finally {
@@ -65,14 +57,8 @@ export default function CourseCard({
     onHide?.(course.id);
     setLoading(true);
     try {
-      await fetch("/api/courses/enroll", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          courseId: course.id,
-          action: "hide",
-        }),
-      });
+      await hideCourseAction(course.id);
+      router.refresh();
     } catch (e) {
       console.error("Hide failed:", e);
     } finally {

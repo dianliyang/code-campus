@@ -66,7 +66,7 @@ export class CAU extends BaseScraper {
           }
 
           let title = titleA.text().trim();
-          title = title.replace(/^[a-zA-Z0-9._-]+[:\s]+/, "").trim();
+          title = title.replace(/^[a-zA-Z0-9._-]+[:\s]+/, "").replace(/^[-–—]\s*/, "").trim();
 
           if (existingCodes.has(courseCode)) {
             courses.push({
@@ -143,10 +143,12 @@ export class CAU extends BaseScraper {
           // Verification with keywords
           const hasEnglishTag = (course.details as any).isEnglish; // eslint-disable-line @typescript-eslint/no-explicit-any
           const hasGermanChars = /[äöüß]/i.test(title);
+          const germanWords = ['masterprojekt', 'oberprojekt', 'algorithmische', 'informatik', 'eingebettete', 'echtzeitsysteme', 'programmiersprachen', 'programmiersysteme', 'steuerung', 'meeresforschung', 'forschung', 'technische', 'grundlagen', 'einführung', 'verfahren', 'methoden', 'anwendungen', 'begleitseminar', 'masterarbeit', 'mitarbeit', 'arbeitsgruppe', 'wahlpflicht', 'kolloquium', 'tutorium', 'werkstatt'];
+          const hasGermanWords = germanWords.some(w => titleLower.includes(w));
           const englishKeywords = ['computer', 'data', 'science', 'network', 'system', 'software', 'intelligence', 'security', 'advanced', 'distributed', 'introduction', 'foundation', 'logic', 'machine', 'learning', 'cloud', 'robotics', 'project', 'seminar', 'vision', 'rendering', 'parallel', 'algorithm', 'things', 'wireless', 'matlab', 'mining'];
-          const hasEnglishKeywords = englishKeywords.some(word => titleLower.includes(word));
+          const hasEnglishKeywords = englishKeywords.some(word => new RegExp(`\\b${word}\\b`, 'i').test(title));
           
-          if (hasEnglishTag || (hasEnglishKeywords && !hasGermanChars)) {
+          if (hasEnglishTag || (hasEnglishKeywords && !hasGermanChars && !hasGermanWords)) {
             const rawUrl = titleA.attr("href");
             if (rawUrl) course.url = rawUrl.startsWith('http') ? rawUrl : `https://univis.uni-kiel.de/${rawUrl.replace(/&amp;/g, "&")}`;
             courses.push(course);

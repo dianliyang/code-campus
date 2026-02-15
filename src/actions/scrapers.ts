@@ -180,3 +180,25 @@ export async function runManualSportScraper() {
     };
   }
 }
+
+export async function clearCAUCoursesAction() {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const supabase = await createClient();
+
+  const { count: courseCount } = await supabase
+    .from('courses')
+    .delete({ count: 'exact' })
+    .eq('university', 'CAU Kiel');
+
+  const { count: psCount } = await supabase
+    .from('projects_seminars')
+    .delete({ count: 'exact' })
+    .eq('university', 'CAU Kiel');
+
+  const removed = (courseCount || 0) + (psCount || 0);
+  console.log(`[CAU Clear] Removed ${courseCount || 0} courses + ${psCount || 0} projects/seminars`);
+  revalidatePath("/courses");
+  return { success: true, removed };
+}

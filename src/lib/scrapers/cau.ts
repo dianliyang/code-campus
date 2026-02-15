@@ -49,7 +49,7 @@ export class CAU extends BaseScraper {
       const td = $(tr).find("td").first();
       const titleA = td.find("a[href*='key=']").first();
       if (titleA.length > 0) {
-        const fullText = td.text().replace(/\s+/g, " ");
+        const fullText = td.text().replace(/\s+/g, " ").trim();
         const bracketMatch = fullText.match(/\[([a-zA-Z0-9._-]+)\]/);
         const startMatch = fullText.match(/^([a-zA-Z0-9._-]+):/);
         const internalIdMatch = fullText.match(/\((\d{6})\)/);
@@ -57,15 +57,18 @@ export class CAU extends BaseScraper {
         if (internalIdMatch) {
           const internalId = internalIdMatch[1];
           let courseCode = bracketMatch ? bracketMatch[1] : (startMatch ? startMatch[1] : internalId);
-          if (['exercise', 'übung', 'praktikum', 'practical', 'projekt', 'project', 'tutorium', 'tutorial'].includes(courseCode.toLowerCase())) {
+          if (['exercise', 'übung', 'praktikum', 'practical', 'projekt', 'project', 'tutorium', 'tutorial', 'workshop'].includes(courseCode.toLowerCase())) {
               courseCode = internalId;
           }
 
-          const title = titleA.text().trim();
+          let title = titleA.text().trim();
+          // Clean title: remove code prefix if present (e.g. "infCN-01a: Computer Networks" -> "Computer Networks")
+          title = title.replace(/^[a-zA-Z0-9._-]+[:\s]+/, "").trim();
+
           if (existingCodes.has(courseCode)) {
             courses.push({
               university: "CAU Kiel", courseCode, title, semesters: [{ term, year }],
-              details: { is_partially_scraped: true } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+              details: { is_partially_scraped: true, internalId } as any // eslint-disable-line @typescript-eslint/no-explicit-any
             });
             return;
           }
@@ -133,7 +136,6 @@ export class CAU extends BaseScraper {
             }
           });
 
-          // Strict English verification
           const hasEnglishTag = (course.details as any).isEnglish; // eslint-disable-line @typescript-eslint/no-explicit-any
           const hasGermanChars = /[äöüß]/i.test(title);
           const hasEnglishKeywords = ['computer', 'data', 'science', 'network', 'system', 'software', 'intelligence', 'security', 'advanced', 'distributed', 'introduction', 'foundation', 'logic', 'machine', 'learning', 'cloud', 'robotics', 'project', 'seminar', 'vision', 'rendering', 'parallel', 'algorithm'].some(word => titleLower.includes(word));
@@ -167,22 +169,37 @@ export class CAU extends BaseScraper {
 
   private mergeCourses(items: Course[]): Course[] {
     const courseMap = new Map<string, Course>();
+    
+    const normalizeTitle = (title: string) => {
+        let t = title.trim();
+        t = t.replace(/^[a-zA-Z0-9._-]+[:\s]+/, "");
+        const prefixes = /^(übung|.?bung|exercise|practical exercise|practice|tutorial|lab|projekt|project|workshop|fyord workshop|begleitseminar|oberseminar|tutorium)( zu| to)?[:\s]+/i;
+        while (prefixes.test(t)) { t = t.replace(prefixes, ""); }
+        return t.trim().toLowerCase();
+    };
+
     const isSecondary = (c: Course) => {
         const type = (c.details as any).type; // eslint-disable-line @typescript-eslint/no-explicit-any
         return type === "Exercise" || type === "Practical" || type === "Project" ||
-               /^(übung|bung|exercise|practical|practice|tutorial|lab|projekt|project)( zu)?:\s*/i.test(c.title);
+               /^(übung|.?bung|exercise|practical|practice|tutorial|lab|projekt|project|workshop)( zu| to)?:\s*/i.test(c.title);
     };
+
     const sorted = [...items].sort((a, b) => {
         const secA = isSecondary(a); const secB = isSecondary(b);
         if (secA === secB) return 0;
         return secA ? 1 : -1;
     });
+
     for (const item of sorted) {
-      const cleanTitle = item.title.replace(/^(.?bung|Exercise|Practical Exercise|Practice|Tutorial|Lab|Projekt|Project)( zu)?:\s*/i, "").trim();
+      const itemNormTitle = normalizeTitle(item.title);
       let targetCode: string | undefined;
+
+      // Match by code, code prefix, or alphanumeric variation
       if (courseMap.has(item.courseCode)) targetCode = item.courseCode;
       else if (item.courseCode.startsWith("PE") && courseMap.has(item.courseCode.substring(2))) targetCode = item.courseCode.substring(2);
       else if ((item.courseCode.startsWith("E") || item.courseCode.startsWith("P")) && courseMap.has(item.courseCode.substring(1))) targetCode = item.courseCode.substring(1);
+
+      // 2. Normalize and check ALL codes in map for a matching internal ID
       if (!targetCode) {
           const itemInternalId = (item.details as any).internalId; // eslint-disable-line @typescript-eslint/no-explicit-any
           for (const [code, existing] of courseMap.entries()) {
@@ -191,38 +208,85 @@ export class CAU extends BaseScraper {
               }
           }
       }
+
+      // 3. Match by normalized title
       if (!targetCode) {
         for (const [code, existing] of courseMap.entries()) {
-             if (existing.title.toLowerCase() === cleanTitle.toLowerCase() && !isSecondary(existing)) {
+             const existingNormTitle = normalizeTitle(existing.title);
+             if (existingNormTitle === itemNormTitle && !isSecondary(existing)) {
                  targetCode = code; break;
              }
         }
       }
-      const existing = targetCode ? courseMap.get(targetCode) : undefined;
-      const target = existing || item;
-      const details = target.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-      if (!details.breakdown) details.breakdown = [0, 0, 0, 0];
-      const u = (item.details as any).rawUnits || 0; // eslint-disable-line @typescript-eslint/no-explicit-any
-      const type = (item.details as any).type; // eslint-disable-line @typescript-eslint/no-explicit-any
-      if (type === "Lecture") details.breakdown[0] += u;
-      else if (type === "Seminar") details.breakdown[1] += u;
-      else if (type === "Exercise") details.breakdown[2] += u;
-      else if (type === "Practical" || type === "Project") details.breakdown[3] += u;
-      if (existing) {
-        const sSched = (item.details as any).schedule || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
-        const tSched = details.schedule || {};
-        for (const [t, d] of Object.entries(sSched)) {
-            if (!tSched[t]) tSched[t] = [];
-            (d as string[]).forEach(x => { if (!tSched[t].includes(x)) tSched[t].push(x); });
+
+      // 4. Fuzzy containment match
+      if (!targetCode) {
+        for (const [code, existing] of courseMap.entries()) {
+             const existingNormTitle = normalizeTitle(existing.title);
+             if (existingNormTitle.length > 5 && (existingNormTitle.includes(itemNormTitle) || itemNormTitle.includes(existingNormTitle)) && !isSecondary(existing)) {
+                 targetCode = code; break;
+             }
         }
-        details.schedule = tSched;
-        if (!target.description && item.description) target.description = item.description;
-        const sInstr = (item.details as any).instructors || []; // eslint-disable-line @typescript-eslint/no-explicit-any
-        const tInstr = details.instructors || [];
+      }
+
+      if (targetCode && courseMap.has(targetCode)) {
+        const existing = courseMap.get(targetCode)!;
+        // Prefer alphanumeric code as the main key
+        const isNewCodeBetter = /^[a-zA-Z]/.test(item.courseCode) && /^\d/.test(existing.courseCode);
+        
+        const target = isNewCodeBetter ? item : existing;
+        const source = isNewCodeBetter ? existing : item;
+        
+        if (isNewCodeBetter) {
+            courseMap.delete(existing.courseCode);
+            courseMap.set(item.courseCode, item);
+        }
+
+        const tDetails = target.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const sDetails = source.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        
+        if (!tDetails.breakdown) tDetails.breakdown = [0, 0, 0, 0];
+        if (!sDetails.breakdown) sDetails.breakdown = [0, 0, 0, 0];
+
+        // Merge units
+        const su = sDetails.rawUnits || 0;
+        const stype = sDetails.type;
+        if (stype === "Lecture") tDetails.breakdown[0] += su;
+        else if (stype === "Seminar") tDetails.breakdown[1] += su;
+        else if (stype === "Exercise") tDetails.breakdown[2] += su;
+        else if (stype === "Practical" || stype === "Project") tDetails.breakdown[3] += su;
+
+        // Merge schedules
+        const sSched = sDetails.schedule || {};
+        const tSched = tDetails.schedule || {};
+        for (const [type, dates] of Object.entries(sSched)) {
+            if (!tSched[type]) tSched[type] = [];
+            (dates as string[]).forEach(d => { if (!tSched[type].includes(d)) tSched[type].push(d); });
+        }
+        tDetails.schedule = tSched;
+
+        // Merge instructors
+        const sInstr = sDetails.instructors || [];
+        const tInstr = tDetails.instructors || [];
         sInstr.forEach((i: string) => { if (!tInstr.includes(i)) tInstr.push(i); });
-        details.instructors = tInstr;
-      } else { courseMap.set(item.courseCode, item); }
+        tDetails.instructors = tInstr;
+
+        if (!target.description) target.description = source.description;
+      } else {
+        const details = item.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (!details.breakdown) {
+            details.breakdown = [0, 0, 0, 0];
+            const u = details.rawUnits || 0;
+            const type = details.type;
+            if (type === "Lecture") details.breakdown[0] += u;
+            else if (type === "Seminar") details.breakdown[1] += u;
+            else if (type === "Exercise") details.breakdown[2] += u;
+            else if (type === "Practical" || type === "Project") details.breakdown[3] += u;
+        }
+        courseMap.set(item.courseCode, item);
+      }
     }
+
     const result = Array.from(courseMap.values());
     result.forEach(c => {
         const d = c.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any

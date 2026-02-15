@@ -339,15 +339,30 @@ export class SupabaseDatabase {
   }
 
   async clearUniversity(university: string): Promise<void> {
+    const formattedUni = formatUniversityName(university);
+    console.log(`[Supabase] Clearing all records for ${formattedUni}...`);
     const supabase = createAdminClient();
-    const { error } = await supabase
+    
+    // Clear courses
+    const { error: courseError } = await supabase
       .from("courses")
       .delete()
-      .eq("university", university);
+      .eq("university", formattedUni);
 
-    if (error) {
-      console.error(`[Supabase] Error clearing ${university}:`, error);
-      throw error;
+    if (courseError) {
+      console.error(`[Supabase] Error clearing courses for ${formattedUni}:`, courseError);
+      throw courseError;
+    }
+
+    // Clear projects_seminars
+    const { error: projError } = await supabase
+      .from("projects_seminars")
+      .delete()
+      .eq("university", formattedUni);
+
+    if (projError) {
+      console.error(`[Supabase] Error clearing projects/seminars for ${formattedUni}:`, projError);
+      throw projError;
     }
   }
 

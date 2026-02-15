@@ -32,7 +32,7 @@ export default async function Home() {
           </div>
 
           {/* Bold Title */}
-          <h1 className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter uppercase mb-10 leading-[0.9] perspective-1000">
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black text-slate-900 tracking-tighter uppercase mb-6 sm:mb-10 leading-[0.9] perspective-1000">
             <span className="block opacity-0 animate-[fadeUp_0.8s_ease-out_forwards]">{dict.hero.title_prefix}</span>
             <span className="block text-transparent bg-clip-text bg-gradient-to-b from-slate-900 to-slate-500 opacity-0 animate-[fadeUp_0.8s_ease-out_0.1s_forwards]">
               <span className="text-brand-blue">{dict.hero.title_highlight}</span> {dict.hero.title_suffix}
@@ -40,14 +40,14 @@ export default async function Home() {
           </h1>
 
           {/* Description */}
-          <p className="text-lg md:text-xl text-slate-500 font-medium max-w-2xl mx-auto mb-16 leading-relaxed opacity-0 animate-[fadeUp_0.8s_ease-out_0.3s_forwards] font-mono">
+          <p className="text-base sm:text-lg md:text-xl text-slate-500 font-medium max-w-2xl mx-auto mb-10 sm:mb-16 leading-relaxed opacity-0 animate-[fadeUp_0.8s_ease-out_0.3s_forwards] font-mono px-4 sm:px-0">
             {dict.hero.description}
           </p>
 
-          <div className="flex justify-center opacity-0 animate-[fadeUp_0.8s_ease-out_0.5s_forwards]">
+          <div className="flex justify-center opacity-0 animate-[fadeUp_0.8s_ease-out_0.5s_forwards] px-6">
             <Link 
               href="/courses" 
-              className="inline-flex items-center justify-center gap-4 px-10 py-4 bg-slate-900 text-white text-xs font-black uppercase tracking-[0.2em] rounded-full hover:bg-brand-blue transition-all duration-300 shadow-xl shadow-slate-200 group"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-4 px-8 sm:px-10 py-3.5 sm:py-4 bg-slate-900 text-white text-xs font-black uppercase tracking-[0.2em] rounded-full hover:bg-brand-blue transition-all duration-300 shadow-xl shadow-slate-200 group"
             >
               {dict.hero.cta}
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

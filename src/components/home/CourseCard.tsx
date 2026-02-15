@@ -95,7 +95,7 @@ export default function CourseCard({
         </div>
 
         {/* 2. Course Info */}
-        <div className="w-[30%] flex-shrink-0 min-w-0">
+        <div className="flex-grow min-w-0">
           <h2 className="text-[13px] font-bold text-gray-900 leading-tight truncate">
             <Link href={detailHref} className="hover:text-brand-blue transition-colors">
               {course.title}
@@ -109,7 +109,7 @@ export default function CourseCard({
         </div>
 
         {/* 3. Tags (Desktop) */}
-        <div className="w-[20%] flex-shrink-0 hidden md:flex flex-wrap gap-1">
+        <div className="w-[18%] flex-shrink-0 hidden md:flex flex-wrap gap-1">
           {course.fields?.slice(0, 2).map((f) => (
             <span key={f} className="bg-gray-100 text-gray-500 text-[9px] font-bold px-1.5 py-0.5 rounded truncate max-w-full uppercase tracking-tighter">
               {f}
@@ -118,25 +118,19 @@ export default function CourseCard({
         </div>
 
         {/* 4. Extra Info (Desktop) */}
-        <div className="flex-grow min-w-0 hidden md:flex items-center gap-4">
+        <div className="w-[12%] flex-shrink-0 hidden md:flex items-center gap-4">
           <div className="flex items-center gap-1">
             <Flame className="w-3 h-3 text-orange-400" />
             <span className="text-[11px] font-bold text-gray-600">{course.popularity}</span>
           </div>
-          {course.level && (
-            <div className="flex items-center gap-1 text-gray-400" title={course.level}>
-              <GraduationCap className="w-3 h-3" />
-              <span className="text-[9px] font-medium truncate max-w-[60px]">{course.level}</span>
-            </div>
-          )}
         </div>
 
         {/* 5. Actions */}
-        <div className="flex-shrink-0 flex items-center justify-end gap-2 ml-auto">
+        <div className="flex-shrink-0 flex items-center justify-end gap-2">
           <button 
             onClick={handleEnroll}
             disabled={loading}
-            className={`h-7 px-3 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
+            className={`h-7 px-2.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
               isEnrolled 
                 ? 'bg-brand-green text-white shadow-sm' 
                 : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-900 hover:text-gray-900'

@@ -144,10 +144,10 @@ export default function CourseList({
         {viewMode === "list" && courses && courses.length > 0 && (
           <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-gray-50/50 border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-500 select-none">
              <div className="w-[40px] flex-shrink-0 text-center"></div>
-             <div className="w-[30%] flex-shrink-0">Course</div>
-             <div className="w-[20%] flex-shrink-0">Tags</div>
-             <div className="flex-grow min-w-0">Info</div>
-             <div className="w-24 flex-shrink-0 text-right pr-2">Action</div>
+             <div className="flex-grow min-w-0">Course</div>
+             <div className="w-[18%] flex-shrink-0">Tags</div>
+             <div className="w-[12%] flex-shrink-0">Info</div>
+             <div className="w-20 flex-shrink-0 text-right pr-2">Action</div>
           </div>
         )}
         {courses?.map((course) => (

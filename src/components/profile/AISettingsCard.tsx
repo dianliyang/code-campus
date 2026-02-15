@@ -103,7 +103,7 @@ export default function AISettingsCard({
       <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8">
         <div className="flex items-center gap-3 text-gray-900 mb-8 pb-4 border-b border-gray-50">
           <Cpu className="w-5 h-5 text-brand-blue" />
-          <span className="text-sm font-bold tracking-tight uppercase tracking-[0.1em]">Engine Configuration</span>
+          <span className="text-sm font-bold uppercase tracking-[0.1em]">Engine Configuration</span>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -191,7 +191,7 @@ export default function AISettingsCard({
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-50">
           <div className="flex items-center gap-3 text-gray-900">
             <FileCode className="w-5 h-5 text-brand-blue" />
-            <span className="text-sm font-bold tracking-tight uppercase tracking-[0.1em]">Metadata Logic</span>
+            <span className="text-sm font-bold uppercase tracking-[0.1em]">Metadata Logic</span>
           </div>
           <button
             onClick={() => setPromptTemplate(DEFAULT_COURSE_DESCRIPTION_PROMPT)}
@@ -211,11 +211,11 @@ export default function AISettingsCard({
             disabled={isPending}
           />
 
-          <div className="flex flex-col items-start gap-4">
+          <div className="flex flex-col gap-4">
             <button
               onClick={saveDescriptionPrompt}
               disabled={isPending}
-              className="flex items-center justify-center gap-2.5 h-11 rounded-lg bg-gray-900 text-white px-8 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-50 shadow-sm"
+              className="w-full flex items-center justify-center gap-2.5 h-11 rounded-lg bg-gray-900 text-white text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-50 shadow-sm"
             >
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Push Metadata Logic
@@ -230,7 +230,7 @@ export default function AISettingsCard({
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-50">
           <div className="flex items-center gap-3 text-gray-900">
             <CalendarDays className="w-5 h-5 text-brand-blue" />
-            <span className="text-sm font-bold tracking-tight uppercase tracking-[0.1em]">Scheduling Logic</span>
+            <span className="text-sm font-bold uppercase tracking-[0.1em]">Scheduling Logic</span>
           </div>
           <button
             onClick={() => setStudyPlanPromptTemplate(DEFAULT_STUDY_PLAN_PROMPT)}
@@ -250,11 +250,11 @@ export default function AISettingsCard({
             disabled={isPending}
           />
 
-          <div className="flex flex-col items-start gap-4">
+          <div className="flex flex-col gap-4">
             <button
               onClick={saveStudyPlanPrompt}
               disabled={isPending}
-              className="flex items-center justify-center gap-2.5 h-11 rounded-lg bg-gray-900 text-white px-8 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-50 shadow-sm"
+              className="w-full flex items-center justify-center gap-2.5 h-11 rounded-lg bg-gray-900 text-white text-[11px] font-black uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-50 shadow-sm"
             >
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Push Schedule Logic

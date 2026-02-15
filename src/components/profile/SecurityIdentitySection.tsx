@@ -35,10 +35,10 @@ export default function SecurityIdentitySection({
     <div className="space-y-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Active Identity */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 space-y-6 shadow-sm">
-          <div className="flex items-center gap-3 text-gray-900 mb-2 border-b border-gray-50 pb-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 space-y-6">
+          <div className="flex items-center gap-3 text-gray-900 mb-8 pb-4 border-b border-gray-50">
             <Fingerprint className="w-5 h-5 text-brand-blue" />
-            <span className="text-sm font-bold tracking-tight uppercase tracking-[0.1em]">Active Identity</span>
+            <span className="text-sm font-bold uppercase tracking-[0.1em]">Active Identity</span>
           </div>
 
           <div className="space-y-4">
@@ -58,10 +58,10 @@ export default function SecurityIdentitySection({
         </div>
 
         {/* Communication */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 space-y-6 shadow-sm">
-          <div className="flex items-center gap-3 text-gray-900 mb-2 border-b border-gray-50 pb-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 space-y-6">
+          <div className="flex items-center gap-3 text-gray-900 mb-8 pb-4 border-b border-gray-50">
             <Mail className="w-5 h-5 text-brand-blue" />
-            <span className="text-sm font-bold tracking-tight uppercase tracking-[0.1em]">Communication</span>
+            <span className="text-sm font-bold uppercase tracking-[0.1em]">Communication</span>
           </div>
 
           <div className="space-y-4">
@@ -78,9 +78,9 @@ export default function SecurityIdentitySection({
 
       {/* Danger Zone */}
       <div className="bg-red-50/30 border border-red-100 rounded-2xl p-6 md:p-8 space-y-6">
-        <div className="flex items-center gap-3 text-red-600">
+        <div className="flex items-center gap-3 text-red-600 pb-4 border-b border-red-100">
           <AlertTriangle className="w-5 h-5" />
-          <span className="text-sm font-bold tracking-tight uppercase tracking-[0.1em]">Termination Zone</span>
+          <span className="text-sm font-bold uppercase tracking-[0.1em]">Termination Zone</span>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

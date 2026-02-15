@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { runManualScraperAction } from "@/actions/scrapers";
-import { Loader2, Play, CheckCircle2, AlertCircle, Check } from "lucide-react";
+import { Loader2, Play, CheckCircle2, AlertCircle, Check, RefreshCw } from "lucide-react";
 
 const UNIVERSITIES = [
   { id: "mit", name: "MIT" },
@@ -86,6 +86,11 @@ export default function SystemMaintenanceCard() {
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 space-y-8">
+      <div className="flex items-center gap-3 text-gray-900 mb-8 pb-4 border-b border-gray-50">
+        <RefreshCw className="w-5 h-5 text-brand-blue" />
+        <span className="text-sm font-bold uppercase tracking-[0.1em]">Data Synchronization</span>
+      </div>
+
       {/* Institution Selection */}
       <div className="space-y-4">
         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Target Institutions</label>
@@ -140,7 +145,7 @@ export default function SystemMaintenanceCard() {
         <button
           onClick={handleRunScrapers}
           disabled={isPending}
-          className="flex items-center justify-center gap-2.5 h-11 bg-gray-900 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-black transition-all disabled:opacity-50 shadow-sm w-full sm:w-auto sm:px-12"
+          className="w-full flex items-center justify-center gap-2.5 h-11 bg-gray-900 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-black transition-all disabled:opacity-50 shadow-sm"
         >
           {isPending ? (
             <>
@@ -156,15 +161,15 @@ export default function SystemMaintenanceCard() {
         </button>
 
         {status.type !== "idle" && (
-          <div className={`p-4 rounded-xl border text-[11px] font-bold uppercase tracking-wide flex items-start gap-3 ${
-            status.type === "success" 
-              ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
+          <div className={`p-3 rounded-lg border text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 ${
+            status.type === "success"
+              ? "bg-emerald-50 border-emerald-100 text-emerald-700"
               : "bg-red-50 border-red-100 text-red-700"
-          } animate-in fade-in slide-in-from-top-1 duration-300`}>
+          } animate-in fade-in duration-300`}>
             {status.type === "success" ? (
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
             ) : (
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <AlertCircle className="w-3 h-3 flex-shrink-0" />
             )}
             <span>{status.message}</span>
           </div>

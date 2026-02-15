@@ -9,34 +9,61 @@ export class UCB extends BaseScraper {
   }
 
   getSemesterParam(): string {
-    if (!this.semester) return "2262"; // Default to Spring 2026
-    
-    const input = this.semester.toLowerCase();
-    
-    // UCB Term codes: 2 + Last 2 of year + (2=Spring, 5=Summer, 8=Fall)
-    const yearMatch = input.match(/\d{2}/);
-    const yearCode = yearMatch ? yearMatch[0] : "26";
-    
-    let termSuffix = "2"; // Spring
-    if (input.includes('fa') || input.includes('fall')) termSuffix = "8";
-    if (input.includes('su') || input.includes('summer')) termSuffix = "5";
-    
+    if (!this.semester) return "2265"; // Default to Spring 2026
+
+    const { term, year } = parseSemesterCode(this.semester);
+    const yearCode = year.toString().substring(2);
+
+    // UC Berkeley term codes: 1=Winter, 2=Spring, 5=Summer, 8=Fall
+    let termSuffix = "2";
+    if (term === "Spring") termSuffix = "2";
+    else if (term === "Summer") termSuffix = "5";
+    else if (term === "Fall") termSuffix = "8";
+    else if (term === "Winter") termSuffix = "1";
+
     return `2${yearCode}${termSuffix}`;
   }
 
-  links(maxPages: number = 10): string[] {
-    const termCode = this.getSemesterParam();
-    const links: string[] = [];
-    // Using mnemonic subject areas which are more stable
-    ["COMPSCI", "EECS", "EL ENG"].map((subject) => {
-      for (let page = 0; page < maxPages; page++) {
-        links.push(
-          `https://classes.berkeley.edu/search/class?f%5B0%5D=term%3A${termCode}&f%5B1%5D=subject_area%3A${subject}&page=${page}`
-        );
-      }
-    });
+  // Satisfy abstract member, though retrieve is overridden for sequential fetching
+  links(): string[] {
+    return [];
+  }
 
-    return links;
+  // Override retrieve to implement early exit if a term is not published
+  async retrieve(): Promise<Course[]> {
+    const termCode = this.getSemesterParam();
+    const subjects = ["COMPSCI", "EECS", "EL ENG"];
+    const allCourses: Course[] = [];
+    const maxPages = 10;
+
+    console.log(`[${this.name}] Starting sequential retrieval for term ${termCode}...`);
+
+    for (const subject of subjects) {
+      console.log(`[${this.name}] Processing subject: ${subject}`);
+      
+      for (let page = 0; page < maxPages; page++) {
+        const url = `https://classes.berkeley.edu/search/class?f%5B0%5D=term%3A${termCode}&f%5B1%5D=subject_area%3A${subject}&page=${page}`;
+        const html = await this.fetchPage(url);
+        
+        if (!html) break;
+
+        const $ = cheerio.load(html);
+        
+        // Check for "No results found"
+        if (html.includes("No results found") || $(".views-row").length === 0) {
+          console.log(`[${this.name}] No results found for ${subject} on page ${page}. Skipping remaining pages for this subject.`);
+          break;
+        }
+
+        const courses = await this.parser(html);
+        allCourses.push(...courses);
+
+        // If we got fewer than 20 rows (UCB default page size), it's likely the last page
+        if ($(".views-row").length < 20) break;
+      }
+    }
+
+    return allCourses;
   }
 
   async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {

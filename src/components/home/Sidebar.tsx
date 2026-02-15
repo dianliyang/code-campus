@@ -10,17 +10,19 @@ import { Plus, Filter, X } from "lucide-react";
 interface SidebarProps {
   universities: University[];
   fields: Field[];
+  semesters: string[];
   enrolledCount: number;
   dict: Dictionary['dashboard']['courses'];
 }
 
-export default function Sidebar({ universities, fields, enrolledCount, dict }: SidebarProps) {
+export default function Sidebar({ universities, fields, semesters, enrolledCount, dict }: SidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedUniversities = searchParams.get("universities")?.split(",") || [];
   const selectedFields = searchParams.get("fields")?.split(",") || [];
+  const selectedSemesters = searchParams.get("semesters")?.split(",") || [];
   const showEnrolledOnly = searchParams.get("enrolled") === "true";
 
   const updateParams = (key: string, value: string | string[] | boolean) => {
@@ -39,10 +41,11 @@ export default function Sidebar({ universities, fields, enrolledCount, dict }: S
   };
 
   const handleToggle = (list: string[], item: string) => {
-    return list.includes(item) ? list.filter(i => i !== item) : [...list, item];
+    const trimmedList = list.filter(Boolean);
+    return trimmedList.includes(item) ? trimmedList.filter(i => i !== item) : [...trimmedList, item];
   };
 
-  const totalFilters = selectedUniversities.length + selectedFields.length + (showEnrolledOnly ? 1 : 0);
+  const totalFilters = selectedUniversities.length + selectedFields.length + selectedSemesters.length + (showEnrolledOnly ? 1 : 0);
 
   return (
     <>
@@ -122,6 +125,28 @@ export default function Sidebar({ universities, fields, enrolledCount, dict }: S
                 {enrolledCount}
               </span>
             </label>
+          </div>
+
+          {/* Eras / Semesters Section */}
+          <div>
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em] mb-8 md:mb-6">
+              Eras / Semesters
+            </h3>
+            <div className="grid grid-cols-1 gap-5 md:block md:space-y-4 max-h-[30vh] md:max-h-48 overflow-y-auto custom-scroll pr-4">
+              {semesters.map((sem) => (
+                <label key={sem} className="flex items-center gap-4 md:gap-3 group cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="w-5 h-5 md:w-4 md:h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
+                    checked={selectedSemesters.includes(sem)} 
+                    onChange={() => updateParams("semesters", handleToggle(selectedSemesters, sem))} 
+                  />
+                  <span className={`text-[15px] md:text-sm font-medium md:font-normal tracking-tight transition-colors ${selectedSemesters.includes(sem) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                    {sem}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* University Section */}

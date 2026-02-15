@@ -91,7 +91,7 @@ export class CAU extends BaseScraper {
     // Parse current semester info for DB lookup consistency
     const semParam = this.getSemesterParam();
     const year = parseInt(semParam.substring(0, 4));
-    const term = semParam.endsWith('w') ? "Fall" : "Spring";
+    const term = semParam.endsWith('w') ? "Winter" : "Spring";
 
     // 1. Collect all English courses first
     $("tr[valign=top]").each((_, tr) => {

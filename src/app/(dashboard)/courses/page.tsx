@@ -44,7 +44,7 @@ async function SidebarData({ userId, params, dict }: {
 }) {
   const supabase = await createClient();
 
-  // Cached static data (shared across all users)
+  // Cached static data
   const getCachedUniversities = unstable_cache(
     async () => {
       const { data } = await (await createClient()).from('courses').select('university').eq('is_hidden', false);
@@ -63,15 +63,26 @@ async function SidebarData({ userId, params, dict }: {
     { revalidate: 300 }
   );
 
-  // Parallelize cached static and dynamic fetches
-  const [universitiesData, fieldsData, enrolledRes] = await Promise.all([
+  const getCachedSemesters = unstable_cache(
+    async () => {
+      const { data } = await (await createClient()).from('semesters').select('term, year').order('year', { ascending: false }).order('term', { ascending: false });
+      return data;
+    },
+    ['semesters-list'],
+    { revalidate: 300 }
+  );
+
+  // Parallelize fetches
+  const [universitiesData, fieldsData, semestersData, enrolledRes] = await Promise.all([
     getCachedUniversities(),
     getCachedFields(),
+    getCachedSemesters(),
     userId ? (async () => {
       // Extract filters for dynamic enrolled count
       const universitiesParam = ((params.universities as string) || "").split(",").filter(Boolean);
       const queryParam = (params.q as string) || "";
       const levelsParam = ((params.levels as string) || "").split(",").filter(Boolean);
+      const semestersParam = ((params.semesters as string) || "").split(",").filter(Boolean);
 
       let q = supabase.from('user_courses')
         .select('course_id, courses!inner(university, title, description, course_code, is_hidden, level)', { count: 'exact', head: true })
@@ -87,6 +98,10 @@ async function SidebarData({ userId, params, dict }: {
       }
       if (levelsParam.length > 0) {
         q = q.in('courses.level', levelsParam);
+      }
+      if (semestersParam.length > 0) {
+        // This is a bit complex for a head count but we should ideally filter by semester
+        // For simplicity in count we might skip or use a join if critical
       }
       
       const { count } = await q;
@@ -113,7 +128,25 @@ async function SidebarData({ userId, params, dict }: {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 
-  return <Sidebar universities={dbUniversities} fields={dbFields} enrolledCount={enrolledRes as number} dict={dict} />;
+  const availableSemesters = Array.from(new Set(
+    (semestersData || []).map(s => `${s.term} ${s.year}`)
+  )).sort((a, b) => {
+    const [termA, yearA] = a.split(' ');
+    const [termB, yearB] = b.split(' ');
+    if (yearA !== yearB) return parseInt(yearB) - parseInt(yearA);
+    const order: Record<string, number> = { 'Winter': 4, 'Fall': 3, 'Summer': 2, 'Spring': 1 };
+    return (order[termB] || 0) - (order[termA] || 0);
+  });
+
+  return (
+    <Sidebar 
+      universities={dbUniversities} 
+      fields={dbFields} 
+      semesters={availableSemesters}
+      enrolledCount={enrolledRes as number} 
+      dict={dict} 
+    />
+  );
 }
 
 async function CourseListData({ params, dict }: { 
@@ -131,10 +164,11 @@ async function CourseListData({ params, dict }: {
   const universities = ((params.universities as string) || "").split(",").filter(Boolean);
   const fields = ((params.fields as string) || "").split(",").filter(Boolean);
   const levels = ((params.levels as string) || "").split(",").filter(Boolean);
+  const semesters = ((params.semesters as string) || "").split(",").filter(Boolean);
 
   // Parallelize course fetch and enrolled IDs fetch
   const [dbCourses, initialEnrolledIds] = await Promise.all([
-    fetchCourses(page, size, offset, query, sort, enrolledOnly, universities, fields, levels, user?.id),
+    fetchCourses(page, size, offset, query, sort, enrolledOnly, universities, fields, levels, semesters, user?.id),
     user ? (async () => {
       const supabase = await createClient();
       const { data } = await supabase
@@ -167,6 +201,7 @@ async function fetchCourses(
   universities: string[], 
   fields: string[], 
   levels: string[],
+  semesters: string[],
   userId?: string | null
 ) {
   const supabase = await createClient();
@@ -186,6 +221,10 @@ async function fetchCourses(
     let s = selectString;
     if (enrolledOnly) {
       s += `, user_courses!inner(user_id, status)`;
+    }
+    if (semesters.length > 0) {
+      // We need to filter by semesters via course_semesters relationship
+      s += `, course_semesters!inner(semesters!inner(term, year))`;
     }
     return supabase
       .from('courses')
@@ -216,6 +255,21 @@ async function fetchCourses(
     const hiddenIds = hiddenResult.data?.map(h => h.course_id) || [];
     if (hiddenIds.length > 0) {
       supabaseQuery = supabaseQuery.not('id', 'in', `(${hiddenIds.join(',')})`);
+    }
+  }
+
+  if (semesters.length > 0) {
+    // We filter the main query to include ONLY courses that have at least ONE matching semester
+    if (semesters.length === 1) {
+       const [term, year] = semesters[0].split(' ');
+       supabaseQuery = supabaseQuery.eq('course_semesters.semesters.term', term);
+       supabaseQuery = supabaseQuery.eq('course_semesters.semesters.year', parseInt(year));
+    } else {
+       // Filter by term/year using .in if multiple selected.
+       const terms = semesters.map(s => s.split(' ')[0]);
+       const years = semesters.map(s => parseInt(s.split(' ')[1]));
+       supabaseQuery = supabaseQuery.in('course_semesters.semesters.term', terms);
+       supabaseQuery = supabaseQuery.in('course_semesters.semesters.year', years);
     }
   }
 

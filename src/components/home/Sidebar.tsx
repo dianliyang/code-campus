@@ -20,9 +20,9 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
 
-  const selectedUniversities = searchParams.get("universities")?.split(",") || [];
-  const selectedFields = searchParams.get("fields")?.split(",") || [];
-  const selectedSemesters = searchParams.get("semesters")?.split(",") || [];
+  const selectedUniversities = searchParams.get("universities")?.split(",").filter(Boolean) || [];
+  const selectedFields = searchParams.get("fields")?.split(",").filter(Boolean) || [];
+  const selectedSemesters = searchParams.get("semesters")?.split(",").filter(Boolean) || [];
   const showEnrolledOnly = searchParams.get("enrolled") === "true";
 
   const updateParams = (key: string, value: string | string[] | boolean) => {
@@ -95,33 +95,33 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
 
         <div className="space-y-12">
           {/* Library Section */}
-          <div className="space-y-8 md:space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em]">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
                 {dict?.sidebar_library || "Personal Library"}
               </h3>
               <Link 
                 href="/import" 
-                className="w-10 h-10 md:w-6 md:h-6 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-brand-blue hover:border-brand-blue/30 transition-all group/plus"
+                className="text-gray-400 hover:text-brand-blue transition-colors group/plus"
                 title="Import Data"
               >
-                <Plus className="w-4 h-4 md:w-2.5 md:h-2.5 group-hover/plus:rotate-90 transition-transform duration-300" />
+                <Plus className="w-3.5 h-3.5 group-hover/plus:rotate-90 transition-transform duration-300" />
               </Link>
             </div>
             
             <label className="flex items-center justify-between group cursor-pointer">
-              <div className="flex items-center gap-4 md:gap-3">
+              <div className="flex items-center gap-3">
                 <input 
                   type="checkbox" 
-                  className="w-5 h-5 md:w-4 md:h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
+                  className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
                   checked={showEnrolledOnly} 
                   onChange={(e) => updateParams("enrolled", e.target.checked)} 
                 />
-                <span className={`text-[15px] md:text-[15px] font-medium md:font-normal transition-colors ${showEnrolledOnly ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                <span className={`text-[13px] md:text-[12px] font-semibold tracking-tight transition-colors ${showEnrolledOnly ? 'text-brand-blue' : 'text-gray-600 group-hover:text-brand-blue'}`}>
                   {dict?.sidebar_enrolled || "Enrolled Only"}
                 </span>
               </div>
-              <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2.5 py-1 rounded-lg">
+              <span className={`text-[10px] font-black transition-colors ${showEnrolledOnly ? 'text-brand-blue' : 'text-gray-300'}`}>
                 {enrolledCount}
               </span>
             </label>
@@ -129,19 +129,19 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
 
           {/* Eras / Semesters Section */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em] mb-8 md:mb-6">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
               Eras / Semesters
             </h3>
-            <div className="grid grid-cols-1 gap-5 md:block md:space-y-4 max-h-[30vh] md:max-h-48 overflow-y-auto custom-scroll pr-4">
+            <div className="grid grid-cols-1 gap-2.5 max-h-48 overflow-y-auto custom-scroll pr-2">
               {semesters.map((sem) => (
-                <label key={sem} className="flex items-center gap-4 md:gap-3 group cursor-pointer">
+                <label key={sem} className="flex items-center gap-3 group cursor-pointer">
                   <input 
                     type="checkbox" 
-                    className="w-5 h-5 md:w-4 md:h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
+                    className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
                     checked={selectedSemesters.includes(sem)} 
                     onChange={() => updateParams("semesters", handleToggle(selectedSemesters, sem))} 
                   />
-                  <span className={`text-[15px] md:text-sm font-medium md:font-normal tracking-tight transition-colors ${selectedSemesters.includes(sem) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                  <span className={`text-[13px] md:text-[12px] font-semibold tracking-tight transition-colors ${selectedSemesters.includes(sem) ? 'text-brand-blue' : 'text-gray-600 group-hover:text-brand-blue'}`}>
                     {sem}
                   </span>
                 </label>
@@ -151,24 +151,24 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
 
           {/* University Section */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em] mb-8 md:mb-6">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
               {dict?.sidebar_universities || "Universities"}
             </h3>
-            <div className="grid grid-cols-1 gap-5 md:block md:space-y-4 max-h-[40vh] md:max-h-64 overflow-y-auto custom-scroll pr-4">
+            <div className="grid grid-cols-1 gap-2.5 max-h-64 overflow-y-auto custom-scroll pr-2">
               {universities.map((uni) => (
                 <label key={uni.name} className="flex items-center justify-between group cursor-pointer">
-                  <div className="flex items-center gap-4 md:gap-3">
+                  <div className="flex items-center gap-3">
                     <input 
                       type="checkbox" 
-                      className="w-5 h-5 md:w-4 md:h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
+                      className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
                       checked={selectedUniversities.includes(uni.name)} 
                       onChange={() => updateParams("universities", handleToggle(selectedUniversities, uni.name))} 
                     />
-                    <span className={`text-[15px] md:text-sm font-medium md:font-normal tracking-tight transition-colors ${selectedUniversities.includes(uni.name) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                    <span className={`text-[13px] md:text-[12px] font-semibold tracking-tight transition-colors ${selectedUniversities.includes(uni.name) ? 'text-brand-blue' : 'text-gray-600 group-hover:text-brand-blue'}`}>
                       {uni.name}
                     </span>
                   </div>
-                  <span className={`text-[11px] font-semibold transition-colors ${selectedUniversities.includes(uni.name) ? 'text-brand-blue' : 'text-gray-400'}`}>
+                  <span className={`text-[10px] font-black transition-colors ${selectedUniversities.includes(uni.name) ? 'text-brand-blue' : 'text-gray-300'}`}>
                     {uni.count}
                   </span>
                 </label>
@@ -178,24 +178,24 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
 
           {/* Focus Area Section */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3em] mb-8 md:mb-6">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
               {dict?.sidebar_fields || "Focus Area"}
             </h3>
-            <div className="grid grid-cols-1 gap-5 md:block md:space-y-4">
+            <div className="grid grid-cols-1 gap-2.5">
               {fields.map((field) => (
                 <label key={field.name} className="flex items-center justify-between group cursor-pointer">
-                  <div className="flex items-center gap-4 md:gap-3">
+                  <div className="flex items-center gap-3">
                     <input 
                       type="checkbox" 
-                      className="w-5 h-5 md:w-4 md:h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
+                      className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
                       checked={selectedFields.includes(field.name)} 
                       onChange={() => updateParams("fields", handleToggle(selectedFields, field.name))} 
                     />
-                    <span className={`text-[15px] md:text-sm font-medium md:font-normal tracking-tight transition-colors ${selectedFields.includes(field.name) ? 'text-brand-blue' : 'text-gray-700 group-hover:text-brand-blue'}`}>
+                    <span className={`text-[13px] md:text-[12px] font-semibold tracking-tight transition-colors ${selectedFields.includes(field.name) ? 'text-brand-blue' : 'text-gray-600 group-hover:text-brand-blue'}`}>
                       {field.name}
                     </span>
                   </div>
-                  <span className={`text-[11px] font-semibold transition-colors ${selectedFields.includes(field.name) ? 'text-brand-blue' : 'text-gray-400'}`}>
+                  <span className={`text-[10px] font-black transition-colors ${selectedFields.includes(field.name) ? 'text-brand-blue' : 'text-gray-300'}`}>
                     {field.count}
                   </span>
                 </label>

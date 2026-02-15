@@ -47,9 +47,6 @@ export async function runManualScraperAction({
     scraper.semester = semester;
     scraper.db = db;
 
-    console.log(`[Manual Scrape] Initializing: clearing existing data for ${scraper.name}...`);
-    await db.clearUniversity(scraper.name);
-
     console.log(`[Manual Scrape] Running ${scraper.name} for ${semester}...`);
     const items = await scraper.retrieve();
 

@@ -4,17 +4,13 @@ import { CMU } from '../lib/scrapers/cmu';
 import { UCB } from '../lib/scrapers/ucb';
 import { CAU } from '../lib/scrapers/cau';
 import { CAUSport } from '../lib/scrapers/cau-sport';
-import { SupabaseDatabase, createAdminClient } from '../lib/supabase/server';
+import { SupabaseDatabase } from '../lib/supabase/server';
 import { BaseScraper } from '../lib/scrapers/BaseScraper';
 
 async function runScraper(scraper: BaseScraper, db: SupabaseDatabase) {
   try {
     console.log(`\n=== Running Scraper: ${scraper.name.toUpperCase()} ===`);
     
-    // Always clear existing data for this university first
-    console.log(`[Supabase] Initializing: clearing existing data for ${scraper.name}...`);
-    await db.clearUniversity(scraper.name);
-
     const items = await scraper.retrieve();
     console.log(`Successfully scraped ${items.length} items from ${scraper.name}.`);
 
@@ -53,11 +49,6 @@ async function runWorkoutScraper(db: SupabaseDatabase, semester: string) {
     const scraper = new CAUSport();
     scraper.semester = semester;
     console.log(`\n=== Running Scraper: ${scraper.name.toUpperCase()} ===`);
-
-    // Clear existing workouts before saving new results
-    console.log(`[Supabase] Initializing: clearing existing workouts for ${scraper.name}...`);
-    const supabase = createAdminClient();
-    await supabase.from('workouts').delete().eq('source', scraper.name);
 
     const workouts = await scraper.retrieveWorkouts();
     console.log(`Successfully scraped ${workouts.length} workouts from ${scraper.name}.`);

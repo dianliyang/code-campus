@@ -9,12 +9,18 @@ export class UCB extends BaseScraper {
   }
 
   getSemesterParam(): string {
-    if (!this.semester) return "2262"; // Default to Spring 2026
+    if (!this.semester) return "8576"; // Default to Spring 2026
 
+    const input = this.semester.toLowerCase();
+    
+    // UC Berkeley specific term IDs for 2026
+    if (input.includes('sp26')) return "8576"; // Spring 2026
+    if (input.includes('su26')) return "8580"; // Summer 2026
+    if (input.includes('fa25')) return "8240"; // Fall 2025 (Approximation based on increments)
+    
+    // Fallback to calculation if not in map
     const { term, year } = parseSemesterCode(this.semester);
     const yearCode = year.toString().substring(2);
-
-    // UC Berkeley term codes: 1=Winter, 2=Spring, 5=Summer, 8=Fall
     let termSuffix = "2";
     if (term === "Spring") termSuffix = "2";
     else if (term === "Summer") termSuffix = "5";
@@ -32,14 +38,15 @@ export class UCB extends BaseScraper {
   // Override retrieve to implement early exit if a term is not published
   async retrieve(): Promise<Course[]> {
     const termCode = this.getSemesterParam();
-    const subjects = ["COMPSCI", "EECS", "EL ENG"];
+    // Use numeric subject IDs: 5582=COMPSCI, 5475=EECS, 5476=EL ENG
+    const subjects = ["5582", "5475", "5476"];
     const allCourses: Course[] = [];
     const maxPages = 10;
 
     console.log(`[${this.name}] Starting sequential retrieval for term ${termCode}...`);
 
     for (const subject of subjects) {
-      console.log(`[${this.name}] Processing subject: ${subject}`);
+      console.log(`[${this.name}] Processing subject ID: ${subject}`);
       
       for (let page = 0; page < maxPages; page++) {
         const url = `https://classes.berkeley.edu/search/class?f%5B0%5D=term%3A${termCode}&f%5B1%5D=subject_area%3A${subject}&page=${page}`;
@@ -63,7 +70,15 @@ export class UCB extends BaseScraper {
       }
     }
 
-    return allCourses;
+    // Deduplicate by courseCode to prevent Supabase ON CONFLICT errors
+    const uniqueMap = new Map<string, Course>();
+    allCourses.forEach(c => {
+        if (!uniqueMap.has(c.courseCode)) {
+            uniqueMap.set(c.courseCode, c);
+        }
+    });
+
+    return Array.from(uniqueMap.values());
   }
 
   async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {

@@ -47,13 +47,13 @@ export async function runManualScraperAction({
     scraper.semester = semester;
     scraper.db = db;
 
+    console.log(`[Manual Scrape] Initializing: clearing existing data for ${scraper.name}...`);
+    await db.clearUniversity(scraper.name);
+
     console.log(`[Manual Scrape] Running ${scraper.name} for ${semester}...`);
     const items = await scraper.retrieve();
 
     if (items.length > 0) {
-      // Clear previous data for this university before saving new results
-      await db.clearUniversity(scraper.name);
-
       if (scraper.name === 'cau') {
         const standardCategoryLabels = ['Standard Course', 'Compulsory elective modules in Computer Science'];
         const standardCourses = items.filter(item => standardCategoryLabels.includes((item.details as any)?.category)); // eslint-disable-line @typescript-eslint/no-explicit-any

@@ -62,7 +62,6 @@ export class CAU extends BaseScraper {
           }
 
           let title = titleA.text().trim();
-          // Clean title: remove code prefix if present (e.g. "infCN-01a: Computer Networks" -> "Computer Networks")
           title = title.replace(/^[a-zA-Z0-9._-]+[:\s]+/, "").trim();
 
           if (existingCodes.has(courseCode)) {
@@ -77,7 +76,7 @@ export class CAU extends BaseScraper {
           let category = "General";
           const titleLower = title.toLowerCase();
 
-          if (titleLower.includes("advanced project") || titleLower.includes("oberprojekt") || titleLower.includes("advanced computer science project")) category = "Advanced Project";
+          if (titleLower.includes("advanced project") || titleLower.includes("oberprojekt") || titleLower.includes("advanced computer science project") || titleLower.startsWith("master project")) category = "Advanced Project";
           else if (titleLower.includes("seminar") && !titleLower.includes("supervision")) category = "Seminar";
           else if (titleLower.includes("colloquium") || titleLower.includes("kolloquium") || titleLower.includes("study group")) category = "Colloquia and study groups";
           else if (titleLower.includes("theoretical") || titleLower.includes("theoretische")) category = "Theoretical Computer Science";
@@ -136,11 +135,13 @@ export class CAU extends BaseScraper {
             }
           });
 
+          // Verification with keywords
           const hasEnglishTag = (course.details as any).isEnglish; // eslint-disable-line @typescript-eslint/no-explicit-any
           const hasGermanChars = /[äöüß]/i.test(title);
-          const hasEnglishKeywords = ['computer', 'data', 'science', 'network', 'system', 'software', 'intelligence', 'security', 'advanced', 'distributed', 'introduction', 'foundation', 'logic', 'machine', 'learning', 'cloud', 'robotics', 'project', 'seminar', 'vision', 'rendering', 'parallel', 'algorithm'].some(word => titleLower.includes(word));
+          const englishKeywords = ['computer', 'data', 'science', 'network', 'system', 'software', 'intelligence', 'security', 'advanced', 'distributed', 'introduction', 'foundation', 'logic', 'machine', 'learning', 'cloud', 'robotics', 'project', 'seminar', 'vision', 'rendering', 'parallel', 'algorithm', 'things', 'wireless', 'matlab', 'mining'];
+          const hasEnglishKeywords = englishKeywords.some(word => titleLower.includes(word));
           
-          if (hasEnglishTag || (hasEnglishKeywords && !hasGermanChars)) {
+          if (hasEnglishTag || (hasEnglishKeywords && !hasGermanChars) || (type !== 'Lecture' && hasEnglishKeywords)) {
             const rawUrl = titleA.attr("href");
             if (rawUrl) course.url = rawUrl.startsWith('http') ? rawUrl : `https://univis.uni-kiel.de/${rawUrl.replace(/&amp;/g, "&")}`;
             courses.push(course);
@@ -194,12 +195,10 @@ export class CAU extends BaseScraper {
       const itemNormTitle = normalizeTitle(item.title);
       let targetCode: string | undefined;
 
-      // Match by code, code prefix, or alphanumeric variation
       if (courseMap.has(item.courseCode)) targetCode = item.courseCode;
       else if (item.courseCode.startsWith("PE") && courseMap.has(item.courseCode.substring(2))) targetCode = item.courseCode.substring(2);
       else if ((item.courseCode.startsWith("E") || item.courseCode.startsWith("P")) && courseMap.has(item.courseCode.substring(1))) targetCode = item.courseCode.substring(1);
 
-      // 2. Normalize and check ALL codes in map for a matching internal ID
       if (!targetCode) {
           const itemInternalId = (item.details as any).internalId; // eslint-disable-line @typescript-eslint/no-explicit-any
           for (const [code, existing] of courseMap.entries()) {
@@ -209,7 +208,6 @@ export class CAU extends BaseScraper {
           }
       }
 
-      // 3. Match by normalized title
       if (!targetCode) {
         for (const [code, existing] of courseMap.entries()) {
              const existingNormTitle = normalizeTitle(existing.title);
@@ -219,7 +217,6 @@ export class CAU extends BaseScraper {
         }
       }
 
-      // 4. Fuzzy containment match
       if (!targetCode) {
         for (const [code, existing] of courseMap.entries()) {
              const existingNormTitle = normalizeTitle(existing.title);
@@ -231,7 +228,6 @@ export class CAU extends BaseScraper {
 
       if (targetCode && courseMap.has(targetCode)) {
         const existing = courseMap.get(targetCode)!;
-        // Prefer alphanumeric code as the main key
         const isNewCodeBetter = /^[a-zA-Z]/.test(item.courseCode) && /^\d/.test(existing.courseCode);
         
         const target = isNewCodeBetter ? item : existing;
@@ -248,7 +244,6 @@ export class CAU extends BaseScraper {
         if (!tDetails.breakdown) tDetails.breakdown = [0, 0, 0, 0];
         if (!sDetails.breakdown) sDetails.breakdown = [0, 0, 0, 0];
 
-        // Merge units
         const su = sDetails.rawUnits || 0;
         const stype = sDetails.type;
         if (stype === "Lecture") tDetails.breakdown[0] += su;
@@ -256,7 +251,6 @@ export class CAU extends BaseScraper {
         else if (stype === "Exercise") tDetails.breakdown[2] += su;
         else if (stype === "Practical" || stype === "Project") tDetails.breakdown[3] += su;
 
-        // Merge schedules
         const sSched = sDetails.schedule || {};
         const tSched = tDetails.schedule || {};
         for (const [type, dates] of Object.entries(sSched)) {
@@ -265,7 +259,6 @@ export class CAU extends BaseScraper {
         }
         tDetails.schedule = tSched;
 
-        // Merge instructors
         const sInstr = sDetails.instructors || [];
         const tInstr = tDetails.instructors || [];
         sInstr.forEach((i: string) => { if (!tInstr.includes(i)) tInstr.push(i); });

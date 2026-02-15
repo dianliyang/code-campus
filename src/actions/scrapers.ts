@@ -51,6 +51,9 @@ export async function runManualScraperAction({
     const items = await scraper.retrieve();
 
     if (items.length > 0) {
+      // Clear previous data for this university before saving new results
+      await db.clearUniversity(scraper.name);
+
       if (scraper.name === 'cau') {
         const standardCategoryLabels = ['Standard Course', 'Compulsory elective modules in Computer Science'];
         const standardCourses = items.filter(item => standardCategoryLabels.includes((item.details as any)?.category)); // eslint-disable-line @typescript-eslint/no-explicit-any

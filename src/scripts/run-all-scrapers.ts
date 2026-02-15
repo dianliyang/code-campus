@@ -14,6 +14,9 @@ async function runScraper(scraper: BaseScraper, db: SupabaseDatabase) {
     console.log(`Successfully scraped ${items.length} items from ${scraper.name}.`);
 
     if (items.length > 0) {
+      // Clear previous data for this university before saving new results
+      await db.clearUniversity(scraper.name);
+
       if (scraper.name === 'cau') {
         // Partition CAU items into Projects/Seminars vs standard Courses
         // "Standard Course" and "Compulsory elective modules in Computer Science" go to 'courses'

@@ -50,12 +50,24 @@ export class CAU extends BaseScraper {
       const titleA = td.find("a[href*='key=']").first();
       if (titleA.length > 0) {
         const fullText = td.text().replace(/\s+/g, " ");
-        // Pattern: [Code] Title [ShortTitle] (Number)
-        const metaMatch = fullText.match(/(?:\[?([\w.-]+)\]?)?\s*(.+?)\s*(?:\[.+?\])?\s*\((\d{6})\)/);
         
-        if (metaMatch) {
-          const internalId = metaMatch[3];
-          const courseCode = metaMatch[1] || internalId;
+        // Smarter extraction for codes like infCV3D-01a
+        // 1. Try to find bracketed code first (often present in both lectures and exercises)
+        const bracketMatch = fullText.match(/\[([a-zA-Z0-9._-]+)\]/);
+        // 2. Try to find code at the beginning (before colon)
+        const startMatch = fullText.match(/^([a-zA-Z0-9._-]+):/);
+        // 3. Find 6-digit internal ID as fallback
+        const internalIdMatch = fullText.match(/\((\d{6})\)/);
+        
+        if (internalIdMatch) {
+          const internalId = internalIdMatch[1];
+          let courseCode = bracketMatch ? bracketMatch[1] : (startMatch ? startMatch[1] : internalId);
+          
+          // If extracted code is just a generic label, fallback to internal ID
+          if (['exercise', 'übung', 'praktikum', 'practical', 'projekt', 'project', 'tutorium', 'tutorial'].includes(courseCode.toLowerCase())) {
+              courseCode = internalId;
+          }
+
           const title = titleA.text().trim();
 
           if (existingCodes.has(courseCode)) {
@@ -66,11 +78,11 @@ export class CAU extends BaseScraper {
             return;
           }
 
-          const type = "Lecture";
+          let type = "Lecture";
           let category = "General";
           const titleLower = title.toLowerCase();
 
-          // Categorization logic based on title and metadata
+          // Categorization logic
           if (titleLower.includes("advanced project") || titleLower.includes("oberprojekt") || titleLower.includes("advanced computer science project")) category = "Advanced Project";
           else if (titleLower.includes("seminar") && !titleLower.includes("supervision")) category = "Seminar";
           else if (titleLower.includes("colloquium") || titleLower.includes("kolloquium") || titleLower.includes("study group")) category = "Colloquia and study groups";
@@ -80,6 +92,10 @@ export class CAU extends BaseScraper {
           else if (titleLower.includes("elective") || titleLower.includes("wahlpflicht")) category = "Compulsory elective modules in Computer Science";
           else if (titleLower.includes("open elective") || titleLower.includes("freie wahl")) category = "Open Elective";
           else category = "Standard Course";
+
+          // Initial type detection from code prefix
+          if (courseCode.startsWith("E")) type = "Exercise";
+          else if (courseCode.startsWith("P") || courseCode.startsWith("PE")) type = "Practical";
 
           const course: Course = {
             university: "CAU Kiel", courseCode, title, department: "Computer Science",
@@ -98,11 +114,12 @@ export class CAU extends BaseScraper {
               const typeMatch = value.match(/^(Vorlesung|Übung|Seminar|Praktikum|Kolloquium|Projekt)/i);
               if (typeMatch) {
                   const t = typeMatch[1].toLowerCase();
-                  if (t === 'vorlesung') (course.details as any).type = "Lecture"; // eslint-disable-line @typescript-eslint/no-explicit-any
-                  else if (t === 'übung') (course.details as any).type = "Exercise"; // eslint-disable-line @typescript-eslint/no-explicit-any
-                  else if (t === 'praktikum') (course.details as any).type = "Practical"; // eslint-disable-line @typescript-eslint/no-explicit-any
-                  else if (t === 'seminar') (course.details as any).type = "Seminar"; // eslint-disable-line @typescript-eslint/no-explicit-any
-                  else if (t === 'projekt') (course.details as any).type = "Project"; // eslint-disable-line @typescript-eslint/no-explicit-any
+                  if (t === 'vorlesung') type = "Lecture";
+                  else if (t === 'übung') type = "Exercise";
+                  else if (t === 'praktikum') type = "Practical";
+                  else if (t === 'seminar') type = "Seminar";
+                  else if (t === 'projekt') type = "Project";
+                  (course.details as any).type = type; // eslint-disable-line @typescript-eslint/no-explicit-any
               }
 
               const ectsMatch = value.match(/(?:ECTS|Credits):\s*(\d+)/i);
@@ -120,10 +137,9 @@ export class CAU extends BaseScraper {
               course.description = value;
             } else if (label.includes("termine") || label.includes("dates")) {
               if (value) {
-                  const cType = (course.details as any).type || "Lecture"; // eslint-disable-line @typescript-eslint/no-explicit-any
                   const sched = (course.details as any).schedule; // eslint-disable-line @typescript-eslint/no-explicit-any
-                  if (!sched[cType]) sched[cType] = [];
-                  sched[cType].push(value);
+                  if (!sched[type]) sched[type] = [];
+                  sched[type].push(value);
               }
             }
           });
@@ -164,7 +180,7 @@ export class CAU extends BaseScraper {
   private mergeCourses(items: Course[]): Course[] {
     const courseMap = new Map<string, Course>();
     
-    // Helper to identify if an item is a secondary component (Exercise, Practical, etc.)
+    // Helper to identify if an item is a secondary component
     const isSecondary = (c: Course) => {
         const type = (c.details as any).type; // eslint-disable-line @typescript-eslint/no-explicit-any
         return type === "Exercise" || type === "Practical" || type === "Project" ||
@@ -180,15 +196,30 @@ export class CAU extends BaseScraper {
     });
 
     for (const item of sorted) {
-      // Normalize title for matching: remove prefixes like "Übung zu: "
+      // Normalize title for matching
       const cleanTitle = item.title.replace(/^(.?bung|Exercise|Practical Exercise|Practice|Tutorial|Lab|Projekt|Project)( zu)?:\s*/i, "").trim();
       let targetCode: string | undefined;
       
-      // Try to find matching primary course by code (e.g., E123 -> 123)
-      if (item.courseCode.startsWith("PE") && courseMap.has(item.courseCode.substring(2))) targetCode = item.courseCode.substring(2);
+      // 1. Direct match by code (This handles infCV3D-01a matching exactly)
+      if (courseMap.has(item.courseCode)) {
+          targetCode = item.courseCode;
+      }
+      // 2. Strip prefix match (e.g., E-infCV -> infCV)
+      else if (item.courseCode.startsWith("PE") && courseMap.has(item.courseCode.substring(2))) targetCode = item.courseCode.substring(2);
       else if ((item.courseCode.startsWith("E") || item.courseCode.startsWith("P")) && courseMap.has(item.courseCode.substring(1))) targetCode = item.courseCode.substring(1);
 
-      // Try to find matching primary course by cleaned title
+      // 3. Match by internal ID if courseCode is alphanumeric
+      if (!targetCode) {
+          const itemInternalId = (item.details as any).internalId; // eslint-disable-line @typescript-eslint/no-explicit-any
+          for (const [code, existing] of courseMap.entries()) {
+              if ((existing.details as any).internalId === itemInternalId) { // eslint-disable-line @typescript-eslint/no-explicit-any
+                  targetCode = code;
+                  break;
+              }
+          }
+      }
+
+      // 4. Clean title match
       if (!targetCode) {
         for (const [code, existing] of courseMap.entries()) {
              if (existing.title.toLowerCase() === cleanTitle.toLowerCase() && !isSecondary(existing)) {
@@ -238,7 +269,6 @@ export class CAU extends BaseScraper {
     result.forEach(c => {
         const d = c.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         if (d.breakdown) {
-            // Format units as L-S-E-P components
             c.units = `${d.breakdown[0]}-${d.breakdown[1]}-${d.breakdown[2]}-${d.breakdown[3]}`;
             delete d.breakdown; delete d.rawUnits; delete d.type;
         }

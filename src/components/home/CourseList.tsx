@@ -140,18 +140,18 @@ export default function CourseList({
         dict={dict}
       />
 
-      <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "bg-white border border-gray-200 rounded-xl overflow-hidden"}>
+      <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "bg-white border border-gray-200 rounded-xl overflow-hidden"}>
         {viewMode === "list" && courses && courses.length > 0 && (
-          <div className="hidden md:flex items-center gap-4 px-4 py-3 bg-gray-50/50 border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-500 select-none">
+          <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-gray-50/50 border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-500 select-none">
              <div className="w-[40px] flex-shrink-0 text-center"></div>
              <div className="w-[30%] flex-shrink-0">Course</div>
              <div className="w-[20%] flex-shrink-0">Tags</div>
              <div className="flex-grow min-w-0">Info</div>
-             <div className="w-24 flex-shrink-0 text-right">Action</div>
+             <div className="w-24 flex-shrink-0 text-right pr-2">Action</div>
           </div>
         )}
         {courses?.map((course) => (
-          <VirtualCard key={course.id} id={course.id} initialHeight={viewMode === 'list' ? "60px" : "200px"}>
+          <VirtualCard key={`${course.id}-${viewMode}`} id={course.id} initialHeight={viewMode === 'list' ? "60px" : "200px"}>
             <CourseCard
               course={course}
               isInitialEnrolled={enrolledIds.includes(course.id)}

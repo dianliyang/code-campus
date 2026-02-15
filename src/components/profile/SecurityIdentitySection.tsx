@@ -33,30 +33,30 @@ function IdentityCard({
   linkAccountLabel
 }: IdentityCardProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-8 border border-gray-100 bg-white group hover:border-gray-200 transition-all">
-      <div className="flex items-center gap-6">
-        <div className={`w-12 h-12 rounded-none flex items-center justify-center text-white shadow-lg ${colorClass}`}>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 rounded-lg border border-gray-100 bg-white transition-all hover:border-gray-200">
+      <div className="flex items-center gap-4">
+        <div className={`w-10 h-10 rounded-md flex items-center justify-center text-white ${colorClass}`}>
           {isSvg ? (
-            <svg className="w-6 h-6" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="currentColor" d={svgPath} />
             </svg>
           ) : (
-            Icon && <Icon className="w-6 h-6" />
+            Icon && <Icon className="w-5 h-5" />
           )}
         </div>
         <div>
-          <span className="block text-[11px] font-black uppercase tracking-widest text-gray-950 mb-1">{title}</span>
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{desc}</span>
+          <span className="block text-sm font-semibold text-gray-900 leading-none mb-1">{title}</span>
+          <span className="text-xs text-gray-500 font-medium">{desc}</span>
         </div>
       </div>
       
       {isConnected ? (
-        <div className="flex items-center gap-2 px-4 py-2 bg-brand-green/10 text-brand-green border border-brand-green/20">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span className="text-[9px] font-black uppercase tracking-[0.2em]">{connectedLabel}</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider">{connectedLabel}</span>
         </div>
       ) : (
-        <button className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-500 hover:border-gray-950 hover:text-gray-950 transition-all text-[9px] font-black uppercase tracking-[0.2em]">
+        <button className="flex items-center gap-2 px-4 py-2 rounded-md bg-white border border-gray-200 text-gray-600 hover:border-gray-900 hover:text-gray-900 transition-all text-[11px] font-semibold uppercase tracking-wider">
           <Link2 className="w-3.5 h-3.5" />
           {linkAccountLabel}
         </button>
@@ -72,20 +72,20 @@ export default function SecurityIdentitySection({ dict, provider }: SecurityIden
   const isGoogle = provider === "google";
 
   return (
-    <div className="space-y-16 animate-in fade-in duration-500">
-      <div className="space-y-8">
+    <div className="space-y-12 animate-in fade-in duration-300">
+      <div className="space-y-6">
         <header>
-          <span className="text-[8px] font-black text-gray-300 uppercase tracking-[0.3em] italic">AUTHENTICATION_VECTORS</span>
-          <h3 className="text-xl font-black text-gray-950 uppercase tracking-tighter italic mt-2">Identity_Protocol</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Authentication</h3>
+          <p className="text-sm text-gray-500">Manage your linked accounts and authentication methods.</p>
         </header>
         
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4 max-w-3xl">
           <IdentityCard 
             title={dict.github_title}
             desc={dict.github_desc}
             icon={Github}
             isConnected={isGithub}
-            colorClass="bg-gray-950"
+            colorClass="bg-[#24292e]"
             connectedLabel={dict.connected}
             linkAccountLabel={dict.link_account}
           />
@@ -104,15 +104,15 @@ export default function SecurityIdentitySection({ dict, provider }: SecurityIden
         </div>
       </div>
 
-      <div className="pt-12 border-t border-red-50">
-        <div className="p-8 border border-red-100 bg-red-50/20">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+      <div className="pt-10 border-t border-gray-100">
+        <div className="p-6 rounded-lg border border-red-100 bg-red-50/20 max-w-3xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="max-w-md">
-              <h4 className="text-[11px] font-black text-red-900 uppercase tracking-widest flex items-center gap-3 mb-2">
-                <Trash2 className="w-4 h-4" /> DANGER_ZONE
+              <h4 className="text-sm font-semibold text-red-900 mb-1 flex items-center gap-2">
+                <Trash2 className="w-4 h-4" /> Danger Zone
               </h4>
-              <p className="text-[10px] font-bold text-red-700/60 uppercase tracking-wider leading-relaxed">
-                {dict.delete_desc} THIS ACTION IS IRREVERSIBLE. ALL ACADEMIC DATA SIGNATURES WILL BE PURGED.
+              <p className="text-xs text-red-700/70 font-medium leading-relaxed">
+                {dict.delete_desc} This action is permanent and cannot be undone.
               </p>
             </div>
             <div className="flex-shrink-0">

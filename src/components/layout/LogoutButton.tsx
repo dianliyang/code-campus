@@ -25,10 +25,10 @@ export default function LogoutButton({ showLabel, dict, fullWidth }: LogoutButto
     return (
       <button 
         onClick={handleLogout}
-        className={`flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-500 transition-all group ${fullWidth ? 'w-full justify-center bg-red-50/20 border border-red-100/50' : 'border-l-2 border-transparent'}`}
+        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all group ${fullWidth ? 'w-full justify-center mt-4 border border-red-100' : ''}`}
       >
-        <LogOut className="w-3.5 h-3.5 transition-colors group-hover:text-red-500" />
-        <span className="text-[10px] font-black uppercase tracking-widest">{dict?.dashboard.profile.sign_out || "SIGNOUT_SESSION"}</span>
+        <LogOut className="w-4 h-4 transition-colors group-hover:text-red-600" />
+        <span>{dict?.dashboard.profile.sign_out || "Sign Out"}</span>
       </button>
     );
   }

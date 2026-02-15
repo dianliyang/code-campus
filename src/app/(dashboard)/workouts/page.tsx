@@ -5,6 +5,7 @@ import WorkoutList from "@/components/workouts/WorkoutList";
 import { createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
+import { getWorkoutLastUpdateTime } from "@/actions/scrapers";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -85,7 +86,10 @@ async function WorkoutListData({ params, dict }: {
   const days = ((params.days as string) || "").split(",").filter(Boolean);
   const status = ((params.status as string) || "").split(",").filter(Boolean);
 
-  const dbWorkouts = await fetchWorkouts(page, size, offset, query, sort, categories, days, status);
+  const [dbWorkouts, lastUpdated] = await Promise.all([
+    fetchWorkouts(page, size, offset, query, sort, categories, days, status),
+    getWorkoutLastUpdateTime()
+  ]);
 
   return (
     <WorkoutList 
@@ -94,6 +98,7 @@ async function WorkoutListData({ params, dict }: {
       totalPages={dbWorkouts.pages}
       currentPage={page}
       dict={dict}
+      lastUpdated={lastUpdated}
     />
   );
 }
@@ -129,8 +134,11 @@ async function fetchWorkouts(
     supabaseQuery = supabaseQuery.in('day_of_week', days);
   }
 
+  // Filter out expired and fully booked workouts by default unless explicitly requested
   if (status.length > 0) {
     supabaseQuery = supabaseQuery.in('booking_status', status);
+  } else {
+    supabaseQuery = supabaseQuery.not('booking_status', 'in', '("expired","fully_booked")');
   }
 
   // Sorting

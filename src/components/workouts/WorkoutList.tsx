@@ -17,6 +17,7 @@ interface WorkoutListProps {
   totalPages: number;
   currentPage: number;
   dict: Dictionary['dashboard']['workouts'];
+  lastUpdated: string | null;
 }
 
 export default function WorkoutList({
@@ -24,7 +25,8 @@ export default function WorkoutList({
   totalItems,
   totalPages,
   currentPage,
-  dict
+  dict,
+  lastUpdated
 }: WorkoutListProps) {
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
@@ -113,6 +115,7 @@ export default function WorkoutList({
         viewMode={viewMode}
         setViewMode={handleViewModeChange}
         dict={dict}
+        lastUpdated={lastUpdated}
       />
 
       <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "bg-white border border-gray-200 rounded-xl overflow-hidden"}>

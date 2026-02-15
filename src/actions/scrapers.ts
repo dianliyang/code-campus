@@ -106,8 +106,11 @@ export async function fetchWorkoutsAction({
     supabaseQuery = supabaseQuery.in('day_of_week', days);
   }
 
+  // Filter out expired and fully booked workouts by default unless explicitly requested
   if (status.length > 0) {
     supabaseQuery = supabaseQuery.in('booking_status', status);
+  } else {
+    supabaseQuery = supabaseQuery.not('booking_status', 'in', '("expired","fully_booked")');
   }
 
   // Sorting
@@ -128,6 +131,19 @@ export async function fetchWorkoutsAction({
   const pages = Math.max(1, Math.ceil(total / size));
 
   return { items, total, pages };
+}
+
+export async function getWorkoutLastUpdateTime() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('workouts')
+    .select('updated_at')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data.updated_at;
 }
 
 export async function runManualSportScraper() {

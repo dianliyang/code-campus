@@ -2,19 +2,27 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
-import { List, LayoutGrid } from "lucide-react";
+import { List, LayoutGrid, RefreshCw } from "lucide-react";
 
 interface WorkoutListHeaderProps {
   totalItems: number;
   viewMode: "list" | "grid";
   setViewMode: (mode: "list" | "grid") => void;
   dict: Dictionary['dashboard']['workouts'];
+  lastUpdated: string | null;
 }
 
-export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, dict }: WorkoutListHeaderProps) {
+export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, dict, lastUpdated }: WorkoutListHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sortBy = searchParams.get("sort") || "title";
+
+  const formattedUpdate = lastUpdated ? new Date(lastUpdated).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }) : null;
 
   const handleSortChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -37,6 +45,12 @@ export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, d
           <span className="text-[11px] text-gray-400 font-black uppercase tracking-[0.2em] whitespace-nowrap">
             {totalItems} {dict?.found_suffix || "workouts..."}
           </span>
+          {formattedUpdate && (
+            <div className="flex items-center gap-1.5 text-[9px] text-emerald-600 font-bold uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100/50">
+              <RefreshCw className="w-2.5 h-2.5" />
+              <span>Last sync: {formattedUpdate}</span>
+            </div>
+          )}
         </div>
         
         {/* View Mode Switcher */}

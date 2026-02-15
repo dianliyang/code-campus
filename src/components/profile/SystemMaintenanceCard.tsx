@@ -25,6 +25,7 @@ export default function SystemMaintenanceCard() {
   const [isPending, startTransition] = useTransition();
   const [selectedUnis, setSelectedUnis] = useState<string[]>(["cau"]);
   const [selectedSems, setSelectedSems] = useState<string[]>([SEMESTERS[2].id]);
+  const [forceUpdate, setForceUpdate] = useState(false);
   const [status, setStatus] = useState<{ type: "idle" | "success" | "error"; message?: string }>({ type: "idle" });
 
   const toggleUni = (id: string) => {
@@ -59,7 +60,8 @@ export default function SystemMaintenanceCard() {
           for (const sem of selectedSems) {
           const result = await runManualScraperAction({
             university: uni,
-            semester: sem
+            semester: sem,
+            forceUpdate
           });
           
           if (result.success) {
@@ -155,6 +157,17 @@ export default function SystemMaintenanceCard() {
 
       {/* Action Area */}
       <div className="pt-6 border-t border-gray-50 flex flex-col gap-4">
+        <label className="flex items-center gap-2.5 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={forceUpdate}
+            onChange={e => setForceUpdate(e.target.checked)}
+            className="accent-red-500 w-3.5 h-3.5"
+          />
+          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-500 group-hover:text-gray-700 transition-colors">
+            Force Update <span className="text-gray-400 normal-case tracking-normal font-bold">(clear existing data before sync)</span>
+          </span>
+        </label>
         <button
           onClick={handleRunScrapers}
           disabled={isPending}

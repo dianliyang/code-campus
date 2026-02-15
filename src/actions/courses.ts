@@ -97,6 +97,12 @@ export async function deleteCourse(courseId: number) {
 
   const supabase = createAdminClient();
 
+  // Delete related rows to avoid FK constraints
+  await supabase.from("study_plans").delete().eq("course_id", courseId);
+  await supabase.from("user_courses").delete().eq("course_id", courseId);
+  await supabase.from("course_fields").delete().eq("course_id", courseId);
+  await supabase.from("course_semesters").delete().eq("course_id", courseId);
+
   const { error } = await supabase
     .from("courses")
     .delete()

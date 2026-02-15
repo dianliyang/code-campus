@@ -13,10 +13,12 @@ import { revalidatePath } from "next/cache";
 
 export async function runManualScraperAction({
   university,
-  semester
+  semester,
+  forceUpdate = false
 }: {
   university: string;
   semester: string;
+  forceUpdate?: boolean;
 }) {
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
@@ -51,6 +53,21 @@ export async function runManualScraperAction({
     const items = await scraper.retrieve();
 
     if (items.length > 0) {
+      // Force update: clear existing data for this university before saving
+      if (forceUpdate) {
+        const supabase = await createClient();
+        const uniName = scraper.name === 'cau' ? 'CAU Kiel'
+          : scraper.name === 'mit' ? 'MIT'
+          : scraper.name === 'stanford' ? 'Stanford'
+          : scraper.name === 'cmu' ? 'CMU'
+          : scraper.name === 'ucb' ? 'UC Berkeley'
+          : university;
+        await supabase.from('courses').delete().eq('university', uniName);
+        if (scraper.name === 'cau') {
+          await supabase.from('projects_seminars').delete().eq('university', uniName);
+        }
+        console.log(`[Manual Scrape] Force cleared existing data for ${uniName}`);
+      }
       if (scraper.name === 'cau') {
         const standardCategoryLabels = ['Standard Course', 'Compulsory elective modules in Computer Science'];
         const standardCourses = items.filter(item => standardCategoryLabels.includes((item.details as any)?.category)); // eslint-disable-line @typescript-eslint/no-explicit-any

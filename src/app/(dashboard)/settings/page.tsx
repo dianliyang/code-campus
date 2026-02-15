@@ -3,6 +3,7 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import Link from "next/link";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
@@ -46,10 +47,19 @@ export default async function SettingsPage() {
   }
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full min-h-screen bg-white">
-      <div className="mb-10">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">{dict.dashboard.profile.settings}</h1>
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-2">Manage your academic engine parameters</p>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full min-h-screen bg-white">
+      <div className="flex items-center gap-4 mb-12">
+        <div className="w-10 h-10 rounded-lg bg-gray-950 flex items-center justify-center">
+          <Image src="/logo.svg" alt="Logo" width={24} height={24} className="brightness-200" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-widest mb-0.5">
+            <span>Dashboard</span>
+            <span className="text-gray-200">/</span>
+            <span className="text-gray-900">Settings</span>
+          </div>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tighter uppercase italic">{dict.dashboard.profile.settings}</h1>
+        </div>
       </div>
       
       <SettingsContainer user={user} profile={profile} dict={dict} />

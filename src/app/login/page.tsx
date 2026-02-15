@@ -46,9 +46,9 @@ export default async function LoginPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white overflow-hidden">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white overflow-y-auto lg:overflow-hidden">
       {/* Left Side: Immersive Branding & Data Visualization */}
-      <div className="hidden lg:flex flex-col justify-between bg-gray-950 p-16 relative overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-between bg-gray-950 p-16 relative overflow-hidden h-full">
         {/* Background Decorative Element */}
         <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none select-none">
           <div className="text-[10rem] font-black italic tracking-tighter">
@@ -103,10 +103,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
       </div>
 
       {/* Right Side: Authentication Form */}
-      <div className="flex items-center justify-center p-8 sm:p-12 md:p-16">
-        <div className="w-full flex justify-center lg:block">
+      <div className="flex items-center justify-center p-6 sm:p-12 md:p-16 min-h-screen lg:min-h-0">
+        <div className="w-full max-w-md flex flex-col justify-center">
           {/* Mobile Logo Only */}
-          <div className="lg:hidden flex justify-center mb-12">
+          <div className="lg:hidden flex justify-center mb-8">
             <Image
               src="/code-campus-logo.svg"
               alt="CodeCampus"

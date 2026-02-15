@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
-import { Send, ArrowLeft } from "lucide-react";
+import { Send, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 
 interface LoginFormProps {
   onMagicLink: (formData: FormData) => Promise<{ success?: boolean; error?: string } | void>;
@@ -36,99 +36,101 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
       }
     } catch (e) {
       console.error("Login submission error:", e);
-      setServerError("Default");
+      setServerError("An unexpected error occurred.");
     } finally {
       setLoading(false); 
     }
   }
 
-  return (
-    <div className="max-w-md w-full">
-      <div className="mb-10">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase mb-2">{dict?.title || "System Authentication"}</h1>
-        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{dict?.subtitle || "Connect to the academic node"}</p>
-      </div>
-
-      {isSent ? (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="p-8 bg-green-50 border border-green-100 rounded-3xl">
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-brand-green mb-6 shadow-sm border border-green-100">
-              <Send className="w-5 h-5" />
-            </div>
-            <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-2">
-              {dict?.success_title || "Success"}
-            </h2>
-            <p className="text-sm text-gray-600 font-medium leading-relaxed">
-              {dict?.success_desc || "Magic link dispatched successfully. Please verify your inbox."}
-            </p>
-            
-            <div className="mt-8 pt-6 border-t border-green-100/50">
-               <p className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-1">{dict?.security_protocol || "Security Protocol"}</p>
-               <p className="text-[11px] text-green-700/70 font-medium italic">
-                 {dict?.spam_notice || "If you don't see the email, please check your spam folder."}
-               </p>
-            </div>
+  if (isSent) {
+    return (
+      <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="p-8 bg-gray-50 border border-gray-100 rounded-2xl">
+          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-green-600 mb-6 shadow-sm border border-gray-100">
+            <Send className="w-5 h-5" />
           </div>
-
-          <div className="flex justify-center">
-            <button 
-              onClick={() => setIsSent(false)}
-              className="text-[10px] font-black text-gray-400 hover:text-brand-blue uppercase tracking-widest transition-colors cursor-pointer flex items-center gap-2"
-            >
-              <ArrowLeft className="w-2.5 h-2.5" />
-              {dict?.wrong_email || "Wrong email?"}
-            </button>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            {dict?.success_title || "Check your email"}
+          </h2>
+          <p className="text-sm text-gray-500 font-medium leading-relaxed">
+            {dict?.success_desc || "We've sent a magic link to your inbox. Please click the link to sign in."}
+          </p>
+          
+          <div className="mt-8 pt-6 border-t border-gray-200">
+             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{dict?.security_protocol || "Security Protocol"}</p>
+             <p className="text-xs text-gray-500 italic">
+               {dict?.spam_notice || "If you don't see the email, please check your spam folder."}
+             </p>
           </div>
         </div>
-      ) : (
-        <>
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl">
-              <p className="text-xs font-bold text-red-600 uppercase tracking-widest mb-1">{dict?.error_title || "Authentication Failure"}</p>
-              <p className="text-xs text-red-700 font-medium leading-relaxed">
-                {error === "OAuthAccountNotLinked"
-                  ? (dict?.error_oauth || "This email is linked to another provider.")
-                                : error === "AccessDenied"
-                                ? (dict?.error_denied || "Access denied. Your account may be restricted.")
-                                : error === "Configuration"
-                                ? (dict?.error_config || "System configuration error.")
-                                : error === "Verification"
-                                ? (dict?.error_verification || "The sign-in link is no longer valid.")
-                                : `${dict?.error_default || "Error"}: ${error}.`}              </p>
-            </div>
-          )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                  {dict?.email_label || "Identity Vector (Email)"}
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="name@example.com"
-                  defaultValue={searchParams.get("email") || ""}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 text-sm focus:border-brand-blue focus:bg-white outline-none transition-all font-mono"
-                  required
-                />
-              </div>
-            </div>
-            
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full btn-primary py-5 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {loading ? (dict?.submit_loading || "Processing...") : (dict?.submit_send || "Send Magic Link")}
-            </button>
-          </form>
-        </>
+        <div className="flex justify-center">
+          <button 
+            onClick={() => setIsSent(false)}
+            className="text-xs font-semibold text-gray-400 hover:text-gray-900 transition-colors cursor-pointer flex items-center gap-2"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            {dict?.wrong_email || "Use a different email"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      <div className="mb-10 text-center lg:text-left">
+        <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic mb-2">{dict?.title || "Sign In"}</h1>
+        <p className="text-sm font-medium text-gray-500">{dict?.subtitle || "Connect to the CodeCampus node"}</p>
+      </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-red-600 uppercase tracking-widest mb-1">{dict?.error_title || "Authentication Failure"}</p>
+            <p className="text-xs text-red-700 font-medium leading-relaxed">
+              {error === "OAuthAccountNotLinked"
+                ? (dict?.error_oauth || "This email is linked to another provider.")
+                : error === "AccessDenied"
+                ? (dict?.error_denied || "Access denied. Your account may be restricted.")
+                : error === "Configuration"
+                ? (dict?.error_config || "System configuration error.")
+                : error === "Verification"
+                ? (dict?.error_verification || "The sign-in link is no longer valid.")
+                : `${dict?.error_default || "Error"}: ${error}.`}
+            </p>
+          </div>
+        </div>
       )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-2">
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+            {dict?.email_label || "Email Address"}
+          </label>
+          <input
+            type="email"
+            name="email"
+            placeholder="name@example.com"
+            defaultValue={searchParams.get("email") || ""}
+            className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-gray-900 focus:ring-0 outline-none transition-all font-mono"
+            required
+          />
+        </div>
+        
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-gray-900 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center h-12"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (dict?.submit_send || "Send Magic Link")}
+        </button>
+      </form>
 
       <div className="mt-12 text-center">
         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-          {dict?.footer || "Protected by Security Protocol."}
+          {dict?.footer || "Secure access via Supabase Auth"}
         </p>
       </div>
     </div>

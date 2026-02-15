@@ -22,9 +22,10 @@ async function runScraper(scraper: BaseScraper, db: SupabaseDatabase) {
   }
 }
 
-async function runWorkoutScraper(db: SupabaseDatabase) {
+async function runWorkoutScraper(db: SupabaseDatabase, semester: string) {
   try {
     const scraper = new CAUSport();
+    scraper.semester = semester;
     console.log(`\n=== Running Scraper: ${scraper.name.toUpperCase()} ===`);
     const workouts = await scraper.retrieveWorkouts();
     console.log(`Successfully scraped ${workouts.length} workouts from ${scraper.name}.`);
@@ -64,7 +65,7 @@ async function main() {
   }
 
   // Run workout scraper (separate table)
-  await runWorkoutScraper(db);
+  await runWorkoutScraper(db, semester);
 
   console.log("\nAll scrapers finished.");
 }

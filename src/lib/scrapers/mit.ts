@@ -43,8 +43,9 @@ export class MIT extends BaseScraper {
 
           if (mainHeader.length > 0) {
             const headerText = mainHeader.text();
-            if (headerText.includes(searchTitle) || 
-               (term === 'spring' && headerText.includes(searchTitle.replace('Spring', 'IAP/Spring')))) {
+            // Handle cases like "IAP/Spring 2026" or "Fall 2025"
+            if (headerText.toLowerCase().includes(searchTitle.toLowerCase()) || 
+               (term === 'spring' && headerText.toLowerCase().includes('iap/spring ' + fullYear))) {
                
                console.log(`[${this.name}] Found current semester: ${searchTitle}. Using root catalog.`);
                termPath = ""; 

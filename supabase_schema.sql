@@ -201,24 +201,32 @@ ALTER TABLE workouts ADD COLUMN IF NOT EXISTS search_vector tsvector
 CREATE INDEX IF NOT EXISTS idx_workouts_search ON workouts USING GIN(search_vector);
 
 -- Row Level Security (RLS)
-ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE fields ENABLE ROW LEVEL SECURITY;
-ALTER TABLE course_fields ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE fields ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE course_fields ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE semesters ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE course_semesters ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE semesters ENABLE ROW LEVEL SECURITY;
-ALTER TABLE course_semesters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE study_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE study_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
 
--- Policies: Public Read Access
-CREATE POLICY "Allow public read access on courses" ON courses FOR SELECT USING (NOT is_hidden);
-CREATE POLICY "Allow public read access on fields" ON fields FOR SELECT USING (true);
-CREATE POLICY "Allow public read access on course_fields" ON course_fields FOR SELECT USING (true);
-CREATE POLICY "Allow public read access on semesters" ON semesters FOR SELECT USING (true);
-CREATE POLICY "Allow public read access on course_semesters" ON course_semesters FOR SELECT USING (true);
-CREATE POLICY "Allow public read access on workouts" ON workouts FOR SELECT USING (true);
+-- Policies: Public Read Access (only for tables with RLS enabled)
+-- CREATE POLICY "Allow public read access on courses" ON courses FOR SELECT USING (NOT is_hidden);
+-- CREATE POLICY "Allow public read access on fields" ON fields FOR SELECT USING (true);
+-- CREATE POLICY "Allow public read access on course_fields" ON course_fields FOR SELECT USING (true);
+-- CREATE POLICY "Allow public read access on semesters" ON semesters FOR SELECT USING (true);
+-- CREATE POLICY "Allow public read access on course_semesters" ON course_semesters FOR SELECT USING (true);
+-- CREATE POLICY "Allow public read access on workouts" ON workouts FOR SELECT USING (true);
+
+-- Ensure all roles can access the disabled RLS tables
+GRANT ALL ON TABLE courses TO anon, authenticated, service_role;
+GRANT ALL ON TABLE workouts TO anon, authenticated, service_role;
+GRANT ALL ON TABLE fields TO anon, authenticated, service_role;
+GRANT ALL ON TABLE semesters TO anon, authenticated, service_role;
+GRANT ALL ON TABLE course_fields TO anon, authenticated, service_role;
+GRANT ALL ON TABLE course_semesters TO anon, authenticated, service_role;
 
 -- Policies: Authenticated User Access for user_courses
 CREATE POLICY "Users can view their own enrollments" ON user_courses FOR SELECT USING (auth.uid() = user_id);

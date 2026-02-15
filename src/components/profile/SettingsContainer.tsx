@@ -3,6 +3,7 @@
 import AISettingsCard from "./AISettingsCard";
 import SecurityIdentitySection from "./SecurityIdentitySection";
 import SystemMaintenanceCard from "./SystemMaintenanceCard";
+import LogoutButton from "@/components/layout/LogoutButton";
 import { Dictionary } from "@/lib/dictionary";
 import { User } from "@supabase/supabase-js";
 
@@ -41,13 +42,19 @@ export default function SettingsContainer({ user, profile, dict }: SettingsConta
         
         <SecurityIdentitySection 
           key="security-section"
-          dict={dict.dashboard.profile} 
           provider={user.app_metadata.provider} 
         />
       </section>
 
       {/* 3. System Maintenance Section */}
       <SystemMaintenanceCard key="maintenance-section" />
+
+      {/* 4. Exit Section */}
+      <section className="pt-12 border-t-2 border-black flex justify-center">
+        <div className="w-full max-w-xs">
+          <LogoutButton showLabel={true} dict={dict} fullWidth={true} className="h-14 !bg-white !text-black border-2 border-black !font-black !uppercase !tracking-[0.3em] hover:!bg-black hover:!text-white transition-all" />
+        </div>
+      </section>
     </div>
   );
 }

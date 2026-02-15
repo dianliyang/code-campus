@@ -9,9 +9,10 @@ interface LogoutButtonProps {
   showLabel?: boolean;
   dict?: Dictionary;
   fullWidth?: boolean;
+  className?: string;
 }
 
-export default function LogoutButton({ showLabel, dict, fullWidth }: LogoutButtonProps) {
+export default function LogoutButton({ showLabel, dict, fullWidth, className }: LogoutButtonProps) {
   const supabase = createBrowserSupabaseClient();
   const router = useRouter();
 
@@ -25,7 +26,7 @@ export default function LogoutButton({ showLabel, dict, fullWidth }: LogoutButto
     return (
       <button 
         onClick={handleLogout}
-        className={`flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all group ${fullWidth ? 'w-full justify-center mt-4 border border-red-100' : ''}`}
+        className={className || `flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all group ${fullWidth ? 'w-full justify-center mt-4 border border-red-100' : ''}`}
       >
         <LogOut className="w-4 h-4 transition-colors group-hover:text-red-600" />
         <span>{dict?.dashboard.profile.sign_out || "Sign Out"}</span>
@@ -36,7 +37,7 @@ export default function LogoutButton({ showLabel, dict, fullWidth }: LogoutButto
   return (
     <button 
       onClick={handleLogout}
-      className="text-gray-300 hover:text-red-500 transition-colors cursor-pointer p-2"
+      className={className || "text-gray-300 hover:text-red-500 transition-colors cursor-pointer p-2"}
     >
       <Power className="w-4 h-4" />
     </button>

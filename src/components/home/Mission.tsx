@@ -1,76 +1,66 @@
-import OrbitingCircles from "@/components/home/OrbitingCircles";
+import { Badge } from "@/components/ui/badge";
+
+const universities = ["MIT", "Stanford", "UC Berkeley", "CMU"];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function Mission({ dict }: { dict: any }) {
   return (
-    <section id="mission" className="min-h-screen flex items-center py-16 sm:py-20 bg-white relative overflow-hidden border-t border-slate-100">
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-brand-blue/5 via-white to-white pointer-events-none"></div>
-      
+    <section id="mission" className="py-24 sm:py-32 bg-white relative overflow-hidden border-t border-slate-100">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-brand-blue/5 via-white to-white pointer-events-none" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-blue/5 border border-brand-blue/10 mb-6 sm:mb-8 backdrop-blur-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-brand-blue animate-pulse"></div>
-              <span className="text-[10px] font-mono font-bold text-brand-blue uppercase tracking-[0.2em]">{dict.label}</span>
-            </div>
-            
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-6 sm:mb-8 leading-tight text-slate-900">
-              {dict.title_prefix} <br /> {dict.title_middle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-cyan-600">{dict.title_highlight}</span>.
+            <Badge variant="outline" className="mb-6 sm:mb-8 text-brand-blue border-brand-blue/20 bg-brand-blue/5">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-blue animate-pulse mr-2 inline-block" />
+              {dict.label}
+            </Badge>
+
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-6 sm:mb-8 leading-tight text-slate-900">
+              {dict.title_prefix} <br /> {dict.title_middle}{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-cyan-600">
+                {dict.title_highlight}
+              </span>
+              .
             </h2>
-            
+
             <div className="space-y-4 sm:space-y-6 text-slate-500 font-medium text-base sm:text-lg leading-relaxed max-w-xl">
-              <p>
-                {dict.desc_1}
-              </p>
-              <p>
-                {dict.desc_2}
-              </p>
+              <p>{dict.desc_1}</p>
+              <p>{dict.desc_2}</p>
             </div>
-            
+
             <div className="mt-10 sm:mt-12 flex flex-wrap gap-8 sm:gap-12 border-t border-slate-100 pt-10 sm:pt-12">
               <div>
-                <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">4+</div>
-                <div className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400">{dict.stat_sources}</div>
+                <div className="text-3xl sm:text-4xl font-bold text-slate-900 mb-1">4+</div>
+                <div className="text-xs text-slate-400 font-medium">{dict.stat_sources}</div>
               </div>
               <div>
-                <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">2.4k</div>
-                <div className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400">{dict.stat_nodes}</div>
+                <div className="text-3xl sm:text-4xl font-bold text-slate-900 mb-1">2.4k</div>
+                <div className="text-xs text-slate-400 font-medium">{dict.stat_nodes}</div>
               </div>
               <div>
-                <div className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">0xFC</div>
-                <div className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400">{dict.stat_schema}</div>
+                <div className="text-3xl sm:text-4xl font-bold text-slate-900 mb-1">100%</div>
+                <div className="text-xs text-slate-400 font-medium">Free</div>
               </div>
             </div>
           </div>
-          
-          <div className="relative group">
-             {/* Data Visualization Container */}
-             <div className="aspect-square bg-slate-50 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-200 flex items-center justify-center relative overflow-hidden transition-all duration-700 shadow-xl shadow-slate-200/50 p-6 sm:p-12">
-                <div className="scale-[0.7] sm:scale-100">
-                  <OrbitingCircles />
-                </div>
-                
-                {/* Overlay Vignette */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,_var(--tw-gradient-stops))] from-transparent to-slate-50/80 pointer-events-none"></div>
-             </div>
-             
-             {/* Floating Code Snippet Card */}
-             <div className="absolute -bottom-6 -left-6 sm:-bottom-8 sm:-left-8 bg-white border border-slate-200 p-4 sm:p-6 rounded-xl shadow-2xl hidden sm:block animate-float backdrop-blur-md">
-                <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
-                  <div className="flex gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
-                    <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
-                    <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
-                  </div>
-                  <span className="text-[9px] font-mono text-slate-400">api.ts</span>
-                </div>
-                <code className="text-xs font-mono block text-slate-600">
-                  <span className="text-brand-blue font-bold">const</span> query = <span className="text-emerald-600">&quot;MIT&quot;</span>;<br/>
-                  <span className="text-slate-400">{"// Fetching schema..."}</span><br/>
-                  <span className="text-brand-blue font-bold">200 OK</span> <span className="text-slate-400">[1.2ms]</span>
-                </code>
-             </div>
+
+          {/* University badges grid */}
+          <div className="relative">
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-8 sm:p-12 shadow-sm">
+              <p className="text-sm text-slate-400 font-medium mb-6">Featured universities</p>
+              <div className="flex flex-wrap gap-3">
+                {universities.map((uni) => (
+                  <Badge
+                    key={uni}
+                    variant="secondary"
+                    className="px-4 py-2 text-sm font-medium"
+                  >
+                    {uni}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

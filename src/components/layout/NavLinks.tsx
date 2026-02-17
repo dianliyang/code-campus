@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Dictionary } from "@/lib/dictionary";
-import { Info, Network, Layers, Tag, BookOpen, MapPin, UserCog, Dumbbell, Settings, type LucideIcon } from "lucide-react";
+import { Info, Network, Layers, BookOpen, MapPin, UserCog, Dumbbell, Settings, type LucideIcon } from "lucide-react";
 
 export default function NavLinks({ 
   variant = "light", 
@@ -27,8 +27,7 @@ export default function NavLinks({
       return [
         { name: dict?.mission || "Mission", href: "#mission", icon: Info },
         { name: dict?.universities || "Nodes", href: "#universities", icon: Network },
-        { name: dict?.curriculum || "Protocol", href: "#features", icon: Layers },
-        { name: dict?.pricing || "Pricing", href: "#pricing", icon: Tag }
+        { name: dict?.curriculum || "Protocol", href: "#features", icon: Layers }
       ];
     }
     return [

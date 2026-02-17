@@ -2,7 +2,6 @@ import LandingNavbar from "@/components/layout/LandingNavbar";
 import UniversityLogos from "@/components/home/UniversityLogos";
 import Features from "@/components/home/Features";
 import Mission from "@/components/home/Mission";
-import Pricing from "@/components/home/Pricing";
 import Link from "next/link";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
@@ -75,8 +74,6 @@ export default async function Home() {
            <div id="features">
              <Features dict={dict.features} />
            </div>
-
-           <Pricing dict={dict.pricing} />
         </div>
 
         {/* Footer */}

@@ -1,13 +1,11 @@
 "use server";
 
-import { CAUSport } from "@/lib/scrapers/cau-sport";
 import { MIT } from "@/lib/scrapers/mit";
 import { Stanford } from "@/lib/scrapers/stanford";
 import { CMU } from "@/lib/scrapers/cmu";
 import { UCB } from "@/lib/scrapers/ucb";
-import { CAU } from "@/lib/scrapers/cau";
 import { BaseScraper } from "@/lib/scrapers/BaseScraper";
-import { SupabaseDatabase, createClient, createAdminClient, mapWorkoutFromRow } from "@/lib/supabase/server";
+import { SupabaseDatabase, createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getUser } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -31,18 +29,6 @@ export async function runManualScraperAction({
     else if (university === 'stanford') scraper = new Stanford();
     else if (university === 'cmu') scraper = new CMU();
     else if (university === 'ucb') scraper = new UCB();
-    else if (university === 'cau') scraper = new CAU();
-    else if (university === 'cau-sport') {
-        const sportScraper = new CAUSport();
-        sportScraper.semester = semester;
-        const workouts = await sportScraper.retrieveWorkouts();
-        if (workouts.length > 0) {
-            await db.saveWorkouts(workouts);
-            revalidatePath("/workouts");
-            return { success: true, count: workouts.length };
-        }
-        return { success: true, count: 0 };
-    }
 
     if (!scraper) throw new Error(`University "${university}" not found.`);
 
@@ -53,25 +39,7 @@ export async function runManualScraperAction({
     const items = await scraper.retrieve();
 
     if (items.length > 0) {
-      if (scraper.name === 'cau') {
-        const standardCategoryLabels = ['Standard Course', 'Compulsory elective modules in Computer Science'];
-        const standardCourses = items.filter(item => standardCategoryLabels.includes((item.details as any)?.category)); // eslint-disable-line @typescript-eslint/no-explicit-any
-        const projectsSeminars = items.filter(item => !standardCategoryLabels.includes((item.details as any)?.category)); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-        // Force update: mark all courses as fully scraped so upsert overwrites all fields
-        if (forceUpdate) {
-          for (const item of items) {
-            if (item.details && (item.details as any).is_partially_scraped) { // eslint-disable-line @typescript-eslint/no-explicit-any
-              delete (item.details as any).is_partially_scraped; // eslint-disable-line @typescript-eslint/no-explicit-any
-            }
-          }
-        }
-
-        if (standardCourses.length > 0) await db.saveCourses(standardCourses);
-        if (projectsSeminars.length > 0) await db.saveProjectsSeminars(projectsSeminars);
-      } else {
-        await db.saveCourses(items);
-      }
+      await db.saveCourses(items);
       revalidatePath("/courses");
       return { success: true, count: items.length };
     }
@@ -152,64 +120,4 @@ export async function getWorkoutLastUpdateTime() {
 
   if (error || !data) return null;
   return data.updated_at;
-}
-
-export async function runManualSportScraper() {
-  const user = await getUser();
-  
-  // Security check: Only allow authorized users if needed, 
-  // but for now we'll allow any logged in user to trigger it 
-  // since it's a dev/prototype phase.
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-
-  try {
-    const db = new SupabaseDatabase();
-    const scraper = new CAUSport();
-    
-    console.log(`[Manual Scrape] Starting CAU-SPORT scraper...`);
-    const workouts = await scraper.retrieveWorkouts();
-    
-    if (workouts.length > 0) {
-      // Always override: clear existing workouts for this source first
-      const supabase = await createClient();
-      await supabase.from('workouts').delete().eq('source', scraper.name === 'cau-sport' ? 'CAU Kiel Sportzentrum' : scraper.name);
-
-      await db.saveWorkouts(workouts);
-      console.log(`[Manual Scrape] Successfully saved ${workouts.length} workouts.`);
-      revalidatePath("/workouts");
-      return { success: true, count: workouts.length };
-    }
-    
-    return { success: true, count: 0 };
-  } catch (error) {
-    console.error(`[Manual Scrape] Failed:`, error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Unknown error occurred" 
-    };
-  }
-}
-
-export async function clearCAUCoursesAction() {
-  const user = await getUser();
-  if (!user) throw new Error("Unauthorized");
-
-  const supabase = createAdminClient();
-
-  const { count: courseCount } = await supabase
-    .from('courses')
-    .delete({ count: 'exact' })
-    .eq('university', 'CAU Kiel');
-
-  const { count: psCount } = await supabase
-    .from('projects_seminars')
-    .delete({ count: 'exact' })
-    .eq('university', 'CAU Kiel');
-
-  const removed = (courseCount || 0) + (psCount || 0);
-  console.log(`[CAU Clear] Removed ${courseCount || 0} courses + ${psCount || 0} projects/seminars`);
-  revalidatePath("/courses");
-  return { success: true, removed };
 }

@@ -1,16 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { runManualScraperAction, clearCAUCoursesAction } from "@/actions/scrapers";
-import { Loader2, Play, CheckCircle2, AlertCircle, Check, RefreshCw, Trash2 } from "lucide-react";
+import { runManualScraperAction } from "@/actions/scrapers";
+import { Loader2, Play, CheckCircle2, AlertCircle, Check, RefreshCw } from "lucide-react";
 
 const UNIVERSITIES = [
   { id: "mit", name: "MIT" },
   { id: "stanford", name: "Stanford" },
   { id: "cmu", name: "CMU" },
   { id: "ucb", name: "UC Berkeley" },
-  { id: "cau", name: "CAU Kiel" },
-  { id: "cau-sport", name: "CAU Sport" },
 ];
 
 const SEMESTERS = [
@@ -23,7 +21,7 @@ const SEMESTERS = [
 
 export default function SystemMaintenanceCard() {
   const [isPending, startTransition] = useTransition();
-  const [selectedUnis, setSelectedUnis] = useState<string[]>(["cau"]);
+  const [selectedUnis, setSelectedUnis] = useState<string[]>(["mit"]);
   const [selectedSems, setSelectedSems] = useState<string[]>([SEMESTERS[2].id]);
   const [forceUpdate, setForceUpdate] = useState(false);
   const [status, setStatus] = useState<{ type: "idle" | "success" | "error"; message?: string }>({ type: "idle" });
@@ -185,25 +183,6 @@ export default function SystemMaintenanceCard() {
             </>
           )}
         </button>
-
-          <button
-            onClick={() => {
-              if (!confirm('Delete ALL CAU Kiel courses and projects/seminars?')) return;
-              startTransition(async () => {
-                try {
-                  const result = await clearCAUCoursesAction();
-                  setStatus({ type: 'success', message: `Cleared ${result.removed} CAU record(s).` });
-                } catch (e) {
-                  setStatus({ type: 'error', message: e instanceof Error ? e.message : 'Failed to clear' });
-                }
-              });
-            }}
-            disabled={isPending}
-            className="w-full flex items-center justify-center gap-2.5 h-11 bg-white text-red-600 text-[11px] font-black uppercase tracking-[0.2em] rounded-lg border border-red-200 hover:bg-red-50 transition-all disabled:opacity-50"
-          >
-            <Trash2 className="w-3 h-3" />
-            Clear CAU Courses
-          </button>
 
         {status.type !== "idle" && (
           <div className={`p-3 rounded-lg border text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 ${

@@ -7,6 +7,7 @@ import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
 import FormattedDescription from "@/components/courses/FormattedDescription";
 import { regenerateCourseDescription, updateCourseDescription, updateCourseFull } from "@/actions/courses";
 import { Loader2, Plus, Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export interface EditableStudyPlan {
   id?: number;
@@ -255,7 +256,7 @@ export default function CourseDetailTopSection({
             type="button"
             onClick={handleRegenerateDescription}
             disabled={isSaving || isGeneratingDescription}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold uppercase tracking-wider text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
             title="AI Regenerate Description"
           >
             {isGeneratingDescription ? (
@@ -270,27 +271,28 @@ export default function CourseDetailTopSection({
           <>
             {generatedDescription && (
               <div className="mb-4 rounded-xl border border-brand-blue/20 bg-brand-blue/5 p-4 space-y-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-brand-blue">
+                <p className="text-sm font-medium text-brand-blue">
                   AI Description Generated
                 </p>
                 <div className="flex items-center gap-3">
-                  <button
+                  <Button
                     type="button"
                     onClick={handleConfirmGeneratedDescription}
                     disabled={isApplyingGeneratedDescription}
-                    className="btn-primary px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider disabled:opacity-50 inline-flex items-center gap-2"
+                    size="sm"
                   >
                     {isApplyingGeneratedDescription && <Loader2 className="w-3 h-3 animate-spin" />}
                     Confirm
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={handleDiscardGeneratedDescription}
                     disabled={isApplyingGeneratedDescription}
-                    className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    size="sm"
                   >
                     Discard
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -323,7 +325,7 @@ export default function CourseDetailTopSection({
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Related URLs (one per line)</label>
+              <label className="text-sm font-medium text-slate-600">Related URLs (one per line)</label>
               <textarea
                 value={formData.relatedUrlsText}
                 onChange={(e) => setFormData((p) => ({ ...p, relatedUrlsText: e.target.value }))}
@@ -342,7 +344,7 @@ export default function CourseDetailTopSection({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Topics (course_fields)</label>
+                <label className="text-sm font-medium text-slate-600">Topics (course_fields)</label>
                 <div className="space-y-3">
                   <div className="flex gap-2">
                     <input
@@ -358,16 +360,17 @@ export default function CourseDetailTopSection({
                       className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm"
                       placeholder="Type a topic and press Enter"
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => {
                         addTopic(topicInput);
                         setTopicInput("");
                       }}
-                      className="px-3 py-2 rounded-lg border border-gray-200 text-xs font-bold uppercase tracking-wider text-gray-600 hover:bg-gray-50"
                     >
                       Add
-                    </button>
+                    </Button>
                   </div>
 
                   {selectedTopics.length > 0 && (
@@ -405,7 +408,7 @@ export default function CourseDetailTopSection({
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Semesters (course_semesters)</label>
+                <label className="text-sm font-medium text-slate-600">Semesters (course_semesters)</label>
                 <input
                   value={formData.semestersText}
                   onChange={(e) => setFormData((p) => ({ ...p, semestersText: e.target.value }))}
@@ -435,7 +438,7 @@ export default function CourseDetailTopSection({
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Details JSON (courses.details)</label>
+              <label className="text-sm font-medium text-slate-600">Details JSON (courses.details)</label>
               <textarea
                 value={formData.detailsJson}
                 onChange={(e) => setFormData((p) => ({ ...p, detailsJson: e.target.value }))}
@@ -446,11 +449,11 @@ export default function CourseDetailTopSection({
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-700">Study Plans (study_plans)</h3>
-                <button type="button" onClick={handleAddStudyPlan} className="text-xs font-bold uppercase tracking-wider text-brand-blue flex items-center gap-1">
+                <h3 className="text-sm font-medium text-slate-600">Study Plans (study_plans)</h3>
+                <Button type="button" variant="ghost" size="sm" onClick={handleAddStudyPlan} className="text-brand-blue">
                   <Plus className="w-3 h-3" />
                   Add Plan
-                </button>
+                </Button>
               </div>
 
               {editablePlans.length === 0 && (
@@ -468,32 +471,31 @@ export default function CourseDetailTopSection({
                     <input type="time" value={plan.endTime.slice(0, 5)} onChange={(e) => setEditablePlans((prev) => prev.map((p, i) => i === index ? { ...p, endTime: normalizeTime(e.target.value) } : p))} className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                     <input value={plan.type || ""} onChange={(e) => setEditablePlans((prev) => prev.map((p, i) => i === index ? { ...p, type: e.target.value } : p))} className="md:col-span-2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm" placeholder="Type" />
                   </div>
-                  <button type="button" onClick={() => handleRemoveStudyPlan(index)} className="text-xs font-bold uppercase tracking-wider text-red-500 inline-flex items-center gap-1">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => handleRemoveStudyPlan(index)} className="text-red-500 hover:text-red-600">
                     <X className="w-3 h-3" />
                     Remove Plan
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
 
             <div className="flex items-center gap-3 pt-2">
-              <button
+              <Button
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="btn-primary px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-2"
               >
                 {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
                 Save All
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={handleToggleEdit}
                 disabled={isSaving}
-                className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         )}

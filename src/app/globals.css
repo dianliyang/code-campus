@@ -55,23 +55,6 @@ button, a {
   cursor: pointer;
 }
 
-@utility btn-base {
-  font-size: 11px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  transition-property: all;
-  transition-duration: 300ms;
-  cursor: pointer;
-}
-
-@utility btn-primary {
-  @apply btn-base bg-brand-dark text-white rounded-md px-8 py-3.5 hover:bg-gray-800 active:scale-95;
-}
-
-@utility btn-secondary {
-  @apply btn-base border border-gray-200 text-gray-500 rounded-md px-8 py-3 hover:border-gray-900 hover:text-gray-900 active:scale-95;
-}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

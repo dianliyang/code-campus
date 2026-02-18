@@ -49,13 +49,6 @@ export default async function LoginPage({ searchParams }: PageProps) {
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white overflow-y-auto lg:overflow-hidden">
       {/* Left Side: Immersive Branding & Data Visualization */}
       <div className="hidden lg:flex flex-col justify-between bg-gray-950 p-16 relative overflow-hidden h-full">
-        {/* Background Decorative Element */}
-        <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none select-none">
-          <div className="text-[10rem] font-black italic tracking-tighter">
-            0xFC
-          </div>
-        </div>
-
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-3 w-fit">
             <Image
@@ -67,10 +60,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
               className="w-12 h-12 brightness-200"
             />
             <div className="flex flex-col -space-y-1.5">
-              <span className="text-2xl font-black tracking-tighter text-white uppercase">
+              <span className="text-2xl font-bold tracking-tight text-white">
                 CodeCampus
               </span>
-              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-[0.3em]">
+              <span className="text-xs font-medium text-brand-blue">
                 {dict.navbar.global_network}
               </span>
             </div>
@@ -85,7 +78,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
         </div>
 
         <div className="relative z-10 max-w-md">
-          <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-6 leading-none">
+          <h2 className="text-4xl font-bold text-white tracking-tight mb-6 leading-none">
             {dict.dashboard.login.title.split(" ")[0]} <br />{" "}
             {dict.dashboard.login.title.split(" ").slice(1).join(" ")}{" "}
             <span className="text-brand-blue">CS</span>.
@@ -96,7 +89,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
         </div>
 
         <div className="relative z-10">
-          <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.3em]">
+          <p className="text-sm text-slate-500">
             {dict.footer.copyright}
           </p>
         </div>

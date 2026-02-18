@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ApiResponse, ImportRequest } from "@/types";
 import { Loader2, LogIn, ArrowLeft, CloudUpload, FileCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ImportFormProps {
   dict: {
@@ -198,17 +199,18 @@ export default function ImportForm({ dict }: ImportFormProps) {
                 Clear File
               </button>
             )}
-            <button 
+            <Button
               onClick={handleGlobalExecute}
               disabled={loading || (!stagedBulkData && (!formData.university || !formData.courseCode || !formData.title))}
-              className="flex-grow md:flex-grow-0 btn-primary px-12 py-4 rounded-2xl shadow-2xl shadow-brand-blue/30 disabled:bg-gray-100 disabled:text-gray-300 disabled:shadow-none min-w-[200px]"
+              size="lg"
+              className="flex-grow md:flex-grow-0 min-w-[200px]"
             >
               {loading ? (
                 <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> {dict.submit_loading}</span>
               ) : (
                 <span className="flex items-center gap-2">{dict.submit_btn} <LogIn className="w-3 h-3" /></span>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

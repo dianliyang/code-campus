@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { WifiOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function OfflinePage() {
   return (
@@ -19,7 +20,7 @@ export default function OfflinePage() {
           <WifiOff className="w-8 h-8 text-gray-400" />
         </div>
 
-        <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-4">
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-4">
           You&apos;re Offline
         </h1>
 
@@ -27,12 +28,9 @@ export default function OfflinePage() {
           Please check your internet connection and try again.
         </p>
 
-        <button
-          onClick={() => window.location.reload()}
-          className="btn-primary px-8 py-3"
-        >
+        <Button onClick={() => window.location.reload()} size="lg">
           Try Again
-        </button>
+        </Button>
       </div>
     </div>
   );

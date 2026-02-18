@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { GraduationCap, Loader2, Check, Plus, EyeOff, Flame } from "lucide-react";
 import { toggleCourseEnrollmentAction, hideCourseAction } from "@/actions/courses";
 
@@ -88,18 +90,18 @@ export default function CourseCard({
             </Link>
           </h2>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{course.university}</span>
+            <span className="text-xs text-slate-400">{course.university}</span>
             <span className="w-0.5 h-0.5 bg-gray-200 rounded-full"></span>
-            <span className="text-[9px] font-mono text-gray-400">{course.courseCode}</span>
+            <span className="text-xs text-slate-400">{course.courseCode}</span>
           </div>
         </div>
 
         {/* 3. Tags (Desktop) */}
         <div className="w-[18%] flex-shrink-0 hidden md:flex flex-wrap gap-1">
           {course.fields?.slice(0, 2).map((f) => (
-            <span key={f} className="bg-gray-100 text-gray-500 text-[9px] font-bold px-1.5 py-0.5 rounded truncate max-w-full uppercase tracking-tighter">
+            <Badge key={f} variant="secondary" className="text-xs truncate max-w-full">
               {f}
-            </span>
+            </Badge>
           ))}
         </div>
 
@@ -113,18 +115,16 @@ export default function CourseCard({
 
         {/* 5. Actions */}
         <div className="w-20 flex-shrink-0 flex items-center justify-end gap-2 pr-2">
-          <button 
+          <Button
             onClick={handleEnroll}
             disabled={loading}
-            className={`h-7 px-2 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
-              isEnrolled 
-                ? 'bg-brand-green text-white shadow-sm' 
-                : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-900 hover:text-gray-900'
-            }`}
+            variant={isEnrolled ? "default" : "outline"}
+            size="xs"
+            className={isEnrolled ? 'bg-brand-green hover:bg-brand-green/90' : ''}
           >
             {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : isEnrolled ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
             <span className="hidden lg:inline">{isEnrolled ? (dict?.enrolled || "Added") : (dict?.enroll || "Join")}</span>
-          </button>
+          </Button>
           <button
             onClick={handleHide}
             disabled={loading}
@@ -146,22 +146,20 @@ export default function CourseCard({
           size={32} 
           className="flex-shrink-0 bg-white border border-gray-100 rounded-lg"
         />
-        <button 
+        <Button
           onClick={handleEnroll}
           disabled={loading}
-          className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${
-            isEnrolled 
-              ? 'bg-brand-green text-white' 
-              : 'bg-gray-100 text-gray-500 hover:bg-gray-900 hover:text-white'
-          }`}
+          variant={isEnrolled ? "default" : "outline"}
+          size="xs"
+          className={isEnrolled ? 'bg-brand-green hover:bg-brand-green/90' : ''}
         >
           {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : isEnrolled ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-        </button>
+        </Button>
       </div>
 
       <div className="mb-3">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-tighter">{course.university} • {course.courseCode}</span>
+          <span className="text-xs text-slate-400">{course.university} • {course.courseCode}</span>
         </div>
         <h2 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 min-h-[2.5em]">
           <Link href={detailHref} className="hover:text-brand-blue transition-colors">
@@ -172,9 +170,9 @@ export default function CourseCard({
 
       <div className="flex flex-wrap gap-1 mb-4">
         {course.fields?.slice(0, 2).map((f) => (
-          <span key={f} className="bg-gray-50 text-gray-500 text-[9px] font-bold px-1.5 py-0.5 rounded border border-gray-100 uppercase tracking-tighter">
+          <Badge key={f} variant="secondary" className="text-xs">
             {f}
-          </span>
+          </Badge>
         ))}
       </div>
 
@@ -182,12 +180,12 @@ export default function CourseCard({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
             <Flame className="w-3 h-3 text-orange-400" />
-            <span className="text-[10px] font-bold text-gray-600">{course.popularity}</span>
+            <span className="text-xs font-medium text-gray-600">{course.popularity}</span>
           </div>
           {course.level && (
             <div className="flex items-center gap-1 text-gray-400" title={course.level}>
               <GraduationCap className="w-3 h-3" />
-              <span className="text-[9px] font-medium truncate max-w-[80px]">{course.level}</span>
+              <span className="text-xs font-medium truncate max-w-[80px]">{course.level}</span>
             </div>
           )}
         </div>

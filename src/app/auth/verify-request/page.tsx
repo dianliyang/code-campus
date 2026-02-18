@@ -12,10 +12,6 @@ export default async function VerifyRequestPage() {
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white overflow-hidden">
       {/* Left Side: Immersive Branding & Globe */}
       <div className="hidden lg:flex flex-col justify-between bg-gray-950 p-16 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none select-none">
-          <div className="text-[10rem] font-black italic tracking-tighter">0xFC</div>
-        </div>
-
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-3 w-fit">
             <Image 
@@ -26,8 +22,8 @@ export default async function VerifyRequestPage() {
               className="w-12 h-12 brightness-200"
             />
             <div className="flex flex-col -space-y-1.5">
-              <span className="text-2xl font-black tracking-tighter text-white uppercase">CodeCampus</span>
-              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-[0.3em]">{dict.navbar.global_network}</span>
+              <span className="text-2xl font-bold tracking-tight text-white">CodeCampus</span>
+              <span className="text-xs font-medium text-brand-blue">{dict.navbar.global_network}</span>
             </div>
           </Link>
         </div>
@@ -40,7 +36,7 @@ export default async function VerifyRequestPage() {
         </div>
 
         <div className="relative z-10 max-w-md">
-           <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-6 leading-none">
+           <h2 className="text-4xl font-bold text-white tracking-tight mb-6 leading-none">
              {dict.dashboard.login.verify_title.split(' ')[0]} <br /> {dict.dashboard.login.verify_title.split(' ').slice(1).join(' ')}.
            </h2>
            <p className="text-gray-400 font-medium leading-relaxed">
@@ -49,7 +45,7 @@ export default async function VerifyRequestPage() {
         </div>
 
         <div className="relative z-10">
-           <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.3em]">
+           <p className="text-sm text-slate-500">
              {dict.footer.copyright}
            </p>
         </div>
@@ -70,15 +66,15 @@ export default async function VerifyRequestPage() {
           </div>
 
           <div className="mb-10">
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase mb-2">{dict.dashboard.login.check_email}</h1>
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">{dict.dashboard.login.check_email}</h1>
+            <p className="text-sm text-slate-500 leading-relaxed">
               {dict.dashboard.login.check_email_desc}
             </p>
           </div>
 
           <div className="space-y-6">
             <div className="p-6 bg-brand-blue/5 border border-brand-blue/10 rounded-xl">
-              <p className="text-xs font-bold text-brand-blue uppercase tracking-widest mb-2">{dict.dashboard.login.security_protocol}</p>
+              <p className="text-sm font-medium text-brand-blue mb-2">{dict.dashboard.login.security_protocol}</p>
               <p className="text-sm text-gray-600 leading-relaxed italic">
                 &quot;{dict.dashboard.login.spam_notice}&quot;
               </p>
@@ -86,14 +82,14 @@ export default async function VerifyRequestPage() {
 
             <Link 
               href="/login" 
-              className="inline-block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-brand-blue transition-colors"
+              className="inline-block text-sm font-medium text-gray-400 hover:text-brand-blue transition-colors"
             >
               ← {dict.dashboard.login.back_to_auth}
             </Link>
           </div>
 
           <div className="mt-12">
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed">
               {dict.dashboard.login.footer}
             </p>
           </div>

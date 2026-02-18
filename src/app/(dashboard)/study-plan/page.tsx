@@ -7,6 +7,7 @@ import StudyPlanHeader from "@/components/home/StudyPlanHeader";
 import SemesterFilter from "@/components/home/SemesterFilter";
 import StudyCalendar from "@/components/home/StudyCalendar";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
@@ -40,7 +41,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-gray-500 font-mono uppercase tracking-widest">{dict.dashboard.profile.user_not_found}</p>
-        <Link href="/login" className="mt-8 btn-primary">{dict.dashboard.login.title}</Link>
+        <Button asChild className="mt-8"><Link href="/login">{dict.dashboard.login.title}</Link></Button>
       </div>
     );
   }
@@ -338,9 +339,7 @@ async function StudyPlanContent({
             <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] max-w-[320px] leading-relaxed mb-12">
               {dict.dashboard.roadmap.empty_desc}
             </p>
-            <Link href="/courses" className="btn-primary">
-              {dict.dashboard.roadmap.empty_cta}
-            </Link>
+            <Button asChild><Link href="/courses">{dict.dashboard.roadmap.empty_cta}</Link></Button>
           </div>
         </div>
       )}

@@ -97,7 +97,7 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
           {/* Library Section */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+              <h3 className="text-xs font-medium text-slate-500">
                 {dict?.sidebar_library || "Personal Library"}
               </h3>
               <Link 
@@ -121,7 +121,7 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
                   {dict?.sidebar_enrolled || "Enrolled Only"}
                 </span>
               </div>
-              <span className={`text-[10px] font-black transition-colors ${showEnrolledOnly ? 'text-brand-blue' : 'text-gray-300'}`}>
+              <span className={`text-xs font-medium transition-colors ${showEnrolledOnly ? 'text-brand-blue' : 'text-gray-300'}`}>
                 {enrolledCount}
               </span>
             </label>
@@ -129,7 +129,7 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
 
           {/* Eras / Semesters Section */}
           <div>
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+            <h3 className="text-xs font-medium text-slate-500 mb-4">
               Eras / Semesters
             </h3>
             <div className="grid grid-cols-1 gap-2.5 max-h-48 overflow-y-auto custom-scroll pr-2">
@@ -151,7 +151,7 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
 
           {/* University Section */}
           <div>
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+            <h3 className="text-xs font-medium text-slate-500 mb-4">
               {dict?.sidebar_universities || "Universities"}
             </h3>
             <div className="grid grid-cols-1 gap-2.5 max-h-64 overflow-y-auto custom-scroll pr-2">
@@ -168,7 +168,7 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
                       {uni.name}
                     </span>
                   </div>
-                  <span className={`text-[10px] font-black transition-colors ${selectedUniversities.includes(uni.name) ? 'text-brand-blue' : 'text-gray-300'}`}>
+                  <span className={`text-xs font-medium transition-colors ${selectedUniversities.includes(uni.name) ? 'text-brand-blue' : 'text-gray-300'}`}>
                     {uni.count}
                   </span>
                 </label>
@@ -178,7 +178,7 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
 
           {/* Focus Area Section */}
           <div>
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+            <h3 className="text-xs font-medium text-slate-500 mb-4">
               {dict?.sidebar_fields || "Focus Area"}
             </h3>
             <div className="grid grid-cols-1 gap-2.5">
@@ -195,7 +195,7 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
                       {field.name}
                     </span>
                   </div>
-                  <span className={`text-[10px] font-black transition-colors ${selectedFields.includes(field.name) ? 'text-brand-blue' : 'text-gray-300'}`}>
+                  <span className={`text-xs font-medium transition-colors ${selectedFields.includes(field.name) ? 'text-brand-blue' : 'text-gray-300'}`}>
                     {field.count}
                   </span>
                 </label>

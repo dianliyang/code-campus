@@ -145,7 +145,7 @@ export default function CourseList({
 
       <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "bg-white border border-gray-200 rounded-xl overflow-hidden"}>
         {viewMode === "list" && courses && courses.length > 0 && (
-          <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-gray-50/50 border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-500 select-none">
+          <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-gray-50/50 border-b border-gray-200 text-xs font-medium text-slate-500 select-none">
              <div className="w-[40px] flex-shrink-0 text-center"></div>
              <div className="flex-grow min-w-0">Course</div>
              <div className="w-[18%] flex-shrink-0">Tags</div>
@@ -172,21 +172,14 @@ export default function CourseList({
         ))}
         {courses?.length === 0 && (
           <div className="text-center py-32 bg-white rounded-2xl border border-gray-100 relative overflow-hidden group">
-            {/* Background Watermark */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] select-none pointer-events-none transition-transform duration-1000 group-hover:scale-110">
-              <span className="text-[12rem] font-black uppercase tracking-tighter">
-                {dict?.empty_title || "NULL"}
-              </span>
-            </div>
-            
             <div className="relative z-10 flex flex-col items-center">
               <div className="w-12 h-12 rounded-full border border-gray-100 flex items-center justify-center mb-6 bg-gray-50/50">
                 <Radio className="w-4 h-4 text-gray-300 animate-spin" style={{ animationDuration: '3s' }} />
               </div>
-              <h3 className="text-xs font-black text-gray-900 uppercase tracking-[0.4em] mb-2">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">
                 {dict?.empty_header || "Zero Matches Found"}
               </h3>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest max-w-[280px] leading-relaxed">
+              <p className="text-sm text-slate-400 max-w-[280px] leading-relaxed">
                 {dict?.empty_desc || "Adjust your frequency filters or expand the topic spectrum to initialize new results."}
               </p>
               <div className="mt-8 h-px w-12 bg-gray-100"></div>
@@ -199,7 +192,7 @@ export default function CourseList({
       <div ref={observerTarget} className="md:hidden py-10 flex justify-center">
         {isLoading && <Loader2 className="w-6 h-6 text-brand-blue animate-spin" />}
         {!isLoading && page >= totalPages && courses.length > 0 && (
-          <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">End of catalog</span>
+          <span className="text-xs text-slate-400">End of catalog</span>
         )}
       </div>
 

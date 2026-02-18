@@ -3,6 +3,7 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -12,11 +13,13 @@ export default async function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="p-10 text-center font-mono">
+      <div className="p-10 text-center">
         <p>{dict.dashboard.profile.user_not_found}</p>
-        <Link href="/login" className="mt-6 inline-block btn-primary">
-          {dict.dashboard.login.title}
-        </Link>
+        <Button asChild className="mt-6">
+          <Link href="/login">
+            {dict.dashboard.login.title}
+          </Link>
+        </Button>
       </div>
     );
   }

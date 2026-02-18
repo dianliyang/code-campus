@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
 import { Send, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface LoginFormProps {
   onMagicLink: (formData: FormData) => Promise<{ success?: boolean; error?: string } | void>;
@@ -57,7 +58,7 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
           </p>
           
           <div className="mt-8 pt-6 border-t border-gray-200">
-             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{dict?.security_protocol || "Security Protocol"}</p>
+             <p className="text-xs font-medium text-slate-500 mb-1">{dict?.security_protocol || "Security Protocol"}</p>
              <p className="text-xs text-gray-500 italic">
                {dict?.spam_notice || "If you don't see the email, please check your spam folder."}
              </p>
@@ -80,7 +81,7 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
   return (
     <div className="w-full">
       <div className="mb-10 text-center lg:text-left">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic mb-2">{dict?.title || "Sign In"}</h1>
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">{dict?.title || "Sign In"}</h1>
         <p className="text-sm font-medium text-gray-500">{dict?.subtitle || "Connect to the CodeCampus node"}</p>
       </div>
 
@@ -88,7 +89,7 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
         <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-start gap-3">
           <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-xs font-bold text-red-600 uppercase tracking-widest mb-1">{dict?.error_title || "Authentication Failure"}</p>
+            <p className="text-sm font-semibold text-red-600 mb-1">{dict?.error_title || "Authentication Failure"}</p>
             <p className="text-xs text-red-700 font-medium leading-relaxed">
               {error === "OAuthAccountNotLinked"
                 ? (dict?.error_oauth || "This email is linked to another provider.")
@@ -106,7 +107,7 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
-          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+          <label className="block text-sm font-medium text-slate-600 ml-1">
             {dict?.email_label || "Email Address"}
           </label>
           <input
@@ -114,22 +115,23 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
             name="email"
             placeholder="name@example.com"
             defaultValue={searchParams.get("email") || ""}
-            className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-gray-900 focus:ring-0 outline-none transition-all font-mono"
+            className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-gray-900 focus:ring-0 outline-none transition-all"
             required
           />
         </div>
         
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-gray-900 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center h-12"
+          className="w-full"
+          size="lg"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (dict?.submit_send || "Send Magic Link")}
-        </button>
+        </Button>
       </form>
 
       <div className="mt-12 text-center">
-        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+        <p className="text-xs text-slate-400 leading-relaxed">
           {dict?.footer || "Secure access via Supabase Auth"}
         </p>
       </div>

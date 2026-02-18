@@ -26,12 +26,7 @@ export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
                   className="object-contain"
                 />
               </div>
-              <div className="flex flex-col -space-y-1">
-                <span className="text-sm lg:text-base font-black tracking-tighter text-gray-900 uppercase leading-none">CodeCampus</span>
-                <span className="hidden sm:block text-[7px] font-black text-brand-blue uppercase tracking-[0.2em] opacity-80 group-hover:opacity-100 transition-opacity">
-                  {dict?.global_network || "Beta Catalog"}
-                </span>
-              </div>
+              <span className="text-sm lg:text-base font-bold tracking-tight text-gray-900 leading-none">CodeCampus</span>
             </Link>
           </div>
 
@@ -42,12 +37,11 @@ export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
             <div className="flex items-center pl-6 border-l border-slate-100 h-8">
               <Link href="/profile" className="flex items-center gap-3 group">
                 <div className="flex flex-col items-end -space-y-0.5">
-                  <span className="text-[10px] font-bold text-slate-900 uppercase tracking-tight">
+                  <span className="text-sm font-medium text-slate-900">
                     {user?.user_metadata?.full_name || user?.email?.split('@')[0] || dict?.guest_user || "Guest User"}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <div className="w-1 h-1 bg-brand-green rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
-                    <span className="text-[8px] font-black text-brand-green uppercase tracking-[0.2em]">{dict?.status_active || "Active"}</span>
                   </div>
                 </div>
                 <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white border border-slate-800 shadow-md group-hover:bg-brand-blue group-hover:border-brand-blue transition-all duration-300">

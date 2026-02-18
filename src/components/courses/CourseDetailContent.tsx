@@ -6,6 +6,7 @@ import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
 import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, type SchedulePlanPreview } from "@/actions/courses";
 import { Check, Clock, ExternalLink, Globe, Info, Loader2, Users, WandSparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CourseDetailContentProps {
   course: Course;
@@ -137,10 +138,10 @@ export default function CourseDetailContent({
 
                     {planPreview && (
                       <div className="mt-6 rounded-xl border border-brand-blue/20 bg-brand-blue/5 p-4 space-y-4">
-                        <p className="text-xs font-bold uppercase tracking-wider text-brand-blue">Study Plan Preview</p>
+                        <p className="text-sm font-medium text-brand-blue">Study Plan Preview</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Original Schedule</p>
+                            <p className="text-sm font-medium text-gray-500">Original Schedule</p>
                             <ul className="space-y-1 text-sm text-gray-700">
                               {planPreview.originalSchedule.map((item, idx) => (
                                 <li key={`${item.type}-${idx}`}>
@@ -150,7 +151,7 @@ export default function CourseDetailContent({
                             </ul>
                           </div>
                           <div className="space-y-2">
-                            <p className="text-xs font-bold uppercase tracking-wider text-gray-500">AI Generated Plans</p>
+                            <p className="text-sm font-medium text-gray-500">AI Generated Plans</p>
                             <ul className="space-y-2">
                               {planPreview.generatedPlans.map((plan, idx) => {
                                 const id = String(idx);
@@ -189,24 +190,25 @@ export default function CourseDetailContent({
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <button
+                          <Button
                             type="button"
                             onClick={handleConfirmPlans}
                             disabled={isConfirmingPlans || selectedPlanIds.length === 0}
-                            className="btn-primary px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider disabled:opacity-50 inline-flex items-center gap-2"
+                            size="sm"
                           >
                             {isConfirmingPlans ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                             Confirm
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="ghost"
                             onClick={handleDiscardPlans}
                             disabled={isConfirmingPlans}
-                            className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+                            size="sm"
                           >
                             <X className="w-3 h-3" />
                             Discard
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     )}

@@ -1,6 +1,7 @@
 import { getUser, createClient } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
+import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function ProfilePage() {
       : Promise.resolve({ data: null }),
   ]);
 
-  if (!user) return <div className="p-10 text-center font-mono">{dict.dashboard.profile.user_not_found}</div>;
+  if (!user) return <div className="p-10 text-center">{dict.dashboard.profile.user_not_found}</div>;
 
   const email = user.email;
   const name = user.user_metadata?.full_name || email?.split('@')[0] || "User";
@@ -80,31 +81,31 @@ export default async function ProfilePage() {
 
           <div className="flex-grow space-y-4">
             <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
-              <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter uppercase italic">{name}</h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">{name}</h1>
               <div className="flex gap-2">
-                <span className="bg-gray-900 text-white text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] px-3 md:px-4 py-1 md:py-1.5 rounded-full">
+                <Badge>
                   LVL_{Math.floor(completedCount / 2) + 1}
-                </span>
-                <span className="bg-brand-blue/10 text-brand-blue text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] px-3 md:px-4 py-1 md:py-1.5 rounded-full border border-brand-blue/20">
+                </Badge>
+                <Badge variant="secondary">
                   {dict.dashboard.profile.user_level.toUpperCase()}
-                </span>
+                </Badge>
               </div>
             </div>
             
             <div className="flex flex-wrap items-center gap-x-6 md:gap-x-8 gap-y-2 md:gap-y-3">
               <div className="flex items-center gap-1.5 md:gap-2">
-                <span className="text-[8px] md:text-[10px] font-black text-gray-300 uppercase tracking-widest">EMAIL_ADDR:</span>
+                <span className="text-xs font-medium text-slate-400">Email</span>
                 <span className="text-xs md:text-sm font-bold text-gray-500 tracking-tight">{email}</span>
               </div>
               <div className="flex items-center gap-1.5 md:gap-2">
-                <span className="text-[8px] md:text-[10px] font-black text-gray-300 uppercase tracking-widest">LAST_LOG:</span>
+                <span className="text-xs font-medium text-slate-400">Last active</span>
                 <span className="text-xs md:text-sm font-bold text-gray-500 tracking-tight">
-                  {lastActiveDate ? lastActiveDate.toLocaleDateString(lang, { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : "NULL"}
+                  {lastActiveDate ? lastActiveDate.toLocaleDateString(lang, { month: 'short', day: 'numeric', year: 'numeric' }) : "NULL"}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 md:gap-2">
-                <span className="text-[8px] md:text-[10px] font-black text-gray-300 uppercase tracking-widest">NODE_COUNT:</span>
-                <span className="text-xs md:text-sm font-bold text-gray-500 tracking-tight">{universityCount} INST.</span>
+                <span className="text-xs font-medium text-slate-400">Universities</span>
+                <span className="text-xs md:text-sm font-bold text-gray-500 tracking-tight">{universityCount}</span>
               </div>
             </div>
           </div>
@@ -113,40 +114,36 @@ export default async function ProfilePage() {
         {/* Stats Grid - High Contrast */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-100 border-b border-gray-100">
           <div className="bg-white py-8 md:py-12 pr-4 md:pr-8 flex flex-col">
-            <span className="text-[8px] md:text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] md:tracking-[0.3em] mb-4 md:mb-6">01_CURRICULUM_DEPTH</span>
+            <span className="text-xs font-medium text-slate-400 mb-4 md:mb-6">Courses Enrolled</span>
             <div className="flex items-baseline gap-1 md:gap-2">
-              <span className="text-4xl md:text-6xl font-black text-gray-900 tracking-tighter leading-none">{totalCourses}</span>
-              <span className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest italic">{dict.dashboard.profile.stat_depth_unit}</span>
+              <span className="text-4xl md:text-6xl font-bold text-gray-900 tracking-tight leading-none">{totalCourses}</span>
+              <span className="text-xs text-slate-400">{dict.dashboard.profile.stat_depth_unit}</span>
             </div>
-            <p className="hidden sm:block text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-6 leading-relaxed opacity-60">SYSTEM_CAPACITY_LOADED</p>
           </div>
 
           <div className="bg-white py-8 md:py-12 px-4 md:px-8 flex flex-col border-l border-gray-50">
-            <span className="text-[8px] md:text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] md:tracking-[0.3em] mb-4 md:mb-6">02_MASTERY_INDEX</span>
+            <span className="text-xs font-medium text-slate-400 mb-4 md:mb-6">Completed</span>
             <div className="flex items-baseline gap-1 md:gap-2">
-              <span className="text-4xl md:text-6xl font-black text-brand-green tracking-tighter leading-none">{completedCount}</span>
-              <span className="text-[10px] md:text-xs font-black text-brand-green/40 uppercase tracking-widest italic">{dict.dashboard.profile.stat_mastery_unit}</span>
+              <span className="text-4xl md:text-6xl font-bold text-brand-green tracking-tight leading-none">{completedCount}</span>
+              <span className="text-xs text-slate-400">{dict.dashboard.profile.stat_mastery_unit}</span>
             </div>
-            <p className="hidden sm:block text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-6 leading-relaxed opacity-60">CERTIFIED_KNOWLEDGE_NODES</p>
           </div>
 
           <div className="bg-white py-8 md:py-12 px-4 md:px-8 flex flex-col border-l border-gray-50">
-            <span className="text-[8px] md:text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] md:tracking-[0.3em] mb-4 md:mb-6">03_PRIMARY_FOCUS</span>
+            <span className="text-xs font-medium text-slate-400 mb-4 md:mb-6">Top Field</span>
             <div className="flex flex-col">
-              <h3 className="text-lg md:text-2xl font-black text-gray-900 tracking-tighter uppercase italic leading-none truncate mb-1 md:mb-2">
+              <h3 className="text-lg md:text-2xl font-bold text-gray-900 tracking-tight leading-none truncate mb-1 md:mb-2">
                 {topField}
               </h3>
-              <p className="hidden sm:block text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed opacity-60">COGNITIVE_VECTOR</p>
             </div>
           </div>
 
           <div className="bg-white py-8 md:py-12 pl-4 md:pl-8 flex flex-col border-l border-gray-50">
-            <span className="text-[8px] md:text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] md:tracking-[0.3em] mb-4 md:mb-6">04_NETWORK_DENSITY</span>
+            <span className="text-xs font-medium text-slate-400 mb-4 md:mb-6">Network Coverage</span>
             <div className="flex items-baseline gap-1 md:gap-2">
-              <span className="text-4xl md:text-6xl font-black text-brand-blue tracking-tighter leading-none">{universityCount > 0 ? Math.round((universityCount / 4) * 100) : 0}</span>
-              <span className="text-lg md:text-xl font-black text-brand-blue/30 italic">%</span>
+              <span className="text-4xl md:text-6xl font-bold text-brand-blue tracking-tight leading-none">{universityCount > 0 ? Math.round((universityCount / 4) * 100) : 0}</span>
+              <span className="text-lg md:text-xl text-brand-blue/30">%</span>
             </div>
-            <p className="hidden sm:block text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-6 leading-relaxed opacity-60">INTER_INST_DENSITY</p>
           </div>
         </div>
 
@@ -154,14 +151,8 @@ export default async function ProfilePage() {
         <div className="py-24">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16">
             <div className="space-y-1">
-              <h2 className="text-[10px] font-black text-brand-blue uppercase tracking-[0.4em]">{dict.dashboard.profile.neural_map}</h2>
-              <h3 className="text-4xl font-black text-gray-900 tracking-tighter uppercase italic leading-none">{dict.dashboard.profile.fingerprint}</h3>
-            </div>
-            <div className="flex items-center gap-4 bg-gray-50 px-5 py-3 rounded-none border border-gray-100">
-              <div className="flex flex-col">
-                <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1">DATA_STREAM_AUTH</span>
-                <span className="text-[10px] font-black text-gray-900 font-mono tracking-wider">0x{user.id.substring(0, 12).toUpperCase()}</span>
-              </div>
+              <Badge variant="secondary" className="text-brand-blue">{dict.dashboard.profile.neural_map}</Badge>
+              <h3 className="text-4xl font-bold text-gray-900 tracking-tight leading-none">{dict.dashboard.profile.fingerprint}</h3>
             </div>
           </div>
 
@@ -209,11 +200,11 @@ export default async function ProfilePage() {
                     <div>
                       <div className="flex items-center gap-2 mb-2 md:mb-4">
                         <div className={`w-2 h-2 md:w-1.5 md:h-1.5 rounded-full ${fieldColors[i % fieldColors.length]}`}></div>
-                        <span className="text-[9px] md:text-[10px] font-black text-gray-900 uppercase tracking-wider md:tracking-widest truncate">{f.name}</span>
+                        <span className="text-xs font-medium text-gray-900 truncate">{f.name}</span>
                       </div>
                       <div className="flex items-baseline gap-1 md:gap-2">
-                        <span className="text-3xl md:text-5xl font-black text-gray-900 tracking-tighter group-hover:text-brand-blue transition-colors leading-none">{f.count}</span>
-                        <span className="text-[8px] md:text-[10px] font-bold text-gray-300 uppercase tracking-wider md:tracking-widest">{dict.dashboard.profile.units}</span>
+                        <span className="text-3xl md:text-5xl font-bold text-gray-900 tracking-tight group-hover:text-brand-blue transition-colors leading-none">{f.count}</span>
+                        <span className="text-xs font-medium text-slate-400">{dict.dashboard.profile.units}</span>
                       </div>
                     </div>
                     <div className="mt-3 md:mt-6">
@@ -229,7 +220,7 @@ export default async function ProfilePage() {
             </div>
           ) : (
             <div className="h-32 md:h-40 bg-gray-50 rounded-2xl md:rounded-3xl flex items-center justify-center border border-dashed border-gray-200">
-              <p className="text-[10px] md:text-xs font-black text-gray-300 uppercase tracking-[0.2em] md:tracking-[0.3em]">{dict.dashboard.profile.no_data}</p>
+              <p className="text-sm text-slate-400">{dict.dashboard.profile.no_data}</p>
             </div>
           )}
         </div>

@@ -5,6 +5,7 @@ import { Course } from "@/types";
 import { updateCourse, deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Check, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EditCourseModalProps {
   course: Course;
@@ -230,13 +231,13 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
               >
                 Cancel
               </button>
-              <button
+              <Button
                 type="submit"
                 disabled={loading || isDeleting}
-                className="btn-primary px-6 py-2 rounded-lg flex items-center gap-2 text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                size="sm"
               >
                 {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Check className="w-3 h-3" /> Save</>}
-              </button>
+              </Button>
             </div>
           </div>
         </form>

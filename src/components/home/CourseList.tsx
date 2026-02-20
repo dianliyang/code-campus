@@ -7,9 +7,9 @@ import CourseCard from "./CourseCard";
 import CourseListHeader from "./CourseListHeader";
 import Pagination from "./Pagination";
 import Toast from "../common/Toast";
-import { Loader2 } from "lucide-react";
-import { fetchCoursesAction } from "@/actions/courses";
-import { useSearchParams } from "next/navigation";
+import { Check, Loader2, Trash2, WandSparkles } from "lucide-react";
+import { clearTopicsForCoursesAction, fetchCoursesAction, generateTopicsForCoursesAction } from "@/actions/courses";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface CourseListProps {
   initialCourses: Course[];
@@ -30,14 +30,19 @@ export default function CourseList({
   initialEnrolledIds,
   dict,
 }: CourseListProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [enrolledIds, setEnrolledIds] = useState<number[]>(initialEnrolledIds);
   const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [page, setPage] = useState(currentPage);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingTopics, setIsGeneratingTopics] = useState(false);
+  const [isClearingTopics, setIsClearingTopics] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
 
   useEffect(() => {
     const savedMode = localStorage.getItem("courseViewMode");
@@ -49,7 +54,18 @@ export default function CourseList({
   useEffect(() => {
     setCourses(initialCourses);
     setPage(currentPage);
+    setSelectedCourseIds([]);
   }, [initialCourses, currentPage]);
+
+  const visibleCourseIds = courses.map((course) => course.id);
+  const selectedVisibleCount = visibleCourseIds.filter((id) => selectedCourseIds.includes(id)).length;
+  const allVisibleSelected = visibleCourseIds.length > 0 && selectedVisibleCount === visibleCourseIds.length;
+  const hasPartialSelection = selectedVisibleCount > 0 && !allVisibleSelected;
+
+  useEffect(() => {
+    if (!selectAllRef.current) return;
+    selectAllRef.current.indeterminate = hasPartialSelection;
+  }, [hasPartialSelection]);
 
   const handleViewModeChange = (mode: "list" | "grid") => {
     setViewMode(mode);
@@ -64,7 +80,68 @@ export default function CourseList({
 
   const handleHide = (courseId: number) => {
     setCourses((prev) => prev.filter((c) => c.id !== courseId));
+    setSelectedCourseIds((prev) => prev.filter((id) => id !== courseId));
     setToast({ message: "Course hidden successfully", type: "success" });
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedCourseIds(visibleCourseIds);
+      return;
+    }
+    setSelectedCourseIds([]);
+  };
+
+  const toggleSelectOne = (courseId: number, checked: boolean) => {
+    setSelectedCourseIds((prev) => {
+      if (checked) {
+        return prev.includes(courseId) ? prev : [...prev, courseId];
+      }
+      return prev.filter((id) => id !== courseId);
+    });
+  };
+
+  const handleGenerateTopicsForSelected = async () => {
+    if (selectedCourseIds.length < 2 || isGeneratingTopics) return;
+    setIsGeneratingTopics(true);
+    try {
+      const result = await generateTopicsForCoursesAction(selectedCourseIds);
+      setToast({
+        type: result.failed > 0 ? "error" : "success",
+        message:
+          result.failed > 0
+            ? `Topics generated for ${result.updated} course(s), ${result.failed} failed.`
+            : `Topics generated for ${result.updated} course(s).`,
+      });
+      router.refresh();
+    } catch (error) {
+      setToast({
+        type: "error",
+        message: error instanceof Error ? error.message : "Failed to generate topics.",
+      });
+    } finally {
+      setIsGeneratingTopics(false);
+    }
+  };
+
+  const handleClearTopicsForSelected = async () => {
+    if (selectedCourseIds.length < 1 || isClearingTopics) return;
+    setIsClearingTopics(true);
+    try {
+      const result = await clearTopicsForCoursesAction(selectedCourseIds);
+      setToast({
+        type: "success",
+        message: `Cleared topics for ${result.cleared} course(s).`,
+      });
+      router.refresh();
+    } catch (error) {
+      setToast({
+        type: "error",
+        message: error instanceof Error ? error.message : "Failed to clear topics.",
+      });
+    } finally {
+      setIsClearingTopics(false);
+    }
   };
 
   const loadMore = useCallback(async () => {
@@ -135,12 +212,65 @@ export default function CourseList({
 
       <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden ${viewMode === "grid" ? "p-3" : ""}`}>
         <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${viewMode === "grid" ? "!hidden" : ""}`}>
+          <div className="w-4">
+            <label className="relative inline-flex h-4 w-4 cursor-pointer items-center justify-center">
+              <input
+                ref={selectAllRef}
+                type="checkbox"
+                checked={allVisibleSelected}
+                onChange={(event) => toggleSelectAll(event.target.checked)}
+                aria-label="Select all courses"
+                className="peer sr-only"
+              />
+              <span className="h-4 w-4 rounded-[4px] border border-[#cfcfcf] bg-white transition-colors peer-checked:border-[#2f2f2f] peer-checked:bg-[#2f2f2f]" />
+              {allVisibleSelected ? (
+                <Check className="pointer-events-none absolute h-3 w-3 text-white" />
+              ) : hasPartialSelection ? (
+                <span className="pointer-events-none absolute h-0.5 w-2 rounded-full bg-[#2f2f2f]" />
+              ) : null}
+            </label>
+          </div>
           <div className="flex-1 min-w-0">Course</div>
-          <div className="w-[12%]">Status</div>
-          <div className="w-[10%]">Credit</div>
-          <div className="w-[12%]">Semester</div>
-          <div className="w-[10%]">Interest</div>
-          <div className="w-[6%] text-right pr-1">Action</div>
+          <div className="w-[18%] flex items-center gap-1.5">
+            <span>Topics</span>
+            {selectedCourseIds.length >= 2 ? (
+              <button
+                type="button"
+                onClick={handleGenerateTopicsForSelected}
+                disabled={isGeneratingTopics}
+                className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
+                title="Generate topics for selected courses"
+                aria-label="Generate topics for selected courses"
+              >
+                {isGeneratingTopics ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <WandSparkles className="h-3 w-3" />
+                )}
+              </button>
+            ) : null}
+            {selectedCourseIds.length >= 1 ? (
+              <button
+                type="button"
+                onClick={handleClearTopicsForSelected}
+                disabled={isClearingTopics}
+                className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
+                title="Clear topics for selected courses"
+                aria-label="Clear topics for selected courses"
+              >
+                {isClearingTopics ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3 w-3" />
+                )}
+              </button>
+            ) : null}
+          </div>
+          <div className="w-[10%]">Status</div>
+          <div className="w-[8%]">Credit</div>
+          <div className="w-[10%]">Semester</div>
+          <div className="w-[8%]">Interest</div>
+          <div className="w-[5%] text-right pr-1">Action</div>
         </div>
 
         <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>
@@ -154,6 +284,8 @@ export default function CourseList({
               dict={dict}
               viewMode={viewMode}
               rowIndex={idx}
+              isSelected={selectedCourseIds.includes(course.id)}
+              onSelectChange={toggleSelectOne}
             />
           ))}
         </div>

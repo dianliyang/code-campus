@@ -26,6 +26,7 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
           initialWebSearchEnabled={(profile?.ai_web_search_enabled as boolean | undefined) ?? false}
           initialPromptTemplate={(profile?.ai_prompt_template as string) || ""}
           initialStudyPlanPromptTemplate={(profile?.ai_study_plan_prompt_template as string) || ""}
+          initialTopicsPromptTemplate={(profile?.ai_topics_prompt_template as string) || ""}
         />
       </section>
 

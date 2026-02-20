@@ -4,7 +4,7 @@ import { createAdminClient, getUser, createClient, mapCourseFromRow } from "@/li
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
-import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT } from "@/lib/ai/prompts";
+import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
 import { Course } from "@/types";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
@@ -1130,6 +1130,242 @@ export async function regenerateCourseDescription(courseId: number) {
     throw new Error("AI returned an empty description");
   }
   return text;
+}
+
+function normalizeAiTopics(rawText: string): string[] {
+  const text = rawText.trim();
+  if (!text) return [];
+
+  const cleaned = text
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  let candidates: string[] = [];
+  try {
+    const parsed = JSON.parse(cleaned) as unknown;
+    if (Array.isArray(parsed)) {
+      candidates = parsed.map((item) => String(item || ""));
+    }
+  } catch {
+    candidates = cleaned
+      .split(/[\n,;|]/g)
+      .map((part) => part.trim());
+  }
+
+  const seen = new Set<string>();
+  const normalized = candidates
+    .map((topic) => topic.replace(/^[-*]\s*/, "").trim())
+    .filter((topic) => topic.length > 1 && topic.length <= 48)
+    .map((topic) => topic.replace(/\s+/g, " "))
+    .filter((topic) => {
+      const key = topic.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+  return normalized.slice(0, 6);
+}
+
+export async function generateTopicsForCoursesAction(courseIds: number[]) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const uniqueCourseIds = Array.from(new Set((courseIds || []).filter((id) => Number.isFinite(id))));
+  if (uniqueCourseIds.length < 1) {
+    return { updated: 0, failed: 0 };
+  }
+
+  const { success: withinLimit } = rateLimit(`ai:course-topics:${user.id}`, 3, 60_000);
+  if (!withinLimit) {
+    throw new Error("Rate limit exceeded. Please try again shortly.");
+  }
+
+  const supabase = createAdminClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_topics_prompt_template")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
+  const selectedModel = (profile?.ai_default_model || "sonar").trim();
+  const model = provider === "gemini"
+    ? (GEMINI_MODEL_SET.has(selectedModel) ? selectedModel : "gemini-2.0-flash")
+    : (PERPLEXITY_MODEL_SET.has(selectedModel) ? selectedModel : "sonar");
+  const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
+  const topicsTemplate = (profile?.ai_topics_prompt_template || "").trim() || DEFAULT_TOPICS_PROMPT;
+
+  const { data: rows, error: rowsError } = await supabase
+    .from("courses")
+    .select("id, title, fields:course_fields(fields(name))")
+    .in("id", uniqueCourseIds);
+
+  if (rowsError) {
+    console.error("Failed to fetch courses for topic generation:", rowsError);
+    throw new Error("Failed to fetch courses");
+  }
+
+  const aiGenerate = async (prompt: string) => {
+    const response = provider === "gemini"
+      ? await (async () => {
+          if (!process.env.GEMINI_API_KEY) {
+            throw new Error("AI service is not configured. Please set GEMINI_API_KEY.");
+          }
+          return fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                system_instruction: {
+                  parts: [{ text: "You are a precise university catalog classifier." }],
+                },
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.2, maxOutputTokens: 220 },
+                tools: webSearchEnabled ? [{ google_search: {} }] : undefined,
+              }),
+            },
+          );
+        })()
+      : await (async () => {
+          if (!process.env.PERPLEXITY_API_KEY) {
+            throw new Error("AI service is not configured. Please set PERPLEXITY_API_KEY.");
+          }
+          return fetch("https://api.perplexity.ai/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: "system", content: "You are a precise university catalog classifier." },
+                { role: "user", content: prompt },
+              ],
+              temperature: 0.2,
+              max_tokens: 220,
+              return_images: false,
+              return_related_questions: false,
+              disable_search: !webSearchEnabled,
+              stream_mode: "concise",
+            }),
+          });
+        })();
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`AI generation failed (${response.status}): ${body || "No response body"}`);
+    }
+
+    const parsedJson = (await response.json()) as
+      | { choices?: Array<{ message?: { content?: string } }> }
+      | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+
+    const rawText = provider === "gemini"
+      ? (
+          (parsedJson as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> })
+            .candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("\n")
+            .trim() || ""
+        )
+      : (
+          (parsedJson as { choices?: Array<{ message?: { content?: string } }> })
+            .choices?.[0]?.message?.content?.trim() || ""
+        );
+
+    return rawText.trim();
+  };
+
+  let updated = 0;
+  let failed = 0;
+
+  for (const row of rows || []) {
+    try {
+      const prompt = applyPromptTemplate(topicsTemplate, {
+        title: row.title || "",
+        course_name: row.title || "",
+        existing_topics: (
+          (row.fields as Array<{ fields: { name: string } | null }>)
+            ?.map((entry) => entry.fields?.name || "")
+            .filter((name) => name.length > 0)
+            .join(", ") || "none"
+        ),
+      });
+
+      const output = await aiGenerate(prompt);
+      const topics = normalizeAiTopics(output);
+      if (!topics.length) {
+        failed += 1;
+        continue;
+      }
+
+      const { error: fieldUpsertError } = await supabase
+        .from("fields")
+        .upsert(topics.map((name) => ({ name })), { onConflict: "name", ignoreDuplicates: true });
+      if (fieldUpsertError) {
+        throw fieldUpsertError;
+      }
+
+      const { data: fieldRows, error: fieldFetchError } = await supabase
+        .from("fields")
+        .select("id, name")
+        .in("name", topics);
+      if (fieldFetchError) {
+        throw fieldFetchError;
+      }
+
+      const { error: clearError } = await supabase
+        .from("course_fields")
+        .delete()
+        .eq("course_id", row.id);
+      if (clearError) {
+        throw clearError;
+      }
+
+      if ((fieldRows || []).length > 0) {
+        const { error: linkError } = await supabase
+          .from("course_fields")
+          .insert((fieldRows || []).map((field) => ({ course_id: row.id, field_id: field.id })));
+        if (linkError) {
+          throw linkError;
+        }
+      }
+
+      updated += 1;
+    } catch (error) {
+      failed += 1;
+      console.error(`Failed to generate topics for course ${row.id}:`, error);
+    }
+  }
+
+  revalidatePath("/courses");
+  return { updated, failed };
+}
+
+export async function clearTopicsForCoursesAction(courseIds: number[]) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const uniqueCourseIds = Array.from(new Set((courseIds || []).filter((id) => Number.isFinite(id))));
+  if (uniqueCourseIds.length < 1) {
+    return { cleared: 0 };
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("course_fields")
+    .delete()
+    .in("course_id", uniqueCourseIds);
+
+  if (error) {
+    console.error("Failed to clear topics:", error);
+    throw new Error("Failed to clear topics");
+  }
+
+  revalidatePath("/courses");
+  return { cleared: uniqueCourseIds.length };
 }
 
 export async function hideCourseAction(courseId: number) {

@@ -77,6 +77,7 @@ export async function updateAiPreferences(input: {
 export async function updateAiPromptTemplates(input: {
   descriptionPromptTemplate?: string;
   studyPlanPromptTemplate?: string;
+  topicsPromptTemplate?: string;
 }) {
   const user = await getUser();
   if (!user) {
@@ -99,6 +100,14 @@ export async function updateAiPromptTemplates(input: {
       throw new Error("Study plan prompt template is too long");
     }
     updatePayload.ai_study_plan_prompt_template = value || null;
+  }
+
+  if (typeof input.topicsPromptTemplate === "string") {
+    const value = input.topicsPromptTemplate.trim();
+    if (value.length > 6000) {
+      throw new Error("Topics prompt template is too long");
+    }
+    updatePayload.ai_topics_prompt_template = value || null;
   }
 
   if (Object.keys(updatePayload).length === 0) {
@@ -128,6 +137,9 @@ export async function updateAiPromptTemplates(input: {
     }
     if (error.code === "PGRST204" && error.message?.includes("'ai_study_plan_prompt_template'")) {
       throw new Error("Database column `profiles.ai_study_plan_prompt_template` is missing. Please run the study plan prompt migration.");
+    }
+    if (error.code === "PGRST204" && error.message?.includes("'ai_topics_prompt_template'")) {
+      throw new Error("Database column `profiles.ai_topics_prompt_template` is missing. Please run the topics prompt migration.");
     }
     throw new Error("Failed to update AI prompt templates");
   }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS, GEMINI_MODELS, PERPLEXITY_MODELS } from "@/lib/ai/models";
-import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT } from "@/lib/ai/prompts";
+import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
 import { 
   Save, 
   CheckCircle2,
@@ -12,7 +12,8 @@ import {
   RefreshCcw,
   Cpu,
   FileCode,
-  CalendarDays
+  CalendarDays,
+  Tag
 } from "lucide-react";
 
 interface AISettingsCardProps {
@@ -21,6 +22,7 @@ interface AISettingsCardProps {
   initialWebSearchEnabled: boolean;
   initialPromptTemplate: string;
   initialStudyPlanPromptTemplate: string;
+  initialTopicsPromptTemplate: string;
 }
 
 interface Status {
@@ -49,12 +51,14 @@ export default function AISettingsCard({
   initialWebSearchEnabled,
   initialPromptTemplate,
   initialStudyPlanPromptTemplate,
+  initialTopicsPromptTemplate,
 }: AISettingsCardProps) {
   const [provider, setProvider] = useState(initialProvider === "gemini" ? "gemini" : "perplexity");
   const [defaultModel, setDefaultModel] = useState(initialModel);
   const [webSearchEnabled, setWebSearchEnabled] = useState(initialWebSearchEnabled);
-  const [promptTemplate, setPromptTemplate] = useState(initialPromptTemplate);
-  const [studyPlanPromptTemplate, setStudyPlanPromptTemplate] = useState(initialStudyPlanPromptTemplate);
+  const [promptTemplate, setPromptTemplate] = useState(initialPromptTemplate || DEFAULT_COURSE_DESCRIPTION_PROMPT);
+  const [studyPlanPromptTemplate, setStudyPlanPromptTemplate] = useState(initialStudyPlanPromptTemplate || DEFAULT_STUDY_PLAN_PROMPT);
+  const [topicsPromptTemplate, setTopicsPromptTemplate] = useState(initialTopicsPromptTemplate || DEFAULT_TOPICS_PROMPT);
   
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<Status>({ type: "idle" });
@@ -96,6 +100,40 @@ export default function AISettingsCard({
       }
     });
   };
+
+  const saveTopicsPrompt = () => {
+    clearStatus();
+    startTransition(async () => {
+      try {
+        await updateAiPromptTemplates({ topicsPromptTemplate });
+        lastSavedTopicsPromptRef.current = topicsPromptTemplate;
+        setStatus({ type: "success", message: "Topic classification logic updated.", panel: "topics" });
+      } catch (error) {
+        setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "topics" });
+      }
+    });
+  };
+
+  const lastSavedTopicsPromptRef = useRef(initialTopicsPromptTemplate || DEFAULT_TOPICS_PROMPT);
+
+  useEffect(() => {
+    if (topicsPromptTemplate === lastSavedTopicsPromptRef.current) return;
+
+    const timer = setTimeout(() => {
+      clearStatus();
+      startTransition(async () => {
+        try {
+          await updateAiPromptTemplates({ topicsPromptTemplate });
+          lastSavedTopicsPromptRef.current = topicsPromptTemplate;
+          setStatus({ type: "success", message: "Topic classification logic auto-saved.", panel: "topics" });
+        } catch (error) {
+          setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "topics" });
+        }
+      });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [topicsPromptTemplate]);
 
   return (
     <div className="space-y-4">
@@ -260,6 +298,45 @@ export default function AISettingsCard({
               Push Schedule Logic
             </button>
             <StatusDisplay panel="studyplan" status={status} />
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Topic Classification Logic */}
+      <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+          <div className="flex items-center gap-2 text-[#222]">
+            <Tag className="w-4 h-4 text-[#777]" />
+            <span className="text-sm font-semibold">Topic Classification Logic</span>
+          </div>
+          <button
+            onClick={() => setTopicsPromptTemplate(DEFAULT_TOPICS_PROMPT)}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+          >
+            <RefreshCcw className="w-3 h-3" />
+            Reset
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <textarea
+            value={topicsPromptTemplate}
+            onChange={(e) => setTopicsPromptTemplate(e.target.value)}
+            className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+            placeholder="ENTER_INSTRUCTION_SET..."
+            disabled={isPending}
+          />
+
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={saveTopicsPrompt}
+              disabled={isPending}
+              className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+            >
+              {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Push Topic Logic
+            </button>
+            <StatusDisplay panel="topics" status={status} />
           </div>
         </div>
       </div>

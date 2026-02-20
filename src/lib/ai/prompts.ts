@@ -44,3 +44,21 @@ Rules:
 - If exam dates are present in the schedule data, include them as entries with type "Exam".
 - For exam entries, set daysOfWeek to the day of the exam date.
 `.trim();
+
+export const DEFAULT_TOPICS_PROMPT = `
+You generate concise topic tags for one university course.
+
+Course:
+- Title: {{course_name}}
+- Existing topics: {{existing_topics}}
+
+Return ONLY a JSON array of strings.
+Rules:
+- 3 to 6 topics
+- each topic short (1-3 words)
+- no duplicates
+- prefer existing topics when relevant, but create new topics if none match
+- topics must be Computer Science subfields only (e.g. Algorithms, Systems, AI, Security, Networks, Databases, HCI, Graphics, Theory, Software Engineering, Distributed Systems, Programming Languages)
+- no markdown
+- no explanation text
+`.trim();

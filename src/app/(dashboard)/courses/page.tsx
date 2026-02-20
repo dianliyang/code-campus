@@ -109,7 +109,12 @@ async function SidebarData({ userId, params, dict }: {
 
   const getCachedSemesters = unstable_cache(
     async () => {
-      const { data } = await (await createClient()).from('semesters').select('term, year').order('year', { ascending: false }).order('term', { ascending: false });
+      const { data } = await (await createClient())
+        .from('semesters')
+        .select('term, year')
+        .order('year', { ascending: false })
+        .order('term', { ascending: false })
+        .limit(4);
       return data;
     },
     ['semesters-list'],

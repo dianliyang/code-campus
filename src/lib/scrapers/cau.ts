@@ -82,8 +82,32 @@ export class CAU extends BaseScraper {
     const semParam = this.getSemesterParam();
     const year = parseInt(semParam.substring(0, 4));
     const term = semParam.endsWith('w') ? "Winter" : "Spring";
+    const headerCategoryMap: Record<string, string> = {
+      "theoretical computer science": "Theoretical Computer Science",
+      "compulsory elective modules in computer science": "Compulsory elective modules in Computer Science",
+      seminar: "Seminar",
+      "advanced project": "Advanced Project",
+      "involvement in a working group": "Involvement in a working group",
+      "open elective": "Open Elective",
+    };
 
-    $("tr[valign=top]").each((_, tr) => {
+    const normalizeHeader = (value: string) =>
+      value
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .replace(/[–—]/g, "-")
+        .trim();
+
+    let currentHeaderCategory: string | null = null;
+
+    $("tr").each((_, tr) => {
+      const trText = normalizeHeader($(tr).text());
+      const headerKey = Object.keys(headerCategoryMap).find((k) => trText === k || trText.startsWith(`${k} `));
+      if (headerKey) {
+        currentHeaderCategory = headerCategoryMap[headerKey];
+      }
+
+      if ($(tr).find("a[href*='key='], a[href*='lecture_view']").length === 0) return;
       const td = $(tr).find("td[width='100%']").first().length > 0
         ? $(tr).find("td[width='100%']").first()
         : $(tr).find("td").first();
@@ -115,18 +139,20 @@ export class CAU extends BaseScraper {
           }
 
           let type = "Lecture";
-          let category = "General";
+          let category = currentHeaderCategory || "General";
           const titleLower = title.toLowerCase();
 
-          if (titleLower.includes("advanced project") || titleLower.includes("oberprojekt") || titleLower.includes("advanced computer science project") || titleLower.startsWith("master project")) category = "Advanced Project";
-          else if (titleLower.includes("seminar") && !titleLower.includes("supervision")) category = "Seminar";
-          else if (titleLower.includes("colloquium") || titleLower.includes("kolloquium") || titleLower.includes("study group")) category = "Colloquia and study groups";
-          else if (titleLower.includes("theoretical") || titleLower.includes("theoretische")) category = "Theoretical Computer Science";
-          else if (titleLower.includes("involvement") || titleLower.includes("mitarbeit")) category = "Involvement in a working group";
-          else if (titleLower.includes("thesis supervision") || titleLower.includes("begleitseminar zur masterarbeit")) category = "Master Thesis Supervision Seminar";
-          else if (titleLower.includes("elective") || titleLower.includes("wahlpflicht")) category = "Compulsory elective modules in Computer Science";
-          else if (titleLower.includes("open elective") || titleLower.includes("freie wahl")) category = "Open Elective";
-          else category = "Standard Course";
+          if (!currentHeaderCategory) {
+            if (titleLower.includes("advanced project") || titleLower.includes("oberprojekt") || titleLower.includes("advanced computer science project") || titleLower.startsWith("master project")) category = "Advanced Project";
+            else if (titleLower.includes("seminar") && !titleLower.includes("supervision")) category = "Seminar";
+            else if (titleLower.includes("colloquium") || titleLower.includes("kolloquium") || titleLower.includes("study group")) category = "Colloquia and study groups";
+            else if (titleLower.includes("theoretical") || titleLower.includes("theoretische")) category = "Theoretical Computer Science";
+            else if (titleLower.includes("involvement") || titleLower.includes("mitarbeit")) category = "Involvement in a working group";
+            else if (titleLower.includes("thesis supervision") || titleLower.includes("begleitseminar zur masterarbeit")) category = "Master Thesis Supervision Seminar";
+            else if (titleLower.includes("elective") || titleLower.includes("wahlpflicht")) category = "Compulsory elective modules in Computer Science";
+            else if (titleLower.includes("open elective") || titleLower.includes("freie wahl")) category = "Open Elective";
+            else category = "Standard Course";
+          }
 
           if (courseCode.startsWith("E")) type = "Exercise";
           else if (courseCode.startsWith("P") || courseCode.startsWith("PE")) type = "Practical";

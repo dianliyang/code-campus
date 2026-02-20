@@ -7,6 +7,27 @@ import { CAUSport } from '../lib/scrapers/cau-sport';
 import { SupabaseDatabase } from '../lib/supabase/server';
 import { BaseScraper } from '../lib/scrapers/BaseScraper';
 
+function isCauProjectSeminarWorkshop(
+  item: { title?: string; details?: Record<string, unknown> },
+): boolean {
+  const category = typeof item.details?.category === "string" ? item.details.category : "";
+  const projectTableCategories = new Set([
+    "Seminar",
+    "Advanced Project",
+    "Involvement in a working group",
+    "Open Elective",
+    "Colloquia and study groups",
+    "Master Thesis Supervision Seminar",
+  ]);
+  const title = (item.title || "").toLowerCase();
+  return (
+    projectTableCategories.has(category) ||
+    title.includes("project") ||
+    title.includes("seminar") ||
+    title.includes("workshop")
+  );
+}
+
 async function runScraper(scraper: BaseScraper, db: SupabaseDatabase) {
   try {
     console.log(`\n=== Running Scraper: ${scraper.name.toUpperCase()} ===`);
@@ -16,19 +37,19 @@ async function runScraper(scraper: BaseScraper, db: SupabaseDatabase) {
 
     if (items.length > 0) {
       if (scraper.name === 'cau') {
-        // Partition CAU items into Projects/Seminars vs standard Courses
-        // "Standard Course" and "Compulsory elective modules in Computer Science" go to 'courses'
-        // Everything else (Seminar, Advanced Project, etc.) goes to 'projects_seminars'
-        const standardCategoryLabels = ['Standard Course', 'Compulsory elective modules in Computer Science'];
-        
-        const standardCourses = items.filter(item => {
-          const cat = (item.details as any)?.category || ""; // eslint-disable-line @typescript-eslint/no-explicit-any
-          return standardCategoryLabels.includes(cat);
-        });
-        const projectsSeminars = items.filter(item => {
-          const cat = (item.details as any)?.category || ""; // eslint-disable-line @typescript-eslint/no-explicit-any
-          return !standardCategoryLabels.includes(cat);
-        });
+        // Partition CAU items: project/seminar/workshop -> projects_seminars, others -> courses
+        const projectsSeminars = items.filter(item =>
+          isCauProjectSeminarWorkshop({
+            title: item.title,
+            details: (item.details as Record<string, unknown> | undefined) || {},
+          }),
+        );
+        const standardCourses = items.filter(item =>
+          !isCauProjectSeminarWorkshop({
+            title: item.title,
+            details: (item.details as Record<string, unknown> | undefined) || {},
+          }),
+        );
 
         console.log(`[cau] Partitioned into ${standardCourses.length} standard courses and ${projectsSeminars.length} projects/seminars.`);
         

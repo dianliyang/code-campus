@@ -22,6 +22,7 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
   const offset = (page - 1) * perPage;
   const query = readParam(params, "q");
   const category = readParam(params, "category");
+  const semester = readParam(params, "semester");
   const sort = readParam(params, "sort") || "title";
   const view = readParam(params, "view") === "grid" ? "grid" : "list";
 
@@ -37,6 +38,13 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
   if (category) {
     dataQuery = dataQuery.eq("category", category);
   }
+  if (semester) {
+    const [term, yearRaw] = semester.split(" ");
+    const year = Number(yearRaw);
+    if (term && Number.isFinite(year)) {
+      dataQuery = dataQuery.contains("latest_semester", { term, year });
+    }
+  }
 
   if (sort === "newest") dataQuery = dataQuery.order("updated_at", { ascending: false });
   else if (sort === "credit") dataQuery = dataQuery.order("credit", { ascending: false, nullsFirst: false });
@@ -45,7 +53,7 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
 
   const [{ data: items, count }, { data: categories }] = await Promise.all([
     dataQuery.range(offset, offset + perPage - 1),
-    supabase.from("projects_seminars").select("category"),
+    supabase.from("projects_seminars").select("category, latest_semester"),
   ]);
 
   const total = count || 0;
@@ -53,11 +61,27 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
   const uniqueCategories = Array.from(
     new Set((categories || []).map((c) => c.category).filter((c): c is string => Boolean(c))),
   ).sort((a, b) => a.localeCompare(b));
+  const uniqueSemesters = Array.from(
+    new Set(
+      (categories || [])
+        .map((c) => {
+          const sem = c.latest_semester as { term?: string; year?: number } | null;
+          return sem?.term && sem?.year ? `${sem.term} ${sem.year}` : null;
+        })
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ).sort((a, b) => {
+    const [termA, yearA] = a.split(" ");
+    const [termB, yearB] = b.split(" ");
+    if (yearA !== yearB) return Number(yearB) - Number(yearA);
+    const order: Record<string, number> = { Winter: 4, Fall: 3, Summer: 2, Spring: 1 };
+    return (order[termB] || 0) - (order[termA] || 0);
+  });
 
   return (
     <div className="space-y-3">
       <div className="space-y-3">
-        <ProjectsSeminarsToolbar categories={uniqueCategories} />
+        <ProjectsSeminarsToolbar categories={uniqueCategories} semesters={uniqueSemesters} />
 
         <div className="rounded-lg overflow-hidden bg-[#fcfcfc]">
           {view === "list" ? (

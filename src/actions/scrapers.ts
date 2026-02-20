@@ -12,6 +12,28 @@ import { getUser } from "@/lib/supabase/server";
 import { aggregateWorkoutsByName } from "@/lib/workouts";
 import { revalidatePath } from "next/cache";
 
+function isCauProjectSeminarWorkshop(
+  item: { title?: string; details?: Record<string, unknown> },
+): boolean {
+  const category = typeof item.details?.category === "string" ? item.details.category : "";
+  const projectTableCategories = new Set([
+    "Seminar",
+    "Advanced Project",
+    "Involvement in a working group",
+    "Open Elective",
+    "Colloquia and study groups",
+    "Master Thesis Supervision Seminar",
+  ]);
+  const title = (item.title || "").toLowerCase();
+
+  return (
+    projectTableCategories.has(category) ||
+    title.includes("project") ||
+    title.includes("seminar") ||
+    title.includes("workshop")
+  );
+}
+
 export async function runManualScraperAction({
   university,
   semester,
@@ -67,7 +89,31 @@ export async function runManualScraperAction({
     const items = await scraper.retrieve();
 
     if (items.length > 0) {
-      await db.saveCourses(items, { forceUpdate });
+      if (university === "cau") {
+        const projectsSeminars = items.filter((item) =>
+          isCauProjectSeminarWorkshop({
+            title: item.title,
+            details: (item.details as Record<string, unknown> | undefined) || {},
+          }),
+        );
+        const standardCourses = items.filter(
+          (item) =>
+            !isCauProjectSeminarWorkshop({
+              title: item.title,
+              details: (item.details as Record<string, unknown> | undefined) || {},
+            }),
+        );
+
+        if (standardCourses.length > 0) {
+          await db.saveCourses(standardCourses, { forceUpdate });
+        }
+        if (projectsSeminars.length > 0) {
+          await db.saveProjectsSeminars(projectsSeminars);
+        }
+        revalidatePath("/projects-seminars");
+      } else {
+        await db.saveCourses(items, { forceUpdate });
+      }
       revalidatePath("/courses");
       return { success: true, count: items.length };
     }

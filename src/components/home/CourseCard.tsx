@@ -15,6 +15,8 @@ interface CourseCardProps {
   isInitialEnrolled: boolean;
   onEnrollToggle?: () => void;
   onHide?: (courseId: number) => void;
+  isSelected?: boolean;
+  onSelectChange?: (courseId: number, checked: boolean) => void;
   progress?: number;
   dict: Dictionary["dashboard"]["courses"];
   viewMode?: "list" | "grid";
@@ -26,6 +28,8 @@ export default function CourseCard({
   isInitialEnrolled,
   onEnrollToggle,
   onHide,
+  isSelected = false,
+  onSelectChange,
   progress,
   dict,
   viewMode = "grid",
@@ -72,6 +76,7 @@ export default function CourseCard({
   const popularity = typeof course.popularity === "number" ? `${course.popularity}%` : "-";
   const credit = course.credit ?? null;
   const primaryField = course.fields?.[0];
+  const topics = course.fields || [];
   const level = course.level || null;
   const formattedLevel = level ? `${level.charAt(0).toUpperCase()}${level.slice(1)}` : null;
   const latestSemester = getLatestSemesterLabel(course.semesters || []);
@@ -81,7 +86,17 @@ export default function CourseCard({
     return (
       <div className={`group flex items-center gap-4 px-4 py-3 ${rowBg} hover:bg-[#f2f2f2] transition-colors`}>
         <div className="flex-1 min-w-0 flex items-center gap-3">
-          <span className="h-4 w-4 rounded border border-[#cfcfcf] bg-white shrink-0" />
+          <label className="relative inline-flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={(event) => onSelectChange?.(course.id, event.target.checked)}
+              aria-label={`Select ${course.title}`}
+              className="peer sr-only"
+            />
+            <span className="h-4 w-4 rounded-[4px] border border-[#cfcfcf] bg-white transition-colors peer-checked:border-[#2f2f2f] peer-checked:bg-[#2f2f2f]" />
+            {isSelected ? <Check className="pointer-events-none absolute h-3 w-3 text-white" /> : null}
+          </label>
           <UniversityIcon name={course.university} size={26} className="bg-white border border-[#dfdfdf] rounded-md" />
           <div className="min-w-0">
             <h2 className="text-[15px] font-medium text-[#2e2e2e] truncate">
@@ -95,7 +110,22 @@ export default function CourseCard({
           </div>
         </div>
 
-        <div className="w-[12%] hidden md:block">
+        <div className="w-[18%] hidden md:flex flex-wrap gap-1">
+          {topics.length > 0 ? (
+            topics.slice(0, 3).map((topic) => (
+              <span
+                key={topic}
+                className="inline-flex h-5 items-center rounded bg-[#efefef] px-1.5 text-[10px] font-medium text-[#666]"
+              >
+                {topic}
+              </span>
+            ))
+          ) : (
+            <span className="text-xs text-[#9a9a9a]">-</span>
+          )}
+        </div>
+
+        <div className="w-[10%] hidden md:block">
           <span
             className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${
               isEnrolled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
@@ -105,16 +135,16 @@ export default function CourseCard({
           </span>
         </div>
 
-        <div className="w-[10%] hidden md:block text-sm text-[#484848]">{credit ?? "-"}</div>
+        <div className="w-[8%] hidden md:block text-sm text-[#484848]">{credit ?? "-"}</div>
 
-        <div className="w-[12%] hidden md:block text-sm text-[#484848]">{latestSemester ?? "-"}</div>
+        <div className="w-[10%] hidden md:block text-sm text-[#484848]">{latestSemester ?? "-"}</div>
 
-        <div className="w-[10%] hidden md:flex items-center gap-1 text-xs text-[#666]">
+        <div className="w-[8%] hidden md:flex items-center gap-1 text-xs text-[#666]">
           <Flame className="w-3.5 h-3.5 text-amber-500" />
           <span>{popularity}</span>
         </div>
 
-        <div className="w-[6%] flex items-center justify-end gap-2">
+        <div className="w-[5%] flex items-center justify-end gap-2">
           <Button
             onClick={handleEnroll}
             disabled={loading}

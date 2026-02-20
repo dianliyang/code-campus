@@ -2,20 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LayoutGrid, List, Search } from "lucide-react";
+import { LayoutGrid, List, Search, SlidersHorizontal } from "lucide-react";
 
 interface ProjectsSeminarsToolbarProps {
   categories: string[];
+  semesters: string[];
 }
 
-export default function ProjectsSeminarsToolbar({ categories }: ProjectsSeminarsToolbarProps) {
+export default function ProjectsSeminarsToolbar({ categories, semesters }: ProjectsSeminarsToolbarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const view = searchParams.get("view") === "grid" ? "grid" : "list";
   const category = searchParams.get("category") || "";
+  const semester = searchParams.get("semester") || "";
   const sort = searchParams.get("sort") || "title";
   const lastPushedQuery = useRef(searchParams.get("q") || "");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersRef = useRef<HTMLDivElement>(null);
 
   const pushWith = (patch: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -45,6 +49,17 @@ export default function ProjectsSeminarsToolbar({ categories }: ProjectsSeminars
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (!filtersRef.current) return;
+      if (!filtersRef.current.contains(event.target as Node)) {
+        setFiltersOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, []);
 
   return (
     <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:justify-between">
@@ -84,24 +99,62 @@ export default function ProjectsSeminarsToolbar({ categories }: ProjectsSeminars
             className="h-8 w-[220px] rounded-md border border-[#dddddd] bg-white pl-8 pr-2 text-[13px] text-[#333] placeholder:text-[#a3a3a3] outline-none focus:border-[#c8c8c8]"
           />
         </div>
-        <select
-          value={category}
-          onChange={(e) => pushWith({ category: e.target.value || null })}
-          className="h-8 min-w-[170px] appearance-none rounded-md border border-[#d7d7d7] bg-white px-2 pr-7 text-[13px] font-medium text-[#454545] outline-none transition-colors hover:border-[#c7c7c7] focus:border-[#bcbcbc]"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23909090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "right 8px center",
-          }}
-        >
-          <option value="">All categories</option>
-          {categories.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
+        <div className="relative" ref={filtersRef}>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((prev) => !prev)}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Filters
+          </button>
+          {filtersOpen ? (
+            <div className="absolute right-0 z-30 mt-1.5 w-[320px] rounded-md border border-[#e1e1e1] bg-white p-3 shadow-sm">
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7a7a]">Category</p>
+                <select
+                  value={category}
+                  onChange={(e) => pushWith({ category: e.target.value || null })}
+                  className="h-8 w-full appearance-none rounded-md border border-[#d7d7d7] bg-white px-2 pr-7 text-[13px] font-medium text-[#454545] outline-none transition-colors hover:border-[#c7c7c7] focus:border-[#bcbcbc]"
+                  style={{
+                    backgroundImage:
+                      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23909090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 8px center",
+                  }}
+                >
+                  <option value="">All categories</option>
+                  {categories.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mt-3 space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7a7a]">Semesters</p>
+                <select
+                  value={semester}
+                  onChange={(e) => pushWith({ semester: e.target.value || null })}
+                  className="h-8 w-full appearance-none rounded-md border border-[#d7d7d7] bg-white px-2 pr-7 text-[13px] font-medium text-[#454545] outline-none transition-colors hover:border-[#c7c7c7] focus:border-[#bcbcbc]"
+                  style={{
+                    backgroundImage:
+                      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23909090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 8px center",
+                  }}
+                >
+                  <option value="">All semesters</option>
+                  {semesters.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : null}
+        </div>
         <select
           value={sort}
           onChange={(e) => pushWith({ sort: e.target.value })}

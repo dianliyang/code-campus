@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import Pagination from "@/components/home/Pagination";
-import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import ProjectsSeminarsToolbar from "@/components/projects-seminars/ProjectsSeminarsToolbar";
 import Link from "next/link";
 import ProjectSeminarEnrollButton from "@/components/projects-seminars/ProjectSeminarEnrollButton";
@@ -35,9 +35,8 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
   const view = readParam(params, "view") === "grid" ? "grid" : "list";
 
   const supabase = await createClient();
-  const admin = createAdminClient();
 
-  let dataQuery = admin
+  let dataQuery = supabase
     .from("projects_seminars")
     .select("id, title, course_code, category, credit, url, latest_semester, university, details", { count: "exact" });
 
@@ -69,13 +68,14 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
 
   const [{ data: items, count }, { data: categories }] = await Promise.all([
     dataQuery.range(offset, offset + perPage - 1),
-    admin.from("projects_seminars").select("category, latest_semester"),
+    supabase.from("projects_seminars").select("category, latest_semester"),
   ]);
 
   const total = count || 0;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const itemIds = (items || []).map((item) => item.id);
   const enrollmentMap = new Map<number, string>();
+  const departmentMap = new Map<number, string>();
 
   if (user && itemIds.length > 0) {
     const { data: enrollmentRows } = await supabase
@@ -86,6 +86,18 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
 
     (enrollmentRows || []).forEach((row) => {
       enrollmentMap.set(row.project_seminar_id, row.status || "in_progress");
+    });
+  }
+
+  if (itemIds.length > 0) {
+    const { data: departmentRows } = await supabase
+      .from("projects_seminars")
+      .select("id, department")
+      .in("id", itemIds);
+    (departmentRows || []).forEach((row) => {
+      if (row.department && row.department.trim()) {
+        departmentMap.set(row.id, row.department);
+      }
     });
   }
 
@@ -150,6 +162,7 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
                       <div className="md:w-[14%] text-[12px] text-[#555]">{item.category}</div>
                       <div className="md:w-[16%] text-[12px] text-[#555] truncate">
                         {(
+                          departmentMap.get(item.id) ||
                           (item.details &&
                             typeof item.details === "object" &&
                             !Array.isArray(item.details) &&

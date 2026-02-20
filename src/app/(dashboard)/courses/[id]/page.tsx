@@ -1,13 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { createClient, mapCourseFromRow, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { Course } from "@/types";
 import CourseDetailContent from "@/components/courses/CourseDetailContent";
-import { ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -41,14 +39,6 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-3">
-      <Link
-        href="/courses"
-        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        {dict.dashboard.course_detail.back_to_catalog}
-      </Link>
-
       <Suspense fallback={<CourseDetailSkeleton />}>
         <CourseDetailData id={id} dict={dict.dashboard} />
       </Suspense>

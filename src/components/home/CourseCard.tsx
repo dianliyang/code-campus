@@ -91,12 +91,11 @@ export default function CourseCard({
             </h2>
             <p className="text-xs text-[#7a7a7a] truncate">
               {course.courseCode} · {course.university}
-              {latestSemester ? ` · ${latestSemester}` : ""}
             </p>
           </div>
         </div>
 
-        <div className="w-[14%] hidden md:block">
+        <div className="w-[12%] hidden md:block">
           <span
             className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${
               isEnrolled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
@@ -106,7 +105,7 @@ export default function CourseCard({
           </span>
         </div>
 
-        <div className="w-[12%] hidden md:block text-sm text-[#484848]">{credit ?? "-"}</div>
+        <div className="w-[10%] hidden md:block text-sm text-[#484848]">{credit ?? "-"}</div>
 
         <div className="w-[12%] hidden md:block text-sm text-[#484848]">{latestSemester ?? "-"}</div>
 
@@ -115,7 +114,7 @@ export default function CourseCard({
           <span>{popularity}</span>
         </div>
 
-        <div className="w-[8%] flex items-center justify-end gap-2">
+        <div className="w-[6%] flex items-center justify-end gap-2">
           <Button
             onClick={handleEnroll}
             disabled={loading}
@@ -158,7 +157,6 @@ export default function CourseCard({
             </h2>
             <p className="text-xs text-slate-500 truncate">
               {course.courseCode} · {course.university}
-              {latestSemester ? ` · ${latestSemester}` : ""}
             </p>
           </div>
         </div>

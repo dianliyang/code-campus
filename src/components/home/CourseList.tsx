@@ -136,11 +136,11 @@ export default function CourseList({
       <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden ${viewMode === "grid" ? "p-3" : ""}`}>
         <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${viewMode === "grid" ? "!hidden" : ""}`}>
           <div className="flex-1 min-w-0">Course</div>
-          <div className="w-[14%]">Status</div>
-          <div className="w-[12%]">Credit</div>
+          <div className="w-[12%]">Status</div>
+          <div className="w-[10%]">Credit</div>
           <div className="w-[12%]">Semester</div>
           <div className="w-[10%]">Interest</div>
-          <div className="w-[8%] text-right pr-1">Action</div>
+          <div className="w-[6%] text-right pr-1">Action</div>
         </div>
 
         <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>

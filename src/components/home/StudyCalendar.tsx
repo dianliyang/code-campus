@@ -233,16 +233,6 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
   const hasEvents = selectedDay && selectedDayEvents.length > 0;
   const isFutureDay = selectedDay && today ? selectedDay >= today : false;
   const isRestDay = isFutureDay && !hasEvents;
-  const monthlyEvents = useMemo(() => {
-    const flat: GeneratedEvent[] = [];
-    eventsByDay.forEach((events) => flat.push(...events));
-    return flat.sort((a, b) => {
-      const dateCompare = a.date.localeCompare(b.date);
-      if (dateCompare !== 0) return dateCompare;
-      return a.startTime.localeCompare(b.startTime);
-    });
-  }, [eventsByDay]);
-
   const inProgressCourses = courses.filter(c => c.status === 'in_progress');
   const hasPlans = plans.length > 0;
   const needsScheduleGeneration = inProgressCourses.length > 0 && !hasPlans;
@@ -559,38 +549,12 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
             </div>
           ) : (
             <div className="flex-grow min-h-0">
-              {monthlyEvents.length > 0 ? (
-                <div className="h-full flex flex-col">
-                  <p className="text-xs font-medium text-[#666] mb-2">
-                    {dict.calendar_events}
-                  </p>
-                  <div className="space-y-2 overflow-y-auto pr-1">
-                    {monthlyEvents.slice(0, 8).map((event, idx) => (
-                      <div
-                        key={`${event.planId}-${event.date}-${idx}`}
-                        className="rounded-md border border-[#e5e5e5] bg-white px-3 py-2"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium text-[#1f1f1f] truncate">{event.title}</p>
-                          <span className="text-[11px] text-[#777] whitespace-nowrap">
-                            {new Date(event.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-[12px] text-[#777]">
-                          {event.startTime.slice(0, 5)}-{event.endTime.slice(0, 5)} · {event.location || "Campus"}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center py-4">
-                  <CalendarCheck className="w-8 h-8 text-gray-200 mb-4" />
-                  <p className="text-xs text-[#8a8a8a]">
-                    {dict.calendar_no_events}
-                  </p>
-                </div>
-              )}
+              <div className="h-full flex flex-col items-center justify-center text-center py-4">
+                <CalendarCheck className="w-8 h-8 text-gray-200 mb-4" />
+                <p className="text-xs text-[#8a8a8a]">
+                  {dict.calendar_events}
+                </p>
+              </div>
             </div>
           )}
         </div>

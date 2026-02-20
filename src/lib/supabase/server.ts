@@ -74,8 +74,12 @@ export const getUser = cache(async () => {
 });
 
 export class SupabaseDatabase {
-  async saveCourses(courses: ScrapedCourse[]): Promise<void> {
+  async saveCourses(
+    courses: ScrapedCourse[],
+    options: { forceUpdate?: boolean } = {},
+  ): Promise<void> {
     if (courses.length === 0) return;
+    const { forceUpdate = false } = options;
 
     const university = formatUniversityName(courses[0].university);
     console.log(
@@ -86,8 +90,8 @@ export class SupabaseDatabase {
     let coursesForUpsert = courses;
 
     // CAU special handling:
-    // If a CAU course already exists, only refresh details.schedule.
-    if (university === "CAU Kiel") {
+    // Without force update, existing CAU rows only refresh details.schedule.
+    if (university === "CAU Kiel" && !forceUpdate) {
       const courseCodes = courses.map((c) => c.courseCode);
       const { data: existingRows, error: existingFetchError } = await supabase
         .from("courses")
@@ -211,9 +215,9 @@ export class SupabaseDatabase {
         payload.instructors = detailsInstructors as string[];
       }
 
-      // If NOT partially scraped, we include description and details and update latest_semester
-      // If IT IS partially scraped, we skip these to avoid overwriting existing data
-      if (!c.details?.is_partially_scraped) {
+      // For force update, always apply incoming description/details/latest semester.
+      // Otherwise keep the previous partial-scrape protection.
+      if (forceUpdate || !c.details?.is_partially_scraped) {
         payload.description = c.description;
         payload.details = c.details as Json;
         if (c.semesters && c.semesters.length > 0) {
@@ -561,6 +565,17 @@ export function mapCourseFromRow(
     parsedDetails = row.details as Record<string, unknown>;
   }
 
+  const parseCredit = (value: unknown): number | undefined => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const n = Number(value.trim());
+      return Number.isFinite(n) ? n : undefined;
+    }
+    return undefined;
+  };
+
+  const derivedCredit = parseCredit(row.credit);
+
   return {
     id: Number(row.id),
     university,
@@ -569,7 +584,7 @@ export function mapCourseFromRow(
     fields: [],
     semesters: [],
     units: String(row.units || ""),
-    credit: typeof row.credit === 'number' ? row.credit : undefined,
+    credit: derivedCredit,
     description: String(row.description || ""),
     url: (row.url as string) || fallbacks[university] || "#",
     department: String(row.department || ""),

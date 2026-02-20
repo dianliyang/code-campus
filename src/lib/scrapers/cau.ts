@@ -34,6 +34,17 @@ export class CAU extends BaseScraper {
     return u.toString();
   }
 
+  private sanitizeCourseUrl(rawUrl: string): string {
+    const absolute = rawUrl.startsWith("http")
+      ? rawUrl
+      : `https://univis.uni-kiel.de/${rawUrl.replace(/&amp;/g, "&")}`;
+    const u = new URL(absolute);
+    // Drop volatile navigation/session params that cause "outdated key" errors later.
+    u.searchParams.delete("__e");
+    u.searchParams.delete("__s");
+    return u.toString();
+  }
+
   async fetchPage(url: string, retries = 3): Promise<string> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
@@ -177,7 +188,7 @@ export class CAU extends BaseScraper {
           
           if (hasEnglishTag || (hasEnglishKeywords && !hasGermanChars && !hasGermanWords)) {
             const rawUrl = titleA.attr("href");
-            if (rawUrl) course.url = rawUrl.startsWith('http') ? rawUrl : `https://univis.uni-kiel.de/${rawUrl.replace(/&amp;/g, "&")}`;
+            if (rawUrl) course.url = this.sanitizeCourseUrl(rawUrl);
             courses.push(course);
           }
         }

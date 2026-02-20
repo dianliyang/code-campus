@@ -95,6 +95,8 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
 
   const quickIncrements = [10, 25, 50, 75];
   const weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const focusSegments = 20;
+  const activeFocusSegments = Math.round((progress / 100) * focusSegments);
 
   return (
     <div className="bg-white border border-[#e5e5e5] rounded-md p-3 flex flex-col gap-3">
@@ -217,14 +219,18 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           </span>
         </div>
         
-        <div className="relative h-4 flex items-center">
-          <div className="absolute inset-0 bg-gray-50 rounded-md overflow-hidden border border-gray-100">
-            <div
-              className={`h-full bg-brand-blue transition-all duration-500 relative ${isUpdating ? 'animate-pulse' : ''}`}
-              style={{ width: `${progress}%` }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10"></div>
-            </div>
+        <div className="relative h-3 flex items-center">
+          <div className="absolute inset-0 flex items-center gap-1">
+            {Array.from({ length: focusSegments }).map((_, index) => (
+              <span
+                key={index}
+                className={`h-2 flex-1 rounded-[2px] transition-colors ${
+                  index < activeFocusSegments
+                    ? `bg-brand-blue ${isUpdating ? 'animate-pulse' : ''}`
+                    : 'bg-gray-100 border border-gray-100'
+                }`}
+              />
+            ))}
           </div>
 
           <input

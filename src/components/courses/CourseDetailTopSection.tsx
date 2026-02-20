@@ -31,6 +31,12 @@ interface CourseDetailTopSectionProps {
 }
 
 const AI_DESCRIPTION_MARK = "AI Regenerated";
+const CAU_CATEGORY_OPTIONS = [
+  { value: "Theoretical Computer Science", label: "Theoretical" },
+  { value: "Compulsory elective modules in Computer Science", label: "Compulsory elective" },
+  { value: "Advanced Project", label: "Project" },
+  { value: "Seminar", label: "Seminar" },
+];
 
 function appendAiDescriptionMark(text: string) {
   const trimmed = text.trim();
@@ -85,6 +91,7 @@ export default function CourseDetailTopSection({
     instructorsText: (course.instructors || []).join(", "),
     topicsText: (course.fields || []).join(", "),
     semestersText: (course.semesters || []).join(", "),
+    cauCategory: typeof course.details?.category === "string" ? course.details.category : "",
   });
   const [selectedTopics, setSelectedTopics] = useState<string[]>(course.fields || []);
   const [topicInput, setTopicInput] = useState("");
@@ -130,6 +137,21 @@ export default function CourseDetailTopSection({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      let parsedDetails: Record<string, unknown> = {};
+      try {
+        parsedDetails = formData.detailsJson.trim()
+          ? (JSON.parse(formData.detailsJson) as Record<string, unknown>)
+          : {};
+      } catch {
+        throw new Error("Invalid details JSON");
+      }
+
+      if (formData.cauCategory.trim()) {
+        parsedDetails.category = formData.cauCategory.trim();
+      } else {
+        delete parsedDetails.category;
+      }
+
       await updateCourseFull(course.id, {
         university: formData.university,
         courseCode: formData.courseCode,
@@ -152,7 +174,7 @@ export default function CourseDetailTopSection({
         workload: formData.workload,
         isHidden: formData.isHidden,
         isInternal: formData.isInternal,
-        detailsJson: formData.detailsJson,
+        detailsJson: JSON.stringify(parsedDetails, null, 2),
         instructors: formData.instructorsText
           .split(",")
           .map((s) => s.trim())
@@ -295,6 +317,27 @@ export default function CourseDetailTopSection({
               <input value={formData.credit} onChange={(e) => setFormData((p) => ({ ...p, credit: e.target.value }))} className={inputClass} placeholder="Credit" />
               <input value={formData.department} onChange={(e) => setFormData((p) => ({ ...p, department: e.target.value }))} className={inputClass} placeholder="Department" />
               <input value={formData.level} onChange={(e) => setFormData((p) => ({ ...p, level: e.target.value }))} className={inputClass} placeholder="Level" />
+              <select
+                value={formData.cauCategory}
+                onChange={(e) => setFormData((p) => ({ ...p, cauCategory: e.target.value }))}
+                className={inputClass}
+              >
+                <option value="">Category (none)</option>
+                {Array.from(
+                  new Map(
+                    [
+                      ...CAU_CATEGORY_OPTIONS,
+                      ...(formData.cauCategory
+                        ? [{ value: formData.cauCategory, label: formData.cauCategory }]
+                        : []),
+                    ].map((option) => [option.value, option]),
+                  ).values(),
+                ).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <input value={formData.corequisites} onChange={(e) => setFormData((p) => ({ ...p, corequisites: e.target.value }))} className={`md:col-span-2 ${inputClass}`} placeholder="Corequisites" />
               <input value={formData.prerequisites} onChange={(e) => setFormData((p) => ({ ...p, prerequisites: e.target.value }))} className={`md:col-span-2 ${inputClass}`} placeholder="Prerequisites" />
               <input value={formData.crossListedCourses} onChange={(e) => setFormData((p) => ({ ...p, crossListedCourses: e.target.value }))} className={`md:col-span-2 ${inputClass}`} placeholder="Cross-listed courses" />

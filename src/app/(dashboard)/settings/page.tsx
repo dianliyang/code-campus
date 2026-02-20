@@ -50,14 +50,6 @@ export default async function SettingsPage() {
 
   return (
     <main className="w-full space-y-4">
-      <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] px-4 py-3">
-        <h1 className="text-[26px] leading-none font-semibold tracking-tight text-slate-900">
-          {dict.dashboard.profile.settings}
-        </h1>
-        <p className="mt-1 text-xs text-slate-500">
-          Manage your AI preferences, account security, and system operations.
-        </p>
-      </section>
       <SettingsContainer user={user} profile={profile} />
     </main>
   );

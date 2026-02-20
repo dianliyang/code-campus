@@ -25,6 +25,7 @@ export default function SystemMaintenanceCard() {
   const [isPending, startTransition] = useTransition();
   const [selectedUnis, setSelectedUnis] = useState<string[]>(["mit"]);
   const [selectedSems, setSelectedSems] = useState<string[]>([SEMESTERS[2].id]);
+  const [forceUpdate, setForceUpdate] = useState(false);
   const [status, setStatus] = useState<{
     type: "idle" | "success" | "error";
     message?: string;
@@ -33,9 +34,7 @@ export default function SystemMaintenanceCard() {
 
   const toggleUni = (id: string) => {
     if (selectedUnis.includes(id)) {
-      if (selectedUnis.length > 1) {
-        setSelectedUnis(selectedUnis.filter(u => u !== id));
-      }
+      setSelectedUnis(selectedUnis.filter(u => u !== id));
     } else {
       setSelectedUnis([...selectedUnis, id]);
     }
@@ -43,9 +42,7 @@ export default function SystemMaintenanceCard() {
 
   const toggleSem = (id: string) => {
     if (selectedSems.includes(id)) {
-      if (selectedSems.length > 1) {
-        setSelectedSems(selectedSems.filter(s => s !== id));
-      }
+      setSelectedSems(selectedSems.filter(s => s !== id));
     } else {
       setSelectedSems([...selectedSems, id]);
     }
@@ -66,6 +63,7 @@ export default function SystemMaintenanceCard() {
             const result = await runManualScraperAction({
               university: uni,
               semester: sem,
+              forceUpdate,
             });
             const label = `${uni.toUpperCase()} ${sem.toUpperCase()}`;
 
@@ -170,9 +168,20 @@ export default function SystemMaintenanceCard() {
 
       {/* Action Area */}
       <div className="pt-3 border-t border-[#efefef] flex flex-col gap-3">
+        <label className="inline-flex items-center gap-2 text-xs text-[#555] select-none">
+          <input
+            type="checkbox"
+            checked={forceUpdate}
+            onChange={(event) => setForceUpdate(event.target.checked)}
+            disabled={isPending}
+            className="h-3.5 w-3.5 rounded border-[#cfcfcf] text-[#1f1f1f] focus:ring-0"
+          />
+          <span>Force update existing records</span>
+        </label>
+
         <button
           onClick={handleRunScrapers}
-          disabled={isPending}
+          disabled={isPending || selectedUnis.length === 0 || selectedSems.length === 0}
           className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
         >
           {isPending ? (

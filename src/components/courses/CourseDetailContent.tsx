@@ -41,6 +41,31 @@ export default function CourseDetailContent({
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const hasStudyPlans = editablePlans.length > 0;
   const normalizeTime = (value: string) => (value.length === 5 ? `${value}:00` : value || "09:00:00");
+  const parseTimeToMinutes = (value: string) => {
+    const parts = value.split(":").map((p) => Number(p));
+    const hours = Number.isFinite(parts[0]) ? parts[0] : 0;
+    const minutes = Number.isFinite(parts[1]) ? parts[1] : 0;
+    return (hours * 60) + minutes;
+  };
+  const weeklyHours = editablePlans.reduce((sum, plan) => {
+    const start = parseTimeToMinutes(plan.startTime || "00:00:00");
+    const end = parseTimeToMinutes(plan.endTime || "00:00:00");
+    const durationMinutes = end >= start ? (end - start) : (end + 24 * 60 - start);
+    const dayCount = (plan.daysOfWeek || []).length;
+    return sum + ((durationMinutes / 60) * dayCount);
+  }, 0);
+  const workloadFromStudyPlan = weeklyHours > 0 ? `${weeklyHours.toFixed(1).replace(/\.0$/, "")} h/week` : "-";
+  const categoryRaw = typeof course.details?.category === "string" ? course.details.category : "";
+  const categoryLabel =
+    categoryRaw === "Compulsory elective modules in Computer Science"
+      ? "Compulsory elective"
+      : categoryRaw === "Theoretical Computer Science"
+        ? "Theoretical"
+      : categoryRaw === "Advanced Project"
+          ? "Project"
+        : categoryRaw === "Seminar"
+          ? "Seminar"
+          : categoryRaw;
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);
@@ -480,15 +505,18 @@ export default function CourseDetailContent({
                     <dd className="font-medium text-[#222]">{course.credit ? `${course.credit} ECTS` : "-"}</dd>
                   </div>
                   <div className="flex justify-between py-1 overflow-visible relative">
-                    <dt className="text-[#666] flex-shrink-0 flex items-center gap-1.5 group cursor-help">
-                      Units (L-D-E)
+                    <dt className="text-[#666] flex-shrink-0 flex items-center gap-1.5 group cursor-help relative">
+                      Units (L-S-E-P)
                       <Info className="w-3.5 h-3.5 text-[#999]" />
+                      <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden w-64 rounded-md border border-[#dcdcdc] bg-white px-2 py-1.5 text-[11px] font-normal leading-relaxed text-[#555] shadow-sm group-hover:block">
+                        CAU format is <span className="font-medium">Lecture-Seminar-Exercise-Practical/Project</span>. Example: <span className="font-medium">2-0-2-0</span>.
+                      </span>
                     </dt>
                     <dd className="font-medium text-[#222] text-right pl-4 break-words">{course.units || "-"}</dd>
                   </div>
                   <div className="flex justify-between py-1">
                     <dt className="text-[#666] flex-shrink-0">Workload</dt>
-                    <dd className="font-medium text-[#222] text-right pl-4 break-words">{course.units || "-"}</dd>
+                    <dd className="font-medium text-[#222] text-right pl-4 break-words">{workloadFromStudyPlan}</dd>
                   </div>
                   <div className="flex justify-between py-1">
                     <dt className="text-[#666] flex-shrink-0">Level</dt>
@@ -497,6 +525,10 @@ export default function CourseDetailContent({
                   <div className="flex justify-between py-1">
                     <dt className="text-[#666] flex-shrink-0">Department</dt>
                     <dd className="font-medium text-[#222] text-right pl-4 break-words">{course.department || "-"}</dd>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <dt className="text-[#666] flex-shrink-0">Category</dt>
+                    <dd className="font-medium text-[#222] text-right pl-4 break-words">{categoryLabel || "-"}</dd>
                   </div>
                   <div className="flex flex-col py-1 gap-2">
                     <dt className="text-[#666]">Available Terms</dt>

@@ -2,9 +2,8 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { ApiResponse, ImportRequest } from "@/types";
-import { Loader2, LogIn, ArrowLeft, CloudUpload, FileCheck } from "lucide-react";
+import { Loader2, LogIn, CloudUpload, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ImportFormProps {
@@ -12,7 +11,6 @@ interface ImportFormProps {
     label: string;
     title_main: string;
     title_sub: string;
-    return_btn: string;
     form_uni: string;
     form_code: string;
     form_title: string;
@@ -173,299 +171,275 @@ export default function ImportForm({ dict }: ImportFormProps) {
   };
 
   return (
-    <div className="relative pb-32">
-      {/* Global Sticky Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-gray-100 z-50 py-6 px-4 md:px-8 shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <div className="hidden sm:flex flex-col">
-              <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">System Protocol</span>
-              <span className="text-xs font-bold text-gray-900 uppercase">{stagedBulkData ? `Bulk Ingest (${stagedBulkData.length} nodes)` : 'Manual Single Entry'}</span>
-            </div>
-            {message.text && (
-              <div className={`flex items-center gap-3 px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-widest ${message.type === 'success' ? 'bg-green-50 border-green-100 text-brand-green' : 'bg-red-50 border-red-100 text-red-500'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${message.type === 'success' ? 'bg-brand-green' : 'bg-red-500'} animate-pulse`}></span>
-                {message.text}
-              </div>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            {stagedBulkData && (
-              <button 
-                onClick={() => { setStagedBulkData(null); setStagedFileName(""); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-red-500 transition-colors px-4"
-              >
-                Clear File
-              </button>
-            )}
-            <Button
-              onClick={handleGlobalExecute}
-              disabled={loading || (!stagedBulkData && (!formData.university || !formData.courseCode || !formData.title))}
-              size="lg"
-              className="flex-grow md:flex-grow-0 min-w-[200px]"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> {dict.submit_loading}</span>
-              ) : (
-                <span className="flex items-center gap-2">{dict.submit_btn} <LogIn className="w-3 h-3" /></span>
-              )}
-            </Button>
-          </div>
+    <div className="w-full space-y-4 pb-4">
+      <div className="flex items-start justify-between gap-3 border-b border-[#ececec] pb-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7a7a]">{dict.label}</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#1f1f1f]">
+            {dict.title_main} <span className="text-[#8c8c8c]">{dict.title_sub}</span>
+          </h1>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 w-full">
-        {/* Header */}
-        <div className="relative mb-20 flex flex-col md:flex-row md:items-end justify-between gap-8">
-          <div>
-            <span className="text-[10px] font-black text-brand-blue uppercase tracking-[0.5em] mb-4 block">
-              {dict.label}
-            </span>
-            <h1 className="text-5xl font-black text-gray-900 tracking-tighter uppercase leading-none">
-              {dict.title_main} <br /> <span className="text-gray-200">{dict.title_sub}</span>
-            </h1>
-          </div>
-          <Link href="/study-plan" className="text-[10px] font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-[0.3em] flex items-center gap-2 mb-2">
-            <ArrowLeft className="w-2.5 h-2.5" />
-            {dict.return_btn}
-          </Link>
+      {message.text ? (
+        <div
+          className={`rounded-md border px-3 py-2 text-[12px] ${
+            message.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-rose-200 bg-rose-50 text-rose-700"
+          }`}
+        >
+          {message.text}
         </div>
+      ) : null}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-24">
-          {/* Left Column: Manual Form */}
-          <div className="lg:col-span-2">
-            <form onSubmit={handleGlobalExecute} className="space-y-20">
-              <div className="space-y-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  <div className="flex flex-col gap-3 group">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] group-focus-within:text-brand-blue transition-colors">
-                      {dict.form_uni}
-                    </label>
-                    <input 
-                      required 
-                      placeholder={dict.form_uni_placeholder}
-                      className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-xl font-black transition-all placeholder:text-gray-100 tracking-tighter"
-                      value={formData.university} 
-                      onChange={(e) => setFormData({...formData, university: e.target.value})} 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-3 group">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] group-focus-within:text-brand-blue transition-colors">
-                      {dict.form_code}
-                    </label>
-                    <input 
-                      required 
-                      placeholder={dict.form_code_placeholder}
-                      className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-xl font-black transition-all placeholder:text-gray-100 tracking-tighter"
-                      value={formData.courseCode} 
-                      onChange={(e) => setFormData({...formData, courseCode: e.target.value})} 
-                    />
-                  </div>
-                </div>
+      <form onSubmit={handleGlobalExecute} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <section className="lg:col-span-2 rounded-lg border border-[#e5e5e5] bg-white p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[14px] font-semibold text-[#2a2a2a]">Manual Import</h2>
+            <span className="text-[11px] text-[#888]">Required: University, Code, Title</span>
+          </div>
 
-                <div className="flex flex-col gap-3 group">
-                  <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] group-focus-within:text-brand-blue transition-colors">
-                    {dict.form_title}
-                  </label>
-                  <input 
-                    required 
-                    placeholder={dict.form_title_placeholder}
-                    className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-xl font-black transition-all placeholder:text-gray-100 tracking-tighter"
-                    value={formData.title} 
-                    onChange={(e) => setFormData({...formData, title: e.target.value})} 
-                  />
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Field label={dict.form_uni} required>
+              <input
+                required
+                className="h-9 w-full rounded-md border border-[#d8d8d8] bg-white px-3 text-[13px] text-[#333] outline-none focus:border-[#bcbcbc]"
+                value={formData.university}
+                onChange={(e) => setFormData({ ...formData, university: e.target.value })}
+              />
+            </Field>
+            <Field label={dict.form_code} required>
+              <input
+                required
+                className="h-9 w-full rounded-md border border-[#d8d8d8] bg-white px-3 text-[13px] text-[#333] outline-none focus:border-[#bcbcbc]"
+                value={formData.courseCode}
+                onChange={(e) => setFormData({ ...formData, courseCode: e.target.value })}
+              />
+            </Field>
+          </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
-                  <div className="flex flex-col gap-3">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                      {dict.form_dept}
-                    </label>
-                    <input 
-                      placeholder={dict.form_dept_placeholder}
-                      className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-sm font-bold transition-all placeholder:text-gray-100"
-                      value={formData.department} 
-                      onChange={(e) => setFormData({...formData, department: e.target.value})} 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                      Credits
-                    </label>
-                    <input 
-                      placeholder="e.g. 3.0"
-                      className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-sm font-bold transition-all placeholder:text-gray-100"
-                      value={formData.credit} 
-                      onChange={(e) => setFormData({...formData, credit: e.target.value})} 
-                    />
-                  </div>
-                </div>
+          <Field label={dict.form_title} required>
+            <input
+              required
+              placeholder={dict.form_title_placeholder}
+              className="h-9 w-full rounded-md border border-[#d8d8d8] bg-white px-3 text-[13px] text-[#333] outline-none focus:border-[#bcbcbc]"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            />
+          </Field>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
-                  <div className="flex flex-col gap-3">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                      {dict.form_url}
-                    </label>
-                    <input 
-                      placeholder="https://..."
-                      className="bg-transparent border-b-2 border-gray-100 focus:border-brand-blue outline-none py-3 text-sm font-bold transition-all placeholder:text-gray-100"
-                      value={formData.url} 
-                      onChange={(e) => setFormData({...formData, url: e.target.value})} 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                      {dict.form_level}
-                    </label>
-                    <div className="flex bg-gray-50 p-1 rounded-xl gap-1 w-fit border border-gray-100">
-                      {['undergraduate', 'graduate'].map(lvl => (
-                        <button
-                          key={lvl}
-                          type="button"
-                          onClick={() => setFormData({...formData, level: lvl})}
-                          className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${formData.level === lvl ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                        >
-                          {lvl === 'undergraduate' ? (dict.level_undergraduate || 'undergraduate') : (dict.level_graduate || 'graduate')}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                      {dict.form_internal}
-                    </label>
-                    <div className="flex bg-gray-50 p-1 rounded-xl gap-1 w-fit border border-gray-100">
-                      {[false, true].map(isInternal => (
-                        <button
-                          key={String(isInternal)}
-                          type="button"
-                          onClick={() => setFormData({...formData, isInternal: isInternal})}
-                          className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${formData.isInternal === isInternal ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                        >
-                          {isInternal ? (dict.internal_private || 'Internal') : (dict.internal_public || 'Public')}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Field label={dict.form_dept}>
+              <input
+                placeholder={dict.form_dept_placeholder}
+                className="h-9 w-full rounded-md border border-[#d8d8d8] bg-white px-3 text-[13px] text-[#333] outline-none focus:border-[#bcbcbc]"
+                value={formData.department}
+                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              />
+            </Field>
+            <Field label="Credits">
+              <input
+                placeholder="e.g. 3.0"
+                className="h-9 w-full rounded-md border border-[#d8d8d8] bg-white px-3 text-[13px] text-[#333] outline-none focus:border-[#bcbcbc]"
+                value={formData.credit}
+                onChange={(e) => setFormData({ ...formData, credit: e.target.value })}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Field label={dict.form_url}>
+              <input
+                placeholder="https://..."
+                className="h-9 w-full rounded-md border border-[#d8d8d8] bg-white px-3 text-[13px] text-[#333] outline-none focus:border-[#bcbcbc]"
+                value={formData.url}
+                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+              />
+            </Field>
+            <Field label={dict.form_level}>
+              <div className="flex h-9 w-full items-center rounded-md border border-[#dddddd] overflow-hidden bg-white">
+                {["undergraduate", "graduate"].map((lvl) => (
+                  <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, level: lvl })}
+                    className={`inline-flex h-9 flex-1 items-center justify-center px-3 text-[12px] transition-colors ${
+                      formData.level === lvl
+                        ? "bg-[#e9e9e9] text-[#1f1f1f] font-medium"
+                        : "text-[#7b7b7b] hover:bg-[#f6f6f6]"
+                    }`}
+                  >
+                    {lvl === "undergraduate" ? (dict.level_undergraduate || "undergraduate") : (dict.level_graduate || "graduate")}
+                  </button>
+                ))}
               </div>
-              
-              <div className="space-y-8">
-                <div className="flex flex-col gap-3">
-                  <label className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                    {dict.form_desc}
-                  </label>
-                  <textarea 
-                    rows={4} 
-                    placeholder={dict.form_desc_placeholder}
-                    className="bg-gray-50 border border-gray-100 rounded-3xl p-8 outline-none text-sm font-medium transition-all focus:ring-4 focus:ring-brand-blue/5 focus:bg-white focus:border-brand-blue/20"
-                    value={formData.description} 
-                    onChange={(e) => setFormData({...formData, description: e.target.value})} 
-                  />
-                </div>
-              </div>
-            </form>
+            </Field>
+          </div>
 
-            <div className="mt-32 pt-24 border-t border-gray-100">
-              <div className="flex items-center gap-3 mb-16">
-                <div className="w-2 h-2 bg-brand-blue rounded-full"></div>
-                <h4 className="text-sm font-black text-gray-900 uppercase tracking-[0.4em]">{dict.protocol_title}</h4>
-              </div>
+          <Field label={dict.form_internal}>
+            <div className="flex h-9 w-full items-center rounded-md border border-[#dddddd] overflow-hidden bg-white">
+              {[false, true].map((isInternal) => (
+                <button
+                  key={String(isInternal)}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, isInternal })}
+                  className={`inline-flex h-9 flex-1 items-center justify-center px-3 text-[12px] transition-colors ${
+                    formData.isInternal === isInternal
+                      ? "bg-[#e9e9e9] text-[#1f1f1f] font-medium"
+                      : "text-[#7b7b7b] hover:bg-[#f6f6f6]"
+                  }`}
+                >
+                  {isInternal ? (dict.internal_private || "Internal") : (dict.internal_public || "Public")}
+                </button>
+              ))}
+            </div>
+          </Field>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
-                <div className="space-y-10">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">{dict.protocol_requirements}</span>
-                  <div className="space-y-6">
-                    {[ 
-                      { key: 'university', req: true, note: dict.note_uni },
-                      { key: 'courseCode', req: true, note: dict.note_code },
-                      { key: 'title', req: true, note: dict.note_title },
-                      { key: 'isInternal', req: false, note: dict.note_internal },
-                      { key: 'description', req: false, note: dict.note_desc },
-                      { key: 'url', req: false, note: dict.note_url },
-                      { key: 'department', req: false, note: dict.note_dept },
-                      { key: 'credit', req: false, note: "Credits (numeric)" },
-                    ].map(f => (
-                      <div key={f.key} className="flex items-center justify-between border-b border-gray-50 pb-4">
-                        <div>
-                          <span className="text-xs font-bold text-gray-900 font-mono lowercase">{f.key}</span>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mt-1">{f.note}</p>
-                        </div>
-                        {f.req ? (
-                          <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">{dict.req_required}</span>
-                        ) : (
-                          <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">{dict.req_optional}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+          <Field label={dict.form_desc}>
+            <textarea
+              rows={4}
+              placeholder={dict.form_desc_placeholder}
+              className="w-full rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] text-[#333] outline-none focus:border-[#bcbcbc]"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+          </Field>
 
-                <div className="space-y-12">
+          <div className="pt-2 border-t border-[#ececec] flex items-center justify-end gap-2">
+            {stagedBulkData ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setStagedBulkData(null);
+                  setStagedFileName("");
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+                className="inline-flex h-8 items-center rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+              >
+                Clear File
+              </button>
+            ) : null}
+            <Button
+              type="submit"
+              disabled={loading || (!stagedBulkData && (!formData.university || !formData.courseCode || !formData.title))}
+              size="sm"
+              className="min-w-[160px]"
+            >
+              {loading ? (
+                <span className="inline-flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> {dict.submit_loading}</span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5">{dict.submit_btn} <LogIn className="w-3.5 h-3.5" /></span>
+              )}
+            </Button>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-[#e5e5e5] bg-white p-4 space-y-3">
+          <h2 className="text-[14px] font-semibold text-[#2a2a2a]">{dict.bulk_title}</h2>
+          <p className="text-[12px] text-[#757575]">{dict.bulk_desc}</p>
+
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className={`rounded-lg border border-dashed p-5 flex flex-col items-center justify-center gap-2.5 cursor-pointer transition-colors ${
+              stagedBulkData ? "border-[#a9a9a9] bg-[#f8f8f8]" : "border-[#d8d8d8] bg-white hover:bg-[#fafafa]"
+            }`}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+          >
+            <div className="w-9 h-9 rounded-md border border-[#e1e1e1] bg-white flex items-center justify-center text-[#808080]">
+              {stagedBulkData ? <FileCheck className="w-4 h-4" /> : <CloudUpload className="w-4 h-4" />}
+            </div>
+            <p className="text-[12px] font-medium text-[#444] text-center">{stagedFileName || dict.bulk_drop}</p>
+            <p className="text-[11px] text-[#8a8a8a] text-center">
+              {stagedBulkData ? `${stagedBulkData.length} courses staged` : dict.bulk_or}
+            </p>
+            <input type="file" ref={fileInputRef} className="hidden" accept=".json,.csv" onChange={handleFileSelect} />
+          </div>
+
+          <div className="rounded-md bg-[#f8f8f8] border border-[#ececec] px-3 py-2">
+            <p className="text-[11px] font-medium text-[#666]">Current mode</p>
+            <p className="mt-0.5 text-[12px] text-[#333]">{stagedBulkData ? `Bulk import (${stagedBulkData.length})` : "Manual import"}</p>
+          </div>
+        </section>
+      </form>
+
+      <section className="rounded-lg border border-[#e5e5e5] bg-white p-4 space-y-4">
+        <h2 className="text-[14px] font-semibold text-[#2a2a2a]">{dict.protocol_title}</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <p className="text-[12px] font-medium text-[#666]">{dict.protocol_requirements}</p>
+            <div className="rounded-md border border-[#ececec] overflow-hidden">
+              {[
+                { key: "university", req: true, note: dict.note_uni },
+                { key: "courseCode", req: true, note: dict.note_code },
+                { key: "title", req: true, note: dict.note_title },
+                { key: "isInternal", req: false, note: dict.note_internal },
+                { key: "description", req: false, note: dict.note_desc },
+                { key: "url", req: false, note: dict.note_url },
+                { key: "department", req: false, note: dict.note_dept },
+                { key: "credit", req: false, note: "Credits (numeric)" },
+              ].map((f, idx) => (
+                <div key={f.key} className={`px-3 py-2.5 flex items-center justify-between gap-3 ${idx !== 0 ? "border-t border-[#f0f0f0]" : ""}`}>
                   <div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-6">{dict.protocol_json_blueprint}</span>
-                    <pre className="bg-gray-900 p-8 rounded-3xl text-[11px] font-mono text-blue-300 overflow-x-auto">
+                    <p className="text-[12px] font-medium text-[#222]">{f.key}</p>
+                    <p className="text-[11px] text-[#8a8a8a]">{f.note}</p>
+                  </div>
+                  <span className={`text-[11px] ${f.req ? "text-rose-600" : "text-[#9a9a9a]"}`}>
+                    {f.req ? dict.req_required : dict.req_optional}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <p className="text-[12px] font-medium text-[#666] mb-1.5">{dict.protocol_json_blueprint}</p>
+              <pre className="rounded-md border border-[#ececec] bg-[#fafafa] p-3 text-[11px] text-[#444] overflow-x-auto">
 {`[
   {
     "university": "MIT",
     "courseCode": "6.001",
     "title": "Structure..."
   }
-]`}                    </pre>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-6">{dict.protocol_csv_headers}</span>
-                    <div className="flex flex-wrap gap-2">
-                      {['university', 'courseCode', 'title'].map(h => (
-                        <span key={h} className="bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl text-[10px] font-mono font-bold text-gray-600">
-                          {h}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+]`}
+              </pre>
             </div>
-          </div>
-
-          {/* Right Column: Bulk Upload */}
-          <div className="relative">
-            <div className="absolute -left-12 top-0 bottom-0 w-px bg-gray-50 hidden lg:block"></div>
-            <div className="space-y-10 sticky top-32">
-              <div>
-                <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-3">
-                  {dict.bulk_title}
-                </h3>
-                <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.2em] leading-relaxed">
-                  {dict.bulk_desc}
-                </p>
-              </div>
-
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className={`group border-2 border-dashed rounded-3xl p-12 flex flex-col items-center justify-center gap-6 transition-all cursor-pointer ${stagedBulkData ? 'border-brand-blue bg-blue-50/10' : 'border-gray-100 bg-gray-50/30 hover:border-brand-blue hover:bg-blue-50/30'}`}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
-              >
-                <div className={`w-16 h-16 bg-white border rounded-2xl flex items-center justify-center transition-all shadow-sm ${stagedBulkData ? 'border-brand-blue text-brand-blue scale-110' : 'border-gray-100 text-gray-300 group-hover:text-brand-blue group-hover:scale-110'}`}>
-                  {stagedBulkData ? <FileCheck className="w-5 h-5" /> : <CloudUpload className="w-5 h-5" />}
-                </div>
-                <div className="text-center">
-                  <span className={`text-[11px] font-black uppercase tracking-[0.2em] block mb-1 ${stagedBulkData ? 'text-brand-blue' : 'text-gray-500 group-hover:text-brand-blue'}`}>
-                    {stagedFileName || dict.bulk_drop}
+            <div>
+              <p className="text-[12px] font-medium text-[#666] mb-1.5">{dict.protocol_csv_headers}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {["university", "courseCode", "title"].map((h) => (
+                  <span key={h} className="rounded-md border border-[#e3e3e3] bg-white px-2 py-1 text-[11px] text-[#555]">
+                    {h}
                   </span>
-                  <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">
-                    {stagedBulkData ? `${stagedBulkData.length} courses identified` : dict.bulk_or}
-                  </span>
-                </div>
-                <input type="file" ref={fileInputRef} className="hidden" accept=".json,.csv" onChange={handleFileSelect} />
+                ))}
               </div>
             </div>
           </div>
         </div>
-      </main>
+      </section>
     </div>
+  );
+}
+
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="flex w-full flex-col items-start gap-1.5">
+      <span className="block text-[11px] font-medium text-[#666] leading-none">
+        {label}
+        {required ? <span className="text-rose-500 ml-0.5">*</span> : null}
+      </span>
+      <div className="w-full">{children}</div>
+    </label>
   );
 }

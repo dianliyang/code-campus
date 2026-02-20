@@ -74,7 +74,7 @@ export default function CourseDetailHeader({
         <UniversityIcon
           name={course.university}
           size={56}
-          className="flex-shrink-0 bg-white rounded-lg p-1 border border-[#e5e5e5]"
+          className="flex-shrink-0 bg-white rounded-lg border border-[#e5e5e5]"
         />
         <div>
           <div className="flex items-center gap-2">

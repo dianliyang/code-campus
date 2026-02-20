@@ -15,7 +15,7 @@ import { revalidatePath } from "next/cache";
 export async function runManualScraperAction({
   university,
   semester,
-  forceUpdate: _forceUpdate = false
+  forceUpdate = false
 }: {
   university: string;
   semester: string;
@@ -23,7 +23,6 @@ export async function runManualScraperAction({
 }) {
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
-  void _forceUpdate;
 
   try {
     const db = new SupabaseDatabase();
@@ -68,7 +67,7 @@ export async function runManualScraperAction({
     const items = await scraper.retrieve();
 
     if (items.length > 0) {
-      await db.saveCourses(items);
+      await db.saveCourses(items, { forceUpdate });
       revalidatePath("/courses");
       return { success: true, count: items.length };
     }

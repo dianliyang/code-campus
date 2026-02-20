@@ -134,9 +134,9 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
                 <div className="w-[14%]">Category</div>
                 <div className="w-[16%]">Department</div>
                 <div className="w-[10%]">Status</div>
-                <div className="w-[10%]">Credit</div>
-                <div className="w-[12%]">Semester</div>
-                <div className="w-[10%] text-right pr-1">Action</div>
+                <div className="w-[6%]">Credit</div>
+                <div className="w-[8%]">Semester</div>
+                <div className="w-[6%] text-right pr-1">Action</div>
               </div>
               <div>
                 {(items || []).map((item, idx) => {
@@ -176,11 +176,11 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
                           {status}
                         </span>
                       </div>
-                      <div className="md:w-[10%] text-[12px] text-[#555]">{item.credit ?? "-"}</div>
-                      <div className="md:w-[12%] text-[12px] text-[#555]">
+                      <div className="md:w-[6%] text-[12px] text-[#555]">{item.credit ?? "-"}</div>
+                      <div className="md:w-[8%] text-[12px] text-[#555]">
                         {semester.term && semester.year ? `${semester.term} ${semester.year}` : "-"}
                       </div>
-                      <div className="md:w-[10%] flex md:justify-end items-center gap-1">
+                      <div className="md:w-[6%] flex md:justify-end items-center gap-1">
                         <ProjectSeminarEnrollButton projectSeminarId={item.id} initialEnrolled={Boolean(enrollmentMap.get(item.id))} iconOnly />
                         {item.url ? (
                           <a

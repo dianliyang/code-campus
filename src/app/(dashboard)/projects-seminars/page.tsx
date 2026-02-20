@@ -13,6 +13,11 @@ function readParam(params: Record<string, string | string[] | undefined>, key: s
   return value || "";
 }
 
+function readListParam(params: Record<string, string | string[] | undefined>, key: string): string[] {
+  const value = readParam(params, key);
+  return value.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
 export default async function ProjectsSeminarsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Math.max(1, parseInt(readParam(params, "page") || "1"));
@@ -21,8 +26,8 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
   const perPage = allowedPerPage.includes(parsedPerPage) ? parsedPerPage : 12;
   const offset = (page - 1) * perPage;
   const query = readParam(params, "q");
-  const category = readParam(params, "category");
-  const semester = readParam(params, "semester");
+  const categoriesFilter = readListParam(params, "category");
+  const semestersFilter = readListParam(params, "semester");
   const sort = readParam(params, "sort") || "title";
   const view = readParam(params, "view") === "grid" ? "grid" : "list";
 
@@ -35,14 +40,21 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
   if (query) {
     dataQuery = dataQuery.textSearch("search_vector", query, { type: "websearch" });
   }
-  if (category) {
-    dataQuery = dataQuery.eq("category", category);
+  if (categoriesFilter.length > 0) {
+    dataQuery = dataQuery.in("category", categoriesFilter);
   }
-  if (semester) {
-    const [term, yearRaw] = semester.split(" ");
-    const year = Number(yearRaw);
-    if (term && Number.isFinite(year)) {
-      dataQuery = dataQuery.contains("latest_semester", { term, year });
+  if (semestersFilter.length > 0) {
+    const clauses = semestersFilter
+      .map((value) => {
+        const [term, yearRaw] = value.split(" ");
+        const year = Number(yearRaw);
+        if (!term || !Number.isFinite(year)) return null;
+        return `and(latest_semester->>term.eq.${term},latest_semester->>year.eq.${year})`;
+      })
+      .filter((value): value is string => Boolean(value));
+
+    if (clauses.length > 0) {
+      dataQuery = dataQuery.or(clauses.join(","));
     }
   }
 

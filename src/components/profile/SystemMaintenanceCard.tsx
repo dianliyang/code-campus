@@ -21,6 +21,22 @@ const SEMESTERS = [
   { id: "fa26", name: "Fall 2026" },
 ];
 
+function normalizeSemesterForSync(university: string, semesterId: string): string {
+  const sem = semesterId.toLowerCase();
+  const year = Number((sem.match(/\d{2}/)?.[0] || "25"));
+
+  if (university === "cau" || university === "cau-sport") {
+    if (sem.startsWith("wi") || sem.startsWith("fa") || sem.includes("winter") || sem.includes("fall")) {
+      return `${university}:w${year}`;
+    }
+    if (sem.startsWith("sp") || sem.startsWith("su") || sem.includes("spring") || sem.includes("summer")) {
+      return `${university}:s${year}`;
+    }
+  }
+
+  return `${university}:${semesterId}`;
+}
+
 export default function SystemMaintenanceCard() {
   const [isPending, startTransition] = useTransition();
   const [selectedUnis, setSelectedUnis] = useState<string[]>(["mit"]);
@@ -55,28 +71,33 @@ export default function SystemMaintenanceCard() {
         let totalCount = 0;
         let successCount = 0;
         const errors: string[] = [];
-        const expectedRuns = selectedUnis.length * selectedSems.length;
-        const runs: Array<{ label: string; count: number; ok: boolean; error?: string }> = [];
-
+        const dedupedRunMap = new Map<string, { uni: string; sem: string }>();
         for (const uni of selectedUnis) {
           for (const sem of selectedSems) {
-            const result = await runManualScraperAction({
-              university: uni,
-              semester: sem,
-              forceUpdate,
-            });
-            const label = `${uni.toUpperCase()} ${sem.toUpperCase()}`;
+            dedupedRunMap.set(normalizeSemesterForSync(uni, sem), { uni, sem });
+          }
+        }
+        const dedupedRuns = Array.from(dedupedRunMap.values());
+        const expectedRuns = dedupedRuns.length;
+        const runs: Array<{ label: string; count: number; ok: boolean; error?: string }> = [];
 
-            if (result.success) {
-              const count = result.count || 0;
-              totalCount += count;
-              successCount++;
-              runs.push({ label, count, ok: true });
-            } else {
-              const error = result.error || "Unknown error";
-              errors.push(`${label}: ${error}`);
-              runs.push({ label, count: 0, ok: false, error });
-            }
+        for (const { uni, sem } of dedupedRuns) {
+          const result = await runManualScraperAction({
+            university: uni,
+            semester: sem,
+            forceUpdate,
+          });
+          const label = `${uni.toUpperCase()} ${sem.toUpperCase()}`;
+
+          if (result.success) {
+            const count = result.count || 0;
+            totalCount += count;
+            successCount++;
+            runs.push({ label, count, ok: true });
+          } else {
+            const error = result.error || "Unknown error";
+            errors.push(`${label}: ${error}`);
+            runs.push({ label, count: 0, ok: false, error });
           }
         }
         

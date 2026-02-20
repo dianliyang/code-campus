@@ -14,22 +14,31 @@ export default function ProjectsSeminarsToolbar({ categories, semesters }: Proje
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const view = searchParams.get("view") === "grid" ? "grid" : "list";
-  const category = searchParams.get("category") || "";
-  const semester = searchParams.get("semester") || "";
+  const selectedCategories = searchParams.get("category")?.split(",").filter(Boolean) || [];
+  const selectedSemesters = searchParams.get("semester")?.split(",").filter(Boolean) || [];
   const sort = searchParams.get("sort") || "title";
   const lastPushedQuery = useRef(searchParams.get("q") || "");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersRef = useRef<HTMLDivElement>(null);
 
-  const pushWith = (patch: Record<string, string | null>) => {
+  const pushWith = (patch: Record<string, string | string[] | null>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(patch).forEach(([key, value]) => {
-      if (!value) params.delete(key);
-      else params.set(key, value);
+      if (Array.isArray(value)) {
+        if (value.length === 0) params.delete(key);
+        else params.set(key, value.join(","));
+      } else if (!value) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
     });
     params.set("page", "1");
     router.push(`?${params.toString()}`, { scroll: false });
   };
+
+  const toggleItem = (list: string[], value: string) =>
+    list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 
   useEffect(() => {
     const urlQuery = searchParams.get("q") || "";
@@ -110,47 +119,37 @@ export default function ProjectsSeminarsToolbar({ categories, semesters }: Proje
           </button>
           {filtersOpen ? (
             <div className="absolute right-0 z-30 mt-1.5 w-[320px] rounded-md border border-[#e1e1e1] bg-white p-3 shadow-sm">
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7a7a]">Category</p>
-                <select
-                  value={category}
-                  onChange={(e) => pushWith({ category: e.target.value || null })}
-                  className="h-8 w-full appearance-none rounded-md border border-[#d7d7d7] bg-white px-2 pr-7 text-[13px] font-medium text-[#454545] outline-none transition-colors hover:border-[#c7c7c7] focus:border-[#bcbcbc]"
-                  style={{
-                    backgroundImage:
-                      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23909090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 8px center",
-                  }}
-                >
-                  <option value="">All categories</option>
+                <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
                   {categories.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
+                    <label key={name} className="flex items-center gap-2 text-[13px] text-[#444]">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(name)}
+                        onChange={() => pushWith({ category: toggleItem(selectedCategories, name) })}
+                        className="h-3.5 w-3.5 rounded border-[#cfcfcf] accent-[#2f2f2f]"
+                      />
+                      <span>{name}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
-              <div className="mt-3 space-y-1">
+              <div className="mt-3 space-y-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7a7a]">Semesters</p>
-                <select
-                  value={semester}
-                  onChange={(e) => pushWith({ semester: e.target.value || null })}
-                  className="h-8 w-full appearance-none rounded-md border border-[#d7d7d7] bg-white px-2 pr-7 text-[13px] font-medium text-[#454545] outline-none transition-colors hover:border-[#c7c7c7] focus:border-[#bcbcbc]"
-                  style={{
-                    backgroundImage:
-                      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23909090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 8px center",
-                  }}
-                >
-                  <option value="">All semesters</option>
+                <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
                   {semesters.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
+                    <label key={name} className="flex items-center gap-2 text-[13px] text-[#444]">
+                      <input
+                        type="checkbox"
+                        checked={selectedSemesters.includes(name)}
+                        onChange={() => pushWith({ semester: toggleItem(selectedSemesters, name) })}
+                        className="h-3.5 w-3.5 rounded border-[#cfcfcf] accent-[#2f2f2f]"
+                      />
+                      <span>{name}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
             </div>
           ) : null}

@@ -54,7 +54,8 @@ export abstract class BaseScraper {
 
   async retrieve(): Promise<Course[]> {
     const links = await this.links();
-    console.log(`[${this.name}] Processing ${links.length} links...`);
+    const dedupedLinks = Array.from(new Set(links));
+    console.log(`[${this.name}] Processing ${dedupedLinks.length} links${dedupedLinks.length !== links.length ? ` (deduped from ${links.length})` : ""}...`);
 
     const upToDateCodes = new Set<string>();
     if (this.db && this.semester) {
@@ -82,7 +83,7 @@ export abstract class BaseScraper {
 
     const limit = pLimit(5);
     const results = await Promise.all(
-      links.map(link =>
+      dedupedLinks.map(link =>
         limit(async () => {
           const html = await this.fetchPage(link);
           if (html) {

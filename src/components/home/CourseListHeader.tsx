@@ -27,9 +27,7 @@ export default function CourseListHeader({ viewMode, setViewMode, dict }: Course
   };
 
   const openFilters = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("filters", "open");
-    router.push(`?${params.toString()}`, { scroll: false });
+    window.dispatchEvent(new Event("course-filters:open"));
   };
 
   useEffect(() => {

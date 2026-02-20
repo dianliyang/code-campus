@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { University, Field } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
@@ -16,7 +17,7 @@ interface SidebarProps {
 export default function Sidebar({ universities, fields, semesters, enrolledCount, dict }: SidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const filtersOpen = searchParams.get("filters") === "open";
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const selectedUniversities = searchParams.get("universities")?.split(",").filter(Boolean) || [];
   const selectedFields = searchParams.get("fields")?.split(",").filter(Boolean) || [];
@@ -46,10 +47,19 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
   const totalFilters = selectedUniversities.length + selectedFields.length + selectedSemesters.length + (showEnrolledOnly ? 1 : 0);
 
   const closeDrawer = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("filters");
-    router.replace(`?${params.toString()}`, { scroll: false });
+    setFiltersOpen(false);
   };
+
+  useEffect(() => {
+    const openHandler = () => setFiltersOpen(true);
+    const closeHandler = () => setFiltersOpen(false);
+    window.addEventListener("course-filters:open", openHandler);
+    window.addEventListener("course-filters:close", closeHandler);
+    return () => {
+      window.removeEventListener("course-filters:open", openHandler);
+      window.removeEventListener("course-filters:close", closeHandler);
+    };
+  }, []);
 
   if (!filtersOpen) return null;
 

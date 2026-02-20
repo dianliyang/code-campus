@@ -15,6 +15,7 @@ interface CourseDetailContentProps {
   availableTopics: string[];
   availableSemesters: string[];
   studyPlans: EditableStudyPlan[];
+  projectSeminarRef?: { id: number; category: string } | null;
 }
 
 export default function CourseDetailContent({
@@ -24,6 +25,7 @@ export default function CourseDetailContent({
   availableTopics,
   availableSemesters,
   studyPlans,
+  projectSeminarRef = null,
 }: CourseDetailContentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isGeneratingPlans, setIsGeneratingPlans] = useState(false);
@@ -184,6 +186,7 @@ export default function CourseDetailContent({
             studyPlans={studyPlans}
             isEditing={isEditing}
             onEditingChange={setIsEditing}
+            projectSeminarRef={projectSeminarRef}
           />
 
           {(hasStudyPlans || course.details?.schedule || (course.instructors && course.instructors.length > 0)) && (

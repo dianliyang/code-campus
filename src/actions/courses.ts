@@ -4,7 +4,7 @@ import { createAdminClient, getUser, createClient, mapCourseFromRow } from "@/li
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
-import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
+import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT } from "@/lib/ai/prompts";
 import { Course } from "@/types";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
@@ -1195,7 +1195,10 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
     ? (GEMINI_MODEL_SET.has(selectedModel) ? selectedModel : "gemini-2.0-flash")
     : (PERPLEXITY_MODEL_SET.has(selectedModel) ? selectedModel : "sonar");
   const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
-  const topicsTemplate = (profile?.ai_topics_prompt_template || "").trim() || DEFAULT_TOPICS_PROMPT;
+  const topicsTemplate = (profile?.ai_topics_prompt_template || "").trim();
+  if (!topicsTemplate) {
+    throw new Error("Topic prompt is not configured. Set Topic Classification Logic in Settings first.");
+  }
 
   const { data: rows, error: rowsError } = await supabase
     .from("courses")

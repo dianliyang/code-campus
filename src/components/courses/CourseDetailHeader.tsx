@@ -1,22 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PenSquare, Loader2, Trash2 } from "lucide-react";
+import { PenSquare, Loader2, Trash2, ArrowUpRight } from "lucide-react";
 
 interface CourseDetailHeaderProps {
   course: Course;
   isEditing?: boolean;
   onToggleEdit?: () => void;
+  projectSeminarRef?: { id: number; category: string } | null;
 }
 
 export default function CourseDetailHeader({
   course,
   isEditing = false,
   onToggleEdit,
+  projectSeminarRef = null,
 }: CourseDetailHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -95,6 +98,15 @@ export default function CourseDetailHeader({
       </div>
 
       <div className="flex flex-wrap gap-1.5 pt-1">
+        {projectSeminarRef ? (
+          <Link
+            href={`/projects-seminars/${projectSeminarRef.id}`}
+            className="inline-flex items-center gap-1 text-xs font-medium bg-white text-[#3e3e3e] px-2 py-0.5 rounded-full border border-[#dcdcdc] hover:bg-[#f7f7f7] transition-colors"
+          >
+            View {projectSeminarRef.category}
+            <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        ) : null}
         {course.fields.map((field) => (
           <span
             key={field}

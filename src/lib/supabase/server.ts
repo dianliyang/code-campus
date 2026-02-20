@@ -73,6 +73,42 @@ export const getUser = cache(async () => {
   return user;
 });
 
+function normalizeExternalUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^www\./i.test(trimmed)) return `https://${trimmed}`;
+  return "";
+}
+
+function extractContentLinks(input: string): { cleanText: string; links: string[] } {
+  const links: string[] = [];
+  let text = input || "";
+
+  text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gi, (_, label: string, url: string) => {
+    const normalized = normalizeExternalUrl(url);
+    if (normalized) links.push(normalized);
+    return label;
+  });
+
+  text = text.replace(/((?:https?:\/\/|www\.)[^\s<>"')\]]+)/gi, (match: string) => {
+    const normalized = normalizeExternalUrl(match);
+    if (normalized) links.push(normalized);
+    return "";
+  });
+
+  const cleanText = text
+    .split("\n")
+    .map((line) => line.replace(/\s{2,}/g, " ").trim())
+    .filter(Boolean)
+    .join("\n");
+
+  return {
+    cleanText: cleanText || "",
+    links: Array.from(new Set(links)),
+  };
+}
+
 export class SupabaseDatabase {
   async saveCourses(
     courses: ScrapedCourse[],
@@ -171,8 +207,33 @@ export class SupabaseDatabase {
       return;
     }
 
+    const upsertCourseCodes = coursesForUpsert.map((c) => c.courseCode);
+    const { data: existingCourseRows } = await supabase
+      .from("courses")
+      .select("course_code, description, related_urls")
+      .eq("university", university)
+      .in("course_code", upsertCourseCodes);
+    const existingCourseByCode = new Map(
+      (existingCourseRows || []).map((row) => [row.course_code, row]),
+    );
+
     // Separate courses into those that need full update and those that are partially scraped
     const toUpsert = coursesForUpsert.map((c) => {
+      const existing = existingCourseByCode.get(c.courseCode);
+      const rawDescription = c.description || existing?.description || "";
+      const { cleanText: cleanedDescription, links: extractedLinks } = extractContentLinks(rawDescription);
+      const detailsRelatedLinks =
+        c.details && typeof c.details === "object" && Array.isArray((c.details as Record<string, unknown>).relatedUrls)
+          ? ((c.details as Record<string, unknown>).relatedUrls as unknown[])
+              .filter((value): value is string => typeof value === "string")
+              .map((value) => normalizeExternalUrl(value))
+              .filter(Boolean)
+          : [];
+      const existingRelatedLinks = Array.isArray(existing?.related_urls)
+        ? existing.related_urls.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+        : [];
+      const mergedRelatedLinks = Array.from(new Set([...existingRelatedLinks, ...detailsRelatedLinks, ...extractedLinks]));
+
       const payload: {
         university: string;
         course_code: string;
@@ -192,6 +253,7 @@ export class SupabaseDatabase {
         details?: Json;
         latest_semester?: Json;
         instructors?: string[];
+        related_urls?: string[];
       } = {
         university: university,
         course_code: c.courseCode,
@@ -209,6 +271,10 @@ export class SupabaseDatabase {
         is_internal: c.isInternal || false,
       };
 
+      if (mergedRelatedLinks.length > 0) {
+        payload.related_urls = mergedRelatedLinks;
+      }
+
       // Extract instructors from details into top-level column
       const detailsInstructors = (c.details as Record<string, unknown>)?.instructors;
       if (Array.isArray(detailsInstructors) && detailsInstructors.length > 0) {
@@ -218,7 +284,7 @@ export class SupabaseDatabase {
       // For force update, always apply incoming description/details/latest semester.
       // Otherwise keep the previous partial-scrape protection.
       if (forceUpdate || !c.details?.is_partially_scraped) {
-        payload.description = c.description;
+        payload.description = cleanedDescription || c.description;
         payload.details = c.details as Json;
         if (c.semesters && c.semesters.length > 0) {
           payload.latest_semester = { term: c.semesters[0].term, year: c.semesters[0].year };
@@ -409,20 +475,72 @@ export class SupabaseDatabase {
     console.log(`[Supabase] Saving ${items.length} projects/seminars for ${university}...`);
 
     const supabase = createAdminClient();
+    const courseCodes = Array.from(new Set(items.map((item) => item.courseCode).filter(Boolean)));
+    const { data: existingRows } = await supabase
+      .from("projects_seminars")
+      .select("course_code, department, prerequisites, contents, schedule, related_links")
+      .eq("university", university)
+      .in("course_code", courseCodes);
+    const existingByCode = new Map(
+      (existingRows || []).map((row) => [row.course_code, row]),
+    );
 
-    const toUpsert = items.map((c) => ({
-      university: university,
-      course_code: c.courseCode,
-      category: (c.details as any)?.category || "Other", // eslint-disable-line @typescript-eslint/no-explicit-any
-      title: c.title,
-      description: c.description,
-      url: c.url,
-      instructors: (c.details as any)?.instructors || ([] as string[]), // eslint-disable-line @typescript-eslint/no-explicit-any
-      credit: c.credit,
-      latest_semester: c.semesters?.[0] ? { term: c.semesters[0].term, year: c.semesters[0].year } : null,
-      details: c.details as Json,
-      updated_at: new Date().toISOString(),
-    }));
+    const toUpsert = items.map((c) => {
+      const rawDetails =
+        c.details && typeof c.details === "object"
+          ? (c.details as Record<string, unknown>)
+          : {};
+      const remainingDetails: Record<string, unknown> = { ...rawDetails };
+      delete remainingDetails.department;
+      delete remainingDetails.prerequisites;
+      delete remainingDetails.prerequisites_organisational_information;
+      delete remainingDetails.contents;
+      delete remainingDetails.related_links;
+      delete remainingDetails.schedule;
+      const scheduleValue =
+        rawDetails.schedule && typeof rawDetails.schedule === "object" && !Array.isArray(rawDetails.schedule)
+          ? (rawDetails.schedule as Record<string, unknown>)
+          : {};
+      const existing = existingByCode.get(c.courseCode);
+      const rawContentValue = c.description || (rawDetails.contents as string) || existing?.contents || "";
+      const { cleanText: cleanedContents, links: extractedLinks } = extractContentLinks(rawContentValue);
+      const detailsRelatedLinks =
+        Array.isArray(rawDetails.relatedUrls)
+          ? (rawDetails.relatedUrls as unknown[])
+              .filter((value): value is string => typeof value === "string")
+              .map((value) => normalizeExternalUrl(value))
+              .filter(Boolean)
+          : [];
+      const existingLinks = Array.isArray(existing?.related_links)
+        ? existing.related_links.filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+        : [];
+      const mergedRelatedLinks = Array.from(new Set([...existingLinks, ...detailsRelatedLinks, ...extractedLinks]));
+
+      return {
+        university: university,
+        course_code: c.courseCode,
+        category: (c.details as any)?.category || "Other", // eslint-disable-line @typescript-eslint/no-explicit-any
+        title: c.title,
+        description: c.description,
+        url: c.url,
+        instructors: (c.details as any)?.instructors || ([] as string[]), // eslint-disable-line @typescript-eslint/no-explicit-any
+        credit: c.credit,
+        department: c.department || (rawDetails.department as string) || existing?.department || null,
+        prerequisites:
+          c.corequisites ||
+          (rawDetails.prerequisites as string) ||
+          (rawDetails.prerequisites_organisational_information as string) ||
+          existing?.prerequisites ||
+          null,
+        contents: cleanedContents || null,
+        related_links: mergedRelatedLinks,
+        schedule:
+          (((Object.keys(scheduleValue).length > 0 ? scheduleValue : (existing?.schedule as Record<string, unknown> | null)) || {}) as Json),
+        latest_semester: c.semesters?.[0] ? { term: c.semesters[0].term, year: c.semesters[0].year } : null,
+        details: remainingDetails as Json,
+        updated_at: new Date().toISOString(),
+      };
+    });
 
     const { error } = await supabase
       .from("projects_seminars")
@@ -477,6 +595,46 @@ export class SupabaseDatabase {
     const map = new Map<string, { term: string, year: number } | null>();
     (data || []).forEach(row => {
       map.set(row.course_code, row.latest_semester as { term: string, year: number } | null);
+    });
+    return map;
+  }
+
+  async getProjectSeminarDepartmentStatus(university: string): Promise<Map<string, boolean>> {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("projects_seminars")
+      .select("course_code, department")
+      .eq("university", university);
+
+    if (error) {
+      console.error(`[Supabase] Error fetching project/seminar department status for ${university}:`, error);
+      return new Map();
+    }
+
+    const map = new Map<string, boolean>();
+    (data || []).forEach((row) => {
+      const hasDepartment = typeof row.department === "string" && row.department.trim().length > 0;
+      map.set(row.course_code, hasDepartment);
+    });
+    return map;
+  }
+
+  async getCourseDepartmentStatus(university: string): Promise<Map<string, boolean>> {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("courses")
+      .select("course_code, department")
+      .eq("university", university);
+
+    if (error) {
+      console.error(`[Supabase] Error fetching course department status for ${university}:`, error);
+      return new Map();
+    }
+
+    const map = new Map<string, boolean>();
+    (data || []).forEach((row) => {
+      const hasDepartment = typeof row.department === "string" && row.department.trim().length > 0;
+      map.set(row.course_code, hasDepartment);
     });
     return map;
   }

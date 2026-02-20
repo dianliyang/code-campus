@@ -26,6 +26,9 @@ export default async function SettingsPage() {
 
   const selectVariants = [
     "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_topics_prompt_template",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template",
+    "ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template",
+    "ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template",
     "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template",
     "ai_default_model, ai_web_search_enabled, ai_prompt_template",
     "ai_web_search_enabled, ai_prompt_template",

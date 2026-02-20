@@ -232,14 +232,19 @@ export type Database = {
       projects_seminars: {
         Row: {
           category: string
+          contents: string | null
           course_code: string
           created_at: string | null
           credit: number | null
+          department: string | null
           description: string | null
           details: Json | null
           id: number
           instructors: string[] | null
           latest_semester: Json | null
+          prerequisites: string | null
+          related_links: string[] | null
+          schedule: Json | null
           search_vector: unknown
           title: string
           university: string
@@ -248,14 +253,19 @@ export type Database = {
         }
         Insert: {
           category: string
+          contents?: string | null
           course_code: string
           created_at?: string | null
           credit?: number | null
+          department?: string | null
           description?: string | null
           details?: Json | null
           id?: number
           instructors?: string[] | null
           latest_semester?: Json | null
+          prerequisites?: string | null
+          related_links?: string[] | null
+          schedule?: Json | null
           search_vector?: unknown
           title: string
           university: string
@@ -264,14 +274,19 @@ export type Database = {
         }
         Update: {
           category?: string
+          contents?: string | null
           course_code?: string
           created_at?: string | null
           credit?: number | null
+          department?: string | null
           description?: string | null
           details?: Json | null
           id?: number
           instructors?: string[] | null
           latest_semester?: Json | null
+          prerequisites?: string | null
+          related_links?: string[] | null
+          schedule?: Json | null
           search_vector?: unknown
           title?: string
           university?: string

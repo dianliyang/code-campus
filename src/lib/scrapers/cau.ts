@@ -45,6 +45,82 @@ export class CAU extends BaseScraper {
     return u.toString();
   }
 
+  private toAbsoluteUrl(rawUrl: string): string {
+    if (!rawUrl) return "";
+    return rawUrl.startsWith("http")
+      ? rawUrl
+      : `https://univis.uni-kiel.de/${rawUrl.replace(/&amp;/g, "&")}`;
+  }
+
+  private collectRelatedLinksFromContainer(container: cheerio.Cheerio<any>): string[] { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const ignoredPatterns = [
+      /dsc=anew\/lecture_view/i,
+      /dsc=anew\/tel_view/i,
+      /dsc=anew\/room_view/i,
+      /dsc=anew\/lecture\b/i,
+      /__e=\d+/i,
+    ];
+
+    const links = container
+      .find("a[href]")
+      .map((_, a) => (a.attribs?.href || "").trim())
+      .get()
+      .map((href) => this.toAbsoluteUrl(href))
+      .filter((href) => /^https?:\/\//i.test(href))
+      .filter((href) => !ignoredPatterns.some((pattern) => pattern.test(href)))
+      .filter((href) => !/^mailto:/i.test(href))
+      .filter((href) => !/^javascript:/i.test(href));
+
+    return Array.from(new Set(links));
+  }
+
+  private extractDepartmentFromDetailHtml(html: string): string | null {
+    if (!html) return null;
+    const $ = cheerio.load(html);
+    let department: string | null = null;
+    const sanitizeDepartment = (value: string): string => {
+      return value
+        .replace(/\s+/g, " ")
+        .replace(/\bUnivIS is a product of Config eG\b.*$/i, "")
+        .replace(/\bOutdated referring page\b.*$/i, "")
+        .trim();
+    };
+
+    $("dt").each((_, dt) => {
+      if (department) return;
+      const label = $(dt).text().trim().toLowerCase();
+      const inlineAnchorText = sanitizeDepartment($(dt).find("a").first().text().trim());
+      const dtText = sanitizeDepartment(
+        $(dt)
+          .clone()
+          .children("a")
+          .remove()
+          .end()
+          .text()
+          .replace(/^[^:]*:\s*/i, "")
+          .trim(),
+      );
+      const ddText = sanitizeDepartment($(dt).next("dd").text().trim());
+      const value = inlineAnchorText || dtText || ddText;
+      const isDepartmentLabel =
+        label.includes("department") ||
+        label.includes("institut") ||
+        label.includes("fach") ||
+        label.includes("chair") ||
+        label.includes("arbeitsgruppe") ||
+        label.includes("institution") ||
+        label.includes("einrichtung");
+      if (isDepartmentLabel && value) department = value;
+    });
+
+    if (department) return department;
+
+    const bodyText = $("body").text().replace(/\s+/g, " ");
+    const directMatch = bodyText.match(/(?:department|institut|chair)\s*:\s*([^|,;]+)/i);
+    const cleaned = directMatch?.[1] ? sanitizeDepartment(directMatch[1]) : "";
+    return cleaned || null;
+  }
+
   async fetchPage(url: string, retries = 3): Promise<string> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
@@ -158,15 +234,27 @@ export class CAU extends BaseScraper {
           else if (courseCode.startsWith("P") || courseCode.startsWith("PE")) type = "Practical";
 
           const course: Course = {
-            university: "CAU Kiel", courseCode, title, department: "Computer Science",
+            university: "CAU Kiel", courseCode, title,
             semesters: [{ term, year }], level: "graduate",
             details: { internalId, schedule: {}, category, type, rawUnits: 0 } as any // eslint-disable-line @typescript-eslint/no-explicit-any
           };
+
+          const rowRelatedLinks = this.collectRelatedLinksFromContainer(td);
+          if (rowRelatedLinks.length > 0) {
+            (course.details as Record<string, unknown>).relatedUrls = rowRelatedLinks;
+          }
 
           td.find("dl dt").each((_, dt) => {
             const label = $(dt).text().trim().toLowerCase();
             const dd = $(dt).next("dd");
             const value = dd.text().trim();
+            const isDepartmentLabel =
+              label.includes("department") ||
+              label.includes("institut") ||
+              label.includes("fach") ||
+              label.includes("chair") ||
+              label.includes("arbeitsgruppe") ||
+              label.includes("institution");
             if (label.includes("dozent") || label.includes("lecturer")) {
               (course.details as any).instructors = value.split(",").map(i => i.trim()).filter(i => i && i !== "N.N." && i !== "N. N."); // eslint-disable-line @typescript-eslint/no-explicit-any
             } else if (label.includes("angaben") || label.includes("details")) {
@@ -192,8 +280,21 @@ export class CAU extends BaseScraper {
               if (value.toLowerCase().includes("englisch") || value.toLowerCase().includes("english")) (course.details as any).isEnglish = true; // eslint-disable-line @typescript-eslint/no-explicit-any
             } else if (label.includes("voraussetzungen") || label.includes("prerequisites")) {
               course.corequisites = value;
+              (course.details as any).prerequisites = value; // eslint-disable-line @typescript-eslint/no-explicit-any
             } else if (label.includes("inhalt") || label.includes("contents")) {
               course.description = value;
+              (course.details as any).contents = value; // eslint-disable-line @typescript-eslint/no-explicit-any
+              const contentsRelatedLinks = this.collectRelatedLinksFromContainer(dd);
+              if (contentsRelatedLinks.length > 0) {
+                const current =
+                  Array.isArray((course.details as Record<string, unknown>).relatedUrls)
+                    ? ((course.details as Record<string, unknown>).relatedUrls as string[])
+                    : [];
+                (course.details as Record<string, unknown>).relatedUrls = Array.from(new Set([...current, ...contentsRelatedLinks]));
+              }
+            } else if (isDepartmentLabel) {
+              course.department = value || course.department;
+              (course.details as any).department = value || null; // eslint-disable-line @typescript-eslint/no-explicit-any
             } else if (label.includes("termine") || label.includes("dates")) {
               if (value) {
                   const cType = (course.details as any).type || "Lecture"; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -214,7 +315,13 @@ export class CAU extends BaseScraper {
           
           if (hasEnglishTag || (hasEnglishKeywords && !hasGermanChars && !hasGermanWords)) {
             const rawUrl = titleA.attr("href");
-            if (rawUrl) course.url = this.sanitizeCourseUrl(rawUrl);
+            if (rawUrl) {
+              const absoluteRawUrl = rawUrl.startsWith("http")
+                ? rawUrl
+                : `https://univis.uni-kiel.de/${rawUrl.replace(/&amp;/g, "&")}`;
+              course.url = this.sanitizeCourseUrl(rawUrl);
+              (course.details as Record<string, unknown>).rawDetailUrl = absoluteRawUrl;
+            }
             courses.push(course);
           }
         }
@@ -235,6 +342,67 @@ export class CAU extends BaseScraper {
       }
     }
     const merged = this.mergeCourses(allItems);
+    const projectTableCategories = new Set([
+      "Seminar",
+      "Advanced Project",
+      "Involvement in a working group",
+      "Open Elective",
+      "Colloquia and study groups",
+      "Master Thesis Supervision Seminar",
+    ]);
+    const isProjectSeminarWorkshop = (item: Course) => {
+      const category =
+        item.details && typeof item.details === "object" && typeof item.details.category === "string"
+          ? item.details.category
+          : "";
+      const title = (item.title || "").toLowerCase();
+      return (
+        projectTableCategories.has(category) ||
+        title.includes("project") ||
+        title.includes("seminar") ||
+        title.includes("workshop")
+      );
+    };
+
+    let projectSeminarDepartmentStatus = new Map<string, boolean>();
+    let courseDepartmentStatus = new Map<string, boolean>();
+    if (this.db) {
+      projectSeminarDepartmentStatus = await this.db.getProjectSeminarDepartmentStatus("CAU Kiel");
+      courseDepartmentStatus = await this.db.getCourseDepartmentStatus("CAU Kiel");
+    }
+
+    const missingDepartmentItems = merged.filter((item) => {
+      const detailsDepartment =
+        item.details && typeof item.details === "object"
+          ? ((item.details as Record<string, unknown>).department as string | undefined)
+          : undefined;
+      if (item.department || detailsDepartment || !item.url) return false;
+      const inProjectsTable = isProjectSeminarWorkshop(item);
+      const dbStatusMap = inProjectsTable ? projectSeminarDepartmentStatus : courseDepartmentStatus;
+      const hasDepartmentInDb = dbStatusMap.get(item.courseCode);
+      // Fetch detail only when this is a new row or existing row without department.
+      return hasDepartmentInDb !== true;
+    });
+
+    if (missingDepartmentItems.length > 0) {
+      await Promise.all(
+        missingDepartmentItems.map(async (item) => {
+          const rawDetailUrl =
+            item.details && typeof item.details === "object"
+              ? ((item.details as Record<string, unknown>).rawDetailUrl as string | undefined)
+              : undefined;
+          const detailUrl = rawDetailUrl || item.url;
+          if (!detailUrl) return;
+          const detailHtml = await this.fetchPage(detailUrl);
+          const department = this.extractDepartmentFromDetailHtml(detailHtml);
+          if (!department) return;
+          item.department = department;
+          if (!item.details || typeof item.details !== "object") item.details = {};
+          (item.details as Record<string, unknown>).department = department;
+        }),
+      );
+    }
+
     console.log(`[${this.name}] Found ${merged.length} English academic items after merging.`);
     return merged;
   }
@@ -347,6 +515,15 @@ export class CAU extends BaseScraper {
         const tInstr = (tDetails.instructors || []).filter((i: string) => i && i !== "N.N." && i !== "N. N.");
         sInstr.forEach((i: string) => { if (!tInstr.includes(i)) tInstr.push(i); });
         tDetails.instructors = tInstr;
+
+        const sLinks = Array.isArray(sDetails.relatedUrls) ? (sDetails.relatedUrls as string[]) : [];
+        const tLinks = Array.isArray(tDetails.relatedUrls) ? (tDetails.relatedUrls as string[]) : [];
+        tDetails.relatedUrls = Array.from(new Set([...tLinks, ...sLinks]));
+
+        if (!target.url && source.url) target.url = source.url;
+        if (!target.department && source.department) target.department = source.department;
+        if (!tDetails.department && sDetails.department) tDetails.department = sDetails.department;
+        if (!tDetails.rawDetailUrl && sDetails.rawDetailUrl) tDetails.rawDetailUrl = sDetails.rawDetailUrl;
 
         if (!target.description) target.description = source.description;
       } else {

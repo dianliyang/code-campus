@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS, GEMINI_MODELS, PERPLEXITY_MODELS } from "@/lib/ai/models";
 import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
@@ -60,57 +60,72 @@ export default function AISettingsCard({
   const [studyPlanPromptTemplate, setStudyPlanPromptTemplate] = useState(initialStudyPlanPromptTemplate || DEFAULT_STUDY_PLAN_PROMPT);
   const [topicsPromptTemplate, setTopicsPromptTemplate] = useState(initialTopicsPromptTemplate || DEFAULT_TOPICS_PROMPT);
   
-  const [isPending, startTransition] = useTransition();
+  const [isSavingProvider, setIsSavingProvider] = useState(false);
+  const [isSavingDescription, setIsSavingDescription] = useState(false);
+  const [isSavingStudyPlan, setIsSavingStudyPlan] = useState(false);
+  const [isSavingTopics, setIsSavingTopics] = useState(false);
   const [status, setStatus] = useState<Status>({ type: "idle" });
 
   const clearStatus = () => setStatus({ type: "idle" });
 
   const saveProviderSettings = () => {
     clearStatus();
-    startTransition(async () => {
+    setIsSavingProvider(true);
+    void (async () => {
       try {
         await updateAiPreferences({ provider, defaultModel, webSearchEnabled });
         setStatus({ type: "success", message: "Intelligence preferences updated.", panel: "provider" });
       } catch (error) {
         setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "provider" });
+      } finally {
+        setIsSavingProvider(false);
       }
-    });
+    })();
   };
 
   const saveDescriptionPrompt = () => {
     clearStatus();
-    startTransition(async () => {
+    setIsSavingDescription(true);
+    void (async () => {
       try {
         await updateAiPromptTemplates({ descriptionPromptTemplate: promptTemplate });
         setStatus({ type: "success", message: "Metadata instructions updated.", panel: "description" });
       } catch (error) {
         setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "description" });
+      } finally {
+        setIsSavingDescription(false);
       }
-    });
+    })();
   };
 
   const saveStudyPlanPrompt = () => {
     clearStatus();
-    startTransition(async () => {
+    setIsSavingStudyPlan(true);
+    void (async () => {
       try {
         await updateAiPromptTemplates({ studyPlanPromptTemplate });
         setStatus({ type: "success", message: "Scheduling logic updated.", panel: "studyplan" });
       } catch (error) {
         setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "studyplan" });
+      } finally {
+        setIsSavingStudyPlan(false);
       }
-    });
+    })();
   };
 
   const saveTopicsPrompt = () => {
     clearStatus();
-    startTransition(async () => {
+    setIsSavingTopics(true);
+    void (async () => {
       try {
         await updateAiPromptTemplates({ topicsPromptTemplate });
         setStatus({ type: "success", message: "Topic classification logic updated.", panel: "topics" });
       } catch (error) {
         setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "topics" });
+      } finally {
+        setIsSavingTopics(false);
       }
-    });
+    })();
   };
 
   return (
@@ -171,7 +186,7 @@ export default function AISettingsCard({
                   type="checkbox"
                   checked={webSearchEnabled}
                   onChange={(e) => setWebSearchEnabled(e.target.checked)}
-                  disabled={isPending}
+                  disabled={isSavingProvider}
                   className="w-4 h-4 rounded border-gray-300 text-[#1f1f1f] focus:ring-[#1f1f1f] transition-all"
                 />
                 <div>
@@ -184,10 +199,10 @@ export default function AISettingsCard({
             <div className="pt-2">
               <button
                 onClick={saveProviderSettings}
-                disabled={isPending}
+                disabled={isSavingProvider}
                 className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
               >
-                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isSavingProvider ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Sync Engine
               </button>
               <StatusDisplay panel="provider" status={status} />
@@ -224,16 +239,16 @@ export default function AISettingsCard({
             onChange={(e) => setPromptTemplate(e.target.value)}
             className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
             placeholder="ENTER_INSTRUCTION_SET..."
-            disabled={isPending}
+            disabled={isSavingDescription}
           />
 
           <div className="flex flex-col gap-4">
             <button
               onClick={saveDescriptionPrompt}
-              disabled={isPending}
+              disabled={isSavingDescription}
               className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
             >
-              {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {isSavingDescription ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Push Metadata Logic
             </button>
             <StatusDisplay panel="description" status={status} />
@@ -263,16 +278,16 @@ export default function AISettingsCard({
             onChange={(e) => setStudyPlanPromptTemplate(e.target.value)}
             className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
             placeholder="ENTER_INSTRUCTION_SET..."
-            disabled={isPending}
+            disabled={isSavingStudyPlan}
           />
 
           <div className="flex flex-col gap-4">
             <button
               onClick={saveStudyPlanPrompt}
-              disabled={isPending}
+              disabled={isSavingStudyPlan}
               className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
             >
-              {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {isSavingStudyPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Push Schedule Logic
             </button>
             <StatusDisplay panel="studyplan" status={status} />
@@ -302,16 +317,16 @@ export default function AISettingsCard({
             onChange={(e) => setTopicsPromptTemplate(e.target.value)}
             className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
             placeholder="ENTER_INSTRUCTION_SET..."
-            disabled={isPending}
+            disabled={isSavingTopics}
           />
 
           <div className="flex flex-col gap-4">
             <button
               onClick={saveTopicsPrompt}
-              disabled={isPending}
+              disabled={isSavingTopics}
               className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
             >
-              {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {isSavingTopics ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Push Topic Logic
             </button>
             <StatusDisplay panel="topics" status={status} />

@@ -105,6 +105,13 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
     notFound();
   }
 
+  const { data: relatedProjectSeminar } = await supabase
+    .from("projects_seminars")
+    .select("id, category")
+    .eq("university", String(data.university))
+    .eq("course_code", String(data.course_code))
+    .maybeSingle();
+
   const row = data as Record<string, unknown>;
   const course = mapCourseFromRow(row);
   const fieldNames = (row.fields as { fields: { name: string } }[] | null)?.map((f) => f.fields.name) || [];
@@ -140,6 +147,11 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
       availableTopics={topicNamesAll}
       availableSemesters={semesterNamesAll}
       studyPlans={editableStudyPlans}
+      projectSeminarRef={
+        relatedProjectSeminar?.id
+          ? { id: relatedProjectSeminar.id, category: relatedProjectSeminar.category || "Project/Seminar" }
+          : null
+      }
     />
   );
 }

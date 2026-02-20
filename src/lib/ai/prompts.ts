@@ -1,11 +1,6 @@
 export const DEFAULT_COURSE_DESCRIPTION_PROMPT = `
 Course:
 - Title: {{title}}
-- Code: {{course_code}}
-- University: {{university}}
-- Level: {{level}}
-- Prerequisites: {{prerequisites}}
-- Corequisites: {{corequisites}}
 - Existing description: {{description}}
 
 Rewrite and improve this course description for students.

@@ -28,6 +28,7 @@ interface CourseDetailTopSectionProps {
   studyPlans: EditableStudyPlan[];
   isEditing: boolean;
   onEditingChange: (editing: boolean) => void;
+  projectSeminarRef?: { id: number; category: string } | null;
 }
 
 const AI_DESCRIPTION_MARK = "AI Regenerated";
@@ -55,6 +56,7 @@ export default function CourseDetailTopSection({
   studyPlans,
   isEditing,
   onEditingChange,
+  projectSeminarRef = null,
 }: CourseDetailTopSectionProps) {
   const inputClass =
     "h-8 w-full rounded-md border border-[#d8d8d8] bg-white px-2.5 text-[13px] text-[#333] outline-none transition-colors focus:border-[#bcbcbc]";
@@ -240,7 +242,12 @@ export default function CourseDetailTopSection({
 
   return (
     <>
-      <CourseDetailHeader course={course} isEditing={isEditing} onToggleEdit={handleToggleEdit} />
+      <CourseDetailHeader
+        course={course}
+        isEditing={isEditing}
+        onToggleEdit={handleToggleEdit}
+        projectSeminarRef={projectSeminarRef}
+      />
 
       <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
         <div className="flex items-center justify-between gap-4 mb-3">

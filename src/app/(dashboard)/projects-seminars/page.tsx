@@ -2,6 +2,7 @@ import { ExternalLink } from "lucide-react";
 import Pagination from "@/components/home/Pagination";
 import { createClient } from "@/lib/supabase/server";
 import ProjectsSeminarsToolbar from "@/components/projects-seminars/ProjectsSeminarsToolbar";
+import Link from "next/link";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -35,7 +36,7 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
 
   let dataQuery = supabase
     .from("projects_seminars")
-    .select("id, title, course_code, category, credit, url, latest_semester, university", { count: "exact" });
+    .select("id, title, course_code, category, credit, department, url, latest_semester, university", { count: "exact" });
 
   if (query) {
     dataQuery = dataQuery.textSearch("search_vector", query, { type: "websearch" });
@@ -100,9 +101,10 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
             <>
               <div className="hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide">
                 <div className="flex-1 min-w-0">S&P</div>
-                <div className="w-[18%]">Category</div>
-                <div className="w-[12%]">Credit</div>
-                <div className="w-[14%]">Semester</div>
+                <div className="w-[14%]">Category</div>
+                <div className="w-[16%]">Department</div>
+                <div className="w-[10%]">Credit</div>
+                <div className="w-[12%]">Semester</div>
                 <div className="w-[8%] text-right pr-1">Action</div>
               </div>
               <div>
@@ -116,14 +118,19 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
                       } hover:bg-[#f2f2f2]`}
                     >
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-[14px] font-medium text-[#222] truncate">{item.title}</h3>
+                        <h3 className="text-[14px] font-medium text-[#222] truncate">
+                          <Link href={`/projects-seminars/${item.id}`} className="hover:text-black transition-colors">
+                            {item.title}
+                          </Link>
+                        </h3>
                         <p className="text-[12px] text-[#717171] mt-0.5">
                           {item.course_code} · {item.university}
                         </p>
                       </div>
-                      <div className="md:w-[18%] text-[12px] text-[#555]">{item.category}</div>
-                      <div className="md:w-[12%] text-[12px] text-[#555]">{item.credit ?? "-"}</div>
-                      <div className="md:w-[14%] text-[12px] text-[#555]">
+                      <div className="md:w-[14%] text-[12px] text-[#555]">{item.category}</div>
+                      <div className="md:w-[16%] text-[12px] text-[#555] truncate">{item.department || "-"}</div>
+                      <div className="md:w-[10%] text-[12px] text-[#555]">{item.credit ?? "-"}</div>
+                      <div className="md:w-[12%] text-[12px] text-[#555]">
                         {semester.term && semester.year ? `${semester.term} ${semester.year}` : "-"}
                       </div>
                       <div className="md:w-[8%] flex md:justify-end">
@@ -156,7 +163,11 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
                   <article key={item.id} className="bg-[#fafafa] border border-[#e3e3e3] rounded-xl p-4 h-full flex flex-col">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-slate-900 line-clamp-2">{item.title}</h3>
+                        <h3 className="text-sm font-semibold text-slate-900 line-clamp-2">
+                          <Link href={`/projects-seminars/${item.id}`} className="hover:text-black transition-colors">
+                            {item.title}
+                          </Link>
+                        </h3>
                         <p className="text-xs text-slate-500 truncate mt-0.5">{item.course_code} · {item.university}</p>
                       </div>
                       {item.url ? (

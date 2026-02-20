@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import Pagination from "@/components/home/Pagination";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import ProjectsSeminarsToolbar from "@/components/projects-seminars/ProjectsSeminarsToolbar";
 import Link from "next/link";
 import ProjectSeminarEnrollButton from "@/components/projects-seminars/ProjectSeminarEnrollButton";
@@ -35,8 +35,9 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
   const view = readParam(params, "view") === "grid" ? "grid" : "list";
 
   const supabase = await createClient();
+  const admin = createAdminClient();
 
-  let dataQuery = supabase
+  let dataQuery = admin
     .from("projects_seminars")
     .select("id, title, course_code, category, credit, url, latest_semester, university, details", { count: "exact" });
 
@@ -68,7 +69,7 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
 
   const [{ data: items, count }, { data: categories }] = await Promise.all([
     dataQuery.range(offset, offset + perPage - 1),
-    supabase.from("projects_seminars").select("category, latest_semester"),
+    admin.from("projects_seminars").select("category, latest_semester"),
   ]);
 
   const total = count || 0;

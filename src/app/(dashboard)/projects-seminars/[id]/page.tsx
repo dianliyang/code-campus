@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { ExternalLink } from "lucide-react";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import ProjectSeminarContentsPanel from "@/components/projects-seminars/ProjectSeminarContentsPanel";
 import ProjectSeminarEnrollButton from "@/components/projects-seminars/ProjectSeminarEnrollButton";
 
@@ -49,8 +49,9 @@ function getLinkLabel(link: string): string {
 export default async function ProjectsSeminarsDetailPage({ params }: PageProps) {
   const { id } = await params;
   const [supabase, user] = await Promise.all([createClient(), getUser()]);
+  const admin = createAdminClient();
 
-  const { data: modernData, error: modernError } = await supabase
+  const { data: modernData, error: modernError } = await admin
     .from("projects_seminars")
     .select("id, title, course_code, category, credit, url, latest_semester, university, description, contents, department, prerequisites, schedule, instructors, related_links, details")
     .eq("id", Number(id))
@@ -58,7 +59,7 @@ export default async function ProjectsSeminarsDetailPage({ params }: PageProps) 
 
   let data: Record<string, unknown> | null = modernData as Record<string, unknown> | null;
   if (modernError || !modernData) {
-    const { data: legacyData, error: legacyError } = await supabase
+    const { data: legacyData, error: legacyError } = await admin
       .from("projects_seminars")
       .select("id, title, course_code, category, credit, url, latest_semester, university, description, instructors, details")
       .eq("id", Number(id))

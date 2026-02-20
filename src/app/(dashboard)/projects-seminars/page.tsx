@@ -38,7 +38,7 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
 
   let dataQuery = supabase
     .from("projects_seminars")
-    .select("id, title, course_code, category, credit, department, url, latest_semester, university", { count: "exact" });
+    .select("id, title, course_code, category, credit, url, latest_semester, university, details", { count: "exact" });
 
   if (query) {
     dataQuery = dataQuery.textSearch("search_vector", query, { type: "websearch" });
@@ -147,7 +147,16 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
                         </p>
                       </div>
                       <div className="md:w-[14%] text-[12px] text-[#555]">{item.category}</div>
-                      <div className="md:w-[16%] text-[12px] text-[#555] truncate">{item.department || "-"}</div>
+                      <div className="md:w-[16%] text-[12px] text-[#555] truncate">
+                        {(
+                          (item.details &&
+                            typeof item.details === "object" &&
+                            !Array.isArray(item.details) &&
+                            typeof (item.details as Record<string, unknown>).department === "string" &&
+                            (item.details as Record<string, unknown>).department) ||
+                          "-"
+                        ) as string}
+                      </div>
                       <div className="md:w-[10%] text-[12px]">
                         <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${status === "Enrolled" ? "border-green-100 bg-green-50 text-green-700" : "border-[#e5e5e5] bg-[#f3f3f3] text-[#666]"}`}>
                           {status}

@@ -50,15 +50,23 @@ export default async function ProjectsSeminarsDetailPage({ params }: PageProps) 
   const { id } = await params;
   const [supabase, user] = await Promise.all([createClient(), getUser()]);
 
-  const { data, error } = await supabase
+  const { data: modernData, error: modernError } = await supabase
     .from("projects_seminars")
-    .select("id, title, course_code, category, credit, url, latest_semester, university, description, contents, department, prerequisites, schedule, instructors, related_links")
+    .select("id, title, course_code, category, credit, url, latest_semester, university, description, contents, department, prerequisites, schedule, instructors, related_links, details")
     .eq("id", Number(id))
     .single();
 
-  if (error || !data) {
-    notFound();
+  let data: Record<string, unknown> | null = modernData as Record<string, unknown> | null;
+  if (modernError || !modernData) {
+    const { data: legacyData, error: legacyError } = await supabase
+      .from("projects_seminars")
+      .select("id, title, course_code, category, credit, url, latest_semester, university, description, instructors, details")
+      .eq("id", Number(id))
+      .single();
+    if (legacyError || !legacyData) notFound();
+    data = legacyData as Record<string, unknown>;
   }
+  if (!data) notFound();
 
   let isEnrolled = false;
   if (user) {
@@ -66,43 +74,70 @@ export default async function ProjectsSeminarsDetailPage({ params }: PageProps) 
       .from("user_projects_seminars")
       .select("project_seminar_id")
       .eq("user_id", user.id)
-      .eq("project_seminar_id", data.id)
+      .eq("project_seminar_id", Number(data.id))
       .maybeSingle();
     isEnrolled = Boolean(enrollment);
   }
 
-  const latestSemester = (data.latest_semester || {}) as { term?: string; year?: number };
+  const row = data as Record<string, unknown>;
+  const details =
+    row.details && typeof row.details === "object" && !Array.isArray(row.details)
+      ? (row.details as Record<string, unknown>)
+      : {};
+  const latestSemester = (row.latest_semester || {}) as { term?: string; year?: number };
   const semesterLabel = latestSemester.term && latestSemester.year ? `${latestSemester.term} ${latestSemester.year}` : "-";
-  const department = data.department || "-";
-  const prereqOrg = data.prerequisites || "-";
-  const contents = data.contents || data.description || "-";
+  const department =
+    (typeof row.department === "string" && row.department.trim()) ||
+    (typeof details.department === "string" && details.department.trim()) ||
+    "-";
+  const prereqOrg =
+    (typeof row.prerequisites === "string" && row.prerequisites.trim()) ||
+    (typeof details.prerequisites === "string" && details.prerequisites.trim()) ||
+    (typeof details.prerequisites_organisational_information === "string" &&
+      details.prerequisites_organisational_information.trim()) ||
+    "-";
+  const contents =
+    (typeof row.contents === "string" && row.contents.trim()) ||
+    (typeof row.description === "string" && row.description.trim()) ||
+    (typeof details.contents === "string" && details.contents.trim()) ||
+    "-";
   const contentLinks = extractContentLinks(contents);
   const schedule =
-    data.schedule && typeof data.schedule === "object" && !Array.isArray(data.schedule)
-      ? (data.schedule as Record<string, string[]>)
+    row.schedule && typeof row.schedule === "object" && !Array.isArray(row.schedule)
+      ? (row.schedule as Record<string, string[]>)
+      : details.schedule && typeof details.schedule === "object" && !Array.isArray(details.schedule)
+        ? (details.schedule as Record<string, string[]>)
       : {};
   const scheduleRows = Object.entries(schedule).flatMap(([kind, values]) =>
     (values || []).map((line) => ({ kind, line })),
   );
-  const savedRelatedLinks = Array.isArray(data.related_links)
-    ? data.related_links.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
-    : [];
-  const relatedLinks = Array.from(new Set([data.url, ...savedRelatedLinks, ...contentLinks].filter((value): value is string => Boolean(value))));
+  const savedRelatedLinks = Array.isArray(row.related_links)
+    ? row.related_links.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    : Array.isArray(details.related_urls)
+      ? details.related_urls.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+      : [];
+  const relatedLinks = Array.from(
+    new Set(
+      [typeof row.url === "string" ? row.url : "", ...savedRelatedLinks, ...contentLinks].filter(
+        (value): value is string => Boolean(value),
+      ),
+    ),
+  );
 
   return (
     <div className="space-y-4">
       <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <p className="text-xs text-[#777]">{data.course_code} · {data.university}</p>
-            <h1 className="mt-1 text-[28px] md:text-[32px] font-semibold text-[#1f1f1f] tracking-tight leading-tight break-words">{data.title}</h1>
+            <p className="text-xs text-[#777]">{String(row.course_code || "")} · {String(row.university || "")}</p>
+            <h1 className="mt-1 text-[28px] md:text-[32px] font-semibold text-[#1f1f1f] tracking-tight leading-tight break-words">{String(row.title || "")}</h1>
           </div>
         </div>
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-4">
-          <ProjectSeminarContentsPanel projectSeminarId={data.id} initialContents={contents} />
+          <ProjectSeminarContentsPanel projectSeminarId={Number(row.id)} initialContents={contents} />
 
           <div>
             <h2 className="text-base font-semibold text-[#2a2a2a] mb-2">Prerequisites / Organisational information</h2>
@@ -135,10 +170,10 @@ export default async function ProjectsSeminarsDetailPage({ params }: PageProps) 
                   {isEnrolled ? "Enrolled" : "Not Enrolled"}
                 </span>
               </div>
-              <ProjectSeminarEnrollButton projectSeminarId={data.id} initialEnrolled={isEnrolled} />
-              {data.url ? (
+              <ProjectSeminarEnrollButton projectSeminarId={Number(row.id)} initialEnrolled={isEnrolled} />
+              {typeof row.url === "string" && row.url ? (
                 <a
-                  href={data.url}
+                  href={row.url}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex h-8 items-center justify-center w-full gap-2 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
@@ -154,7 +189,7 @@ export default async function ProjectsSeminarsDetailPage({ params }: PageProps) 
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between gap-3">
                   <dt className="text-[#666]">Category</dt>
-                  <dd className="text-right text-[#222]">{data.category || "-"}</dd>
+                  <dd className="text-right text-[#222]">{String(row.category || "-")}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-[#666]">Department</dt>
@@ -162,7 +197,7 @@ export default async function ProjectsSeminarsDetailPage({ params }: PageProps) 
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-[#666]">Credit</dt>
-                  <dd className="text-right text-[#222]">{data.credit ?? "-"}</dd>
+                  <dd className="text-right text-[#222]">{(row.credit as number | null) ?? "-"}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-[#666]">Semester</dt>
@@ -171,10 +206,10 @@ export default async function ProjectsSeminarsDetailPage({ params }: PageProps) 
                 <div className="flex flex-col gap-1">
                   <dt className="text-[#666]">Instructors</dt>
                   <dd className="text-[#222]">
-                    {(data.instructors || []).length > 0 ? (
+                    {(Array.isArray(row.instructors) ? row.instructors : []).length > 0 ? (
                       <ul className="list-disc pl-4 space-y-1">
-                        {(data.instructors || []).map((name, idx) => (
-                          <li key={`${name}-${idx}`}>{name}</li>
+                        {(Array.isArray(row.instructors) ? row.instructors : []).map((name, idx) => (
+                          <li key={`${String(name)}-${idx}`}>{String(name)}</li>
                         ))}
                       </ul>
                     ) : (

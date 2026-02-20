@@ -128,7 +128,6 @@ export default function CourseList({
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <CourseListHeader
-        totalItems={totalItems}
         viewMode={viewMode}
         setViewMode={handleViewModeChange}
         dict={dict}

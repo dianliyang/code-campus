@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Workout } from "@/types";
-import { ChevronDown, ChevronUp, Clock, ExternalLink, Flame, Info, MapPin } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, ExternalLink, Info, MapPin } from "lucide-react";
 import { Dictionary } from "@/lib/dictionary";
 
 interface WorkoutCardProps {
@@ -37,6 +37,7 @@ function getStatusLabel(status: string | null, dict: Dictionary["dashboard"]["wo
 
 interface AggregatedEntry {
   schedule: string | null;
+  duration: string | null;
   location: string | null;
   locationEn: string | null;
 }
@@ -61,6 +62,7 @@ function getAggregatedEntries(workout: Workout): AggregatedEntry[] {
       const entry = item as Record<string, unknown>;
       return {
         schedule: typeof entry.schedule === "string" ? entry.schedule : null,
+        duration: typeof entry.duration === "string" ? entry.duration : null,
         location: typeof entry.location === "string" ? entry.location : null,
         locationEn: typeof entry.locationEn === "string" ? entry.locationEn : null,
       };
@@ -151,16 +153,24 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
           </div>
         </div>
         {expanded && hasExpandableVariants ? (
-          <div className="hidden md:block px-4 pb-3">
-            <div className="ml-[calc(100%-85%)] mr-[calc(100%-33%)] rounded-md border border-[#e6e6e6] bg-[#fbfbfb] px-2 py-2">
-              {extraEntries.map((entry, index) => {
-                const location = entry.locationEn || entry.location || "-";
-                return (
-                  <p key={`${entry.schedule || "none"}-${location}-${index}`} className="text-[11px] text-[#666] leading-5">
-                    {entry.schedule || "-"} <span className="text-[#9a9a9a]">•</span> {location}
-                  </p>
-                );
-              })}
+          <div className="hidden md:block border-t border-[#ececec] bg-[#fafafa]">
+            <div className="px-4 py-2">
+              <p className="text-[11px] text-[#8a8a8a] mb-2">Additional options</p>
+              <div className="grid grid-cols-2 xl:grid-cols-3 gap-2">
+                {extraEntries.map((entry, index) => {
+                  const location = entry.locationEn || entry.location || "-";
+                  return (
+                    <div
+                      key={`${entry.schedule || "none"}-${location}-${index}`}
+                      className="rounded border border-[#e7e7e7] bg-white px-2 py-1.5 text-[11px] text-[#666]"
+                    >
+                      <p className="truncate">{entry.schedule || "-"}</p>
+                      <p className="truncate text-[#8a8a8a]">{entry.duration || "-"}</p>
+                      <p className="truncate text-[#8a8a8a]">{location}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : null}
@@ -169,7 +179,7 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
   }
 
   return (
-    <div className="bg-[#fafafa] border border-[#e3e3e3] rounded-xl p-4">
+    <div className="bg-[#fafafa] border border-[#e3e3e3] rounded-xl p-4 flex flex-col h-full">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-slate-900 truncate">
@@ -186,19 +196,38 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
         <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${statusClass}`}>{statusLabel}</span>
       </div>
 
-      <div className="mt-3 space-y-1.5 text-[12px] text-[#555]">
-        <div className="flex items-center gap-1.5 truncate">
-          <Clock className="w-3.5 h-3.5 text-[#8a8a8a]" />
-          <span className="truncate">{schedule}</span>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-md bg-white px-2 py-1.5 text-[12px] text-[#555]">
+          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Time</p>
+          <p className="mt-0.5 inline-flex items-center gap-1.5 truncate">
+            <Clock className="w-3.5 h-3.5 text-[#8a8a8a]" />
+            <span className="truncate">{schedule}</span>
+          </p>
         </div>
-        <div className="flex items-center gap-1.5 truncate">
-          <Clock className="w-3.5 h-3.5 text-[#8a8a8a]" />
-          <span className="truncate">{duration}</span>
+        <div className="rounded-md bg-white px-2 py-1.5 text-[12px] text-[#555]">
+          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Duration</p>
+          <p className="mt-0.5 inline-flex items-center gap-1.5 truncate">
+            <Clock className="w-3.5 h-3.5 text-[#8a8a8a]" />
+            <span className="truncate">{duration}</span>
+          </p>
         </div>
-        <div className="flex items-center gap-1.5 truncate">
-          <MapPin className="w-3.5 h-3.5 text-[#8a8a8a]" />
-          <span className="truncate">{displayLocation}</span>
+        <div className="rounded-md bg-white px-2 py-1.5 text-[12px] text-[#555]">
+          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Location</p>
+          <p className="mt-0.5 inline-flex items-center gap-1.5 truncate">
+            <MapPin className="w-3.5 h-3.5 text-[#8a8a8a]" />
+            <span className="truncate">{displayLocation}</span>
+          </p>
         </div>
+        <div className="rounded-md bg-white px-2 py-1.5 text-[12px] text-[#555]">
+          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Price</p>
+          <p className="mt-0.5 inline-flex items-center gap-1">
+            <span className="text-[13px] font-medium text-[#3b3b3b]">{price}</span>
+            <PriceHelpButton priceDetails={priceDetails} />
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-2 space-y-1.5 text-[12px] text-[#555]">
         {hasExpandableVariants ? (
           <button
             type="button"
@@ -210,47 +239,33 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
           </button>
         ) : null}
         {expanded && hasExpandableVariants ? (
-          <div className="rounded-md border border-[#e6e6e6] bg-[#fbfbfb] px-2 py-2 mt-1 space-y-1">
+          <div className="px-0 py-0 mt-1 space-y-2">
             {extraEntries.map((entry, index) => {
               const location = entry.locationEn || entry.location || "-";
               return (
-                <p key={`${entry.schedule || "none"}-${location}-${index}`} className="text-[11px] text-[#666] leading-4">
-                  {entry.schedule || "-"} <span className="text-[#9a9a9a]">•</span> {location}
-                </p>
+                <div key={`${entry.schedule || "none"}-${location}-${index}`} className="rounded border border-[#ececec] bg-white px-2 py-1.5">
+                  <p className="text-[11px] text-[#666] leading-4 truncate">
+                    {entry.schedule || "-"} <span className="text-[#9a9a9a]">•</span> {entry.duration || "-"} <span className="text-[#9a9a9a]">•</span> {location}
+                  </p>
+                </div>
               );
             })}
           </div>
         ) : null}
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <div className="rounded-md bg-white px-2 py-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Price</p>
-          <p className="inline-flex w-full items-center gap-1 text-[13px] font-medium text-[#3b3b3b]">
-            <span>{price}</span>
-            <PriceHelpButton priceDetails={priceDetails} />
-          </p>
-          {priceDetails.length > 0 ? <p className="mt-0.5 text-[10px] text-[#9a9a9a]">Different by user type</p> : null}
-        </div>
-        <div className="rounded-md bg-white px-2 py-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Interest</p>
-          <p className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3b3b3b]">
-            <Flame className="w-3.5 h-3.5 text-amber-500" />
-            {workout.bookingStatus === "available" ? "High" : "-"}
-          </p>
-        </div>
-      </div>
-
       {actionHref ? (
-        <a
-          href={actionHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 h-7 inline-flex items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-        >
-          Book
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+        <div className="mt-auto pt-3">
+          <a
+            href={actionHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-8 w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-3 text-[13px] font-medium leading-none text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+          >
+            <span className="inline-flex items-center">Book</span>
+            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+          </a>
+        </div>
       ) : null}
     </div>
   );
@@ -269,7 +284,7 @@ function PriceHelpButton({ priceDetails }: { priceDetails: Array<{ label: string
         <Info className="w-3.5 h-3.5" />
       </button>
 
-      <div className="pointer-events-none absolute right-0 top-6 z-20 w-56 rounded-md border border-[#dedede] bg-white p-2 shadow-lg text-left opacity-0 translate-y-1 transition-all duration-150 group-hover/help:opacity-100 group-hover/help:translate-y-0">
+      <div className="pointer-events-none absolute right-0 top-6 z-[99] w-56 rounded-md border border-[#dedede] bg-white p-2 shadow-lg text-left opacity-0 translate-y-1 transition-all duration-150 group-hover/help:opacity-100 group-hover/help:translate-y-0">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8a8a8a] mb-1">Price details</p>
         <div className="space-y-0.5">
           {priceDetails.map((item) => (

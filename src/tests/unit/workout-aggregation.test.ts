@@ -49,8 +49,8 @@ describe("aggregateWorkoutsByName", () => {
     expect(output[0].details).toMatchObject({
       aggregatedVariants: 2,
       aggregatedEntries: [
-        { schedule: "Mon 10:00-11:00", location: "Hall A", locationEn: "Hall A" },
-        { schedule: "Wed 18:00-19:00", location: "Hall B", locationEn: "Hall B" },
+        { schedule: "Mon 10:00-11:00", duration: null, location: "Hall A", locationEn: "Hall A" },
+        { schedule: "Wed 18:00-19:00", duration: null, location: "Hall B", locationEn: "Hall B" },
       ],
     });
   });

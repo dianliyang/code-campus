@@ -6,6 +6,7 @@ import { Course as ScrapedCourse } from "../scrapers/types";
 import type { WorkoutCourse } from "../scrapers/cau-sport";
 import type { Course as AppCourse, Workout } from "@/types";
 import { Database, Json } from "./database.types";
+import { aggregateWorkoutCoursesByName } from "@/lib/workouts";
 
 export async function getBaseUrl() {
   const envUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -317,7 +318,8 @@ export class SupabaseDatabase {
     if (workouts.length === 0) return;
 
     const source = workouts[0].source;
-    console.log(`[Supabase] Saving ${workouts.length} workouts for ${source}...`);
+    const aggregatedWorkouts = aggregateWorkoutCoursesByName(workouts);
+    console.log(`[Supabase] Saving ${aggregatedWorkouts.length} aggregated workouts (from ${workouts.length}) for ${source}...`);
 
     const supabase = createAdminClient();
 
@@ -344,7 +346,7 @@ export class SupabaseDatabase {
       return timeStr + ":00";
     };
 
-    const toUpsertRaw = workouts.map((w) => ({
+    const toUpsertRaw = aggregatedWorkouts.map((w) => ({
       source: w.source,
       course_code: w.courseCode,
       category: w.category,

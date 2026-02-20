@@ -7,13 +7,12 @@ import { Dictionary } from "@/lib/dictionary";
 import { LayoutGrid, List, Plus, Search, SlidersHorizontal, X } from "lucide-react";
 
 interface CourseListHeaderProps {
-  totalItems: number;
   viewMode: "list" | "grid";
   setViewMode: (mode: "list" | "grid") => void;
   dict: Dictionary["dashboard"]["courses"];
 }
 
-export default function CourseListHeader({ totalItems, viewMode, setViewMode, dict }: CourseListHeaderProps) {
+export default function CourseListHeader({ viewMode, setViewMode, dict }: CourseListHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sortBy = searchParams.get("sort") || "title";
@@ -140,9 +139,6 @@ export default function CourseListHeader({ totalItems, viewMode, setViewMode, di
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-[#6f6f6f]">{totalItems} {dict?.found_suffix || "courses"}</span>
-      </div>
     </div>
   );
 }

@@ -115,35 +115,35 @@ export default function WorkoutList({
         lastUpdated={lastUpdated}
       />
 
-      <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden ${viewMode === "grid" ? "p-3" : ""}`}>
-        <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${viewMode === "grid" ? "!hidden" : ""}`}>
-          <div className="flex-1 min-w-0">Workout</div>
-          <div className="w-[15%]">Schedule</div>
-          <div className="w-[18%]">Location</div>
-          <div className="w-[10%] text-right pr-1">Price</div>
-          <div className="w-[12%]">Status</div>
-          <div className="w-[8%] text-right pr-1">Action</div>
-        </div>
-
-        <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>
-          {workouts.map((workout, idx) => (
-            <WorkoutCard
-              key={workout.id}
-              workout={workout}
-              viewMode={viewMode}
-              dict={dict}
-              rowIndex={idx}
-            />
-          ))}
-        </div>
-
-        {workouts.length === 0 && (
-          <div className="text-center py-16">
-            <h3 className="text-sm font-semibold text-slate-900">{dict?.empty_header || "No matches found"}</h3>
-            <p className="text-sm text-slate-500 mt-1">{dict?.empty_desc || "Try adjusting your current filters."}</p>
+        <div className={`bg-[#fcfcfc] rounded-lg ${viewMode === "grid" ? "overflow-visible p-3" : "overflow-hidden"}`}>
+          <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${viewMode === "grid" ? "!hidden" : ""}`}>
+            <div className="flex-1 min-w-0">Workout</div>
+            <div className="w-[15%]">Schedule</div>
+            <div className="w-[18%]">Location</div>
+            <div className="w-[10%] text-right pr-1">Price</div>
+            <div className="w-[12%]">Status</div>
+            <div className="w-[8%] text-right pr-1">Action</div>
           </div>
-        )}
-      </div>
+
+          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>
+            {workouts.map((workout, idx) => (
+              <WorkoutCard
+                key={workout.id}
+                workout={workout}
+                viewMode={viewMode}
+                dict={dict}
+                rowIndex={idx}
+              />
+            ))}
+          </div>
+
+          {workouts.length === 0 && (
+            <div className="text-center py-16">
+              <h3 className="text-sm font-semibold text-slate-900">{dict?.empty_header || "No matches found"}</h3>
+              <p className="text-sm text-slate-500 mt-1">{dict?.empty_desc || "Try adjusting your current filters."}</p>
+            </div>
+          )}
+        </div>
 
       <div ref={observerTarget} className="md:hidden py-4 flex justify-center">
         {isLoading && <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />}

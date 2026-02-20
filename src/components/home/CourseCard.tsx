@@ -127,11 +127,11 @@ export default function CourseCard({
 
         <div className="w-[10%] hidden md:block">
           <span
-            className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${
-              isEnrolled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+            className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+              isEnrolled ? "border-green-100 bg-green-50 text-green-700" : "border-[#e5e5e5] bg-[#f3f3f3] text-[#666]"
             }`}
           >
-            {isEnrolled ? (dict?.enrolled || "Enrolled") : "Open"}
+            {isEnrolled ? (dict?.enrolled || "Enrolled") : "Not Enrolled"}
           </span>
         </div>
 
@@ -151,16 +151,16 @@ export default function CourseCard({
             size="xs"
             className={
               isEnrolled
-                ? "h-7 w-7 p-0 rounded-md bg-[#ececec] text-[#3f3f3f] hover:bg-[#e5e5e5]"
-                : "h-7 w-7 p-0 rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4]"
+                ? "h-8 w-8 p-0 rounded-md border border-green-100 bg-green-50 text-green-700 hover:bg-green-100"
+                : "h-8 w-8 p-0 rounded-md border border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
             }
           >
             {loading ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : isEnrolled ? (
-              <Check className="w-3 h-3" />
+              <Check className="w-3.5 h-3.5" />
             ) : (
-              <Plus className="w-3 h-3" />
+              <Plus className="w-3.5 h-3.5" />
             )}
           </Button>
           <button
@@ -194,29 +194,29 @@ export default function CourseCard({
           onClick={handleEnroll}
           disabled={loading}
           size="xs"
-          className={`h-7 w-7 p-0 rounded-md transition-colors ${
+          className={`transition-colors ${
             isEnrolled
-              ? "bg-[#ececec] text-[#3f3f3f] hover:bg-[#e5e5e5]"
-              : "bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4]"
+              ? "h-8 w-8 p-0 rounded-md border border-green-100 bg-green-50 text-green-700 hover:bg-green-100"
+              : "h-8 w-8 p-0 rounded-md border border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
           }`}
         >
           {loading ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : isEnrolled ? (
-            <Check className="w-3 h-3" />
+            <Check className="w-3.5 h-3.5" />
           ) : (
-            <Plus className="w-3 h-3" />
+            <Plus className="w-3.5 h-3.5" />
           )}
         </Button>
       </div>
 
       <div className="mt-3 flex items-center gap-1.5">
         <span
-          className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${
-            isEnrolled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+          className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+            isEnrolled ? "border-green-100 bg-green-50 text-green-700" : "border-[#e5e5e5] bg-[#f3f3f3] text-[#666]"
           }`}
         >
-          {isEnrolled ? (dict?.enrolled || "Enrolled") : "Open"}
+          {isEnrolled ? (dict?.enrolled || "Enrolled") : "Not Enrolled"}
         </span>
         {primaryField ? (
           <span className="inline-flex rounded bg-[#efefef] px-2 py-0.5 text-[11px] font-medium text-[#666]">{primaryField}</span>

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createAdminClient, getUser } from "@/lib/supabase/server";
+import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
 
@@ -171,6 +171,36 @@ export async function updateProjectSeminarDescription(projectSeminarId: number, 
   if (error) {
     console.error("Failed to update project/seminar description:", error);
     throw new Error("Failed to update project/seminar description");
+  }
+
+  revalidatePath(`/projects-seminars/${projectSeminarId}`);
+  revalidatePath("/projects-seminars");
+}
+
+export async function toggleProjectSeminarEnrollmentAction(projectSeminarId: number, isEnrolled: boolean) {
+  const user = await getUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const supabase = await createClient();
+  if (isEnrolled) {
+    const { error } = await supabase
+      .from("user_projects_seminars")
+      .delete()
+      .match({ user_id: user.id, project_seminar_id: projectSeminarId });
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from("user_projects_seminars")
+      .upsert({
+        user_id: user.id,
+        project_seminar_id: projectSeminarId,
+        status: "in_progress",
+        progress: 0,
+        updated_at: new Date().toISOString(),
+      });
+    if (error) throw error;
   }
 
   revalidatePath(`/projects-seminars/${projectSeminarId}`);

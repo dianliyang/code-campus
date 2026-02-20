@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
@@ -39,6 +39,7 @@ export default function CourseDetailContent({
     generatedPlans: SchedulePlanPreview[];
   } | null>(null);
   const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([]);
+  const [statusCardMinHeight, setStatusCardMinHeight] = useState<number | null>(null);
   const router = useRouter();
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const hasStudyPlans = editablePlans.length > 0;
@@ -68,6 +69,18 @@ export default function CourseDetailContent({
         : categoryRaw === "Seminar"
           ? "Seminar"
           : categoryRaw;
+
+  useEffect(() => {
+    const updateHeight = () => {
+      const header = document.querySelector<HTMLElement>("[data-course-title-header]");
+      if (!header) return;
+      setStatusCardMinHeight(header.offsetHeight);
+    };
+
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+    return () => window.removeEventListener("resize", updateHeight);
+  }, [course.title, course.university, course.courseCode]);
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);
@@ -481,13 +494,18 @@ export default function CourseDetailContent({
         </div>
 
         <aside className="lg:col-span-4 space-y-4">
-          <div className="sticky top-4 space-y-4">
-              <div className="space-y-3 rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+          <div className="sticky top-0 space-y-4">
+              <div
+                className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 flex flex-col justify-between"
+                style={statusCardMinHeight ? { minHeight: `${statusCardMinHeight}px` } : undefined}
+              >
+                <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-[#666]">Your Status</span>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${isEnrolled ? "bg-green-50 text-green-700 border-green-100" : "bg-[#f3f3f3] text-[#666] border-[#e5e5e5]"}`}>
                     {isEnrolled ? "Enrolled" : "Not Enrolled"}
                   </span>
+                </div>
                 </div>
                 <a
                   href={course.url}

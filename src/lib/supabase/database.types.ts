@@ -484,6 +484,38 @@ export type Database = {
           },
         ]
       }
+      user_projects_seminars: {
+        Row: {
+          progress: number | null
+          project_seminar_id: number
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          progress?: number | null
+          project_seminar_id: number
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          progress?: number | null
+          project_seminar_id?: number
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_projects_seminars_project_seminar_id_fkey"
+            columns: ["project_seminar_id"]
+            isOneToOne: false
+            referencedRelation: "projects_seminars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workouts: {
         Row: {
           booking_status: string | null

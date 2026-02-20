@@ -1,8 +1,9 @@
 import { ExternalLink } from "lucide-react";
 import Pagination from "@/components/home/Pagination";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import ProjectsSeminarsToolbar from "@/components/projects-seminars/ProjectsSeminarsToolbar";
 import Link from "next/link";
+import ProjectSeminarEnrollButton from "@/components/projects-seminars/ProjectSeminarEnrollButton";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -21,6 +22,7 @@ function readListParam(params: Record<string, string | string[] | undefined>, ke
 
 export default async function ProjectsSeminarsPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  const user = await getUser();
   const page = Math.max(1, parseInt(readParam(params, "page") || "1"));
   const allowedPerPage = [12, 24, 48];
   const parsedPerPage = parseInt(readParam(params, "perPage") || "12");
@@ -71,6 +73,21 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
 
   const total = count || 0;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const itemIds = (items || []).map((item) => item.id);
+  const enrollmentMap = new Map<number, string>();
+
+  if (user && itemIds.length > 0) {
+    const { data: enrollmentRows } = await supabase
+      .from("user_projects_seminars")
+      .select("project_seminar_id, status")
+      .eq("user_id", user.id)
+      .in("project_seminar_id", itemIds);
+
+    (enrollmentRows || []).forEach((row) => {
+      enrollmentMap.set(row.project_seminar_id, row.status || "in_progress");
+    });
+  }
+
   const uniqueCategories = Array.from(
     new Set((categories || []).map((c) => c.category).filter((c): c is string => Boolean(c))),
   ).sort((a, b) => a.localeCompare(b));
@@ -103,13 +120,15 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
                 <div className="flex-1 min-w-0">S&P</div>
                 <div className="w-[14%]">Category</div>
                 <div className="w-[16%]">Department</div>
+                <div className="w-[10%]">Status</div>
                 <div className="w-[10%]">Credit</div>
                 <div className="w-[12%]">Semester</div>
-                <div className="w-[8%] text-right pr-1">Action</div>
+                <div className="w-[10%] text-right pr-1">Action</div>
               </div>
               <div>
                 {(items || []).map((item, idx) => {
                   const semester = (item.latest_semester || {}) as { term?: string; year?: number };
+                  const status = enrollmentMap.get(item.id) ? "Enrolled" : "Not Enrolled";
                   return (
                     <article
                       key={item.id}
@@ -129,23 +148,29 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
                       </div>
                       <div className="md:w-[14%] text-[12px] text-[#555]">{item.category}</div>
                       <div className="md:w-[16%] text-[12px] text-[#555] truncate">{item.department || "-"}</div>
+                      <div className="md:w-[10%] text-[12px]">
+                        <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${status === "Enrolled" ? "border-green-100 bg-green-50 text-green-700" : "border-[#e5e5e5] bg-[#f3f3f3] text-[#666]"}`}>
+                          {status}
+                        </span>
+                      </div>
                       <div className="md:w-[10%] text-[12px] text-[#555]">{item.credit ?? "-"}</div>
                       <div className="md:w-[12%] text-[12px] text-[#555]">
                         {semester.term && semester.year ? `${semester.term} ${semester.year}` : "-"}
                       </div>
-                      <div className="md:w-[8%] flex md:justify-end">
+                      <div className="md:w-[10%] flex md:justify-end items-center gap-1">
+                        <ProjectSeminarEnrollButton projectSeminarId={item.id} initialEnrolled={Boolean(enrollmentMap.get(item.id))} iconOnly />
                         {item.url ? (
                           <a
                             href={item.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
+                            className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
                             aria-label="Open seminar"
                           >
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         ) : (
-                          <span className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-[#ececec] text-[#9a9a9a]">
+                          <span className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-[#ececec] text-[#9a9a9a]">
                             <ExternalLink className="w-3 h-3" />
                           </span>
                         )}
@@ -159,6 +184,7 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 p-3">
               {(items || []).map((item) => {
                 const semester = (item.latest_semester || {}) as { term?: string; year?: number };
+                const status = enrollmentMap.get(item.id) ? "Enrolled" : "Not Enrolled";
                 return (
                   <article key={item.id} className="bg-[#fafafa] border border-[#e3e3e3] rounded-xl p-4 h-full flex flex-col">
                     <div className="flex items-start justify-between gap-3">
@@ -170,26 +196,32 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
                         </h3>
                         <p className="text-xs text-slate-500 truncate mt-0.5">{item.course_code} · {item.university}</p>
                       </div>
-                      {item.url ? (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
-                          aria-label="Open seminar"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        <span className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-[#ececec] text-[#9a9a9a]">
-                          <ExternalLink className="w-3 h-3" />
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1">
+                        <ProjectSeminarEnrollButton projectSeminarId={item.id} initialEnrolled={Boolean(enrollmentMap.get(item.id))} iconOnly />
+                        {item.url ? (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
+                            aria-label="Open seminar"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          <span className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-[#ececec] text-[#9a9a9a]">
+                            <ExternalLink className="w-3 h-3" />
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-3 flex items-center gap-1.5">
                       <span className="inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-[#efefef] text-[#666]">
                         {item.category}
+                      </span>
+                      <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${status === "Enrolled" ? "bg-green-50 text-green-700" : "bg-[#efefef] text-[#666]"}`}>
+                        {status}
                       </span>
                     </div>
 

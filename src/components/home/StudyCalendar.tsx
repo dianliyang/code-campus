@@ -41,7 +41,7 @@ interface StudyLog {
 
 type OptimisticEntry = {
   isCompleted: boolean;
-  status: "pending" | "failed";
+  status: "pending" | "synced" | "failed";
 };
 
 interface GeneratedEvent {
@@ -213,11 +213,21 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
         }
       }
       setOptimisticByKey(prev => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
+        return {
+          ...prev,
+          [key]: { isCompleted: nextCompleted, status: "synced" },
+        };
       });
       router.refresh();
+      setTimeout(() => {
+        setOptimisticByKey(prev => {
+          const current = prev[key];
+          if (!current || current.status === "pending") return prev;
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+      }, 1200);
     } catch (e) {
       setOptimisticByKey(prev => ({
         ...prev,
@@ -480,15 +490,17 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                       const optimistic = optimisticByKey[key];
                       const isPending = optimistic?.status === "pending";
                       const isFailed = optimistic?.status === "failed";
-                      const effectiveCompleted = optimistic?.status === "pending"
+                      const effectiveCompleted = optimistic
                         ? optimistic.isCompleted
                         : event.isCompleted;
+                      const shouldShake = isPending;
                       const bgColor = effectiveCompleted ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-white border-gray-200 hover:bg-gray-50';
 
                       return (
                         <div
                           key={`${event.planId}-${idx}`}
                           className={`rounded-lg border cursor-pointer transition-all flex flex-col px-3 py-1.5 group/item ${bgColor}`}
+                          style={shouldShake ? { animation: "studyScheduleShake 280ms ease-in-out 1" } : undefined}
                           aria-disabled={isPending}
                           onClick={() => {
                             if (isPending) return;
@@ -653,6 +665,16 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
           </div>
         </div>
       )}
+      <style jsx global>{`
+        @keyframes studyScheduleShake {
+          0% { transform: translateX(0); }
+          20% { transform: translateX(-2px); }
+          40% { transform: translateX(2px); }
+          60% { transform: translateX(-1px); }
+          80% { transform: translateX(1px); }
+          100% { transform: translateX(0); }
+        }
+      `}</style>
     </div>
   );
 }

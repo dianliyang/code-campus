@@ -86,9 +86,7 @@ export default function CourseDetailContent({
     setIsGeneratingPlans(true);
     try {
       const preview = await previewStudyPlansFromCourseSchedule(course.id);
-      const selectableIds = preview.generatedPlans
-        .map((_, idx) => String(idx))
-        .filter((idx) => !preview.generatedPlans[Number(idx)].alreadyExists);
+      const selectableIds = preview.generatedPlans.map((_, idx) => String(idx));
       setPlanPreview(preview);
       setSelectedPlanIds(selectableIds);
     } catch (error) {
@@ -105,7 +103,7 @@ export default function CourseDetailContent({
     try {
       const selected = planPreview.generatedPlans
         .map((plan, idx) => ({ plan, idx: String(idx) }))
-        .filter(({ idx, plan }) => selectedPlanIds.includes(idx) && !plan.alreadyExists)
+        .filter(({ idx }) => selectedPlanIds.includes(idx))
         .map(({ plan }) => ({
           daysOfWeek: plan.daysOfWeek,
           startTime: plan.startTime,
@@ -115,8 +113,8 @@ export default function CourseDetailContent({
           startDate: plan.startDate,
           endDate: plan.endDate,
         }));
-      const result = await confirmGeneratedStudyPlans(course.id, selected);
-      alert(`Created ${result.created} study plan(s).`);
+      const result = await confirmGeneratedStudyPlans(course.id, selected, { replaceExisting: true });
+      alert(`Updated Weekly Schedule with ${result.created} plan(s).`);
       setPlanPreview(null);
       setSelectedPlanIds([]);
       router.refresh();
@@ -217,9 +215,9 @@ export default function CourseDetailContent({
                       <button
                         type="button"
                         onClick={handleGeneratePlans}
-                        disabled={isGeneratingPlans || hasStudyPlans}
+                        disabled={isGeneratingPlans}
                         className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
-                        title={hasStudyPlans ? "Study plan exists" : "Generate study plan preview"}
+                        title="Generate study plan preview"
                       >
                         {isGeneratingPlans ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -401,7 +399,7 @@ export default function CourseDetailContent({
                       <ul className="space-y-2">
                         {planPreview.generatedPlans.map((plan, idx) => {
                           const id = String(idx);
-                          const disabled = plan.alreadyExists;
+                          const disabled = false;
                           const daysText = plan.daysOfWeek.map((d) => dayLabels[d] || String(d)).join(", ");
                           return (
                             <li key={id} className="rounded-md border border-[#e5e5e5] bg-white px-2.5 py-2">
@@ -426,7 +424,7 @@ export default function CourseDetailContent({
                                       {plan.type || "Session"}
                                     </span>
                                     @ {plan.location}
-                                    {disabled ? " (already exists)" : ""}
+                                    {plan.alreadyExists ? " (will replace existing)" : ""}
                                   </span>
                                   {plan.startDate && plan.endDate && (
                                     <span className="block text-xs text-[#888]">

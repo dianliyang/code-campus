@@ -533,7 +533,7 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
   type: string;
   startDate: string;
   endDate: string;
-}>) {
+}>, options?: { replaceExisting?: boolean }) {
   const user = await getUser();
   if (!user) {
     throw new Error("Unauthorized");
@@ -544,19 +544,7 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
   }
 
   const supabase = createAdminClient();
-  const { data: existingPlans } = await supabase
-    .from("study_plans")
-    .select("days_of_week, start_time, end_time, location, type")
-    .eq("user_id", user.id)
-    .eq("course_id", courseId);
-
-  const existingKeys = new Set((existingPlans || []).map((p) => planKey({
-    daysOfWeek: p.days_of_week || [],
-    startTime: p.start_time || "",
-    endTime: p.end_time || "",
-    location: p.location || "",
-    type: p.type || "",
-  })));
+  const shouldReplaceExisting = options?.replaceExisting === true;
 
   const dedupe = new Set<string>();
   const toInsert = selectedPlans
@@ -579,10 +567,53 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
         location: plan.location || "",
         type: plan.type || "",
       });
-      if (existingKeys.has(key) || dedupe.has(key)) return false;
+      if (dedupe.has(key)) return false;
       dedupe.add(key);
       return true;
     });
+
+  if (toInsert.length === 0) {
+    return { created: 0, selected: selectedPlans.length };
+  }
+
+  if (shouldReplaceExisting) {
+    const { error: removeExistingError } = await supabase
+      .from("study_plans")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("course_id", courseId);
+    if (removeExistingError) {
+      console.error("Failed to replace study plans:", removeExistingError);
+      throw new Error("Failed to generate study plans");
+    }
+  } else {
+    const { data: existingPlans } = await supabase
+      .from("study_plans")
+      .select("days_of_week, start_time, end_time, location, type")
+      .eq("user_id", user.id)
+      .eq("course_id", courseId);
+
+    const existingKeys = new Set((existingPlans || []).map((p) => planKey({
+      daysOfWeek: p.days_of_week || [],
+      startTime: p.start_time || "",
+      endTime: p.end_time || "",
+      location: p.location || "",
+      type: p.type || "",
+    })));
+
+    const unique = toInsert.filter((plan) => {
+      const key = planKey({
+        daysOfWeek: plan.days_of_week || [],
+        startTime: plan.start_time,
+        endTime: plan.end_time,
+        location: plan.location || "",
+        type: plan.type || "",
+      });
+      return !existingKeys.has(key);
+    });
+    toInsert.length = 0;
+    toInsert.push(...unique);
+  }
 
   if (toInsert.length === 0) {
     return { created: 0, selected: selectedPlans.length };

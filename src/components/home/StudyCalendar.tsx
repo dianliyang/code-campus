@@ -5,7 +5,7 @@ import { Course } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Loader2, Sparkles, Clock, Moon, Flower2, Check, MapPin, CalendarDays, CalendarCheck, WandSparkles, X } from "lucide-react";
-import { bulkPreviewStudyPlans, confirmGeneratedStudyPlans, type BulkCoursePreview, type SchedulePlanPreview } from "@/actions/courses";
+import { bulkPreviewStudyPlans, confirmGeneratedStudyPlans, type BulkCoursePreview } from "@/actions/courses";
 
 interface EnrolledCourse extends Course {
   status: string;
@@ -115,8 +115,11 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
         // Check if date is in range
         if (dateStr < plan.start_date || dateStr > plan.end_date) return;
 
-        // Check if day of week matches
-        if (!plan.days_of_week.includes(dayOfWeek)) return;
+        // Check if day of week matches (supports mixed legacy values)
+        const normalizedDays = (plan.days_of_week || [])
+          .map((d) => (typeof d === "number" ? d : Number(d)))
+          .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+        if (!normalizedDays.includes(dayOfWeek)) return;
 
         // Find completion log
         const log = logs.find(l => l.plan_id === plan.id && l.log_date === dateStr);
@@ -230,6 +233,15 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
   const hasEvents = selectedDay && selectedDayEvents.length > 0;
   const isFutureDay = selectedDay && today ? selectedDay >= today : false;
   const isRestDay = isFutureDay && !hasEvents;
+  const monthlyEvents = useMemo(() => {
+    const flat: GeneratedEvent[] = [];
+    eventsByDay.forEach((events) => flat.push(...events));
+    return flat.sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      if (dateCompare !== 0) return dateCompare;
+      return a.startTime.localeCompare(b.startTime);
+    });
+  }, [eventsByDay]);
 
   const inProgressCourses = courses.filter(c => c.status === 'in_progress');
   const hasPlans = plans.length > 0;
@@ -300,19 +312,19 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-4 hover:border-gray-300 transition-all hover:shadow-lg h-full flex flex-col">
-      <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
+    <div className="rounded-md border border-[#e5e5e5] bg-white p-3 sm:p-4 h-full flex flex-col">
+      <div className="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
         {/* Left: Calendar */}
         <div className="flex-shrink-0 w-full md:w-80 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-black text-gray-900 tracking-tight">
-              {monthNames[month]} <span className="text-gray-400">{year}</span>
+            <h3 className="text-sm font-semibold text-[#1f1f1f]">
+              {monthNames[month]} <span className="text-[#8a8a8a]">{year}</span>
             </h3>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => navigateMonth(-1)}
-                className="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all"
+                className="h-8 w-8 rounded-md border border-[#d3d3d3] bg-white flex items-center justify-center text-[#777] hover:bg-[#f8f8f8] transition-colors"
               >
                 <ChevronLeft className="w-3 h-3" />
               </button>
@@ -322,13 +334,13 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                   setCurrentDate(now);
                   setSelectedDay(now.getDate());
                 }}
-                className="px-2 py-1 text-[8px] font-black uppercase tracking-widest text-gray-700 bg-gray-100 rounded-md hover:bg-gray-800 hover:text-white transition-all"
+                className="h-8 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
                 {dict.calendar_today}
               </button>
               <button
                 onClick={() => navigateMonth(1)}
-                className="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all"
+                className="h-8 w-8 rounded-md border border-[#d3d3d3] bg-white flex items-center justify-center text-[#777] hover:bg-[#f8f8f8] transition-colors"
               >
                 <ChevronRight className="w-3 h-3" />
               </button>
@@ -336,7 +348,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                 <button
                   onClick={handleBulkGenerate}
                   disabled={isBulkGenerating}
-                  className="w-6 h-6 rounded-md bg-violet-50 flex items-center justify-center text-violet-500 hover:text-violet-700 hover:bg-violet-100 transition-all disabled:opacity-50"
+                  className="h-8 w-8 rounded-md border border-[#d3d3d3] bg-white flex items-center justify-center text-[#555] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
                   title={`Generate study plans for ${coursesWithoutPlans.length} course(s)`}
                 >
                   {isBulkGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <WandSparkles className="w-3 h-3" />}
@@ -350,7 +362,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
             <button
               onClick={generateSchedule}
               disabled={isGenerating}
-              className="w-full mb-3 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white bg-violet-500 rounded-lg hover:bg-violet-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full mb-3 h-8 px-3 text-[13px] font-medium text-[#333] bg-white border border-[#d3d3d3] rounded-md hover:bg-[#f8f8f8] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isGenerating ? (
                 <>
@@ -367,7 +379,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
           )}
 
           {/* Legend */}
-          <div className="flex items-center gap-3 mb-2 text-[8px] font-bold text-gray-400 uppercase tracking-wider">
+          <div className="flex items-center gap-3 mb-2 text-xs text-[#8a8a8a]">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-violet-500"></div>
               <span>{dict.calendar_study}</span>
@@ -383,8 +395,8 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
             {weekdays.map((day, i) => (
               <div
                 key={i}
-                className={`text-center text-[8px] font-black uppercase tracking-widest py-1 ${
-                  i === 0 || i === 6 ? 'text-gray-300' : 'text-gray-400'
+                className={`text-center text-[11px] font-medium py-1 ${
+                  i === 0 || i === 6 ? 'text-[#ababab]' : 'text-[#8a8a8a]'
                 }`}
               >
                 {day}
@@ -408,14 +420,14 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                 <button
                   key={day}
                   onClick={() => setSelectedDay(isSelected ? null : day)}
-                  className={`flex-1 aspect-square rounded-lg flex flex-col items-center justify-center relative transition-all ${
+                  className={`flex-1 aspect-square rounded-md flex flex-col items-center justify-center relative transition-all ${
                     isSelected
-                      ? 'bg-gray-900 text-white shadow-md shadow-gray-900/20'
-                      : isToday
-                        ? 'bg-gray-100 text-gray-900 ring-2 ring-gray-400'
+                      ? 'bg-[#1f1f1f] text-white'
+                    : isToday
+                        ? 'bg-[#efefef] text-[#1f1f1f] ring-1 ring-[#d0d0d0]'
                         : hasSchedule
-                          ? 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                          : 'text-gray-400 hover:bg-gray-50'
+                          ? 'bg-[#f8f8f8] text-[#3f3f3f] hover:bg-[#f1f1f1]'
+                          : 'text-[#9a9a9a] hover:bg-[#f8f8f8]'
                   }`}
                 >
                   <span className={`text-xs font-bold ${isToday && !isSelected ? 'text-violet-700' : ''}`}>
@@ -436,21 +448,21 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
         </div>
 
         {/* Right: Selected Day Details */}
-        <div className="flex-1 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6 min-w-0 flex flex-col">
+        <div className="flex-1 border-t md:border-t-0 md:border-l border-[#e8e8e8] pt-4 md:pt-0 md:pl-4 min-w-0 flex flex-col">
           {selectedDay ? (
             <div className="animate-in fade-in duration-200 h-full flex flex-col">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                <span className="text-xs font-medium text-[#777]">
                   {monthNames[month]} {selectedDay}
                 </span>
                 {hasEvents && (
-                  <span className="text-[9px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-medium text-[#555] bg-[#f2f2f2] px-2 py-0.5 rounded-full">
                     <Clock className="w-3 h-3 mr-1 inline" />
                     {dict.calendar_study_day}
                   </span>
                 )}
                 {isRestDay && (
-                  <span className="text-[9px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-medium text-[#777] bg-[#f7f7f7] px-2 py-0.5 rounded-full">
                     <Moon className="w-3 h-3 mr-1 inline" />
                     {dict.calendar_rest_day}
                   </span>
@@ -546,15 +558,38 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
               )}
             </div>
           ) : (
-            <div className="flex-grow flex flex-col items-center justify-center text-center py-4">
-              <CalendarCheck className="w-8 h-8 text-gray-200 mb-4" />
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                {dict.calendar_events}
-              </p>
-              {plans.length > 0 && (
-                <p className="text-[9px] text-gray-500 mt-2 font-black">
-                  {plans.length} {dict.calendar_courses_scheduled || "plans active"}
-                </p>
+            <div className="flex-grow min-h-0">
+              {monthlyEvents.length > 0 ? (
+                <div className="h-full flex flex-col">
+                  <p className="text-xs font-medium text-[#666] mb-2">
+                    {dict.calendar_events}
+                  </p>
+                  <div className="space-y-2 overflow-y-auto pr-1">
+                    {monthlyEvents.slice(0, 8).map((event, idx) => (
+                      <div
+                        key={`${event.planId}-${event.date}-${idx}`}
+                        className="rounded-md border border-[#e5e5e5] bg-white px-3 py-2"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium text-[#1f1f1f] truncate">{event.title}</p>
+                          <span className="text-[11px] text-[#777] whitespace-nowrap">
+                            {new Date(event.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[12px] text-[#777]">
+                          {event.startTime.slice(0, 5)}-{event.endTime.slice(0, 5)} · {event.location || "Campus"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center py-4">
+                  <CalendarCheck className="w-8 h-8 text-gray-200 mb-4" />
+                  <p className="text-xs text-[#8a8a8a]">
+                    {dict.calendar_no_events}
+                  </p>
+                </div>
               )}
             </div>
           )}

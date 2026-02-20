@@ -7,7 +7,9 @@
       "Bash(npx tsx:*)",
       "Bash(curl:*)",
       "Bash(iconv:*)",
-      "WebFetch(domain:univis.uni-kiel.de)"
+      "WebFetch(domain:univis.uni-kiel.de)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(git add:*)"
     ]
   }
 }

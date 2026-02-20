@@ -644,6 +644,7 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
   }
 
   const supabase = createAdminClient();
+  let didChange = false;
 
   let parsedDetails: Record<string, unknown> = {};
   try {
@@ -657,123 +658,232 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
   delete parsedDetails.relatedUrls;
   delete parsedDetails.crossListedCourses;
 
-  const { error: courseError } = await supabase
-    .from("courses")
-    .update({
-      university: input.university,
-      course_code: input.courseCode,
-      title: input.title,
-      units: input.units,
-      credit: input.credit,
-      description: input.description,
-      url: input.url,
-      department: input.department,
-      corequisites: input.corequisites,
-      level: input.level,
-      difficulty: input.difficulty,
-      popularity: input.popularity,
-      workload: input.workload,
-      is_hidden: input.isHidden,
-      is_internal: input.isInternal,
-      prerequisites: input.prerequisites || null,
-      related_urls: input.relatedUrls || [],
-      cross_listed_courses: input.crossListedCourses || null,
-      details: JSON.stringify(parsedDetails),
-      instructors: input.instructors,
-    })
-    .eq("id", courseId);
+  const [courseRes, topicsRes, semestersRes, plansRes] = await Promise.all([
+    supabase
+      .from("courses")
+      .select(
+        "id, university, course_code, title, units, credit, description, url, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, prerequisites, related_urls, cross_listed_courses, details, instructors",
+      )
+      .eq("id", courseId)
+      .single(),
+    supabase.from("course_fields").select("fields(name)").eq("course_id", courseId),
+    supabase.from("course_semesters").select("semesters(term, year)").eq("course_id", courseId),
+    supabase
+      .from("study_plans")
+      .select("id, start_date, end_date, days_of_week, start_time, end_time, location, type")
+      .eq("user_id", user.id)
+      .eq("course_id", courseId),
+  ]);
 
-  if (courseError) {
-    console.error("Failed to update course:", courseError);
+  if (courseRes.error || !courseRes.data) {
+    console.error("Failed to fetch existing course:", courseRes.error);
     throw new Error("Failed to update course");
+  }
+
+  const existingCourse = courseRes.data;
+  const stableStringify = (value: unknown): string => {
+    if (Array.isArray(value)) {
+      return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+    }
+    if (value && typeof value === "object") {
+      const entries = Object.entries(value as Record<string, unknown>)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, v]) => `${JSON.stringify(k)}:${stableStringify(v)}`);
+      return `{${entries.join(",")}}`;
+    }
+    return JSON.stringify(value);
+  };
+
+  const arrayEqual = (a: unknown[], b: unknown[]) =>
+    a.length === b.length && a.every((v, idx) => v === b[idx]);
+
+  const normalizeTimeWithSeconds = (value: string | null | undefined) => {
+    const raw = (value || "").trim();
+    if (!raw) return "00:00:00";
+    return raw.length === 5 ? `${raw}:00` : raw;
+  };
+
+  const nextCoursePayload = {
+    university: input.university,
+    course_code: input.courseCode,
+    title: input.title,
+    units: input.units,
+    credit: input.credit,
+    description: input.description,
+    url: input.url,
+    department: input.department,
+    corequisites: input.corequisites,
+    level: input.level,
+    difficulty: input.difficulty,
+    popularity: input.popularity,
+    workload: input.workload,
+    is_hidden: input.isHidden,
+    is_internal: input.isInternal,
+    prerequisites: input.prerequisites || null,
+    related_urls: input.relatedUrls || [],
+    cross_listed_courses: input.crossListedCourses || null,
+    details: JSON.stringify(parsedDetails),
+    instructors: input.instructors,
+  };
+
+  const existingDetailsParsed =
+    typeof existingCourse.details === "string"
+      ? JSON.parse(existingCourse.details || "{}")
+      : (existingCourse.details as Record<string, unknown> | null) || {};
+
+  const existingCourseComparable = {
+    university: existingCourse.university || "",
+    course_code: existingCourse.course_code || "",
+    title: existingCourse.title || "",
+    units: existingCourse.units || "",
+    credit: existingCourse.credit,
+    description: existingCourse.description || "",
+    url: existingCourse.url || "",
+    department: existingCourse.department || "",
+    corequisites: existingCourse.corequisites || "",
+    level: existingCourse.level || "",
+    difficulty: Number(existingCourse.difficulty || 0),
+    popularity: Number(existingCourse.popularity || 0),
+    workload: existingCourse.workload || "",
+    is_hidden: Boolean(existingCourse.is_hidden),
+    is_internal: Boolean(existingCourse.is_internal),
+    prerequisites: existingCourse.prerequisites || null,
+    related_urls: Array.isArray(existingCourse.related_urls) ? existingCourse.related_urls : [],
+    cross_listed_courses: existingCourse.cross_listed_courses || null,
+    details: stableStringify(existingDetailsParsed),
+    instructors: Array.isArray(existingCourse.instructors) ? existingCourse.instructors : [],
+  };
+
+  const changedCoursePayload: Record<string, unknown> = {};
+  (Object.keys(nextCoursePayload) as Array<keyof typeof nextCoursePayload>).forEach((key) => {
+    const nextValue = key === "details" ? stableStringify(parsedDetails) : nextCoursePayload[key];
+    const prevValue = existingCourseComparable[key as keyof typeof existingCourseComparable];
+    const equal =
+      Array.isArray(nextValue) && Array.isArray(prevValue)
+        ? arrayEqual(nextValue as unknown[], prevValue as unknown[])
+        : nextValue === prevValue;
+
+    if (!equal) {
+      changedCoursePayload[key] = nextCoursePayload[key];
+    }
+  });
+
+  if (Object.keys(changedCoursePayload).length > 0) {
+    const { error: courseError } = await supabase
+      .from("courses")
+      .update(changedCoursePayload)
+      .eq("id", courseId);
+    if (courseError) {
+      console.error("Failed to update course:", courseError);
+      throw new Error("Failed to update course");
+    }
+    didChange = true;
   }
 
   const topicNames = Array.from(
     new Set(input.topics.map((name) => name.trim()).filter((name) => name.length > 0)),
-  );
+  ).sort((a, b) => a.localeCompare(b));
+  const existingTopicNames = ((topicsRes.data || []) as Array<{ fields: { name: string } | null }>)
+    .map((row) => row.fields?.name || "")
+    .filter((name) => name.length > 0)
+    .sort((a, b) => a.localeCompare(b));
+  const topicsChanged = !arrayEqual(topicNames, existingTopicNames);
 
-  if (topicNames.length > 0) {
-    const { error: insertFieldsError } = await supabase
+  if (topicsChanged) {
+    if (topicNames.length > 0) {
+      const { error: insertFieldsError } = await supabase
+        .from("fields")
+        .upsert(topicNames.map((name) => ({ name })), { onConflict: "name", ignoreDuplicates: true });
+      if (insertFieldsError) {
+        console.error("Failed to upsert fields:", insertFieldsError);
+        throw new Error("Failed to update topics");
+      }
+    }
+
+    const { data: topicRows, error: topicFetchError } = await supabase
       .from("fields")
-      .upsert(topicNames.map((name) => ({ name })), { onConflict: "name", ignoreDuplicates: true });
-    if (insertFieldsError) {
-      console.error("Failed to upsert fields:", insertFieldsError);
+      .select("id, name")
+      .in("name", topicNames.length > 0 ? topicNames : ["__no_topic__"]);
+    if (topicFetchError) {
+      console.error("Failed to fetch topic ids:", topicFetchError);
       throw new Error("Failed to update topics");
     }
-  }
 
-  const { data: topicRows, error: topicFetchError } = await supabase
-    .from("fields")
-    .select("id, name")
-    .in("name", topicNames.length > 0 ? topicNames : ["__no_topic__"]);
-  if (topicFetchError) {
-    console.error("Failed to fetch topic ids:", topicFetchError);
-    throw new Error("Failed to update topics");
-  }
-
-  const { error: clearTopicsError } = await supabase
-    .from("course_fields")
-    .delete()
-    .eq("course_id", courseId);
-  if (clearTopicsError) {
-    console.error("Failed to clear course topics:", clearTopicsError);
-    throw new Error("Failed to update topics");
-  }
-
-  if ((topicRows || []).length > 0) {
-    const { error: insertCourseFieldsError } = await supabase
+    const { error: clearTopicsError } = await supabase
       .from("course_fields")
-      .insert((topicRows || []).map((row) => ({ course_id: courseId, field_id: row.id })));
-    if (insertCourseFieldsError) {
-      console.error("Failed to update course topics:", insertCourseFieldsError);
+      .delete()
+      .eq("course_id", courseId);
+    if (clearTopicsError) {
+      console.error("Failed to clear course topics:", clearTopicsError);
       throw new Error("Failed to update topics");
     }
+
+    if ((topicRows || []).length > 0) {
+      const { error: insertCourseFieldsError } = await supabase
+        .from("course_fields")
+        .insert((topicRows || []).map((row) => ({ course_id: courseId, field_id: row.id })));
+      if (insertCourseFieldsError) {
+        console.error("Failed to update course topics:", insertCourseFieldsError);
+        throw new Error("Failed to update topics");
+      }
+    }
+    didChange = true;
   }
 
   const semesterPairs = Array.from(
     new Set(input.semesters.map((label) => label.trim()).filter((label) => label.length > 0)),
   )
     .map(parseSemesterLabel)
-    .filter((v): v is { term: string; year: number } => v !== null);
+    .filter((v): v is { term: string; year: number } => v !== null)
+    .sort((a, b) => `${a.term} ${a.year}`.localeCompare(`${b.term} ${b.year}`));
+  const existingSemesterLabels = ((semestersRes.data || []) as Array<{ semesters: { term: string; year: number } | null }>)
+    .map((row) => (row.semesters ? `${row.semesters.term} ${row.semesters.year}` : ""))
+    .filter((label) => label.length > 0)
+    .sort((a, b) => a.localeCompare(b));
+  const nextSemesterLabels = semesterPairs.map((s) => `${s.term} ${s.year}`);
+  const semestersChanged = !arrayEqual(existingSemesterLabels, nextSemesterLabels);
 
-  if (semesterPairs.length > 0) {
-    const { error: upsertSemestersError } = await supabase
-      .from("semesters")
-      .upsert(semesterPairs, { onConflict: "term,year", ignoreDuplicates: true });
-    if (upsertSemestersError) {
-      console.error("Failed to upsert semesters:", upsertSemestersError);
-      throw new Error("Failed to update semesters");
-    }
-  }
-
-  const { error: clearSemestersError } = await supabase
-    .from("course_semesters")
-    .delete()
-    .eq("course_id", courseId);
-  if (clearSemestersError) {
-    console.error("Failed to clear course semesters:", clearSemestersError);
-    throw new Error("Failed to update semesters");
-  }
-
-  for (const sem of semesterPairs) {
-    const { data: semRow, error: semFetchError } = await supabase
-      .from("semesters")
-      .select("id")
-      .eq("term", sem.term)
-      .eq("year", sem.year)
-      .single();
-    if (semFetchError || !semRow) {
-      console.error("Failed to fetch semester id:", semFetchError);
-      throw new Error("Failed to update semesters");
+  if (semestersChanged) {
+    if (semesterPairs.length > 0) {
+      const { error: upsertSemestersError } = await supabase
+        .from("semesters")
+        .upsert(semesterPairs, { onConflict: "term,year", ignoreDuplicates: true });
+      if (upsertSemestersError) {
+        console.error("Failed to upsert semesters:", upsertSemestersError);
+        throw new Error("Failed to update semesters");
+      }
     }
 
-    const { error: linkError } = await supabase
+    const { error: clearSemestersError } = await supabase
       .from("course_semesters")
-      .insert({ course_id: courseId, semester_id: semRow.id });
-    if (linkError) {
-      console.error("Failed to link course semester:", linkError);
+      .delete()
+      .eq("course_id", courseId);
+    if (clearSemestersError) {
+      console.error("Failed to clear course semesters:", clearSemestersError);
       throw new Error("Failed to update semesters");
     }
+
+    for (const sem of semesterPairs) {
+      const { data: semRow, error: semFetchError } = await supabase
+        .from("semesters")
+        .select("id")
+        .eq("term", sem.term)
+        .eq("year", sem.year)
+        .single();
+      if (semFetchError || !semRow) {
+        console.error("Failed to fetch semester id:", semFetchError);
+        throw new Error("Failed to update semesters");
+      }
+
+      const { error: linkError } = await supabase
+        .from("course_semesters")
+        .insert({ course_id: courseId, semester_id: semRow.id });
+      if (linkError) {
+        console.error("Failed to link course semester:", linkError);
+        throw new Error("Failed to update semesters");
+      }
+    }
+    didChange = true;
   }
 
   if (input.removedStudyPlanIds.length > 0) {
@@ -787,7 +897,21 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
       console.error("Failed to remove study plans:", removePlansError);
       throw new Error("Failed to update study plans");
     }
+    didChange = true;
   }
+
+  const existingPlansById = new Map(
+    ((plansRes.data || []) as Array<{
+      id: number;
+      start_date: string;
+      end_date: string;
+      days_of_week: number[];
+      start_time: string;
+      end_time: string;
+      location: string | null;
+      type: string | null;
+    }>).map((plan) => [plan.id, plan]),
+  );
 
   for (const plan of input.studyPlans) {
     const payload = {
@@ -795,24 +919,49 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
       course_id: courseId,
       start_date: plan.startDate,
       end_date: plan.endDate,
-      days_of_week: plan.daysOfWeek,
-      start_time: plan.startTime,
-      end_time: plan.endTime,
+      days_of_week: [...plan.daysOfWeek].sort((a, b) => a - b),
+      start_time: normalizeTimeWithSeconds(plan.startTime),
+      end_time: normalizeTimeWithSeconds(plan.endTime),
       location: plan.location,
       type: plan.type || null,
       updated_at: new Date().toISOString(),
     };
 
     if (plan.id) {
-      const { error: updatePlanError } = await supabase
-        .from("study_plans")
-        .update(payload)
-        .eq("id", plan.id)
-        .eq("user_id", user.id)
-        .eq("course_id", courseId);
-      if (updatePlanError) {
-        console.error("Failed to update study plan:", updatePlanError);
-        throw new Error("Failed to update study plans");
+      const existing = existingPlansById.get(plan.id);
+      const existingComparable = existing
+        ? {
+            start_date: existing.start_date,
+            end_date: existing.end_date,
+            days_of_week: [...(existing.days_of_week || [])].sort((a, b) => a - b),
+            start_time: normalizeTimeWithSeconds(existing.start_time),
+            end_time: normalizeTimeWithSeconds(existing.end_time),
+            location: existing.location || "",
+            type: existing.type || null,
+          }
+        : null;
+      const hasPlanChanged =
+        !existingComparable ||
+        existingComparable.start_date !== payload.start_date ||
+        existingComparable.end_date !== payload.end_date ||
+        !arrayEqual(existingComparable.days_of_week, payload.days_of_week) ||
+        existingComparable.start_time !== payload.start_time ||
+        existingComparable.end_time !== payload.end_time ||
+        existingComparable.location !== payload.location ||
+        existingComparable.type !== payload.type;
+
+      if (hasPlanChanged) {
+        const { error: updatePlanError } = await supabase
+          .from("study_plans")
+          .update(payload)
+          .eq("id", plan.id)
+          .eq("user_id", user.id)
+          .eq("course_id", courseId);
+        if (updatePlanError) {
+          console.error("Failed to update study plan:", updatePlanError);
+          throw new Error("Failed to update study plans");
+        }
+        didChange = true;
       }
     } else {
       const { error: insertPlanError } = await supabase
@@ -822,12 +971,15 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
         console.error("Failed to create study plan:", insertPlanError);
         throw new Error("Failed to update study plans");
       }
+      didChange = true;
     }
   }
 
-  revalidatePath(`/courses/${courseId}`);
-  revalidatePath("/courses");
-  revalidatePath("/study-plan");
+  if (didChange) {
+    revalidatePath(`/courses/${courseId}`);
+    revalidatePath("/courses");
+    revalidatePath("/study-plan");
+  }
 }
 
 export async function regenerateCourseDescription(courseId: number) {

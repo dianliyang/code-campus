@@ -82,9 +82,92 @@ export class SupabaseDatabase {
     );
 
     const supabase = createAdminClient();
+    let coursesForUpsert = courses;
+
+    // CAU special handling:
+    // If a CAU course already exists, only refresh details.schedule.
+    if (university === "CAU Kiel") {
+      const courseCodes = courses.map((c) => c.courseCode);
+      const { data: existingRows, error: existingFetchError } = await supabase
+        .from("courses")
+        .select("id, course_code, details")
+        .eq("university", university)
+        .in("course_code", courseCodes);
+
+      if (existingFetchError) {
+        console.error("[Supabase] Error fetching existing CAU courses:", existingFetchError);
+        throw existingFetchError;
+      }
+
+      const existingByCode = new Map(
+        (existingRows || []).map((row) => [row.course_code, row]),
+      );
+
+      const existingCourses = courses.filter((c) => existingByCode.has(c.courseCode));
+      coursesForUpsert = courses.filter((c) => !existingByCode.has(c.courseCode));
+
+      for (const course of existingCourses) {
+        const existing = existingByCode.get(course.courseCode);
+        if (!existing) continue;
+
+        const existingDetails =
+          typeof existing.details === "string"
+            ? (JSON.parse(existing.details || "{}") as Record<string, unknown>)
+            : ((existing.details as Record<string, unknown> | null) || {});
+
+        const nextSchedule =
+          course.details && typeof course.details === "object"
+            ? ((course.details as Record<string, unknown>).schedule as Record<string, unknown> | undefined)
+            : undefined;
+
+        if (!nextSchedule) continue;
+
+        const stableStringify = (value: unknown): string => {
+          if (Array.isArray(value)) {
+            return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+          }
+          if (value && typeof value === "object") {
+            const entries = Object.entries(value as Record<string, unknown>)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([k, v]) => `${JSON.stringify(k)}:${stableStringify(v)}`);
+            return `{${entries.join(",")}}`;
+          }
+          return JSON.stringify(value);
+        };
+
+        const currentSchedule =
+          existingDetails && typeof existingDetails === "object"
+            ? ((existingDetails as Record<string, unknown>).schedule as Record<string, unknown> | undefined)
+            : undefined;
+
+        if (stableStringify(currentSchedule || {}) === stableStringify(nextSchedule || {})) {
+          continue;
+        }
+
+        const mergedDetails = {
+          ...existingDetails,
+          schedule: nextSchedule,
+        };
+
+        const { error: updateScheduleError } = await supabase
+          .from("courses")
+          .update({ details: mergedDetails as Json })
+          .eq("id", existing.id);
+
+        if (updateScheduleError) {
+          console.error(`[Supabase] Failed to update CAU schedule for ${course.courseCode}:`, updateScheduleError);
+          throw updateScheduleError;
+        }
+      }
+    }
+
+    if (coursesForUpsert.length === 0) {
+      console.log(`[Supabase] No new ${university} courses to upsert.`);
+      return;
+    }
 
     // Separate courses into those that need full update and those that are partially scraped
-    const toUpsert = courses.map((c) => {
+    const toUpsert = coursesForUpsert.map((c) => {
       const payload: {
         university: string;
         course_code: string;
@@ -155,7 +238,7 @@ export class SupabaseDatabase {
 
     // 2. Fetch IDs for ALL courses in this batch (both new and existing)
     // We need to match based on university and course_code.
-    const courseCodes = courses.map(c => c.courseCode);
+    const courseCodes = coursesForUpsert.map(c => c.courseCode);
     const { data: allCourses, error: fetchError } = await supabase
       .from("courses")
       .select("id, course_code")
@@ -169,7 +252,7 @@ export class SupabaseDatabase {
     }
 
     // Handle Semesters
-    const coursesWithSemesters = courses.filter(c => c.semesters && c.semesters.length > 0);
+    const coursesWithSemesters = coursesForUpsert.filter(c => c.semesters && c.semesters.length > 0);
     if (coursesWithSemesters.length > 0 && allCourses) {
       // 1. Collect all unique semesters
       const uniqueSemesters = new Map<string, { term: string, year: number }>();

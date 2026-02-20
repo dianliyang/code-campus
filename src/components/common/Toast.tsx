@@ -8,9 +8,10 @@ interface ToastProps {
   type?: "success" | "error" | "info";
   duration?: number;
   onClose: () => void;
+  position?: "bottom-right" | "top-right";
 }
 
-export default function Toast({ message, type = "success", duration = 3000, onClose }: ToastProps) {
+export default function Toast({ message, type = "success", duration = 3000, onClose, position = "bottom-right" }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -34,12 +35,16 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
     info: "bg-blue-50/50 border-blue-200/50 text-blue-700"
   };
 
+  const positionClass = position === "top-right" ? "top-4 right-4" : "bottom-4 right-4";
+
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg backdrop-blur-sm transition-all duration-300 ${
+      className={`fixed ${positionClass} z-50 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg backdrop-blur-sm will-change-transform transition-all duration-200 ease-out ${
         colorMap[type]
       } ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+        isVisible
+          ? "opacity-100 translate-y-0 scale-100"
+          : `opacity-0 scale-[0.98] ${position === "top-right" ? "-translate-y-2" : "translate-y-2"}`
       }`}
     >
       {(() => { const Icon = iconMap[type]; return <Icon className="w-5 h-5" />; })()}

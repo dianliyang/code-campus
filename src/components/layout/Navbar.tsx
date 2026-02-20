@@ -18,7 +18,7 @@ export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
             <Link href="/" className="group flex items-center gap-2">
               <div className="relative w-7 h-7 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-105">
                 <Image
-                  src="/code-campus-logo.svg"
+                  src="/code-campus-logo-bw.svg"
                   alt="CodeCampus"
                   fill
                   priority

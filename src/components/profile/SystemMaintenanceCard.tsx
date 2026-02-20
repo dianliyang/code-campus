@@ -9,6 +9,8 @@ const UNIVERSITIES = [
   { id: "stanford", name: "Stanford" },
   { id: "cmu", name: "CMU" },
   { id: "ucb", name: "UC Berkeley" },
+  { id: "cau", name: "CAU Kiel" },
+  { id: "cau-sport", name: "CAU Sport" },
 ];
 
 const SEMESTERS = [
@@ -23,8 +25,11 @@ export default function SystemMaintenanceCard() {
   const [isPending, startTransition] = useTransition();
   const [selectedUnis, setSelectedUnis] = useState<string[]>(["mit"]);
   const [selectedSems, setSelectedSems] = useState<string[]>([SEMESTERS[2].id]);
-  const [forceUpdate, setForceUpdate] = useState(false);
-  const [status, setStatus] = useState<{ type: "idle" | "success" | "error"; message?: string }>({ type: "idle" });
+  const [status, setStatus] = useState<{
+    type: "idle" | "success" | "error";
+    message?: string;
+    runs?: Array<{ label: string; count: number; ok: boolean; error?: string }>;
+  }>({ type: "idle" });
 
   const toggleUni = (id: string) => {
     if (selectedUnis.includes(id)) {
@@ -47,65 +52,75 @@ export default function SystemMaintenanceCard() {
   };
 
   const handleRunScrapers = () => {
-    setStatus({ type: "idle" });
+    setStatus({ type: "idle", runs: [] });
     startTransition(async () => {
       try {
         let totalCount = 0;
         let successCount = 0;
         const errors: string[] = [];
+        const expectedRuns = selectedUnis.length * selectedSems.length;
+        const runs: Array<{ label: string; count: number; ok: boolean; error?: string }> = [];
 
         for (const uni of selectedUnis) {
           for (const sem of selectedSems) {
-          const result = await runManualScraperAction({
-            university: uni,
-            semester: sem,
-            forceUpdate
-          });
-          
-          if (result.success) {
-            totalCount += result.count || 0;
-            successCount++;
-          } else {
-            errors.push(`${uni.toUpperCase()}: ${result.error}`);
+            const result = await runManualScraperAction({
+              university: uni,
+              semester: sem,
+            });
+            const label = `${uni.toUpperCase()} ${sem.toUpperCase()}`;
+
+            if (result.success) {
+              const count = result.count || 0;
+              totalCount += count;
+              successCount++;
+              runs.push({ label, count, ok: true });
+            } else {
+              const error = result.error || "Unknown error";
+              errors.push(`${label}: ${error}`);
+              runs.push({ label, count: 0, ok: false, error });
+            }
           }
         }
-        }
         
-        if (successCount === selectedUnis.length) {
+        if (successCount === expectedRuns) {
           setStatus({ 
             type: "success", 
-            message: `Synchronization complete. ${totalCount} records processed across ${successCount} institutions.` 
+            message: `Synchronization complete. ${totalCount} records scraped across ${expectedRuns} run(s).`,
+            runs,
           });
         } else if (successCount > 0) {
           setStatus({ 
             type: "error", 
-            message: `Partial success. ${totalCount} records processed, but ${errors.length} failed: ${errors.join(", ")}` 
+            message: `Partial success. ${totalCount} records scraped, ${successCount}/${expectedRuns} run(s) succeeded${errors.length > 0 ? `, ${errors.length} failed.` : ""}.`,
+            runs,
           });
         } else {
           setStatus({ 
             type: "error", 
-            message: `Operation failed: ${errors.join(", ")}` 
+            message: `Operation failed: ${errors.join(", ")}`,
+            runs,
           });
         }
       } catch (error) {
         setStatus({ 
           type: "error", 
-          message: error instanceof Error ? error.message : "An unexpected error occurred." 
+          message: error instanceof Error ? error.message : "An unexpected error occurred.",
+          runs: [],
         });
       }
     });
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 space-y-8">
-      <div className="flex items-center gap-3 text-gray-900 mb-8 pb-4 border-b border-gray-50">
-        <RefreshCw className="w-5 h-5 text-brand-blue" />
-        <span className="text-sm font-bold uppercase tracking-[0.1em]">Data Synchronization</span>
+    <div className="bg-white border border-[#e5e5e5] rounded-md p-4 space-y-4">
+      <div className="flex items-center gap-2 text-[#222] mb-3 pb-3 border-b border-[#efefef]">
+        <RefreshCw className="w-4 h-4 text-[#777]" />
+        <span className="text-sm font-semibold">Data Synchronization</span>
       </div>
 
       {/* Institution Selection */}
-      <div className="space-y-4">
-        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Target Institutions</label>
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-[#666] block">Target Institutions</label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {UNIVERSITIES.map((uni) => {
             const isSelected = selectedUnis.includes(uni.id);
@@ -114,10 +129,10 @@ export default function SystemMaintenanceCard() {
                 key={uni.id}
                 onClick={() => toggleUni(uni.id)}
                 disabled={isPending}
-                className={`flex items-center justify-between px-4 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-lg border-2 transition-all ${
+                className={`flex items-center justify-between h-8 px-2.5 rounded-md border transition-colors text-[13px] font-medium ${
                   isSelected 
-                    ? "bg-gray-900 border-gray-900 text-white shadow-sm" 
-                    : "bg-white border-gray-100 text-gray-400 hover:border-gray-200 hover:text-gray-700"
+                    ? "bg-[#1f1f1f] border-[#1f1f1f] text-white" 
+                    : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
                 } disabled:opacity-50`}
               >
                 {uni.name}
@@ -129,8 +144,8 @@ export default function SystemMaintenanceCard() {
       </div>
 
       {/* Semester Selection */}
-      <div className="space-y-4">
-        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Target Semester</label>
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-[#666] block">Target Semester</label>
         <div className="flex flex-wrap gap-2">
           {SEMESTERS.map((sem) => {
             const isSelected = selectedSems.includes(sem.id);
@@ -139,10 +154,10 @@ export default function SystemMaintenanceCard() {
                 key={sem.id}
                 onClick={() => toggleSem(sem.id)}
                 disabled={isPending}
-                className={`flex items-center justify-between px-4 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-lg border-2 transition-all ${
+                className={`flex items-center justify-between h-8 px-2.5 rounded-md border transition-colors text-[13px] font-medium ${
                   isSelected 
-                    ? "bg-gray-900 border-gray-900 text-white shadow-sm" 
-                    : "bg-white border-gray-100 text-gray-400 hover:border-gray-200 hover:text-gray-700"
+                    ? "bg-[#1f1f1f] border-[#1f1f1f] text-white" 
+                    : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
                 } disabled:opacity-50`}
               >
                 {sem.name}
@@ -154,22 +169,11 @@ export default function SystemMaintenanceCard() {
       </div>
 
       {/* Action Area */}
-      <div className="pt-6 border-t border-gray-50 flex flex-col gap-4">
-        <label className="flex items-center gap-2.5 cursor-pointer group">
-          <input
-            type="checkbox"
-            checked={forceUpdate}
-            onChange={e => setForceUpdate(e.target.checked)}
-            className="accent-red-500 w-3.5 h-3.5"
-          />
-          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-500 group-hover:text-gray-700 transition-colors">
-            Force Update <span className="text-gray-400 normal-case tracking-normal font-bold">(override existing course data)</span>
-          </span>
-        </label>
+      <div className="pt-3 border-t border-[#efefef] flex flex-col gap-3">
         <button
           onClick={handleRunScrapers}
           disabled={isPending}
-          className="w-full flex items-center justify-center gap-2.5 h-11 bg-gray-900 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-lg hover:bg-black transition-all disabled:opacity-50 shadow-sm"
+          className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
         >
           {isPending ? (
             <>
@@ -179,23 +183,37 @@ export default function SystemMaintenanceCard() {
           ) : (
             <>
               <Play className="w-3 h-3 fill-current" />
-              Execute Sync Pattern
+              Run Sync
             </>
           )}
         </button>
 
         {status.type !== "idle" && (
-          <div className={`p-3 rounded-lg border text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 ${
+          <div className={`rounded-md border px-3 py-2 text-xs font-medium ${
             status.type === "success"
               ? "bg-emerald-50 border-emerald-100 text-emerald-700"
               : "bg-red-50 border-red-100 text-red-700"
           } animate-in fade-in duration-300`}>
-            {status.type === "success" ? (
-              <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
-            ) : (
-              <AlertCircle className="w-3 h-3 flex-shrink-0" />
-            )}
-            <span>{status.message}</span>
+            <div className="flex items-center gap-2">
+              {status.type === "success" ? (
+                <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
+              ) : (
+                <AlertCircle className="w-3 h-3 flex-shrink-0" />
+              )}
+              <span>{status.message}</span>
+            </div>
+            {status.runs && status.runs.length > 0 ? (
+              <div className="mt-2 border-t border-current/20 pt-2 space-y-1">
+                {status.runs.map((run) => (
+                  <div key={run.label} className="flex items-center justify-between gap-2 text-[11px]">
+                    <span className="opacity-90">{run.label}</span>
+                    <span className="font-semibold">
+                      {run.ok ? `${run.count} scraped` : "failed"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
         )}
       </div>

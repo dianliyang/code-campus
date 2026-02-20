@@ -20,16 +20,43 @@ export class CAU extends BaseScraper {
   async links(): Promise<string[]> {
     const sem = this.getSemesterParam();
     // Use form-based URL for CS master program lectures (full listing)
-    return [`https://univis.uni-kiel.de/form?__s=2&dsc=anew/tlecture&showhow=long&anonymous=1&lang=en&sem=${sem}&tdir=techn/infora/master&tlecture_all=1&__e=499`];
+    return [`https://univis.uni-kiel.de/form?__s=2&dsc=anew/tlecture&showhow=long&anonymous=1&lang=en&sem=${sem}&tdir=techn/infora/master&tlecture_all=1`];
+  }
+
+  private extractNavigationToken(html: string): string | null {
+    const m = html.match(/(?:\?|&|&amp;)__e=(\d+)/i);
+    return m ? m[1] : null;
+  }
+
+  private withNavigationToken(url: string, token: string): string {
+    const u = new URL(url);
+    u.searchParams.set("__e", token);
+    return u.toString();
   }
 
   async fetchPage(url: string, retries = 3): Promise<string> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        const response = await fetch(url);
+        let response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const buffer = await response.arrayBuffer();
-        return new TextDecoder("windows-1252").decode(buffer);
+        let buffer = await response.arrayBuffer();
+        let html = new TextDecoder("windows-1252").decode(buffer);
+
+        // UnivIS rejects stale/missing navigation tokens with error pages.
+        if (
+          html.includes("Outdated referring page") ||
+          html.includes("<title>Browser Error</title>")
+        ) {
+          const token = this.extractNavigationToken(html);
+          if (token) {
+            response = await fetch(this.withNavigationToken(url, token));
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            buffer = await response.arrayBuffer();
+            html = new TextDecoder("windows-1252").decode(buffer);
+          }
+        }
+
+        return html;
       } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
         if (attempt === retries) return "";
         await new Promise(resolve => setTimeout(resolve, 1000));

@@ -236,6 +236,7 @@ export interface WorkoutCourse {
   url: string;
   semester: string;
   details: Record<string, unknown>;
+  duration?: string;
 }
 
 export class CAUSport extends BaseScraper {
@@ -376,10 +377,15 @@ export class CAUSport extends BaseScraper {
         return $l("a").text().trim() || $l.text().trim();
       }).filter(Boolean);
 
-      const dateText = row.find("td.bs_szr").text().replace(/\s+/g, "").trim();
+      const dateCellTextRaw = row.find("td.bs_szr").text().replace(/\s+/g, " ").trim();
+      const dateText = dateCellTextRaw.replace(/\s+/g, "").trim();
       const dateMatch = dateText.match(/([\d.]+)-\s*([\d.]+)/);
       const startDate = dateMatch?.[1] || "";
       const endDate = dateMatch?.[2] || "";
+      const durationMatch = dateCellTextRaw.match(/\(([^)]+)\)/);
+      const explicitDuration = durationMatch?.[1]?.trim() || "";
+      const derivedDuration = startDate && endDate ? `${startDate} - ${endDate}` : "";
+      const duration = explicitDuration || derivedDuration;
       const instructor = row.find("td.bs_skl span").text().trim();
 
       const priceDivs = row.find("td.bs_spreis .bs_tt1");
@@ -458,9 +464,11 @@ export class CAUSport extends BaseScraper {
         url: pageUrl,
         semester,
         details: {
+          ...(duration ? { duration } : {}),
           ...(scheduleEntries.length > 1 ? { schedule: scheduleEntries } : {}),
           ...(isEntgeltfrei ? { isEntgeltfrei: true } : {}),
         },
+        duration,
       });
     });
     return results;

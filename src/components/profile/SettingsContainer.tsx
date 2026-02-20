@@ -12,12 +12,11 @@ interface SettingsContainerProps {
 
 export default function SettingsContainer({ user, profile }: SettingsContainerProps) {
   return (
-    <div className="max-w-4xl space-y-16 pb-24">
-      {/* 1. Intelligence Section */}
-      <section id="intelligence" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <header>
-          <h3 className="text-lg font-bold text-gray-900 tracking-tight">Intelligence Preference</h3>
-          <p className="text-sm text-gray-500">Configure AI providers and prompt behavioral patterns.</p>
+    <div className="space-y-4 pb-2">
+      <section id="intelligence" className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
+        <header className="space-y-1">
+          <h3 className="text-base font-semibold text-[#1f1f1f]">Intelligence Preference</h3>
+          <p className="text-xs text-[#7a7a7a]">Configure AI providers and prompt behavioral patterns.</p>
         </header>
         
         <AISettingsCard
@@ -30,11 +29,10 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
         />
       </section>
 
-      {/* 2. Identity & Security Section */}
-      <section id="security" className="pt-16 border-t border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <header>
-          <h3 className="text-lg font-bold text-gray-900 tracking-tight">Identity & Security</h3>
-          <p className="text-sm text-gray-500">Manage account access, authentication, and privacy.</p>
+      <section id="security" className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
+        <header className="space-y-1">
+          <h3 className="text-base font-semibold text-[#1f1f1f]">Identity & Security</h3>
+          <p className="text-xs text-[#7a7a7a]">Manage account access, authentication, and privacy.</p>
         </header>
         
         <SecurityIdentitySection 
@@ -43,15 +41,13 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
         />
       </section>
 
-      {/* 3. System Maintenance Section */}
-      <section id="maintenance" className="pt-16 border-t border-gray-100 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-        <header>
-          <h3 className="text-lg font-bold text-gray-900 tracking-tight">System Operations</h3>
-          <p className="text-sm text-gray-500">Synchronize academic catalogs and manage data integrity.</p>
+      <section id="maintenance" className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
+        <header className="space-y-1">
+          <h3 className="text-base font-semibold text-[#1f1f1f]">System Operations</h3>
+          <p className="text-xs text-[#7a7a7a]">Synchronize academic catalogs and manage data integrity.</p>
         </header>
         <SystemMaintenanceCard key="maintenance-section" />
       </section>
-
     </div>
   );
 }

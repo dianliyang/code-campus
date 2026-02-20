@@ -1,51 +1,41 @@
 export default function ProfileLoading() {
   return (
-    <div className="flex flex-col min-h-screen bg-white animate-pulse">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
-        {/* Profile header skeleton */}
-        <div className="flex flex-col md:flex-row md:items-center gap-8 pb-16 border-b border-gray-100">
-          <div className="w-32 h-32 bg-gray-100 rounded-full"></div>
-          <div className="flex-grow space-y-3">
-            <div className="h-8 bg-gray-100 rounded w-48"></div>
-            <div className="h-5 bg-gray-50 rounded w-64"></div>
-            <div className="flex gap-6 mt-4">
-              <div className="h-4 bg-gray-50 rounded w-32"></div>
-              <div className="h-4 bg-gray-50 rounded w-32"></div>
-            </div>
+    <div className="animate-pulse space-y-4">
+      <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+        <div className="flex items-center gap-3">
+          <div className="h-14 w-14 rounded-xl bg-gray-200" />
+          <div className="space-y-2">
+            <div className="h-6 w-52 rounded bg-gray-200" />
+            <div className="h-4 w-72 rounded bg-gray-100" />
           </div>
         </div>
+      </div>
 
-        {/* Stats grid skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-16 py-16 border-b border-gray-100">
-          <div className="space-y-4">
-            <div className="h-3 bg-gray-100 rounded w-20"></div>
-            <div className="h-16 bg-gray-50 rounded w-24"></div>
-            <div className="h-10 bg-gray-50 rounded w-48"></div>
-          </div>
-          <div className="space-y-4">
-            <div className="h-3 bg-gray-100 rounded w-20"></div>
-            <div className="h-16 bg-gray-50 rounded w-24"></div>
-            <div className="h-10 bg-gray-50 rounded w-48"></div>
-          </div>
-          <div className="space-y-4 hidden md:block">
-            <div className="h-3 bg-gray-100 rounded w-20"></div>
-            <div className="h-8 bg-gray-50 rounded w-32"></div>
-          </div>
-          <div className="space-y-4 hidden md:block">
-            <div className="h-3 bg-gray-100 rounded w-20"></div>
-            <div className="h-16 bg-gray-50 rounded w-24"></div>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 rounded-lg overflow-hidden border border-[#e5e5e5] bg-[#fcfcfc]">
+        <div className="h-20 border-r border-b lg:border-b-0 border-[#e5e5e5] bg-gray-100/60" />
+        <div className="h-20 border-b lg:border-b-0 lg:border-r border-[#e5e5e5] bg-gray-100/60" />
+        <div className="h-20 border-r border-[#e5e5e5] bg-gray-100/60" />
+        <div className="h-20 bg-gray-100/60" />
+      </div>
 
-        {/* Fingerprint section skeleton */}
-        <div className="py-24 border-b border-gray-100">
-          <div className="space-y-4 mb-20">
-            <div className="h-3 bg-gray-100 rounded w-32"></div>
-            <div className="h-8 bg-gray-100 rounded w-56"></div>
+      <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 space-y-2">
+            <div className="h-5 w-52 rounded bg-gray-200" />
+            <div className="h-4 w-60 rounded bg-gray-100" />
+            <div className="h-12 rounded-md border border-[#e5e5e5] bg-white" />
+            <div className="h-12 rounded-md border border-[#e5e5e5] bg-white" />
+            <div className="h-12 rounded-md border border-[#e5e5e5] bg-white" />
           </div>
-          <div className="h-32 bg-gray-50 rounded-3xl"></div>
+          <div className="space-y-2">
+            <div className="h-5 w-32 rounded bg-gray-200" />
+            <div className="h-4 w-40 rounded bg-gray-100" />
+            <div className="h-10 rounded-md border border-[#e5e5e5] bg-white" />
+            <div className="h-10 rounded-md border border-[#e5e5e5] bg-white" />
+            <div className="h-10 rounded-md border border-[#e5e5e5] bg-white" />
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

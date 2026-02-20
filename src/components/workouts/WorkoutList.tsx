@@ -6,10 +6,9 @@ import { Dictionary } from "@/lib/dictionary";
 import WorkoutCard from "./WorkoutCard";
 import WorkoutListHeader from "./WorkoutListHeader";
 import Pagination from "../home/Pagination";
-import { Radio, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { fetchWorkoutsAction } from "@/actions/scrapers";
 import { useSearchParams } from "next/navigation";
-import VirtualCard from "../common/VirtualCard";
 
 interface WorkoutListProps {
   initialWorkouts: Workout[];
@@ -17,7 +16,7 @@ interface WorkoutListProps {
   totalPages: number;
   currentPage: number;
   perPage: number;
-  dict: Dictionary['dashboard']['workouts'];
+  dict: Dictionary["dashboard"]["workouts"];
   lastUpdated: string | null;
 }
 
@@ -28,28 +27,25 @@ export default function WorkoutList({
   currentPage,
   perPage,
   dict,
-  lastUpdated
+  lastUpdated,
 }: WorkoutListProps) {
   const searchParams = useSearchParams();
-  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [workouts, setWorkouts] = useState<Workout[]>(initialWorkouts);
   const [page, setPage] = useState(currentPage);
   const [isLoading, setIsLoading] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Load view mode from localStorage on mount
   useEffect(() => {
     const savedMode = localStorage.getItem("workoutViewMode") as "list" | "grid";
     if (savedMode) setViewMode(savedMode);
   }, []);
 
-  // Sync workouts when initialWorkouts changes (e.g., filter change via URL)
   useEffect(() => {
     setWorkouts(initialWorkouts);
     setPage(currentPage);
   }, [initialWorkouts, currentPage]);
 
-  // Save view mode to localStorage
   const handleViewModeChange = (mode: "list" | "grid") => {
     setViewMode(mode);
     localStorage.setItem("workoutViewMode", mode);
@@ -73,35 +69,33 @@ export default function WorkoutList({
         sort,
         categories,
         days,
-        status
+        status,
       });
 
       if (nextData.items.length > 0) {
-        setWorkouts(prev => {
-          const existingIds = new Set(prev.map(w => w.id));
-          const newItems = nextData.items.filter(w => !existingIds.has(w.id));
+        setWorkouts((prev) => {
+          const existingIds = new Set(prev.map((w) => w.id));
+          const newItems = nextData.items.filter((w) => !existingIds.has(w.id));
           return [...prev, ...newItems];
         });
-        setPage(prev => prev + 1);
+        setPage((prev) => prev + 1);
       }
     } catch (error) {
       console.error("[WorkoutList] Failed to load more:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [page, totalPages, isLoading, searchParams]);
+  }, [page, totalPages, isLoading, searchParams, perPage]);
 
-  // Intersection Observer for Infinite Scroll (Mobile Only)
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        // Only trigger if we are on mobile (using window width check as proxy)
         const isMobile = window.innerWidth < 768;
         if (entries[0].isIntersecting && isMobile && !isLoading) {
           loadMore();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (observerTarget.current) {
@@ -112,7 +106,7 @@ export default function WorkoutList({
   }, [loadMore, isLoading]);
 
   return (
-    <main className="flex-grow space-y-4 min-w-0">
+    <main className="flex-grow space-y-3 min-w-0">
       <WorkoutListHeader
         totalItems={totalItems}
         viewMode={viewMode}
@@ -121,66 +115,44 @@ export default function WorkoutList({
         lastUpdated={lastUpdated}
       />
 
-      <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "bg-white border border-gray-200 rounded-xl overflow-hidden"}>
-        {viewMode === "list" && workouts && workouts.length > 0 && (
-          <div className="hidden md:flex items-center gap-6 px-6 py-3 bg-gray-50/50 border-b border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-500 select-none">
-             <div className="w-[30%] flex-shrink-0">Workout</div>
-             <div className="w-[20%] flex-shrink-0">Schedule</div>
-             <div className="flex-grow min-w-0">Location / Instructor</div>
-             <div className="w-16 flex-shrink-0 text-center">Price</div>
-             <div className="w-24 flex-shrink-0 text-center">Status</div>
-             <div className="w-16 flex-shrink-0 text-right pr-2">Booking</div>
-          </div>
-        )}
-        {workouts?.map((workout) => (
-          <VirtualCard 
-            key={`${workout.id}-${viewMode}`} 
-            id={workout.id} 
-            initialHeight={viewMode === 'list' ? "80px" : "320px"}
-            className={viewMode === 'list' ? "border-b border-gray-100" : ""}
-          >
+      <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden ${viewMode === "grid" ? "p-3" : ""}`}>
+        <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${viewMode === "grid" ? "!hidden" : ""}`}>
+          <div className="flex-1 min-w-0">Workout</div>
+          <div className="w-[15%]">Schedule</div>
+          <div className="w-[18%]">Location</div>
+          <div className="w-[10%] text-right pr-1">Price</div>
+          <div className="w-[12%]">Status</div>
+          <div className="w-[8%] text-right pr-1">Action</div>
+        </div>
+
+        <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>
+          {workouts.map((workout, idx) => (
             <WorkoutCard
+              key={workout.id}
               workout={workout}
               viewMode={viewMode}
               dict={dict}
+              rowIndex={idx}
             />
-          </VirtualCard>
-        ))}
-        {workouts?.length === 0 && (
-          <div className="text-center py-32 bg-white rounded-2xl border border-gray-100 relative overflow-hidden group">
-            {/* Background Watermark */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] select-none pointer-events-none transition-transform duration-1000 group-hover:scale-110">
-              <span className="text-[12rem] font-black uppercase tracking-tighter">
-                {dict?.empty_title || "NULL"}
-              </span>
-            </div>
-            
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border border-gray-100 flex items-center justify-center mb-6 bg-gray-50/50">
-                <Radio className="w-4 h-4 text-gray-300 animate-spin" style={{ animationDuration: '3s' }} />
-              </div>
-              <h3 className="text-xs font-black text-gray-900 uppercase tracking-[0.4em] mb-2">
-                {dict?.empty_header || "Zero Matches Found"}
-              </h3>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest max-w-[280px] leading-relaxed">
-                {dict?.empty_desc || "Adjust your activity filters to find available sports courses."}
-              </p>
-              <div className="mt-8 h-px w-12 bg-gray-100"></div>
-            </div>
+          ))}
+        </div>
+
+        {workouts.length === 0 && (
+          <div className="text-center py-16">
+            <h3 className="text-sm font-semibold text-slate-900">{dict?.empty_header || "No matches found"}</h3>
+            <p className="text-sm text-slate-500 mt-1">{dict?.empty_desc || "Try adjusting your current filters."}</p>
           </div>
         )}
       </div>
 
-      {/* Infinite Scroll Loader / Target */}
-      <div ref={observerTarget} className="md:hidden py-10 flex justify-center">
-        {isLoading && <Loader2 className="w-6 h-6 text-brand-blue animate-spin" />}
+      <div ref={observerTarget} className="md:hidden py-4 flex justify-center">
+        {isLoading && <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />}
         {!isLoading && page >= totalPages && workouts.length > 0 && (
-          <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">End of catalog</span>
+          <span className="text-xs text-slate-400">End of catalog</span>
         )}
       </div>
 
-      {/* Desktop Pagination */}
-      <div className="hidden md:block">
+      <div className="hidden md:block sticky bottom-0 bg-[#fcfcfc]">
         <Pagination totalPages={totalPages} currentPage={currentPage} totalItems={totalItems} perPage={perPage} />
       </div>
     </main>

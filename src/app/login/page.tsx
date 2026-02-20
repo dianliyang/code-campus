@@ -52,7 +52,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-3 w-fit">
             <Image
-              src="/code-campus-logo.svg"
+              src="/code-campus-logo-bw.svg"
               alt="CodeCampus"
               width={48}
               height={48}
@@ -101,7 +101,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
           {/* Mobile Logo Only */}
           <div className="lg:hidden flex justify-center mb-8">
             <Image
-              src="/code-campus-logo.svg"
+              src="/code-campus-logo-bw.svg"
               alt="CodeCampus"
               width={64}
               height={64}

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Backend Engineering | Oili.dev</title>
+    <style>
+        /* --- VARIABLES & RESET --- */
+        :root {
+            --bg-body: #ffffff;
+            --bg-surface: #f9fafb;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --accent: #2563eb; /* Royal Blue */
+            --accent-hover: #1d4ed8;
+            --border: #e5e7eb;
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: var(--font-main);
+            color: var(--text-primary);
+            line-height: 1.6;
+            background-color: var(--bg-body);
+        }
+
+        a { text-decoration: none; color: inherit; transition: 0.2s; }
+        ul { list-style: none; }
+        
+        /* --- UTILITIES --- */
+        .container { max-width: 1024px; margin: 0 auto; padding: 0 1.5rem; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .text-center { text-align: center; }
+        .section { padding: 5rem 0; border-bottom: 1px solid var(--border); }
+        .subtext { color: var(--text-secondary); font-size: 1.125rem; }
+        
+        /* --- BUTTONS --- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: var(--text-primary);
+            color: white;
+        }
+        .btn-primary:hover { background-color: black; transform: translateY(-1px); }
+        
+        .btn-secondary {
+            background-color: white;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        .btn-secondary:hover { border-color: var(--text-secondary); }
+
+        /* --- NAVIGATION --- */
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            padding: 1rem 0;
+        }
+        .nav-inner { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.05em; }
+        .nav-links { display: flex; gap: 2rem; font-size: 0.9rem; font-weight: 500; }
+        
+        /* --- HERO --- */
+        .hero { padding: 6rem 0; }
+        .hero h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.5rem;
+            background: -webkit-linear-gradient(45deg, #111, #555);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p { max-width: 600px; margin-bottom: 2rem; }
+        .hero-actions { display: flex; gap: 1rem; }
+        .hero-tag {
+            display: inline-block;
+            background: #f3f4f6;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* --- FEATURES --- */
+        .feature-card {
+            padding: 2rem;
+            background: var(--bg-surface);
+            border-radius: var(--radius);
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+        .feature-card:hover { border-color: var(--border); transform: translateY(-2px); }
+        .feature-icon { font-size: 1.5rem; margin-bottom: 1rem; display: block; }
+        .feature-card h3 { margin-bottom: 0.5rem; font-size: 1.25rem; }
+        .feature-card p { font-size: 0.95rem; color: var(--text-secondary); }
+
+        /* --- CURRICULUM --- */
+        .syllabus-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .syllabus-left { display: flex; gap: 1.5rem; }
+        .module-num { font-family: monospace; color: var(--text-secondary); opacity: 0.5; }
+        .module-title { font-weight: 600; }
+        .module-desc { font-size: 0.9rem; color: var(--text-secondary); display: block; margin-top: 0.25rem; }
+        .syllabus-tag { 
+            font-size: 0.75rem; 
+            border: 1px solid var(--border); 
+            padding: 0.25rem 0.5rem; 
+            border-radius: 4px; 
+            color: var(--text-secondary);
+        }
+
+        /* --- PRICING --- */
+        .pricing-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2.5rem;
+            position: relative;
+        }
+        .pricing-card.featured {
+            border-color: var(--text-primary);
+            background: var(--bg-surface);
+            box-shadow: var(--shadow);
+        }
+        .price { font-size: 3rem; font-weight: 800; margin: 1rem 0; }
+        .price span { font-size: 1rem; font-weight: 400; color: var(--text-secondary); }
+        .check-list li { margin-bottom: 0.75rem; display: flex; gap: 0.5rem; font-size: 0.95rem; }
+        .check-list li::before { content: "✓"; color: var(--accent); }
+
+        /* --- FOOTER --- */
+        footer { padding: 4rem 0; background: var(--bg-surface); font-size: 0.9rem; color: var(--text-secondary); }
+        
+        /* --- MOBILE --- */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .nav-links { display: none; } /* Simplified for mobile */
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="container nav-inner">
+            <a href="#" class="logo">Oili.dev_</a>
+            <div class="nav-links">
+                <a href="#curriculum">Curriculum</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#faq">FAQ</a>
+            </div>
+            <a href="#join" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Get Access</a>
+        </div>
+    </nav>
+
+    <header class="container hero">
+        <span class="hero-tag">New: Updated for 2026 Systems</span>
+        <h1>Stop copying code.<br>Start engineering systems.</h1>
+        <p class="subtext">
+            A rigorous, first-principles dive into backend architecture. Move beyond frameworks and understand the raw mechanics of distributed systems.
+        </p>
+        <div class="hero-actions">
+            <a href="#pricing" class="btn btn-primary">Start Learning</a>
+            <a href="#curriculum" class="btn btn-secondary">View Syllabus</a>
+        </div>
+    </header>
+
+    <section class="section">
+        <div class="container">
+            <div class="text-center" style="margin-bottom: 3rem;">
+                <h2 style="font-size: 2rem;">Why this course?</h2>
+            </div>
+            <div class="grid-3">
+                <div class="feature-card">
+                    <span class="feature-icon">⚡️</span>
+                    <h3>Zero Fluff</h3>
+                    <p>No 20-minute intros. We dive straight into code, architecture diagrams, and trade-off analysis.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🛠</span>
+                    <h3>Build from Scratch</h3>
+                    <p>We don't use "magic" libraries. We build our own router, database wrapper, and auth system.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🧠</span>
+                    <h3>Mental Models</h3>
+                    <p>Learn how senior engineers make decisions. It's not about syntax; it's about solving problems.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="curriculum" class="section">
+        <div class="container">
+            <h2 style="margin-bottom: 2rem; font-size: 2rem;">The Curriculum</h2>
+            
+            <div class="syllabus-item">
+                <div class="syllabus-left">
+                    <span class="module-num">01</span>
+                    <div>
+                        <div class="module-title">Foundations of HTTP & Networking</div>
+                        <span class="module-desc">TCP/IP, Sockets, and building a server in C.</span>
+                    </div>
+                </div>
+                <span class="syllabus-tag">3h 20m</span>
+            </div>
+
+            <div class="syllabus-item">
+                <div class="syllabus-left">
+                    <span class="module-num">02</span>
+                    <div>
+                        <div class="module-title">Database Internals</div>
+                        <span class="module-desc">B-Trees, WAL, and writing a mini-database engine.</span>
+                    </div>
+                </div>
+                <span class="syllabus-tag">4h 15m</span>
+            </div>
+
+            <div class="syllabus-item">
+                <div class="syllabus-left">
+                    <span class="module-num">03</span>
+                    <div>
+                        <div class="module-title">Distributed Systems Patterns</div>
+                        <span class="module-desc">Consensus, Raft, and handling eventual consistency.</span>
+                    </div>
+                </div>
+                <span class="syllabus-tag">5h 00m</span>
+            </div>
+
+            <div class="syllabus-item">
+                <div class="syllabus-left">
+                    <span class="module-num">04</span>
+                    <div>
+                        <div class="module-title">Production Ops & Telemetry</div>
+                        <span class="module-desc">CI/CD pipelines, Prometheus metrics, and tracing.</span>
+                    </div>
+                </div>
+                <span class="syllabus-tag">2h 45m</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing" class="section" style="background-color: #fafafa;">
+        <div class="container">
+            <div class="text-center" style="margin-bottom: 3rem;">
+                <h2>Simple Pricing</h2>
+                <p class="subtext">One-time payment. Lifetime access.</p>
+            </div>
+            
+            <div class="grid-2" style="max-width: 800px; margin: 0 auto;">
+                <div class="pricing-card">
+                    <h3>Course Only</h3>
+                    <div class="price">$49 <span>/one-time</span></div>
+                    <ul class="check-list">
+                        <li>Full Video Access</li>
+                        <li>Source Code Downloads</li>
+                        <li>Lifetime Updates</li>
+                    </ul>
+                    <a href="#" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">Buy Course</a>
+                </div>
+
+                <div class="pricing-card featured">
+                    <h3>The Bundle</h3>
+                    <div class="price">$89 <span>/one-time</span></div>
+                    <ul class="check-list">
+                        <li>Everything in Course Only</li>
+                        <li><strong>Private Discord Community</strong></li>
+                        <li>Code Review Sessions</li>
+                        <li>Certificate of Completion</li>
+                    </ul>
+                    <a href="#" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 2rem;">Get The Bundle</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="grid-2">
+                <div>
+                    <span class="logo">Oili.dev_</span>
+                    <p style="margin-top: 1rem; opacity: 0.7;">
+                        Teaching the hard parts of software engineering.<br>
+                        Based in San Francisco.
+                    </p>
+                </div>
+                <div style="text-align: right;">
+                    <a href="#">Twitter</a> &nbsp;•&nbsp; 
+                    <a href="#">GitHub</a> &nbsp;•&nbsp; 
+                    <a href="#">Contact</a>
+                </div>
+            </div>
+            <div style="margin-top: 3rem; pt: 2rem; border-top: 1px solid #ddd; font-size: 0.8rem; opacity: 0.5;">
+                &copy; 2026 Oili Dev. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

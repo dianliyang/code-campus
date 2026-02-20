@@ -49,15 +49,15 @@ export default async function SettingsPage() {
   }
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 w-full min-h-screen bg-white">
-      {/* Settings Header */}
-      <div className="mb-12">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{dict.dashboard.profile.settings}</h1>
-        <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+    <main className="w-full space-y-4">
+      <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] px-4 py-3">
+        <h1 className="text-[26px] leading-none font-semibold tracking-tight text-slate-900">
+          {dict.dashboard.profile.settings}
+        </h1>
+        <p className="mt-1 text-xs text-slate-500">
           Manage your AI preferences, account security, and system operations.
         </p>
-      </div>
-      
+      </section>
       <SettingsContainer user={user} profile={profile} />
     </main>
   );

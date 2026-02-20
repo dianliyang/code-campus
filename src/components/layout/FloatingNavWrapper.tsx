@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 export default function FloatingNavWrapper({ 
   children, 
-  initialClassName = "w-full border-b border-gray-100 bg-white/95 backdrop-blur-md translate-y-0"
+  initialClassName = "w-full border-b border-gray-100 bg-white/95 backdrop-blur-md"
 }: { 
   children: (scrolled: boolean) => React.ReactNode,
   initialClassName?: string
@@ -20,14 +20,14 @@ export default function FloatingNavWrapper({
   }, []);
 
   return (
-    <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out flex justify-center w-full pointer-events-none ${
-      scrolled ? 'pt-4 pb-4' : 'pt-0 pb-0'
-    }`}>
-      <div className={`transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] pointer-events-auto w-fit ${
-        scrolled 
-          ? 'min-w-[380px] rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-white/60 bg-white/80 backdrop-blur-xl translate-y-0 px-6 ring-1 ring-slate-900/5' 
-          : `${initialClassName} min-w-full rounded-none px-0`
-      }`}>
+    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center w-full pointer-events-none">
+      <div
+        className={`pointer-events-auto w-full transition-[transform,background-color,border-color,box-shadow,border-radius,backdrop-filter,padding] duration-300 ease-out ${
+          scrolled
+            ? "max-w-5xl mt-3 rounded-2xl border border-black/10 bg-white/85 backdrop-blur-xl shadow-[0_10px_34px_rgba(0,0,0,0.08)] px-2 sm:px-4"
+            : `${initialClassName} rounded-none px-0`
+        }`}
+      >
         {children(scrolled)}
       </div>
     </div>

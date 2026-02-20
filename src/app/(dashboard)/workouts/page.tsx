@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Hero from "@/components/home/Hero";
 import WorkoutSidebar from "@/components/workouts/WorkoutSidebar";
 import WorkoutList from "@/components/workouts/WorkoutList";
 import { createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
@@ -19,18 +18,13 @@ export default async function WorkoutsPage({ searchParams }: PageProps) {
   const dict = await getDictionary(lang);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <Hero dict={dict.dashboard} />
-      
-      <div className="flex-grow max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col md:flex-row gap-8">
-        <Suspense fallback={<SidebarSkeleton />}>
-          <SidebarData dict={dict.dashboard.workouts} />
-        </Suspense>
-        
-        <Suspense fallback={<WorkoutListSkeleton />}>
-          <WorkoutListData params={params} dict={dict.dashboard.workouts} />
-        </Suspense>
-      </div>
+    <div className="space-y-4">
+      <Suspense fallback={null}>
+        <SidebarData dict={dict.dashboard.workouts} />
+      </Suspense>
+      <Suspense fallback={<WorkoutListSkeleton />}>
+        <WorkoutListData params={params} dict={dict.dashboard.workouts} />
+      </Suspense>
     </div>
   );
 }
@@ -163,10 +157,6 @@ async function fetchWorkouts(
   const pages = Math.max(1, Math.ceil(total / size));
 
   return { items, total, pages };
-}
-
-function SidebarSkeleton() {
-  return <div className="w-64 space-y-8 animate-pulse"><div className="h-4 bg-gray-100 rounded w-1/2"></div><div className="space-y-4"><div className="h-8 bg-gray-50 rounded"></div><div className="h-8 bg-gray-50 rounded"></div></div></div>;
 }
 
 function WorkoutListSkeleton() {

@@ -97,7 +97,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
   const weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col gap-4 group hover:border-brand-blue/30 transition-all shadow-sm">
+    <div className="bg-white border border-[#e5e5e5] rounded-md p-3 flex flex-col gap-3">
       {/* Modals */}
       {showAddPlanModal && (
         <AddPlanModal
@@ -180,11 +180,11 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-[8px] font-black text-brand-blue uppercase tracking-widest leading-none">{course.university}</span>
+              <span className="text-[11px] font-medium text-[#4d4d4d] leading-none">{course.university}</span>
               <span className="w-0.5 h-0.5 bg-gray-200 rounded-full"></span>
-              <span className="text-[8px] font-bold text-gray-300 font-mono">{course.courseCode}</span>
+              <span className="text-[11px] text-[#9a9a9a]">{course.courseCode}</span>
             </div>
-            <h3 className="text-sm font-bold text-gray-900 tracking-tight leading-tight group-hover:text-brand-blue transition-colors line-clamp-1 uppercase">
+            <h3 className="text-sm font-semibold text-[#1f1f1f] tracking-tight leading-tight line-clamp-1">
               <Link href={detailHref}>{course.title}</Link>
             </h3>
           </div>
@@ -212,7 +212,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
               </div>
             )}
           </div>
-          <span className={`text-lg font-black italic tracking-tighter transition-colors ${isUpdating ? 'text-brand-blue animate-pulse' : 'text-gray-900'}`}>
+          <span className={`text-lg font-semibold tracking-tight transition-colors ${isUpdating ? 'text-[#333] animate-pulse' : 'text-[#1f1f1f]'}`}>
             {progress}%
           </span>
         </div>
@@ -241,7 +241,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-3 border-t border-gray-50">
+      <div className="flex items-center gap-2 pt-2 border-t border-[#f0f0f0]">
         <div className="flex gap-1">
           {quickIncrements.map((inc) => (
             <button

@@ -78,7 +78,7 @@ export default function AchievementCard({ course }: AchievementCardProps) {
     : 0;
 
   return (
-    <div className="bg-white border border-gray-100 p-4 flex flex-col gap-3 h-full relative group hover:border-brand-green/30 transition-all rounded-2xl shadow-sm">
+    <div className="bg-white border border-[#e5e5e5] p-3 flex flex-col gap-3 h-full relative rounded-md">
       {/* Update Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/10 backdrop-blur-md animate-in fade-in duration-300">
@@ -149,25 +149,25 @@ export default function AchievementCard({ course }: AchievementCardProps) {
             className="bg-gray-50 rounded border border-gray-100 p-0.5 flex-shrink-0"
           />
           <div className="flex flex-col min-w-0">
-            <span className="text-[8px] font-black text-brand-green uppercase tracking-widest leading-none mb-0.5">
+            <span className="text-[11px] font-medium text-[#4d4d4d] leading-none mb-0.5">
               {course.university}
             </span>
-            <span className="text-[8px] font-bold text-gray-300 font-mono leading-none">
+            <span className="text-[11px] text-[#9a9a9a] leading-none">
               {course.courseCode}
             </span>
           </div>
         </div>
-        <div className="w-1 h-1 bg-brand-green rounded-full shadow-[0_0_6px_rgba(34,197,94,0.6)]"></div>
+        <div className="w-1.5 h-1.5 bg-[#c8c8c8] rounded-full"></div>
       </div>
 
       {/* Title */}
-      <h3 className="text-[13px] font-bold text-gray-900 leading-tight tracking-tight line-clamp-2 uppercase min-h-[2.2em]">
+      <h3 className="text-[13px] font-semibold text-[#1f1f1f] leading-tight tracking-tight line-clamp-2 min-h-[2.2em]">
         {course.title}
       </h3>
 
       {/* Subtle Status Line */}
-      <div className="h-0.5 w-full bg-brand-green/10 rounded-full overflow-hidden">
-        <div className="h-full bg-brand-green rounded-full w-full opacity-60"></div>
+      <div className="h-px w-full bg-[#ececec] rounded-full overflow-hidden">
+        <div className="h-full bg-[#dadada] rounded-full w-full"></div>
       </div>
 
       {/* Stats Grid */}
@@ -180,7 +180,7 @@ export default function AchievementCard({ course }: AchievementCardProps) {
             </div>
             <div className="bg-white py-2 flex flex-col items-center justify-center border-l border-gray-50">
               <span className="text-[6px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">GPA</span>
-              <span className="text-xs font-black text-brand-green italic">{course.gpa ? Number(course.gpa).toFixed(1) : "—"}</span>
+              <span className="text-xs font-black text-gray-900 italic">{course.gpa ? Number(course.gpa).toFixed(1) : "—"}</span>
             </div>
             <div className="bg-white py-2 flex flex-col items-center justify-center border-l border-gray-50">
               <span className="text-[6px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">SCORE</span>

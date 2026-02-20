@@ -4,15 +4,17 @@ import { MIT } from "@/lib/scrapers/mit";
 import { Stanford } from "@/lib/scrapers/stanford";
 import { CMU } from "@/lib/scrapers/cmu";
 import { UCB } from "@/lib/scrapers/ucb";
+import { CAU } from "@/lib/scrapers/cau";
+import { CAUSport } from "@/lib/scrapers/cau-sport";
 import { BaseScraper } from "@/lib/scrapers/BaseScraper";
-import { SupabaseDatabase, createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
+import { SupabaseDatabase, createAdminClient, createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getUser } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function runManualScraperAction({
   university,
   semester,
-  forceUpdate = false
+  forceUpdate: _forceUpdate = false
 }: {
   university: string;
   semester: string;
@@ -20,15 +22,41 @@ export async function runManualScraperAction({
 }) {
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
+  void _forceUpdate;
 
   try {
     const db = new SupabaseDatabase();
+
+    if (university === "cau-sport") {
+      const scraper = new CAUSport();
+      scraper.semester = semester;
+      const workouts = await scraper.retrieveWorkouts();
+
+      const supabase = createAdminClient();
+      const source = "CAU Kiel Sportzentrum";
+      const { error: deleteError } = await supabase
+        .from("workouts")
+        .delete()
+        .eq("source", source);
+
+      if (deleteError) {
+        throw new Error(deleteError.message);
+      }
+
+      if (workouts.length > 0) {
+        await db.saveWorkouts(workouts);
+      }
+      revalidatePath("/workouts");
+      return { success: true, count: workouts.length };
+    }
+
     let scraper: BaseScraper | null = null;
 
     if (university === 'mit') scraper = new MIT();
     else if (university === 'stanford') scraper = new Stanford();
     else if (university === 'cmu') scraper = new CMU();
     else if (university === 'ucb') scraper = new UCB();
+    else if (university === "cau") scraper = new CAU();
 
     if (!scraper) throw new Error(`University "${university}" not found.`);
 
@@ -120,4 +148,40 @@ export async function getWorkoutLastUpdateTime() {
 
   if (error || !data) return null;
   return data.updated_at;
+}
+
+export async function refreshCauSportWorkoutsAction() {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  try {
+    const db = new SupabaseDatabase();
+    const scraper = new CAUSport();
+    const workouts = await scraper.retrieveWorkouts();
+
+    const supabase = createAdminClient();
+    const source = "CAU Kiel Sportzentrum";
+    const { error: deleteError } = await supabase
+      .from("workouts")
+      .delete()
+      .eq("source", source);
+
+    if (deleteError) {
+      console.error("[refreshCauSportWorkoutsAction] Failed to clear old workouts:", deleteError);
+      return { success: false, error: deleteError.message };
+    }
+
+    if (workouts.length > 0) {
+      await db.saveWorkouts(workouts);
+    }
+
+    revalidatePath("/workouts");
+    return { success: true, count: workouts.length };
+  } catch (error) {
+    console.error("[refreshCauSportWorkoutsAction] Failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 }

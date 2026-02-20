@@ -6,9 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Loader2, Check, Plus, EyeOff, Flame } from "lucide-react";
+import { Loader2, Check, Plus, EyeOff, Flame } from "lucide-react";
 import { toggleCourseEnrollmentAction, hideCourseAction } from "@/actions/courses";
 
 interface CourseCardProps {
@@ -17,8 +16,9 @@ interface CourseCardProps {
   onEnrollToggle?: () => void;
   onHide?: (courseId: number) => void;
   progress?: number;
-  dict: Dictionary['dashboard']['courses'];
+  dict: Dictionary["dashboard"]["courses"];
   viewMode?: "list" | "grid";
+  rowIndex?: number;
 }
 
 export default function CourseCard({
@@ -29,14 +29,15 @@ export default function CourseCard({
   progress,
   dict,
   viewMode = "grid",
+  rowIndex = 0,
 }: CourseCardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isEnrolled, setIsEnrolled] = useState(isInitialEnrolled);
   const [loading, setLoading] = useState(false);
-  
+
   const refParams = searchParams.toString();
-  const detailHref = `/courses/${course.id}${refParams ? `?refParams=${encodeURIComponent(refParams)}` : ''}`;
+  const detailHref = `/courses/${course.id}${refParams ? `?refParams=${encodeURIComponent(refParams)}` : ""}`;
 
   const handleEnroll = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -68,67 +69,76 @@ export default function CourseCard({
     }
   };
 
-  const displayProgress = progress ?? 0;
+  const popularity = typeof course.popularity === "number" ? `${course.popularity}%` : "-";
+  const credit = course.credit ?? null;
+  const primaryField = course.fields?.[0];
+  const level = course.level || null;
+  const formattedLevel = level ? `${level.charAt(0).toUpperCase()}${level.slice(1)}` : null;
+  const latestSemester = getLatestSemesterLabel(course.semesters || []);
 
   if (viewMode === "list") {
+    const rowBg = rowIndex % 2 === 0 ? "bg-[#fcfcfc]" : "bg-[#f7f7f7]";
     return (
-      <div className="group flex items-center gap-4 py-2 px-4 md:px-4 hover:bg-gray-50 transition-colors h-full">
-        {/* 1. Icon */}
-        <div className="w-[40px] flex-shrink-0 flex justify-center">
-          <UniversityIcon 
-            name={course.university} 
-            size={28} 
-            className="bg-white border border-gray-100 rounded-md"
-          />
-        </div>
-
-        {/* 2. Course Info */}
-        <div className="flex-grow min-w-0">
-          <h2 className="text-[13px] font-bold text-gray-900 leading-tight truncate">
-            <Link href={detailHref} className="hover:text-brand-blue transition-colors">
-              {course.title}
-            </Link>
-          </h2>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-xs text-slate-400">{course.university}</span>
-            <span className="w-0.5 h-0.5 bg-gray-200 rounded-full"></span>
-            <span className="text-xs text-slate-400">{course.courseCode}</span>
+      <div className={`group flex items-center gap-4 px-4 py-3 ${rowBg} hover:bg-[#f2f2f2] transition-colors`}>
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          <span className="h-4 w-4 rounded border border-[#cfcfcf] bg-white shrink-0" />
+          <UniversityIcon name={course.university} size={26} className="bg-white border border-[#dfdfdf] rounded-md" />
+          <div className="min-w-0">
+            <h2 className="text-[15px] font-medium text-[#2e2e2e] truncate">
+              <Link href={detailHref} className="hover:text-black transition-colors">
+                {course.title}
+              </Link>
+            </h2>
+            <p className="text-xs text-[#7a7a7a] truncate">
+              {course.courseCode} · {course.university}
+              {latestSemester ? ` · ${latestSemester}` : ""}
+            </p>
           </div>
         </div>
 
-        {/* 3. Tags (Desktop) */}
-        <div className="w-[18%] flex-shrink-0 hidden md:flex flex-wrap gap-1">
-          {course.fields?.slice(0, 2).map((f) => (
-            <Badge key={f} variant="secondary" className="text-xs truncate max-w-full">
-              {f}
-            </Badge>
-          ))}
+        <div className="w-[14%] hidden md:block">
+          <span
+            className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${
+              isEnrolled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+            }`}
+          >
+            {isEnrolled ? (dict?.enrolled || "Enrolled") : "Open"}
+          </span>
         </div>
 
-        {/* 4. Extra Info (Desktop) */}
-        <div className="w-[12%] flex-shrink-0 hidden md:flex items-center gap-4">
-          <div className="flex items-center gap-1">
-            <Flame className="w-3 h-3 text-orange-400" />
-            <span className="text-[11px] font-bold text-gray-600">{course.popularity}</span>
-          </div>
+        <div className="w-[12%] hidden md:block text-sm text-[#484848]">{credit ?? "-"}</div>
+
+        <div className="w-[12%] hidden md:block text-sm text-[#484848]">{latestSemester ?? "-"}</div>
+
+        <div className="w-[10%] hidden md:flex items-center gap-1 text-xs text-[#666]">
+          <Flame className="w-3.5 h-3.5 text-amber-500" />
+          <span>{popularity}</span>
         </div>
 
-        {/* 5. Actions */}
-        <div className="w-20 flex-shrink-0 flex items-center justify-end gap-2 pr-2">
+        <div className="w-[8%] flex items-center justify-end gap-2">
           <Button
             onClick={handleEnroll}
             disabled={loading}
-            variant={isEnrolled ? "default" : "outline"}
             size="xs"
-            className={isEnrolled ? 'bg-brand-green hover:bg-brand-green/90' : ''}
+            className={
+              isEnrolled
+                ? "h-7 w-7 p-0 rounded-md bg-[#ececec] text-[#3f3f3f] hover:bg-[#e5e5e5]"
+                : "h-7 w-7 p-0 rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4]"
+            }
           >
-            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : isEnrolled ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-            <span className="hidden lg:inline">{isEnrolled ? (dict?.enrolled || "Added") : (dict?.enroll || "Join")}</span>
+            {loading ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : isEnrolled ? (
+              <Check className="w-3 h-3" />
+            ) : (
+              <Plus className="w-3 h-3" />
+            )}
           </Button>
           <button
             onClick={handleHide}
             disabled={loading}
-            className="w-7 h-7 flex-shrink-0 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors"
+            className="w-7 h-7 flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors"
+            aria-label="Hide course"
           >
             <EyeOff className="w-3.5 h-3.5" />
           </button>
@@ -137,74 +147,100 @@ export default function CourseCard({
     );
   }
 
-  // Grid Mode (Compact)
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 transition-all relative overflow-hidden group flex flex-col h-full hover:border-gray-300">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <UniversityIcon 
-          name={course.university} 
-          size={32} 
-          className="flex-shrink-0 bg-white border border-gray-100 rounded-lg"
-        />
+    <div className="bg-[#fafafa] border border-[#e3e3e3] rounded-xl p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <UniversityIcon name={course.university} size={30} className="bg-white rounded-md" />
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-slate-900 truncate">
+              <Link href={detailHref}>{course.title}</Link>
+            </h2>
+            <p className="text-xs text-slate-500 truncate">
+              {course.courseCode} · {course.university}
+              {latestSemester ? ` · ${latestSemester}` : ""}
+            </p>
+          </div>
+        </div>
         <Button
           onClick={handleEnroll}
           disabled={loading}
-          variant={isEnrolled ? "default" : "outline"}
           size="xs"
-          className={isEnrolled ? 'bg-brand-green hover:bg-brand-green/90' : ''}
+          className={`h-7 w-7 p-0 rounded-md transition-colors ${
+            isEnrolled
+              ? "bg-[#ececec] text-[#3f3f3f] hover:bg-[#e5e5e5]"
+              : "bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4]"
+          }`}
         >
-          {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : isEnrolled ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+          {loading ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : isEnrolled ? (
+            <Check className="w-3 h-3" />
+          ) : (
+            <Plus className="w-3 h-3" />
+          )}
         </Button>
       </div>
 
-      <div className="mb-3">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs text-slate-400">{course.university} • {course.courseCode}</span>
-        </div>
-        <h2 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 min-h-[2.5em]">
-          <Link href={detailHref} className="hover:text-brand-blue transition-colors">
-            {course.title}
-          </Link>
-        </h2>
-      </div>
-
-      <div className="flex flex-wrap gap-1 mb-4">
-        {course.fields?.slice(0, 2).map((f) => (
-          <Badge key={f} variant="secondary" className="text-xs">
-            {f}
-          </Badge>
-        ))}
-      </div>
-
-      <div className="mt-auto flex items-center justify-between pt-3 border-t border-gray-50">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <Flame className="w-3 h-3 text-orange-400" />
-            <span className="text-xs font-medium text-gray-600">{course.popularity}</span>
-          </div>
-          {course.level && (
-            <div className="flex items-center gap-1 text-gray-400" title={course.level}>
-              <GraduationCap className="w-3 h-3" />
-              <span className="text-xs font-medium truncate max-w-[80px]">{course.level}</span>
-            </div>
-          )}
-        </div>
-        <button
-          onClick={handleHide}
-          disabled={loading}
-          className="text-gray-300 hover:text-red-500 transition-colors"
+      <div className="mt-3 flex items-center gap-1.5">
+        <span
+          className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${
+            isEnrolled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+          }`}
         >
-          <EyeOff className="w-3.5 h-3.5" />
-        </button>
+          {isEnrolled ? (dict?.enrolled || "Enrolled") : "Open"}
+        </span>
+        {primaryField ? (
+          <span className="inline-flex rounded bg-[#efefef] px-2 py-0.5 text-[11px] font-medium text-[#666]">{primaryField}</span>
+        ) : null}
+        {formattedLevel ? (
+          <span className="inline-flex rounded bg-[#efefef] px-2 py-0.5 text-[11px] font-medium text-[#666]">{formattedLevel}</span>
+        ) : null}
       </div>
 
-      {isEnrolled && displayProgress > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-50">
-          <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
-             <div className="h-full bg-brand-blue transition-all duration-1000" style={{ width: `${displayProgress}%` }}></div>
-          </div>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="rounded-md bg-white px-2 py-1.5">
+          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Credit</p>
+          <p className="text-[13px] font-medium text-[#3b3b3b]">{credit ?? "-"}</p>
         </div>
-      )}
+        <div className="rounded-md bg-white px-2 py-1.5">
+          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Semester</p>
+          <p className="text-[13px] font-medium text-[#3b3b3b]">{latestSemester ?? "-"}</p>
+        </div>
+        <div className="rounded-md bg-white px-2 py-1.5">
+          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Interest</p>
+          <p className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3b3b3b]">
+            <Flame className="w-3.5 h-3.5 text-amber-500" />
+            {popularity}
+          </p>
+        </div>
+      </div>
+  {progress ? <div className="mt-3 h-1 rounded-full bg-slate-100"><div className="h-full bg-slate-900 rounded-full" style={{ width: `${progress}%` }} /></div> : null}
     </div>
   );
+}
+
+function getLatestSemesterLabel(semesters: string[]): string | null {
+  if (!semesters.length) return null;
+  const termOrder: Record<string, number> = { spring: 1, summer: 2, fall: 3, winter: 4 };
+
+  const parsed = semesters
+    .map((value) => {
+      const m = value.trim().match(/^([A-Za-z]+)\s+(\d{4})$/);
+      if (!m) return null;
+      const term = m[1];
+      const year = Number(m[2]);
+      const weight = termOrder[term.toLowerCase()] || 0;
+      return { label: `${term} ${year}`, year, weight };
+    })
+    .filter((v): v is { label: string; year: number; weight: number } => v !== null);
+
+  if (!parsed.length) return semesters[0] || null;
+
+  parsed.sort((a, b) => {
+    if (a.year !== b.year) return b.year - a.year;
+    return b.weight - a.weight;
+  });
+
+  return parsed[0].label;
 }

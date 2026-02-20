@@ -5,7 +5,7 @@ const OFFLINE_URL = '/offline';
 const PRECACHE_ASSETS = [
   '/',
   '/offline',
-  '/code-campus-logo.svg',
+  '/code-campus-logo-bw.svg',
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png'

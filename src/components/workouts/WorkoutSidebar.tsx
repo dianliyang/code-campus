@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
-import { ChevronDown, ChevronUp, Filter, X } from "lucide-react";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 
 interface FilterOption {
   name: string;
@@ -13,7 +13,7 @@ interface FilterOption {
 interface WorkoutSidebarProps {
   categories: FilterOption[];
   statuses: FilterOption[];
-  dict: Dictionary['dashboard']['workouts'];
+  dict: Dictionary["dashboard"]["workouts"];
 }
 
 const DAY_OPTIONS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -23,7 +23,7 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const filtersOpen = searchParams.get("filters") === "open";
 
   const selectedCategories = searchParams.get("categories")?.split(",").filter(Boolean) || [];
   const selectedDays = searchParams.get("days")?.split(",").filter(Boolean) || [];
@@ -38,114 +38,108 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
   };
 
   const handleToggle = (list: string[], item: string) => {
-    return list.includes(item) ? list.filter(i => i !== item) : [...list, item];
+    return list.includes(item) ? list.filter((i) => i !== item) : [...list, item];
   };
 
   const displayedCategories = isExpanded ? categories : categories.slice(0, INITIAL_CATEGORY_LIMIT);
   const totalFilters = selectedCategories.length + selectedDays.length + selectedStatuses.length;
 
+  const closeDrawer = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("filters");
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
+
+  if (!filtersOpen) return null;
+
   return (
-    <>
-      {/* Mobile Fixed Toggle Button (Floating Right) */}
-      <div className="md:hidden fixed bottom-24 right-6 z-40">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="relative flex items-center justify-center w-14 h-14 bg-white text-gray-900 rounded-full shadow-2xl active:scale-90 transition-all border border-gray-200 group"
-        >
-          <Filter className="w-5 h-5 group-hover:scale-110 transition-transform" />
-          {totalFilters > 0 && (
-            <span className="absolute -top-1 -left-1 bg-gray-900 text-white text-[10px] font-semibold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
-              {totalFilters}
-            </span>
-          )}
-        </button>
-      </div>
+    <div className="fixed inset-0 z-[70]">
+      <button
+        onClick={closeDrawer}
+        aria-label="Close filters"
+        className="absolute inset-0 bg-black/25 backdrop-blur-[1px] animate-[fadeIn_180ms_ease-out]"
+      />
 
-      {/* Mobile Drawer Overlay */}
-      {isOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Mobile Drawer Content */}
-      <aside className={`
-        fixed inset-x-0 bottom-0 z-[60] bg-white rounded-t-[2.5rem] p-8 pb-12 transition-transform duration-500 ease-out md:static md:z-0 md:bg-transparent md:rounded-none md:p-0 md:translate-y-0 md:block md:w-64 md:flex-shrink-0
-        ${isOpen ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}
-        max-h-[85vh] overflow-y-auto custom-scroll
-      `}>
-        {/* Drawer Handle (Mobile Only) */}
-        <div className="md:hidden flex justify-center mb-8">
+      <aside className="absolute inset-x-0 bottom-0 max-h-[86vh] overflow-y-auto rounded-t-2xl bg-white px-4 py-4 shadow-xl animate-[fadeUp_220ms_ease-out] md:inset-y-0 md:right-0 md:left-auto md:w-[320px] md:max-h-none md:rounded-none md:border-l md:border-slate-200 md:animate-[fadeIn_180ms_ease-out]">
+        <div className="md:hidden flex justify-center mb-5">
           <div className="w-12 h-1.5 bg-gray-100 rounded-full" />
         </div>
 
-        <div className="flex items-center justify-between md:hidden mb-10">
-          <h2 className="text-xl font-semibold uppercase tracking-tighter text-gray-900">Filters</h2>
-          <button 
-            onClick={() => setIsOpen(false)}
-            className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400"
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-[14px] font-semibold tracking-tight text-slate-900">Filters</h2>
+          <button
+            onClick={closeDrawer}
+            className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="space-y-12">
-          {/* Category Section */}
+        <div className="space-y-6">
           <div>
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[12px] font-semibold uppercase tracking-wide text-slate-500">Filters</h3>
+              <span className="text-[12px] text-slate-400">{totalFilters}</span>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-[12px] font-semibold uppercase tracking-wide text-slate-500 mb-3">
               {dict?.sidebar_categories || "Category"}
             </h3>
-            <div className="grid grid-cols-1 gap-3 md:gap-2.5">
+            <div className="grid grid-cols-1 gap-2.5">
               {displayedCategories.map((cat) => (
                 <label key={cat.name} className="flex items-center justify-between group cursor-pointer">
                   <div className="flex items-center gap-3">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
+                      className="w-4 h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
                       checked={selectedCategories.includes(cat.name)}
                       onChange={() => updateParams("categories", handleToggle(selectedCategories, cat.name))}
                     />
-                    <span className={`text-[13px] md:text-[12px] font-semibold tracking-tight transition-colors ${selectedCategories.includes(cat.name) ? 'text-brand-blue' : 'text-gray-600 group-hover:text-brand-blue'}`}>
+                    <span className={`text-[13px] font-medium tracking-tight transition-colors ${selectedCategories.includes(cat.name) ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}>
                       {cat.name}
                     </span>
                   </div>
-                  <span className={`text-[10px] font-black transition-colors ${selectedCategories.includes(cat.name) ? 'text-brand-blue' : 'text-gray-300'}`}>
+                  <span className={`text-[12px] font-medium transition-colors ${selectedCategories.includes(cat.name) ? "text-brand-blue" : "text-gray-300"}`}>
                     {cat.count}
                   </span>
                 </label>
               ))}
-              
-              {categories.length > INITIAL_CATEGORY_LIMIT && (
+
+              {categories.length > INITIAL_CATEGORY_LIMIT ? (
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-brand-blue hover:text-blue-700 transition-colors pt-4 md:pt-2"
+                  className="flex items-center gap-2 text-[12px] font-medium text-slate-600 hover:text-slate-900 transition-colors pt-1"
                 >
                   {isExpanded ? (
-                    <>Show Less <ChevronUp className="w-3 h-3" /></>
+                    <>
+                      Show less <ChevronUp className="w-3 h-3" />
+                    </>
                   ) : (
-                    <>Show All ({categories.length}) <ChevronDown className="w-3 h-3" /></>
+                    <>
+                      Show all ({categories.length}) <ChevronDown className="w-3 h-3" />
+                    </>
                   )}
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
 
-          {/* Day of Week Section */}
           <div>
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+            <h3 className="text-[12px] font-semibold uppercase tracking-wide text-slate-500 mb-3">
               {dict?.sidebar_days || "Day of Week"}
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-1 gap-3 md:gap-2.5">
+            <div className="grid grid-cols-2 gap-2.5">
               {DAY_OPTIONS.map((day) => (
                 <label key={day} className="flex items-center gap-3 group cursor-pointer">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
+                    className="w-4 h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
                     checked={selectedDays.includes(day)}
                     onChange={() => updateParams("days", handleToggle(selectedDays, day))}
                   />
-                  <span className={`text-[13px] md:text-[12px] font-semibold tracking-tight transition-colors ${selectedDays.includes(day) ? 'text-brand-blue' : 'text-gray-600 group-hover:text-brand-blue'}`}>
+                  <span className={`text-[13px] font-medium tracking-tight transition-colors ${selectedDays.includes(day) ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}>
                     {day}
                   </span>
                 </label>
@@ -153,38 +147,37 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
             </div>
           </div>
 
-          {/* Booking Status Section */}
           <div>
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+            <h3 className="text-[12px] font-semibold uppercase tracking-wide text-slate-500 mb-3">
               {dict?.sidebar_status || "Status"}
             </h3>
-            <div className="grid grid-cols-1 gap-3 md:gap-2.5">
+            <div className="grid grid-cols-1 gap-2.5">
               {statuses.map((s) => {
-                const statusKey = Object.entries({
+                const statusMap: Record<string, keyof Dictionary["dashboard"]["workouts"]> = {
                   available: "status_available",
                   fully_booked: "status_full",
                   expired: "status_expired",
                   waitlist: "status_waitlist",
                   cancelled: "status_cancelled",
                   see_text: "status_details",
-                }).find(([val]) => val === s.name)?.[1] as keyof Dictionary['dashboard']['workouts'];
-                
-                const label = statusKey && dict[statusKey] ? String(dict[statusKey]) : s.name;
+                };
+                const key = statusMap[s.name];
+                const label = key && dict[key] ? String(dict[key]) : s.name;
 
                 return (
                   <label key={s.name} className="flex items-center justify-between group cursor-pointer">
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
+                        className="w-4 h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
                         checked={selectedStatuses.includes(s.name)}
                         onChange={() => updateParams("status", handleToggle(selectedStatuses, s.name))}
                       />
-                      <span className={`text-[13px] md:text-[12px] font-semibold tracking-tight transition-colors ${selectedStatuses.includes(s.name) ? 'text-brand-blue' : 'text-gray-600 group-hover:text-brand-blue'}`}>
+                      <span className={`text-[13px] font-medium tracking-tight transition-colors ${selectedStatuses.includes(s.name) ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}>
                         {label}
                       </span>
                     </div>
-                    <span className={`text-[10px] font-black transition-colors ${selectedStatuses.includes(s.name) ? 'text-brand-blue' : 'text-gray-300'}`}>
+                    <span className={`text-[12px] font-medium transition-colors ${selectedStatuses.includes(s.name) ? "text-brand-blue" : "text-gray-300"}`}>
                       {s.count}
                     </span>
                   </label>
@@ -194,6 +187,6 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
           </div>
         </div>
       </aside>
-    </>
+    </div>
   );
 }

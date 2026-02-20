@@ -47,58 +47,58 @@ export default function CourseDetailHeader({
   };
 
   return (
-    <header className="space-y-6 relative group">
-      <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+    <header className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-4 relative group">
+      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
         <button
           onClick={() => onToggleEdit?.()}
-          className="p-2 rounded-lg bg-gray-50 text-gray-400 hover:text-brand-blue hover:bg-blue-50 cursor-pointer"
+          className="h-8 w-8 rounded-md border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] cursor-pointer"
           title={isEditing ? "Cancel Editing" : "Edit Course Details"}
         >
-          <PenSquare className="w-4 h-4" />
+          <PenSquare className="w-3.5 h-3.5 mx-auto" />
         </button>
         <button
           onClick={handleDelete}
           disabled={isDeleting}
-          className="p-2 rounded-lg bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer disabled:opacity-50"
+          className="h-8 w-8 rounded-md border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] cursor-pointer disabled:opacity-50"
           title="Delete Course"
         >
           {isDeleting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin mx-auto" />
           ) : (
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5 mx-auto" />
           )}
         </button>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <UniversityIcon
           name={course.university}
-          size={64}
-          className="flex-shrink-0 bg-white rounded-xl p-1 shadow-sm border border-gray-100"
+          size={56}
+          className="flex-shrink-0 bg-white rounded-lg p-1 border border-[#e5e5e5]"
         />
         <div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-black text-brand-blue tracking-widest bg-brand-blue/5 px-2 py-1 rounded">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-[#555] bg-white px-2 py-0.5 rounded border border-[#e5e5e5]">
               {course.university}
             </span>
             {course.isInternal && (
-              <span className="text-[10px] font-black bg-brand-blue text-white px-2 py-0.5 rounded uppercase tracking-widest">
+              <span className="text-[11px] font-medium bg-[#efefef] text-[#333] px-2 py-0.5 rounded border border-[#e1e1e1]">
                 Internal
               </span>
             )}
-            <span className="text-xs font-mono font-bold text-gray-400">{course.courseCode}</span>
+            <span className="text-[11px] text-[#999]">{course.courseCode}</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter mt-2 leading-[0.9]">
+          <h1 className="text-[28px] md:text-[32px] font-semibold text-[#1f1f1f] tracking-tight mt-1 leading-tight">
             {course.title}
           </h1>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 pt-2">
+      <div className="flex flex-wrap gap-1.5 pt-1">
         {course.fields.map((field) => (
           <span
             key={field}
-            className="text-[10px] font-black uppercase tracking-widest bg-gray-50 text-gray-500 px-3 py-1.5 rounded-full border border-gray-100"
+            className="text-xs font-medium bg-white text-[#666] px-2 py-0.5 rounded-full border border-[#e5e5e5]"
           >
             {field}
           </span>

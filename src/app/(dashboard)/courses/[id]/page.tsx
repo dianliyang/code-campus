@@ -40,20 +40,18 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const dict = await getDictionary(lang);
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32">
-        <Link
-          href="/courses"
-          className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-gray-900 transition-colors mb-12"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {dict.dashboard.course_detail.back_to_catalog}
-        </Link>
+    <div className="space-y-3">
+      <Link
+        href="/courses"
+        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        {dict.dashboard.course_detail.back_to_catalog}
+      </Link>
 
-        <Suspense fallback={<CourseDetailSkeleton />}>
-          <CourseDetailData id={id} dict={dict.dashboard} />
-        </Suspense>
-      </div>
+      <Suspense fallback={<CourseDetailSkeleton />}>
+        <CourseDetailData id={id} dict={dict.dashboard} />
+      </Suspense>
     </div>
   );
 }
@@ -158,20 +156,20 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
 
 function CourseDetailSkeleton() {
   return (
-    <div className="animate-pulse space-y-12 max-w-7xl mx-auto pt-32 px-4">
-      <div className="flex items-center gap-6">
-        <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
+    <div className="animate-pulse space-y-4">
+      <div className="flex items-center gap-3 rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+        <div className="w-14 h-14 bg-gray-100 rounded-xl"></div>
         <div className="space-y-2 flex-grow">
           <div className="h-4 bg-gray-100 rounded w-1/4"></div>
-          <div className="h-12 bg-gray-100 rounded w-3/4"></div>
+          <div className="h-8 bg-gray-100 rounded w-2/3"></div>
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
-        <div className="lg:col-span-8 space-y-8">
-          <div className="h-40 bg-gray-50 rounded-2xl"></div>
-          <div className="h-60 bg-gray-50 rounded-2xl"></div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8 space-y-4">
+          <div className="h-40 bg-[#fcfcfc] border border-[#e5e5e5] rounded-lg"></div>
+          <div className="h-60 bg-[#fcfcfc] border border-[#e5e5e5] rounded-lg"></div>
         </div>
-        <div className="lg:col-span-4 h-80 bg-gray-50 rounded-3xl"></div>
+        <div className="lg:col-span-4 h-80 bg-[#fcfcfc] border border-[#e5e5e5] rounded-lg"></div>
       </div>
     </div>
   );

@@ -1,16 +1,16 @@
 // Known logo files in the Supabase storage bucket (slug -> extension)
 // This avoids extension probing (and 400 errors) for known universities
 const KNOWN_LOGOS: Record<string, string> = {
-  'cmu': '.jpg',
-  'mit': '.svg',
-  'stanford': '.jpg',
-  'uc-berkeley': '.png',
-  'cau-kiel': '.png',
-  'ncu': '.png',
-  'nju': '.png',
-  'cau': '.png',
-  'ucb': '.png',
-  'carnegie-mellon': '.jpg',
+  'cmu': '.webp',
+  'mit': '.webp',
+  'stanford': '.webp',
+  'uc-berkeley': '.webp',
+  'cau-kiel': '.webp',
+  'ncu': '.webp',
+  'nju': '.webp',
+  'cau': '.webp',
+  'ucb': '.webp',
+  'carnegie-mellon': '.webp',
 };
 
 export function getStorageBaseUrl(): string {

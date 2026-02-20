@@ -32,61 +32,61 @@ export default function SecurityIdentitySection({
   };
 
   return (
-    <div className="space-y-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Active Identity */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 space-y-6">
-          <div className="flex items-center gap-3 text-gray-900 mb-8 pb-4 border-b border-gray-50">
-            <Fingerprint className="w-5 h-5 text-brand-blue" />
-            <span className="text-sm font-bold uppercase tracking-[0.1em]">Active Identity</span>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 space-y-4">
+          <div className="flex items-center gap-2 text-[#222] mb-3 pb-3 border-b border-[#efefef]">
+            <Fingerprint className="w-4 h-4 text-[#777]" />
+            <span className="text-sm font-semibold">Active Identity</span>
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Provider</span>
-              <span className="text-[11px] font-black text-gray-900 uppercase tracking-tighter">{provider || "Unknown"}</span>
+              <span className="text-xs text-[#777]">Provider</span>
+              <span className="text-sm font-medium text-[#222]">{provider || "Unknown"}</span>
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</span>
-              <div className="flex items-center gap-1.5 text-emerald-600">
+              <span className="text-xs text-[#777]">Status</span>
+              <div className="flex items-center gap-1.5 text-emerald-600 text-sm">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Verified</span>
+                <span className="font-medium">Verified</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Communication */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 space-y-6">
-          <div className="flex items-center gap-3 text-gray-900 mb-8 pb-4 border-b border-gray-50">
-            <Mail className="w-5 h-5 text-brand-blue" />
-            <span className="text-sm font-bold uppercase tracking-[0.1em]">Communication</span>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 space-y-4">
+          <div className="flex items-center gap-2 text-[#222] mb-3 pb-3 border-b border-[#efefef]">
+            <Mail className="w-4 h-4 text-[#777]" />
+            <span className="text-sm font-semibold">Communication</span>
           </div>
 
           <div className="space-y-4">
-            <p className="text-[11px] text-gray-500 leading-relaxed font-medium italic">
+            <p className="text-xs text-[#666] leading-relaxed">
               System notifications and security alerts are dispatched via your authentication provider&apos;s endpoint.
             </p>
             <div className="flex items-center justify-between pt-2">
-              <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Alerts</span>
-              <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-100/50">Active</span>
+              <span className="text-xs text-[#777]">Alerts</span>
+              <span className="text-xs font-medium text-emerald-700 px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-100">Active</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Danger Zone */}
-      <div className="bg-red-50/30 border border-red-100 rounded-2xl p-6 md:p-8 space-y-6">
-        <div className="flex items-center gap-3 text-red-600 pb-4 border-b border-red-100">
-          <AlertTriangle className="w-5 h-5" />
-          <span className="text-sm font-bold uppercase tracking-[0.1em]">Termination Zone</span>
+      <div className="bg-red-50/30 border border-red-100 rounded-md p-4 space-y-4">
+        <div className="flex items-center gap-2 text-red-700 pb-3 border-b border-red-100">
+          <AlertTriangle className="w-4 h-4" />
+          <span className="text-sm font-semibold">Danger Zone</span>
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h4 className="text-[11px] font-black text-red-600 uppercase tracking-widest">Delete Account</h4>
-            <p className="text-[10px] text-red-800/60 leading-relaxed max-w-xl font-bold italic uppercase">
+            <h4 className="text-sm font-medium text-red-700">Delete Account</h4>
+            <p className="text-xs text-red-800/70 leading-relaxed max-w-xl">
               This will permanently purge your profile, enrollment history, and scheduling data. This operation is irreversible.
             </p>
           </div>
@@ -94,7 +94,7 @@ export default function SecurityIdentitySection({
           <button
             onClick={handleDeleteAccount}
             disabled={isPending}
-            className="flex items-center justify-center gap-2 px-6 h-10 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-red-700 transition-all disabled:opacity-50 whitespace-nowrap shadow-sm"
+            className="inline-flex items-center justify-center gap-2 h-8 rounded-md border border-red-300 bg-white px-3 text-[13px] font-medium text-red-700 hover:bg-red-50 transition-colors disabled:opacity-50 whitespace-nowrap"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Purge Account

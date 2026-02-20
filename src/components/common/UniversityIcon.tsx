@@ -10,7 +10,7 @@ interface UniversityIconProps {
   className?: string;
 }
 
-const EXTENSIONS = ['.png', '.jpg', '.jpeg', '.svg', '.webp'] as const;
+const EXTENSIONS = ['.webp', '.png', '.jpg', '.jpeg', '.svg'] as const;
 
 function getInitials(str: string) {
   if (str === str.toUpperCase() && str.length <= 4) return str;
@@ -22,33 +22,36 @@ function getInitials(str: string) {
 export default memo(function UniversityIcon({ name, size = 40, className = "" }: UniversityIconProps) {
   const [error, setError] = useState(false);
   const [extIndex, setExtIndex] = useState(0);
+  const [knownFailed, setKnownFailed] = useState(false);
   const [prevName, setPrevName] = useState(name);
 
   if (name !== prevName) {
     setPrevName(name);
     setError(false);
     setExtIndex(0);
+    setKnownFailed(false);
   }
 
   // Use known logo URL directly (no probing needed), fall back to extension probing
   const knownUrl = useMemo(() => getUniversityLogoUrl(name), [name]);
 
   const currentSrc = useMemo(() => {
-    if (knownUrl) return knownUrl;
+    if (knownUrl && !knownFailed) return knownUrl;
     const baseLogoUrl = getUniversityLogoBase(name);
     return `${baseLogoUrl}${EXTENSIONS[extIndex]}`;
-  }, [knownUrl, name, extIndex]);
+  }, [knownUrl, knownFailed, name, extIndex]);
 
   const handleError = useCallback(() => {
-    if (knownUrl) {
-      // Known URL failed — skip probing, show fallback directly
-      setError(true);
+    if (knownUrl && !knownFailed) {
+      // Known URL failed once (e.g. extension changed). Start probing.
+      setKnownFailed(true);
+      setExtIndex(0);
     } else if (extIndex < EXTENSIONS.length - 1) {
       setExtIndex(prev => prev + 1);
     } else {
       setError(true);
     }
-  }, [knownUrl, extIndex]);
+  }, [knownUrl, knownFailed, extIndex]);
 
   if (error) {
     return (

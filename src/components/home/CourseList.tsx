@@ -7,10 +7,9 @@ import CourseCard from "./CourseCard";
 import CourseListHeader from "./CourseListHeader";
 import Pagination from "./Pagination";
 import Toast from "../common/Toast";
-import { Radio, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { fetchCoursesAction } from "@/actions/courses";
 import { useSearchParams } from "next/navigation";
-import VirtualCard from "../common/VirtualCard";
 
 interface CourseListProps {
   initialCourses: Course[];
@@ -19,7 +18,7 @@ interface CourseListProps {
   currentPage: number;
   perPage: number;
   initialEnrolledIds: number[];
-  dict: Dictionary['dashboard']['courses'];
+  dict: Dictionary["dashboard"]["courses"];
 }
 
 export default function CourseList({
@@ -29,7 +28,7 @@ export default function CourseList({
   currentPage,
   perPage,
   initialEnrolledIds,
-  dict
+  dict,
 }: CourseListProps) {
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -40,32 +39,31 @@ export default function CourseList({
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Load view mode from localStorage on mount
   useEffect(() => {
-    const savedMode = localStorage.getItem("viewMode") as "list" | "grid";
-    if (savedMode) setViewMode(savedMode);
+    const savedMode = localStorage.getItem("courseViewMode");
+    if (savedMode === "grid" || savedMode === "list") {
+      setViewMode(savedMode);
+    }
   }, []);
 
-  // Sync courses when initialCourses changes (e.g., page change, filter change via URL)
   useEffect(() => {
     setCourses(initialCourses);
     setPage(currentPage);
   }, [initialCourses, currentPage]);
 
-  // Save view mode to localStorage whenever it changes
   const handleViewModeChange = (mode: "list" | "grid") => {
     setViewMode(mode);
-    localStorage.setItem("viewMode", mode);
+    localStorage.setItem("courseViewMode", mode);
   };
 
   const fetchEnrolled = async () => {
     const res = await fetch("/api/user/courses");
-    const data = await res.json() as EnrolledCoursesResponse;
+    const data = (await res.json()) as EnrolledCoursesResponse;
     if (data.enrolledIds) setEnrolledIds(data.enrolledIds);
   };
 
   const handleHide = (courseId: number) => {
-    setCourses(prev => prev.filter(c => c.id !== courseId));
+    setCourses((prev) => prev.filter((c) => c.id !== courseId));
     setToast({ message: "Course hidden successfully", type: "success" });
   };
 
@@ -89,25 +87,24 @@ export default function CourseList({
         enrolledOnly,
         universities,
         fields,
-        levels
+        levels,
       });
 
       if (nextData.items.length > 0) {
-        setCourses(prev => {
-          const existingIds = new Set(prev.map(c => c.id));
-          const newItems = nextData.items.filter(c => !existingIds.has(c.id));
+        setCourses((prev) => {
+          const existingIds = new Set(prev.map((c) => c.id));
+          const newItems = nextData.items.filter((c) => !existingIds.has(c.id));
           return [...prev, ...newItems];
         });
-        setPage(prev => prev + 1);
+        setPage((prev) => prev + 1);
       }
     } catch (error) {
       console.error("[CourseList] Failed to load more:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [page, totalPages, isLoading, searchParams]);
+  }, [page, totalPages, isLoading, searchParams, perPage]);
 
-  // Intersection Observer for Infinite Scroll (Mobile Only)
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -116,7 +113,7 @@ export default function CourseList({
           loadMore();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (observerTarget.current) {
@@ -127,14 +124,8 @@ export default function CourseList({
   }, [loadMore, isLoading]);
 
   return (
-    <main className="flex-grow space-y-4 min-w-0">
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+    <main className="flex-grow space-y-3 min-w-0">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <CourseListHeader
         totalItems={totalItems}
@@ -143,60 +134,47 @@ export default function CourseList({
         dict={dict}
       />
 
-      <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "bg-white border border-gray-200 rounded-xl overflow-hidden"}>
-        {viewMode === "list" && courses && courses.length > 0 && (
-          <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-gray-50/50 border-b border-gray-200 text-xs font-medium text-slate-500 select-none">
-             <div className="w-[40px] flex-shrink-0 text-center"></div>
-             <div className="flex-grow min-w-0">Course</div>
-             <div className="w-[18%] flex-shrink-0">Tags</div>
-             <div className="w-[12%] flex-shrink-0">Info</div>
-             <div className="w-20 flex-shrink-0 text-right pr-2">Action</div>
-          </div>
-        )}
-        {courses?.map((course) => (
-          <VirtualCard 
-            key={`${course.id}-${viewMode}`} 
-            id={course.id} 
-            initialHeight={viewMode === 'list' ? "64px" : "240px"}
-            className={viewMode === 'list' ? "border-b border-gray-100" : ""}
-          >
+      <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden ${viewMode === "grid" ? "p-3" : ""}`}>
+        <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${viewMode === "grid" ? "!hidden" : ""}`}>
+          <div className="flex-1 min-w-0">Course</div>
+          <div className="w-[14%]">Status</div>
+          <div className="w-[12%]">Credit</div>
+          <div className="w-[12%]">Semester</div>
+          <div className="w-[10%]">Interest</div>
+          <div className="w-[8%] text-right pr-1">Action</div>
+        </div>
+
+        <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>
+          {courses.map((course, idx) => (
             <CourseCard
+              key={course.id}
               course={course}
               isInitialEnrolled={enrolledIds.includes(course.id)}
               onEnrollToggle={fetchEnrolled}
               onHide={handleHide}
               dict={dict}
               viewMode={viewMode}
+              rowIndex={idx}
             />
-          </VirtualCard>
-        ))}
-        {courses?.length === 0 && (
-          <div className="text-center py-32 bg-white rounded-2xl border border-gray-100 relative overflow-hidden group">
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border border-gray-100 flex items-center justify-center mb-6 bg-gray-50/50">
-                <Radio className="w-4 h-4 text-gray-300 animate-spin" style={{ animationDuration: '3s' }} />
-              </div>
-              <h3 className="text-base font-semibold text-gray-900 mb-2">
-                {dict?.empty_header || "Zero Matches Found"}
-              </h3>
-              <p className="text-sm text-slate-400 max-w-[280px] leading-relaxed">
-                {dict?.empty_desc || "Adjust your frequency filters or expand the topic spectrum to initialize new results."}
-              </p>
-              <div className="mt-8 h-px w-12 bg-gray-100"></div>
-            </div>
+          ))}
+        </div>
+
+        {courses.length === 0 && (
+          <div className="text-center py-16">
+            <h3 className="text-sm font-semibold text-slate-900">{dict?.empty_header || "No matches found"}</h3>
+            <p className="text-sm text-slate-500 mt-1">{dict?.empty_desc || "Try adjusting your current filters."}</p>
           </div>
         )}
       </div>
 
-      {/* Infinite Scroll Loader / Target */}
-      <div ref={observerTarget} className="md:hidden py-10 flex justify-center">
-        {isLoading && <Loader2 className="w-6 h-6 text-brand-blue animate-spin" />}
+      <div ref={observerTarget} className="md:hidden py-4 flex justify-center">
+        {isLoading && <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />}
         {!isLoading && page >= totalPages && courses.length > 0 && (
           <span className="text-xs text-slate-400">End of catalog</span>
         )}
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden md:block sticky bottom-0 bg-[#fcfcfc]">
         <Pagination totalPages={totalPages} currentPage={currentPage} totalItems={totalItems} perPage={perPage} />
       </div>
     </main>

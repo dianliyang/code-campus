@@ -15,7 +15,7 @@ export default async function VerifyRequestPage() {
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-3 w-fit">
             <Image 
-              src="/code-campus-logo.svg" 
+              src="/code-campus-logo-bw.svg" 
               alt="CodeCampus" 
               width={48} 
               height={48} 
@@ -57,7 +57,7 @@ export default async function VerifyRequestPage() {
           {/* Mobile Logo Only */}
           <div className="lg:hidden flex justify-center mb-12">
             <Image 
-              src="/code-campus-logo.svg" 
+              src="/code-campus-logo-bw.svg" 
               alt="CodeCampus" 
               width={64} 
               height={64} 

@@ -12,7 +12,7 @@ import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { calculateAttendance } from "@/lib/attendance";
-import { CalendarDays, Zap, Trophy, Ghost } from "lucide-react";
+import { Ghost } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +39,7 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center py-16">
         <p className="text-gray-500 font-mono uppercase tracking-widest">{dict.dashboard.profile.user_not_found}</p>
         <Button asChild className="mt-8"><Link href="/login">{dict.dashboard.login.title}</Link></Button>
       </div>
@@ -49,17 +49,15 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
   const selectedSemester = (params.semester as string) || "all";
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 w-full">
-        <Suspense fallback={<StudyPlanSkeleton />}>
-          <StudyPlanContent
-            userId={user.id}
-            selectedSemester={selectedSemester}
-            dict={dict}
-          />
-        </Suspense>
-      </main>
-    </div>
+    <main className="w-full">
+      <Suspense fallback={<StudyPlanSkeleton />}>
+        <StudyPlanContent
+          userId={user.id}
+          selectedSemester={selectedSemester}
+          dict={dict}
+        />
+      </Suspense>
+    </main>
   );
 }
 
@@ -135,10 +133,25 @@ async function StudyPlanContent({
     } as EnrolledCourse;
   });
 
+  const toDateOnly = (value: unknown) => {
+    if (typeof value !== "string") return "";
+    return value.includes("T") ? value.split("T")[0] : value;
+  };
+
+  const normalizeDays = (value: unknown): number[] => {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((d) => (typeof d === "number" ? d : Number(d)))
+      .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allPlans = rawPlans.map((plan: any) => ({
     ...plan,
-    courses: Array.isArray(plan.courses) ? plan.courses[0] : plan.courses
+    courses: Array.isArray(plan.courses) ? plan.courses[0] : plan.courses,
+    start_date: toDateOnly(plan.start_date),
+    end_date: toDateOnly(plan.end_date),
+    days_of_week: normalizeDays(plan.days_of_week),
   }));
 
   const enrolledCourseIds = new Set(enrolledCourses.map((course) => course.id));
@@ -208,175 +221,105 @@ async function StudyPlanContent({
     : completed.filter(c => c.semesters.includes(selectedSemester));
 
   return (
-    <>
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 mb-12">
-        <StudyPlanHeader
-          enrolledCount={enrolledCourses.length}
-          completedCount={completed.length}
-          totalCredits={totalCredits}
-          attendance={{ attended: totalAttended, total: totalSessions }}
+    <div className="space-y-4">
+      <StudyPlanHeader
+        enrolledCount={enrolledCourses.length}
+        completedCount={completed.length}
+        totalCredits={totalCredits}
+        attendance={{ attended: totalAttended, total: totalSessions }}
+        dict={dict.dashboard.roadmap}
+      />
+
+      <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
+        <div className="mb-3">
+          <h3 className="text-base font-semibold text-[#1f1f1f]">{dict.dashboard.roadmap.calendar_title}</h3>
+        </div>
+        <StudyCalendar
+          courses={enrolledCourses}
+          plans={plans}
+          logs={filteredLogs}
           dict={dict.dashboard.roadmap}
+          coursesWithoutPlans={coursesWithoutPlans}
         />
-      </div>
+      </section>
 
-      <div className="relative space-y-20 md:space-y-24">
-        <div className="absolute left-[21px] top-0 bottom-0 w-0.5 bg-gray-100 hidden md:block"></div>
+      <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
+        <div className="mb-3">
+          <h3 className="text-base font-semibold text-[#1f1f1f]">AI Learning Planner</h3>
+          <p className="text-xs text-[#7a7a7a]">Smart course recommendations</p>
+        </div>
+        <AILearningPlanner />
+      </section>
 
-        {/* Calendar Section - At Top */}
-        <section className="relative">
-          <div className="flex items-center gap-6 mb-6">
-            <div className="w-11 h-11 bg-violet-500 rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-violet-500/20 ring-8 ring-white">
-              <CalendarDays className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.dashboard.roadmap.calendar_title}</h3>
-            </div>
-          </div>
-
-          <div className="pl-0 md:pl-20">
-            <StudyCalendar
-              courses={enrolledCourses}
-              plans={plans}
-              logs={filteredLogs}
-              dict={dict.dashboard.roadmap}
-              coursesWithoutPlans={coursesWithoutPlans}
-            />
-          </div>
-        </section>
-
-        {/* AI Learning Planner Section */}
-        <section className="relative">
-          <div className="flex items-center gap-6 mb-6">
-            <div className="w-11 h-11 bg-violet-500 rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-violet-500/20 ring-8 ring-white">
-              <Zap className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900 tracking-tight">AI Learning Planner</h3>
-              <p className="text-xs text-gray-400 uppercase tracking-wider">Smart course recommendations</p>
-            </div>
-          </div>
-          <div className="pl-0 md:pl-20">
-            <AILearningPlanner />
-          </div>
-        </section>
-
-        {/* Current Focus Section */}
-        <section className="relative">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-            <div className="flex items-center gap-6">
-              <div className="w-11 h-11 bg-brand-blue rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-brand-blue/20 ring-8 ring-white">
-                <Zap className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.dashboard.roadmap.phase_1_title}</h3>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pl-0 md:pl-20">
-            {inProgress.length > 0 ? (
-              inProgress.map(course => (
-                <ActiveCourseTrack 
-                  key={course.id} 
-                  course={course} 
-                  initialProgress={course.progress} 
-                  plan={plans.find((p: { course_id: number }) => p.course_id === course.id)}
-                />
-              ))
-            ) : (
-              <p className="text-sm text-gray-400 font-mono italic">{dict.dashboard.roadmap.no_active}</p>
-            )}
-          </div>
-        </section>
-
-        {/* Achievements Section */}
-        <section className="relative">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
-            <div className="flex items-center gap-6">
-              <div className="w-11 h-11 bg-brand-green rounded-full flex items-center justify-center text-white z-10 shadow-xl shadow-brand-green/20 ring-8 ring-white">
-                <Trophy className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{dict.dashboard.roadmap.phase_2_title}</h3>
-              </div>
-            </div>
-
-            {availableSemesters.length > 0 && (
-              <SemesterFilter
-                availableSemesters={availableSemesters}
-                selectedSemester={selectedSemester}
+      <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
+        <div className="mb-3">
+          <h3 className="text-base font-semibold text-[#1f1f1f]">{dict.dashboard.roadmap.phase_1_title}</h3>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {inProgress.length > 0 ? (
+            inProgress.map(course => (
+              <ActiveCourseTrack
+                key={course.id}
+                course={course}
+                initialProgress={course.progress}
+                plan={plans.find((p: { course_id: number }) => p.course_id === course.id)}
               />
-            )}
-          </div>
+            ))
+          ) : (
+            <p className="text-sm text-[#8a8a8a]">{dict.dashboard.roadmap.no_active}</p>
+          )}
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 pl-0 md:pl-20">
-            {filteredAchievements.length > 0 ? (
-              filteredAchievements.map(course => (
-                <AchievementCard
-                  key={course.id}
-                  course={course}
-                  completionDate={course.updated_at}
-                />
-              ))
-            ) : (
-              <p className="text-sm text-gray-400 font-mono italic">{dict.dashboard.roadmap.peak_ahead}</p>
-            )}
-          </div>
-        </section>
-      </div>
+      <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
+        <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <h3 className="text-base font-semibold text-[#1f1f1f]">{dict.dashboard.roadmap.phase_2_title}</h3>
+          {availableSemesters.length > 0 && (
+            <SemesterFilter
+              availableSemesters={availableSemesters}
+              selectedSemester={selectedSemester}
+            />
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filteredAchievements.length > 0 ? (
+            filteredAchievements.map(course => (
+              <AchievementCard
+                key={course.id}
+                course={course}
+                completionDate={course.updated_at}
+              />
+            ))
+          ) : (
+            <p className="text-sm text-[#8a8a8a]">{dict.dashboard.roadmap.peak_ahead}</p>
+          )}
+        </div>
+      </section>
 
       {enrolledCourses.length === 0 && (
-        <div className="py-48 text-center relative overflow-hidden group">
-          <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] select-none pointer-events-none transition-transform duration-1000 group-hover:scale-110">
-            <span className="text-[12rem] font-black uppercase tracking-tighter italic">{dict.dashboard.roadmap.empty_title}</span>
+        <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] py-16 text-center">
+          <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-[#e5e5e5] bg-white">
+            <Ghost className="w-4 h-4 text-[#b0b0b0]" />
           </div>
-
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="w-16 h-16 rounded-2xl border border-gray-100 flex items-center justify-center mb-8 bg-gray-50/50 group-hover:rotate-12 transition-transform duration-500">
-              <Ghost className="w-5 h-5 text-gray-200" />
-            </div>
-            <h2 className="text-sm font-black text-gray-900 uppercase tracking-[0.5em] mb-4">{dict.dashboard.roadmap.null_path}</h2>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] max-w-[320px] leading-relaxed mb-12">
-              {dict.dashboard.roadmap.empty_desc}
-            </p>
-            <Button asChild><Link href="/courses">{dict.dashboard.roadmap.empty_cta}</Link></Button>
-          </div>
+          <h2 className="text-sm font-medium text-[#2f2f2f] mb-2">{dict.dashboard.roadmap.null_path}</h2>
+          <p className="text-xs text-[#7a7a7a] max-w-[380px] leading-relaxed mb-6 mx-auto">
+            {dict.dashboard.roadmap.empty_desc}
+          </p>
+          <Button asChild><Link href="/courses">{dict.dashboard.roadmap.empty_cta}</Link></Button>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
 function StudyPlanSkeleton() {
   return (
-    <div className="animate-pulse">
-      {/* Header skeleton */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 mb-12">
-        <div className="space-y-4">
-          <div className="h-4 bg-gray-100 rounded w-32"></div>
-          <div className="h-8 bg-gray-100 rounded w-64"></div>
-          <div className="flex gap-8 mt-4">
-            <div className="h-16 bg-gray-50 rounded-xl w-24"></div>
-            <div className="h-16 bg-gray-50 rounded-xl w-24"></div>
-            <div className="h-16 bg-gray-50 rounded-xl w-24"></div>
-          </div>
-        </div>
-      </div>
-      <div className="space-y-32">
-        <section>
-          <div className="flex items-center gap-6 mb-12">
-            <div className="w-11 h-11 bg-gray-100 rounded-full"></div>
-            <div className="space-y-2">
-              <div className="h-3 bg-gray-100 rounded w-24"></div>
-              <div className="h-6 bg-gray-100 rounded w-48"></div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pl-0 md:pl-20">
-            <div className="h-48 bg-gray-50 rounded-2xl"></div>
-            <div className="h-48 bg-gray-50 rounded-2xl"></div>
-          </div>
-        </section>
-      </div>
+    <div className="animate-pulse space-y-4">
+      <div className="h-28 rounded-lg border border-[#e5e5e5] bg-[#fcfcfc]" />
+      <div className="h-72 rounded-lg border border-[#e5e5e5] bg-[#fcfcfc]" />
+      <div className="h-44 rounded-lg border border-[#e5e5e5] bg-[#fcfcfc]" />
+      <div className="h-48 rounded-lg border border-[#e5e5e5] bg-[#fcfcfc]" />
     </div>
   );
 }

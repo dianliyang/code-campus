@@ -36,6 +36,10 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
     isHidden: course.isHidden || false,
     isInternal: course.isInternal || false,
   });
+  const inputClass =
+    "h-8 w-full rounded-md border border-[#d8d8d8] bg-white px-2.5 text-[13px] text-[#333] outline-none transition-colors focus:border-[#bcbcbc]";
+  const textareaClass =
+    "w-full rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] text-[#333] outline-none transition-colors focus:border-[#bcbcbc]";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,77 +88,77 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="pt-2 space-y-6 max-w-4xl">
+    <form onSubmit={handleSubmit} className="pt-1 space-y-4 max-w-4xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Core Info - Full Width */}
             <div className="md:col-span-2 space-y-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Prerequisites</label>
+                <label className="text-xs font-medium text-[#666]">Prerequisites</label>
                 <textarea
                   rows={2}
                   value={formData.prerequisites}
                   onChange={(e) => setFormData({ ...formData, prerequisites: e.target.value })}
-                  className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
+                  className={textareaClass}
                   placeholder="e.g., CS101, MATH202"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Related URLs (one per line)</label>
+                <label className="text-xs font-medium text-[#666]">Related URLs (one per line)</label>
                 <textarea
                   rows={3}
                   value={formData.relatedUrls}
                   onChange={(e) => setFormData({ ...formData, relatedUrls: e.target.value })}
-                  className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm font-mono focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
+                  className={textareaClass}
                 />
               </div>
             </div>
 
             {/* Compact Grid Fields */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Cross-Listed</label>
+              <label className="text-xs font-medium text-[#666]">Cross-Listed</label>
               <input
                 type="text"
                 value={formData.crossListedCourses}
                 onChange={(e) => setFormData({ ...formData, crossListedCourses: e.target.value })}
-                className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brand-blue outline-none"
+                className={inputClass}
               />
             </div>
             
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Corequisites</label>
+              <label className="text-xs font-medium text-[#666]">Corequisites</label>
               <input
                 type="text"
                 value={formData.corequisites}
                 onChange={(e) => setFormData({ ...formData, corequisites: e.target.value })}
-                className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brand-blue outline-none"
+                className={inputClass}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">URL</label>
+              <label className="text-xs font-medium text-[#666]">URL</label>
               <input
                 type="url"
                 value={formData.url}
                 onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brand-blue outline-none"
+                className={inputClass}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Units</label>
+              <label className="text-xs font-medium text-[#666]">Units</label>
               <input
                 type="text"
                 value={formData.units}
                 onChange={(e) => setFormData({ ...formData, units: e.target.value })}
-                className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brand-blue outline-none"
+                className={inputClass}
               />
             </div>
 
             {/* Numeric Row */}
             <div className="grid grid-cols-2 gap-4 md:col-span-2">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Difficulty (0-10)</label>
+                <label className="text-xs font-medium text-[#666]">Difficulty (0-10)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -162,16 +166,16 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                   max="10"
                   value={formData.difficulty}
                   onChange={(e) => setFormData({ ...formData, difficulty: parseFloat(e.target.value) })}
-                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brand-blue outline-none"
+                  className={inputClass}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Popularity</label>
+                <label className="text-xs font-medium text-[#666]">Popularity</label>
                 <input
                   type="number"
                   value={formData.popularity}
                   onChange={(e) => setFormData({ ...formData, popularity: parseInt(e.target.value) })}
-                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brand-blue outline-none"
+                  className={inputClass}
                 />
               </div>
             </div>
@@ -179,14 +183,14 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
             {/* Toggles Row */}
             <div className="md:col-span-2 grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</label>
-                <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200 w-full">
+                <label className="text-xs font-medium text-[#666]">Status</label>
+                <div className="flex bg-[#f6f6f6] p-1 rounded-md border border-[#d8d8d8] w-full">
                   {[false, true].map(isInternal => (
                     <button
                       key={String(isInternal)}
                       type="button"
                       onClick={() => setFormData({...formData, isInternal: isInternal})}
-                      className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${formData.isInternal === isInternal ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                      className={`flex-1 h-7 rounded text-[12px] font-medium transition-colors ${formData.isInternal === isInternal ? 'bg-white text-[#222] border border-[#e1e1e1]' : 'text-[#777] hover:text-[#555]'}`}
                     >
                       {isInternal ? 'Internal' : 'Public'}
                     </button>
@@ -195,14 +199,14 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Visibility</label>
-                <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200 w-full">
+                <label className="text-xs font-medium text-[#666]">Visibility</label>
+                <div className="flex bg-[#f6f6f6] p-1 rounded-md border border-[#d8d8d8] w-full">
                   {[false, true].map(isHidden => (
                     <button
                       key={String(isHidden)}
                       type="button"
                       onClick={() => setFormData({...formData, isHidden: isHidden})}
-                      className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${formData.isHidden === isHidden ? 'bg-white text-red-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                      className={`flex-1 h-7 rounded text-[12px] font-medium transition-colors ${formData.isHidden === isHidden ? 'bg-white text-red-600 border border-[#f0c9c9]' : 'text-[#777] hover:text-[#555]'}`}
                     >
                       {isHidden ? 'Hidden' : 'Visible'}
                     </button>
@@ -213,12 +217,12 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
           </div>
 
           {/* Actions */}
-          <div className="pt-6 border-t border-gray-100 flex items-center justify-between gap-4 mt-auto">
+          <div className="pt-3 border-t border-[#e5e5e5] flex items-center justify-between gap-4 mt-auto">
             <button
               type="button"
               onClick={handleDelete}
               disabled={loading || isDeleting}
-              className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors disabled:opacity-50"
+              className="h-8 w-8 rounded-md border border-[#e2bcbc] bg-white text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
               title="Delete Course"
             >
               {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
@@ -227,7 +231,7 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-50 transition-colors"
+                className="h-8 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
                 Cancel
               </button>

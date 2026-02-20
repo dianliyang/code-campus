@@ -1,7 +1,8 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { Workout } from "@/types";
-import { Clock, ExternalLink, Flame, Info, MapPin } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, ExternalLink, Flame, Info, MapPin } from "lucide-react";
 import { Dictionary } from "@/lib/dictionary";
 
 interface WorkoutCardProps {
@@ -34,15 +35,49 @@ function getStatusLabel(status: string | null, dict: Dictionary["dashboard"]["wo
   return key && dict[key] ? String(dict[key]) : status;
 }
 
+interface AggregatedEntry {
+  schedule: string | null;
+  location: string | null;
+  locationEn: string | null;
+}
+
+function getScheduleLabel(workout: Workout): string {
+  if (workout.startTime) {
+    return `${workout.dayOfWeek || "-"} ${workout.startTime.slice(0, 5)}${workout.endTime ? `-${workout.endTime.slice(0, 5)}` : ""}`;
+  }
+  return workout.dayOfWeek || "-";
+}
+
+function getAggregatedEntries(workout: Workout): AggregatedEntry[] {
+  const raw = workout.details && typeof workout.details === "object"
+    ? (workout.details as Record<string, unknown>).aggregatedEntries
+    : undefined;
+
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .filter((item) => item && typeof item === "object")
+    .map((item) => {
+      const entry = item as Record<string, unknown>;
+      return {
+        schedule: typeof entry.schedule === "string" ? entry.schedule : null,
+        location: typeof entry.location === "string" ? entry.location : null,
+        locationEn: typeof entry.locationEn === "string" ? entry.locationEn : null,
+      };
+    });
+}
+
 export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex = 0 }: WorkoutCardProps) {
+  const [expanded, setExpanded] = useState(false);
   const displayTitle = workout.titleEn || workout.title;
   const displayCategory = workout.categoryEn || workout.category;
   const displayLocation = workout.locationEn || workout.location || "-";
   const statusLabel = getStatusLabel(workout.bookingStatus, dict);
   const statusClass = workout.bookingStatus && statusStyle[workout.bookingStatus] ? statusStyle[workout.bookingStatus] : "bg-slate-100 text-slate-600";
-  const schedule = workout.startTime
-    ? `${workout.dayOfWeek || "-"} ${workout.startTime.slice(0, 5)}${workout.endTime ? `-${workout.endTime.slice(0, 5)}` : ""}`
-    : (workout.dayOfWeek || "-");
+  const schedule = getScheduleLabel(workout);
+  const aggregatedEntries = useMemo(() => getAggregatedEntries(workout), [workout]);
+  const extraEntries = aggregatedEntries.slice(1);
+  const hasExpandableVariants = extraEntries.length > 0;
   const duration = typeof workout.details?.duration === "string"
     ? workout.details.duration
     : (workout.startDate && workout.endDate ? `${workout.startDate} - ${workout.endDate}` : "-");
@@ -58,51 +93,77 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
   if (viewMode === "list") {
     const rowBg = rowIndex % 2 === 0 ? "bg-[#fcfcfc]" : "bg-[#f7f7f7]";
     return (
-      <div className={`group flex items-center gap-4 px-4 py-3 ${rowBg} hover:bg-[#f2f2f2] transition-colors`}>
-        <div className="flex-1 min-w-0">
-          <h2 className="text-[14px] font-medium text-[#2e2e2e] truncate">
-            {workout.url ? (
-              <a href={workout.url} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">
-                {displayTitle}
+      <div className={rowBg}>
+        <div className="group flex items-center gap-4 px-4 py-3 hover:bg-[#f2f2f2] transition-colors">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-[14px] font-medium text-[#2e2e2e] truncate">
+              {workout.url ? (
+                <a href={workout.url} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">
+                  {displayTitle}
+                </a>
+              ) : (
+                displayTitle
+              )}
+            </h2>
+            <p className="text-xs text-[#7a7a7a] truncate">{displayCategory}</p>
+          </div>
+
+          <div className="w-[15%] hidden md:block">
+            <p className="text-sm text-[#484848] truncate">{schedule}</p>
+            <p className="text-[11px] text-[#8a8a8a] truncate">{duration}</p>
+            {hasExpandableVariants ? (
+              <button
+                type="button"
+                onClick={() => setExpanded((prev) => !prev)}
+                className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-[#4f4f4f] hover:text-black"
+              >
+                {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                {expanded ? "Hide options" : `Show ${extraEntries.length} more`}
+              </button>
+            ) : null}
+          </div>
+          <div className="w-[18%] hidden md:block text-sm text-[#484848] truncate">{displayLocation}</div>
+          <div className="w-[10%] hidden md:flex items-center justify-end gap-1 pr-1 text-sm text-[#484848] text-right">
+            <span>{price}</span>
+            <PriceHelpButton priceDetails={priceDetails} />
+          </div>
+
+          <div className="w-[12%] hidden md:block">
+            <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${statusClass}`}>{statusLabel}</span>
+          </div>
+
+          <div className="w-[8%] flex items-center justify-end pr-1">
+            {actionHref ? (
+              <a
+                href={actionHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
+                aria-label="Open booking"
+              >
+                <ExternalLink className="w-3 h-3" />
               </a>
             ) : (
-              displayTitle
+              <span className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-[#ececec] text-[#9a9a9a]">
+                <ExternalLink className="w-3 h-3" />
+              </span>
             )}
-          </h2>
-          <p className="text-xs text-[#7a7a7a] truncate">{displayCategory}</p>
+          </div>
         </div>
-
-        <div className="w-[15%] hidden md:block">
-          <p className="text-sm text-[#484848] truncate">{schedule}</p>
-          <p className="text-[11px] text-[#8a8a8a] truncate">{duration}</p>
-        </div>
-        <div className="w-[18%] hidden md:block text-sm text-[#484848] truncate">{displayLocation}</div>
-        <div className="w-[10%] hidden md:flex items-center justify-end gap-1 pr-1 text-sm text-[#484848] text-right">
-          <span>{price}</span>
-          <PriceHelpButton priceDetails={priceDetails} />
-        </div>
-
-        <div className="w-[12%] hidden md:block">
-          <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${statusClass}`}>{statusLabel}</span>
-        </div>
-
-        <div className="w-[8%] flex items-center justify-end pr-1">
-          {actionHref ? (
-            <a
-              href={actionHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
-              aria-label="Open booking"
-            >
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          ) : (
-            <span className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-[#ececec] text-[#9a9a9a]">
-              <ExternalLink className="w-3 h-3" />
-            </span>
-          )}
-        </div>
+        {expanded && hasExpandableVariants ? (
+          <div className="hidden md:block px-4 pb-3">
+            <div className="ml-[calc(100%-85%)] mr-[calc(100%-33%)] rounded-md border border-[#e6e6e6] bg-[#fbfbfb] px-2 py-2">
+              {extraEntries.map((entry, index) => {
+                const location = entry.locationEn || entry.location || "-";
+                return (
+                  <p key={`${entry.schedule || "none"}-${location}-${index}`} className="text-[11px] text-[#666] leading-5">
+                    {entry.schedule || "-"} <span className="text-[#9a9a9a]">•</span> {location}
+                  </p>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -138,12 +199,34 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
           <MapPin className="w-3.5 h-3.5 text-[#8a8a8a]" />
           <span className="truncate">{displayLocation}</span>
         </div>
+        {hasExpandableVariants ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((prev) => !prev)}
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#4f4f4f] hover:text-black"
+          >
+            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {expanded ? "Hide options" : `Show ${extraEntries.length} more`}
+          </button>
+        ) : null}
+        {expanded && hasExpandableVariants ? (
+          <div className="rounded-md border border-[#e6e6e6] bg-[#fbfbfb] px-2 py-2 mt-1 space-y-1">
+            {extraEntries.map((entry, index) => {
+              const location = entry.locationEn || entry.location || "-";
+              return (
+                <p key={`${entry.schedule || "none"}-${location}-${index}`} className="text-[11px] text-[#666] leading-4">
+                  {entry.schedule || "-"} <span className="text-[#9a9a9a]">•</span> {location}
+                </p>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div className="rounded-md bg-white px-2 py-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a] text-right">Price</p>
-          <p className="inline-flex w-full items-center justify-end gap-1 text-[13px] font-medium text-[#3b3b3b]">
+          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Price</p>
+          <p className="inline-flex w-full items-center gap-1 text-[13px] font-medium text-[#3b3b3b]">
             <span>{price}</span>
             <PriceHelpButton priceDetails={priceDetails} />
           </p>

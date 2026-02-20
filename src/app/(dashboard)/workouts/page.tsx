@@ -5,6 +5,7 @@ import { createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { getWorkoutLastUpdateTime } from "@/actions/scrapers";
+import { aggregateWorkoutsByName } from "@/lib/workouts";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -34,19 +35,22 @@ async function SidebarData({ dict }: {
 }) {
   const supabase = await createClient();
 
-  // Fetch distinct categories with counts
-  const { data: categoriesData } = await supabase
+  const { data: workoutsData, error } = await supabase
     .from('workouts')
-    .select('category_en, category');
+    .select('*');
 
-  // Fetch distinct statuses with counts
-  const { data: statusesData } = await supabase
-    .from('workouts')
-    .select('booking_status');
+  if (error) {
+    console.error("[Supabase] Fetch sidebar workouts error:", error);
+    return <WorkoutSidebar categories={[]} statuses={[]} dict={dict} />;
+  }
+
+  const aggregatedWorkouts = aggregateWorkoutsByName(
+    (workoutsData || []).map((row: any) => mapWorkoutFromRow(row)) // eslint-disable-line @typescript-eslint/no-explicit-any
+  );
 
   const categoryCounts: Record<string, number> = {};
-  categoriesData?.forEach(w => {
-    const name = w.category_en || w.category;
+  aggregatedWorkouts.forEach((w) => {
+    const name = w.categoryEn || w.category;
     if (name) categoryCounts[name] = (categoryCounts[name] || 0) + 1;
   });
   
@@ -55,8 +59,8 @@ async function SidebarData({ dict }: {
     .sort((a, b) => b.count - a.count);
 
   const statusCounts: Record<string, number> = {};
-  statusesData?.forEach(w => {
-    const name = w.booking_status;
+  aggregatedWorkouts.forEach((w) => {
+    const name = w.bookingStatus;
     if (name) statusCounts[name] = (statusCounts[name] || 0) + 1;
   });
   const statuses = Object.entries(statusCounts)
@@ -144,17 +148,17 @@ async function fetchWorkouts(
   else if (sort === 'day') supabaseQuery = supabaseQuery.order('day_of_week', { ascending: true });
   else supabaseQuery = supabaseQuery.order('title', { ascending: true });
 
-  const { data, count, error } = await supabaseQuery.range(offset, offset + size - 1);
+  const { data, error } = await supabaseQuery;
 
   if (error) {
     console.error("[Supabase] Fetch workouts error:", error);
     return { items: [], total: 0, pages: 0 };
   }
 
-  const items = (data || []).map((row: any) => mapWorkoutFromRow(row)); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-  const total = count || 0;
+  const allItems = aggregateWorkoutsByName((data || []).map((row: any) => mapWorkoutFromRow(row))); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const total = allItems.length;
   const pages = Math.max(1, Math.ceil(total / size));
+  const items = allItems.slice(offset, offset + size);
 
   return { items, total, pages };
 }

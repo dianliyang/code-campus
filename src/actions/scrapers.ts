@@ -9,6 +9,7 @@ import { CAUSport } from "@/lib/scrapers/cau-sport";
 import { BaseScraper } from "@/lib/scrapers/BaseScraper";
 import { SupabaseDatabase, createAdminClient, createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getUser } from "@/lib/supabase/server";
+import { aggregateWorkoutsByName } from "@/lib/workouts";
 import { revalidatePath } from "next/cache";
 
 export async function runManualScraperAction({
@@ -123,16 +124,17 @@ export async function fetchWorkoutsAction({
   else if (sort === 'day') supabaseQuery = supabaseQuery.order('day_of_week', { ascending: true });
   else supabaseQuery = supabaseQuery.order('title', { ascending: true });
 
-  const { data, count, error } = await supabaseQuery.range(offset, offset + size - 1);
+  const { data, error } = await supabaseQuery;
 
   if (error) {
     console.error("[fetchWorkoutsAction] Error:", error);
     return { items: [], total: 0, pages: 0 };
   }
 
-  const items = (data || []).map((row) => mapWorkoutFromRow(row as any)); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const total = count || 0;
+  const allItems = aggregateWorkoutsByName((data || []).map((row) => mapWorkoutFromRow(row as any))); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const total = allItems.length;
   const pages = Math.max(1, Math.ceil(total / size));
+  const items = allItems.slice(offset, offset + size);
 
   return { items, total, pages };
 }

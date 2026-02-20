@@ -64,16 +64,35 @@ export async function regenerateProjectSeminarDescription(projectSeminarId: numb
     };
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template")
-    .eq("id", user.id)
-    .maybeSingle();
-  if (profileError) {
+  const profileSelectVariants = [
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template",
+    "ai_default_model, ai_web_search_enabled, ai_prompt_template",
+    "ai_web_search_enabled, ai_prompt_template",
+    "ai_prompt_template",
+    "id",
+  ];
+  let profile: Record<string, unknown> | null = null;
+  let lastProfileError: { code?: string; message?: string } | null = null;
+
+  for (const selectColumns of profileSelectVariants) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(selectColumns)
+      .eq("id", user.id)
+      .maybeSingle();
+    if (!error) {
+      profile = (data as Record<string, unknown> | null) || null;
+      lastProfileError = null;
+      break;
+    }
+    lastProfileError = error;
+  }
+
+  if (lastProfileError) {
+    const msg = lastProfileError.message || "";
     if (
-      profileError.code === "PGRST204" ||
-      profileError.message?.includes("ai_prompt_template") ||
-      profileError.message?.includes("column")
+      (lastProfileError.code === "PGRST204" && msg.includes("'ai_prompt_template'")) ||
+      msg.includes('column "ai_prompt_template"')
     ) {
       throw new Error("Database column `profiles.ai_prompt_template` is missing. Please run the prompt template migration.");
     }
@@ -81,12 +100,12 @@ export async function regenerateProjectSeminarDescription(projectSeminarId: numb
   }
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
-  const selectedModel = (profile?.ai_default_model || "sonar").trim();
+  const selectedModel = (String(profile?.ai_default_model || "sonar")).trim();
   const model = provider === "gemini"
     ? (GEMINI_MODEL_SET.has(selectedModel) ? selectedModel : "gemini-2.0-flash")
     : (PERPLEXITY_MODEL_SET.has(selectedModel) ? selectedModel : "sonar");
-  const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
-  const template = (profile?.ai_prompt_template || "").trim();
+  const webSearchEnabled = Boolean(profile?.ai_web_search_enabled ?? false);
+  const template = String(profile?.ai_prompt_template || "").trim();
   if (!template) {
     throw new Error("Metadata prompt is not configured. Set Metadata Logic in Settings first.");
   }

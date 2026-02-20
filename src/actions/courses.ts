@@ -4,7 +4,7 @@ import { createAdminClient, getUser, createClient, mapCourseFromRow } from "@/li
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
-import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT } from "@/lib/ai/prompts";
+import { DEFAULT_COURSE_DESCRIPTION_PROMPT } from "@/lib/ai/prompts";
 import { Course } from "@/types";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
@@ -361,11 +361,21 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
       .filter((v): v is NonNullable<typeof v> => v !== null);
   });
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_study_plan_prompt_template")
     .eq("id", user.id)
     .maybeSingle();
+  if (profileError) {
+    if (
+      profileError.code === "PGRST204" ||
+      profileError.message?.includes("ai_study_plan_prompt_template") ||
+      profileError.message?.includes("column")
+    ) {
+      throw new Error("Database column `profiles.ai_study_plan_prompt_template` is missing. Please run the study plan prompt migration.");
+    }
+    throw new Error("Failed to load study plan prompt settings.");
+  }
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
   const selectedModel = (profile?.ai_default_model || "sonar").trim();
@@ -373,7 +383,10 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
     ? (GEMINI_MODEL_SET.has(selectedModel) ? selectedModel : "gemini-2.0-flash")
     : (PERPLEXITY_MODEL_SET.has(selectedModel) ? selectedModel : "sonar");
   const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
-  const promptTemplate = (profile?.ai_study_plan_prompt_template || "").trim() || DEFAULT_STUDY_PLAN_PROMPT;
+  const promptTemplate = (profile?.ai_study_plan_prompt_template || "").trim();
+  if (!promptTemplate) {
+    throw new Error("Study plan prompt is not configured. Set Study Plan Prompt in Settings first.");
+  }
   const prompt = applyPromptTemplate(promptTemplate, {
     schedule_lines: originalSchedule.map((s) => `- ${s.type}: ${s.line}`).join("\n"),
   });

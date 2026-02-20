@@ -21,21 +21,64 @@ export async function regenerateProjectSeminarDescription(projectSeminarId: numb
   }
 
   const supabase = createAdminClient();
-  const { data: row, error } = await supabase
+  let row: {
+    title?: string | null;
+    course_code?: string | null;
+    university?: string | null;
+    category?: string | null;
+    prerequisites?: string | null;
+    contents?: string | null;
+    description?: string | null;
+    details?: unknown;
+  } | null = null;
+
+  const { data: modernRow, error: modernError } = await supabase
     .from("projects_seminars")
     .select("title, course_code, university, category, prerequisites, contents, description")
     .eq("id", projectSeminarId)
     .single();
 
-  if (error || !row) {
-    throw new Error("Project/Seminar not found");
+  if (!modernError && modernRow) {
+    row = modernRow;
+  } else {
+    const { data: legacyRow, error: legacyError } = await supabase
+      .from("projects_seminars")
+      .select("title, course_code, university, category, description, details")
+      .eq("id", projectSeminarId)
+      .single();
+    if (legacyError || !legacyRow) {
+      throw new Error("Project/Seminar not found");
+    }
+    const details =
+      legacyRow.details && typeof legacyRow.details === "object" && !Array.isArray(legacyRow.details)
+        ? (legacyRow.details as Record<string, unknown>)
+        : {};
+    row = {
+      ...legacyRow,
+      prerequisites:
+        (typeof details.prerequisites === "string" && details.prerequisites) ||
+        (typeof details.prerequisites_organisational_information === "string" &&
+          details.prerequisites_organisational_information) ||
+        null,
+      contents: (typeof details.contents === "string" && details.contents) || null,
+    };
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template")
     .eq("id", user.id)
     .maybeSingle();
+  if (profileError) {
+    if (
+      profileError.code === "PGRST204" ||
+      profileError.message?.includes("ai_prompt_template") ||
+      profileError.message?.includes("column")
+    ) {
+      throw new Error("Database column `profiles.ai_prompt_template` is missing. Please run the prompt template migration.");
+    }
+    throw new Error("Failed to load AI profile settings.");
+  }
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
   const selectedModel = (profile?.ai_default_model || "sonar").trim();
@@ -168,7 +211,16 @@ export async function updateProjectSeminarDescription(projectSeminarId: number, 
     })
     .eq("id", projectSeminarId);
 
-  if (error) {
+  if (error?.message?.includes("contents") || error?.code === "PGRST204") {
+    const { error: fallbackError } = await supabase
+      .from("projects_seminars")
+      .update({ description })
+      .eq("id", projectSeminarId);
+    if (fallbackError) {
+      console.error("Failed to update project/seminar description (fallback):", fallbackError);
+      throw new Error("Failed to update project/seminar description");
+    }
+  } else if (error) {
     console.error("Failed to update project/seminar description:", error);
     throw new Error("Failed to update project/seminar description");
   }

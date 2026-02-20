@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS, GEMINI_MODELS, PERPLEXITY_MODELS } from "@/lib/ai/models";
 import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
@@ -106,34 +106,12 @@ export default function AISettingsCard({
     startTransition(async () => {
       try {
         await updateAiPromptTemplates({ topicsPromptTemplate });
-        lastSavedTopicsPromptRef.current = topicsPromptTemplate;
         setStatus({ type: "success", message: "Topic classification logic updated.", panel: "topics" });
       } catch (error) {
         setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "topics" });
       }
     });
   };
-
-  const lastSavedTopicsPromptRef = useRef(initialTopicsPromptTemplate || DEFAULT_TOPICS_PROMPT);
-
-  useEffect(() => {
-    if (topicsPromptTemplate === lastSavedTopicsPromptRef.current) return;
-
-    const timer = setTimeout(() => {
-      clearStatus();
-      startTransition(async () => {
-        try {
-          await updateAiPromptTemplates({ topicsPromptTemplate });
-          lastSavedTopicsPromptRef.current = topicsPromptTemplate;
-          setStatus({ type: "success", message: "Topic classification logic auto-saved.", panel: "topics" });
-        } catch (error) {
-          setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "topics" });
-        }
-      });
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [topicsPromptTemplate]);
 
   return (
     <div className="space-y-4">

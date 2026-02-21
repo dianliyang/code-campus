@@ -53,3 +53,7 @@ coverage/
 .vercel
 agent-skills/
 
+# Claude / AI tooling
+.claude/
+docs/plans/
+

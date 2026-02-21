@@ -59,7 +59,14 @@ const stanfordSuffixMeaning = (suffix: string): string => {
 };
 
 export const getCourseCodeBreakdown = (university: string | undefined, courseCode: string | undefined): CodeBreakdownItem[] => {
-  const school = (university || "").trim().toLowerCase();
+  const rawSchool = (university || "").trim().toLowerCase();
+  const school = (
+    rawSchool === "uc berkeley" || rawSchool === "university of california, berkeley" || rawSchool === "university of california berkeley"
+      ? "ucb"
+      : rawSchool === "carnegie mellon" || rawSchool === "carnegie mellon university"
+        ? "cmu"
+        : rawSchool
+  );
   const code = (courseCode || "").trim();
   if (!code) return [];
 

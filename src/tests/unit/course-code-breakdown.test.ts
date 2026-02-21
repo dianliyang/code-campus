@@ -38,4 +38,10 @@ describe("getCourseCodeBreakdown", () => {
     expect(items.find((x) => x.label === "Prefix Modifier")?.value).toBe("W");
     expect(items.find((x) => x.label === "Suffix")?.value).toBe("B");
   });
+
+  test("parses UCB breakdown when university is UC Berkeley", () => {
+    const items = getCourseCodeBreakdown("UC Berkeley", "ELENG W242B");
+    expect(items.length).toBeGreaterThan(0);
+    expect(items.find((x) => x.label === "Subject Prefix")?.value).toBe("ELENG");
+  });
 });

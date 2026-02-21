@@ -1,86 +1,151 @@
-const CACHE_NAME = 'codecampus-v1';
-const OFFLINE_URL = '/offline';
+// ─── Cache names ────────────────────────────────────────────────────────────
+const CACHE_STATIC = 'cc-static-v2';   // /_next/static/* — immutable
+const CACHE_IMAGES = 'cc-images-v2';   // icons, webp, svg, png — cache-first LRU
+const CACHE_PAGES  = 'cc-pages-v2';    // HTML navigation — stale-while-revalidate
+const CACHE_API    = 'cc-api-v2';      // /api/universities + /api/fields — SWR 5 min
+const ALL_CACHES   = [CACHE_STATIC, CACHE_IMAGES, CACHE_PAGES, CACHE_API];
 
-// Assets to cache immediately on install
-const PRECACHE_ASSETS = [
-  '/',
-  '/offline',
-  '/code-campus-logo-bw.svg',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
-];
+const OFFLINE_URL       = '/offline';
+const IMAGES_MAX        = 60;
+const API_MAX_AGE_MS    = 5 * 60 * 1000;
 
-// Install event - cache essential assets
+// Endpoints whose POST requests are queued offline (Task 2 adds the handler)
+const QUEUED_ENDPOINTS  = ['/api/study-plans/update', '/api/schedule'];
+
+// ─── Install ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
-    })
+    caches.open(CACHE_PAGES).then((cache) =>
+      cache.addAll([OFFLINE_URL, '/manifest.json', '/icons/icon-192x192.png', '/icons/icon-512x512.png'])
+    )
   );
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// ─── Activate — evict old caches ─────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    })
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => !ALL_CACHES.includes(k)).map((k) => caches.delete(k)))
+    )
   );
   self.clients.claim();
 });
 
-// Fetch event - network first, fall back to cache
+// ─── Fetch ───────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
+  const { request } = event;
+  const url = new URL(request.url);
 
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) return;
+  // Only handle same-origin
+  if (url.origin !== self.location.origin) return;
 
-  // Skip API requests - always go to network
-  if (event.request.url.includes('/api/')) return;
+  // Queue offline writes (handler added in Task 2)
+  if (request.method === 'POST' && QUEUED_ENDPOINTS.some((ep) => url.pathname.startsWith(ep))) {
+    event.respondWith(handleOfflineWrite(request));
+    return;
+  }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clone the response before caching
-        const responseClone = response.clone();
+  // Skip non-GET after write check
+  if (request.method !== 'GET') return;
 
-        // Cache successful responses
-        if (response.status === 200) {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
+  // 1. Static assets — cache-first (immutable content-hashed filenames)
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(cacheFirst(request, CACHE_STATIC));
+    return;
+  }
 
-        return response;
-      })
-      .catch(async () => {
-        // Try to get from cache
-        const cachedResponse = await caches.match(event.request);
-        if (cachedResponse) {
-          return cachedResponse;
-        }
+  // 2. Images — cache-first with LRU eviction
+  if (url.pathname.startsWith('/icons/') || /\.(webp|svg|png|jpe?g)$/.test(url.pathname)) {
+    event.respondWith(cacheFirstImages(request));
+    return;
+  }
 
-        // For navigation requests, show offline page
-        if (event.request.mode === 'navigate') {
-          const offlineResponse = await caches.match(OFFLINE_URL);
-          if (offlineResponse) {
-            return offlineResponse;
-          }
-        }
+  // 3. Public reference API — stale-while-revalidate with 5 min TTL
+  if (url.pathname === '/api/universities' || url.pathname === '/api/fields') {
+    event.respondWith(staleWhileRevalidateApi(request));
+    return;
+  }
 
-        // Return a basic offline response
-        return new Response('Offline', {
-          status: 503,
-          statusText: 'Service Unavailable'
-        });
-      })
-  );
+  // 4. Other API — network-only
+  if (url.pathname.startsWith('/api/')) return;
+
+  // 5. HTML navigation — stale-while-revalidate
+  if (request.mode === 'navigate') {
+    event.respondWith(staleWhileRevalidatePages(request));
+    return;
+  }
 });
+
+// ─── Strategy helpers ────────────────────────────────────────────────────────
+async function cacheFirst(request, cacheName) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(cacheName);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
+async function cacheFirstImages(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  try {
+    const response = await fetch(request);
+    if (!response.ok) return response;
+    const cache = await caches.open(CACHE_IMAGES);
+    const keys = await cache.keys();
+    if (keys.length >= IMAGES_MAX) cache.delete(keys[0]); // evict oldest
+    cache.put(request, response.clone());
+    return response;
+  } catch {
+    return new Response('', { status: 503 });
+  }
+}
+
+async function staleWhileRevalidateApi(request) {
+  const cache = await caches.open(CACHE_API);
+  const cached = await cache.match(request);
+  if (cached) {
+    const age = Date.now() - Number(cached.headers.get('sw-cached-at') || 0);
+    if (age < API_MAX_AGE_MS) {
+      // Still fresh — revalidate in background
+      fetch(request).then((res) => {
+        if (res.ok) putWithTimestamp(cache, request, res);
+      }).catch(() => {});
+      return cached;
+    }
+  }
+  try {
+    const response = await fetch(request);
+    if (response.ok) putWithTimestamp(cache, request, response.clone());
+    return response;
+  } catch {
+    return cached || new Response('', { status: 503 });
+  }
+}
+
+async function staleWhileRevalidatePages(request) {
+  const cache = await caches.open(CACHE_PAGES);
+  const cached = await cache.match(request);
+  const networkPromise = fetch(request)
+    .then((res) => { if (res.ok) cache.put(request, res.clone()); return res; })
+    .catch(() => null);
+  if (cached) { networkPromise; return cached; }  // return stale, update bg
+  const response = await networkPromise;
+  if (response) return response;
+  return (await cache.match(OFFLINE_URL)) || new Response('Offline', { status: 503 });
+}
+
+function putWithTimestamp(cache, request, response) {
+  const headers = new Headers(response.headers);
+  headers.set('sw-cached-at', String(Date.now()));
+  cache.put(request, new Response(response.body, { status: response.status, statusText: response.statusText, headers }));
+}
+
+// ─── Offline write handler (stub — replaced in Task 2) ───────────────────────
+async function handleOfflineWrite(request) {
+  return fetch(request);
+}

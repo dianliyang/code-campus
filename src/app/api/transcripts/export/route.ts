@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { generateTranscriptPdf, TranscriptRow } from "@/lib/pdf/transcript";
-import { generateTranscriptPdfWithReact } from "@/lib/pdf/transcript-react";
+import { TranscriptRow } from "@/lib/pdf/transcript";
+import { buildTranscriptTypst } from "@/lib/pdf/transcript-typst";
 
 export const runtime = "nodejs";
 
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     const titleSemester = body.semester && body.semester !== "all" ? body.semester : "All Semesters";
     const title = `Academic Transcript - ${titleUniversity} - ${titleSemester}`;
 
-    const pdfInput = {
+    const typstInput = {
       title,
       rows,
       generatedBy: user.email || user.id,
@@ -96,27 +96,21 @@ export async function POST(req: NextRequest) {
       semesterFilter: titleSemester,
     };
 
-    let pdfBuffer: Buffer;
-    try {
-      pdfBuffer = await generateTranscriptPdfWithReact(pdfInput);
-    } catch (reactPdfError) {
-      console.error("React PDF transcript generation failed, falling back:", reactPdfError);
-      pdfBuffer = generateTranscriptPdf(pdfInput);
-    }
+    const typstSource = buildTranscriptTypst(typstInput);
     const uniSafe = toSafeFilenamePart(titleUniversity);
     const semSafe = toSafeFilenamePart(titleSemester);
-    const filename = `transcript_${uniSafe}_${semSafe}.pdf`;
+    const filename = `transcript_${uniSafe}_${semSafe}.typ`;
 
-    return new NextResponse(new Uint8Array(pdfBuffer), {
+    return new NextResponse(typstSource, {
       status: 200,
       headers: {
-        "Content-Type": "application/pdf",
+        "Content-Type": "text/plain; charset=utf-8",
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store",
       },
     });
   } catch (error) {
-    console.error("Transcript PDF export error:", error);
-    return NextResponse.json({ error: "Failed to generate transcript PDF" }, { status: 500 });
+    console.error("Transcript Typst export error:", error);
+    return NextResponse.json({ error: "Failed to generate transcript Typst source" }, { status: 500 });
   }
 }

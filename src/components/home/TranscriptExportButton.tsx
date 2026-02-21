@@ -33,7 +33,7 @@ export default function TranscriptExportButton({ rows, selectedSemester }: Trans
     [rows, selectedUniversity]
   );
 
-  const exportPdf = async () => {
+  const exportTypst = async () => {
     if (filteredRows.length === 0 || isExporting) return;
 
     setIsExporting(true);
@@ -54,7 +54,7 @@ export default function TranscriptExportButton({ rows, selectedSemester }: Trans
       const blob = await res.blob();
       const disposition = res.headers.get("Content-Disposition") || "";
       const match = disposition.match(/filename="([^"]+)"/);
-      const filename = match?.[1] || "transcript.pdf";
+      const filename = match?.[1] || "transcript.typ";
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -64,8 +64,8 @@ export default function TranscriptExportButton({ rows, selectedSemester }: Trans
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("PDF export failed:", error);
-      alert("Failed to export transcript PDF.");
+      console.error("Typst export failed:", error);
+      alert("Failed to export transcript Typst.");
     } finally {
       setIsExporting(false);
     }
@@ -87,12 +87,12 @@ export default function TranscriptExportButton({ rows, selectedSemester }: Trans
       </select>
       <button
         type="button"
-        onClick={exportPdf}
+        onClick={exportTypst}
         disabled={filteredRows.length === 0 || isExporting}
         className="h-8 inline-flex items-center gap-1.5 rounded-md border border-[#e5e5e5] bg-white px-2.5 text-xs font-medium text-[#333] hover:bg-[#f7f7f7] disabled:opacity-50"
       >
         <FileDown className="w-3.5 h-3.5" />
-        {isExporting ? "Exporting..." : "Export PDF"}
+        {isExporting ? "Exporting..." : "Export Typst"}
       </button>
     </div>
   );

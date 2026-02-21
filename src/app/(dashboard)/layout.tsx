@@ -2,6 +2,7 @@ import BottomTabBar from "@/components/layout/BottomTabBar";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import LeftRail from "@/components/dashboard/LeftRail";
+import OfflineIndicator from "@/components/common/OfflineIndicator";
 
 export default async function DashboardLayout({
   children,
@@ -41,6 +42,7 @@ export default async function DashboardLayout({
           settings: dict.navbar?.settings || "Settings",
         }}
       />
+      <OfflineIndicator />
     </>
   );
 }

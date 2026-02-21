@@ -40,8 +40,7 @@ interface StudyLog {
 }
 
 type OptimisticEntry = {
-  isCompleted: boolean;
-  status: "pending" | "synced" | "failed";
+  status: "pending" | "failed";
 };
 
 interface GeneratedEvent {
@@ -185,14 +184,13 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
 
   const eventKey = (planId: number, date: string) => `${planId}:${date}`;
 
-  const toggleComplete = async (planId: number, date: string, currentCompleted: boolean) => {
+  const toggleComplete = async (planId: number, date: string) => {
     const key = eventKey(planId, date);
-    const nextCompleted = !currentCompleted;
 
     setGlobalError(null);
     setOptimisticByKey(prev => ({
       ...prev,
-      [key]: { isCompleted: nextCompleted, status: "pending" },
+      [key]: { status: "pending" },
     }));
 
     try {
@@ -213,25 +211,15 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
         }
       }
       setOptimisticByKey(prev => {
-        return {
-          ...prev,
-          [key]: { isCompleted: nextCompleted, status: "synced" },
-        };
+        const next = { ...prev };
+        delete next[key];
+        return next;
       });
       router.refresh();
-      setTimeout(() => {
-        setOptimisticByKey(prev => {
-          const current = prev[key];
-          if (!current || current.status === "pending") return prev;
-          const next = { ...prev };
-          delete next[key];
-          return next;
-        });
-      }, 1200);
     } catch (e) {
       setOptimisticByKey(prev => ({
         ...prev,
-        [key]: { isCompleted: currentCompleted, status: "failed" },
+        [key]: { status: "failed" },
       }));
       setGlobalError("Update failed. Please try again.");
       console.error('Failed to toggle completion:', e);
@@ -490,9 +478,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                       const optimistic = optimisticByKey[key];
                       const isPending = optimistic?.status === "pending";
                       const isFailed = optimistic?.status === "failed";
-                      const effectiveCompleted = optimistic
-                        ? optimistic.isCompleted
-                        : event.isCompleted;
+                      const effectiveCompleted = event.isCompleted;
                       const shouldShake = isPending;
                       const bgColor = effectiveCompleted ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' : 'bg-white border-gray-200 hover:bg-gray-50';
 
@@ -504,7 +490,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                           aria-disabled={isPending}
                           onClick={() => {
                             if (isPending) return;
-                            toggleComplete(event.planId, event.date, effectiveCompleted);
+                            toggleComplete(event.planId, event.date);
                           }}
                         >
                           <div className="flex items-start justify-between gap-2 mb-0.5">
@@ -517,6 +503,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                                   Failed
                                 </span>
                               )}
+                              {isPending && <Loader2 className="w-3 h-3 text-gray-400 animate-spin" />}
                               {effectiveCompleted && <Check className="w-3 h-3 text-gray-400" />}
                             </div>
                           </div>

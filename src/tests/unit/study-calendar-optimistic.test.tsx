@@ -46,7 +46,7 @@ const makeProps = (overrides?: Partial<React.ComponentProps<typeof StudyCalendar
   ...overrides,
 });
 
-describe("StudyCalendar optimistic attendance", () => {
+describe("StudyCalendar attendance updates", () => {
   const clickFirstCard = () => {
     const title = screen.getAllByText("Course A").find((el) => el.closest("div[aria-disabled]"));
     if (!title) {
@@ -60,7 +60,7 @@ describe("StudyCalendar optimistic attendance", () => {
     vi.restoreAllMocks();
   });
 
-  test("toggles completed state immediately on click", async () => {
+  test("waits for server result and shows pending spinner", async () => {
     render(
       <StudyCalendar
         {...makeProps({
@@ -76,7 +76,10 @@ describe("StudyCalendar optimistic attendance", () => {
       clickFirstCard();
     });
 
-    expect(screen.getAllByText("Course A")[0].className).toContain("line-through");
+    const pendingTitle = screen.getAllByText("Course A").find((el) => el.closest("div[aria-disabled='true']"));
+    expect(pendingTitle).toBeTruthy();
+    expect(document.querySelector(".animate-spin")).toBeTruthy();
+    expect(screen.getAllByText("Course A")[0].className).not.toContain("line-through");
   });
 
   test.skip("reverts on failure and shows failed status", async () => {

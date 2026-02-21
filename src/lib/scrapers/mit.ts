@@ -202,16 +202,18 @@ export class MIT extends BaseScraper {
         curr = curr.next;
       }
 
+      const inferredLevel = level || this.inferLevelFromCourseCode(courseId);
       courses.push({
         university: this.name,
         courseCode: courseId,
         title: courseTitle,
         units: details.units as string | undefined,
         description: descriptionParts.join(" ").trim(),
-        department: "Electrical Engineering and Computer Science",
-        level: level,
+        department: this.getDepartmentFromCourseCode(courseId),
+        level: inferredLevel,
         corequisites: details.prerequisites as string | undefined,
         semesters: [{ term: termName, year: fullYear }],
+        url: `https://student.mit.edu/catalog/search.cgi?search=${encodeURIComponent(courseId)}`,
         details: {
           terms: details.terms,
           instructors: instructors
@@ -219,6 +221,124 @@ export class MIT extends BaseScraper {
       });
     });
 
-    return courses;
+    return this.dedupeCoursesByTitleAndPattern(courses);
+  }
+
+  async retrieve(): Promise<Course[]> {
+    const courses = await super.retrieve();
+    return this.dedupeCoursesByTitleAndPattern(courses);
+  }
+
+  private parseCourseCode(code: string): { dept: string; subject: number; suffix2: string } | null {
+    const match = code.trim().match(/^(\d+)\.(\d+)[A-Z]?$/i);
+    if (!match) return null;
+    const dept = match[1];
+    const subject = Number(match[2]);
+    if (!Number.isFinite(subject)) return null;
+    const suffix2 = String(subject % 100).padStart(2, "0");
+    return { dept, subject, suffix2 };
+  }
+
+  private inferLevelFromCourseCode(code: string): string {
+    const parsed = this.parseCourseCode(code);
+    if (!parsed) return "undergraduate";
+    const leadingDigit = Number(String(parsed.subject)[0] || "0");
+    if (leadingDigit >= 6) return "graduate";
+    return "undergraduate";
+  }
+
+  private getLevelRank(code: string): number {
+    const parsed = this.parseCourseCode(code);
+    if (!parsed) return 0;
+    const leadingDigit = Number(String(parsed.subject)[0] || "0");
+    return Number.isFinite(leadingDigit) ? leadingDigit : 0;
+  }
+
+  private getDepartmentFromCourseCode(code: string): string {
+    const parsed = this.parseCourseCode(code);
+    if (!parsed) return "MIT";
+
+    const byDept: Record<string, string> = {
+      "3": "Materials Science and Engineering",
+      "4": "Architecture",
+      "5": "Chemistry",
+      "6": "Electrical Engineering and Computer Science",
+      "7": "Biology",
+      "8": "Physics",
+      "17": "Political Science",
+      "18": "Mathematics",
+    };
+
+    return byDept[parsed.dept] || `Course ${parsed.dept}`;
+  }
+
+  private dedupeCoursesByTitleAndPattern(courses: Course[]): Course[] {
+    const grouped = new Map<string, Course[]>();
+
+    for (const course of courses) {
+      const parsed = this.parseCourseCode(course.courseCode);
+      const titleKey = (course.title || "").trim().toLowerCase();
+
+      if (!parsed) {
+        const fallbackKey = `__raw__:${course.courseCode}:${titleKey}`;
+        const list = grouped.get(fallbackKey) || [];
+        list.push(course);
+        grouped.set(fallbackKey, list);
+        continue;
+      }
+
+      // Same strategy as CMU aggregation: same canonical pattern + same title.
+      const key = `${parsed.dept}-${parsed.suffix2}::${titleKey}`;
+      const list = grouped.get(key) || [];
+      list.push(course);
+      grouped.set(key, list);
+    }
+
+    const deduped: Course[] = [];
+    for (const entries of grouped.values()) {
+      if (entries.length === 1) {
+        deduped.push(entries[0]);
+        continue;
+      }
+
+      const sorted = [...entries].sort((a, b) => {
+        const rankDiff = this.getLevelRank(b.courseCode) - this.getLevelRank(a.courseCode);
+        if (rankDiff !== 0) return rankDiff;
+        return b.courseCode.localeCompare(a.courseCode);
+      });
+      const winner = sorted[0];
+
+      const mergedTerms = Array.from(
+        new Set(
+          sorted.flatMap((c) => {
+            const terms = (c.details as Record<string, unknown> | undefined)?.terms;
+            return Array.isArray(terms) ? terms.map((t) => String(t)) : [];
+          })
+        )
+      );
+      const mergedInstructors = Array.from(
+        new Set(
+          sorted.flatMap((c) => {
+            const instructors = (c.details as Record<string, unknown> | undefined)?.instructors;
+            return Array.isArray(instructors) ? instructors.map((t) => String(t)) : [];
+          })
+        )
+      );
+      const mitCodeLinks = sorted
+        .map((c) => ({ id: c.courseCode, link: c.url || "" }))
+        .filter((item, idx, arr) => arr.findIndex((x) => x.id === item.id) === idx);
+
+      winner.details = {
+        ...(winner.details as Record<string, unknown>),
+        terms: mergedTerms,
+        instructors: mergedInstructors,
+        mit_code_links: mitCodeLinks,
+      };
+      winner.level = this.inferLevelFromCourseCode(winner.courseCode);
+
+      deduped.push(winner);
+    }
+
+    return deduped;
   }
 }

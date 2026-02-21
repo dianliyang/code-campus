@@ -7,6 +7,7 @@ import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/
 import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, type SchedulePlanPreview } from "@/actions/courses";
 import { Check, Clock, ExternalLink, Globe, Info, Loader2, PenSquare, Trash2, Users, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getUniversityUnitInfo } from "@/lib/university-units";
 
 interface CourseDetailContentProps {
   course: Course;
@@ -44,20 +45,11 @@ export default function CourseDetailContent({
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const hasStudyPlans = editablePlans.length > 0;
   const normalizeTime = (value: string) => (value.length === 5 ? `${value}:00` : value || "09:00:00");
-  const parseTimeToMinutes = (value: string) => {
-    const parts = value.split(":").map((p) => Number(p));
-    const hours = Number.isFinite(parts[0]) ? parts[0] : 0;
-    const minutes = Number.isFinite(parts[1]) ? parts[1] : 0;
-    return (hours * 60) + minutes;
-  };
-  const weeklyHours = editablePlans.reduce((sum, plan) => {
-    const start = parseTimeToMinutes(plan.startTime || "00:00:00");
-    const end = parseTimeToMinutes(plan.endTime || "00:00:00");
-    const durationMinutes = end >= start ? (end - start) : (end + 24 * 60 - start);
-    const dayCount = (plan.daysOfWeek || []).length;
-    return sum + ((durationMinutes / 60) * dayCount);
-  }, 0);
-  const workloadFromStudyPlan = weeklyHours > 0 ? `${weeklyHours.toFixed(1).replace(/\.0$/, "")} h/week` : "-";
+  const unitInfo = useMemo(
+    () => getUniversityUnitInfo(course.university, course.units),
+    [course.university, course.units]
+  );
+  const estimatedWorkload = unitInfo.estimate?.details || "-";
   const categoryRaw = typeof course.details?.category === "string" ? course.details.category : "";
   const categoryLabel =
     categoryRaw === "Compulsory elective modules in Computer Science"
@@ -69,8 +61,9 @@ export default function CourseDetailContent({
         : categoryRaw === "Seminar"
           ? "Seminar"
           : categoryRaw;
-  const cmuCodeLinks = useMemo(() => {
-    const raw = (course.details as Record<string, unknown> | undefined)?.cmu_code_links;
+  const variantCodeLinks = useMemo(() => {
+    const details = (course.details as Record<string, unknown> | undefined) || {};
+    const raw = details.cmu_code_links || details.mit_code_links;
     if (!Array.isArray(raw)) return [] as Array<{ id: string; link: string }>;
     return raw
       .map((item) => {
@@ -82,6 +75,7 @@ export default function CourseDetailContent({
       })
       .filter((item): item is { id: string; link: string } => item !== null);
   }, [course.details]);
+  const variantLabel = course.university?.toLowerCase() === "mit" ? "MIT Course Variants" : "CMU Course Variants";
 
   useEffect(() => {
     const updateHeight = () => {
@@ -538,17 +532,17 @@ export default function CourseDetailContent({
                   </div>
                   <div className="flex justify-between py-1 overflow-visible relative">
                     <dt className="text-[#666] flex-shrink-0 flex items-center gap-1.5 group cursor-help relative">
-                      Units (L-S-E-P)
+                      {unitInfo.label}
                       <Info className="w-3.5 h-3.5 text-[#999]" />
                       <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden w-64 rounded-md border border-[#dcdcdc] bg-white px-2 py-1.5 text-[11px] font-normal leading-relaxed text-[#555] shadow-sm group-hover:block">
-                        CAU format is <span className="font-medium">Lecture-Seminar-Exercise-Practical/Project</span>. Example: <span className="font-medium">2-0-2-0</span>.
+                        {unitInfo.help}
                       </span>
                     </dt>
                     <dd className="font-medium text-[#222] text-right pl-4 break-words">{course.units || "-"}</dd>
                   </div>
                   <div className="flex justify-between py-1">
                     <dt className="text-[#666] flex-shrink-0">Workload</dt>
-                    <dd className="font-medium text-[#222] text-right pl-4 break-words">{workloadFromStudyPlan}</dd>
+                    <dd className="font-medium text-[#222] text-right pl-4 break-words">{estimatedWorkload}</dd>
                   </div>
                   <div className="flex justify-between py-1">
                     <dt className="text-[#666] flex-shrink-0">Level</dt>
@@ -585,7 +579,7 @@ export default function CourseDetailContent({
                 </dl>
               </div>
 
-              {(course.crossListedCourses || (course.relatedUrls && course.relatedUrls.length > 0) || cmuCodeLinks.length > 0) && (
+              {(course.crossListedCourses || (course.relatedUrls && course.relatedUrls.length > 0) || variantCodeLinks.length > 0) && (
                 <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
                   <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">Resources</h3>
                   <div className="space-y-4">
@@ -607,11 +601,11 @@ export default function CourseDetailContent({
                         <p className="text-sm text-[#555] leading-relaxed">{course.crossListedCourses}</p>
                       </div>
                     )}
-                    {cmuCodeLinks.length > 0 && (
+                    {variantCodeLinks.length > 0 && (
                       <div>
-                        <span className="text-xs font-medium text-[#777] block mb-2">CMU Course Variants</span>
+                        <span className="text-xs font-medium text-[#777] block mb-2">{variantLabel}</span>
                         <ul className="space-y-2">
-                          {cmuCodeLinks.map((item) => (
+                          {variantCodeLinks.map((item) => (
                             <li key={item.id} className="text-sm text-[#555]">
                               {item.link ? (
                                 <a href={item.link} target="_blank" rel="noreferrer" className="text-[#335b9a] hover:underline">

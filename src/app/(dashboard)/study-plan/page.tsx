@@ -251,7 +251,7 @@ async function StudyPlanContent({
 
   const inProgress = enrolledWithAttendance.filter(c => c.status === 'in_progress');
   const inProgressProjectsSeminars = enrolledProjectsSeminars.filter((item) => item.status === 'in_progress');
-  const completed = enrolledWithAttendance.filter(c => c.status === 'completed');
+  const completed = enrolledWithAttendance.filter(c => c.status === 'completed' && !c.isHidden);
 
   const totalCredits = completed.reduce((acc, course) => {
     return acc + (course.credit || 0);

@@ -164,5 +164,31 @@ async function fetchWorkouts(
 }
 
 function WorkoutListSkeleton() {
-  return <div className="flex-grow space-y-4 animate-pulse"><div className="h-10 bg-gray-50 rounded w-full"></div><div className="h-40 bg-gray-50 rounded w-full"></div><div className="h-40 bg-gray-50 rounded w-full"></div></div>;
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="flex items-center justify-between rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] px-4 py-2">
+        <div className="h-4 w-24 bg-[#f0f0f0] rounded" />
+        <div className="flex gap-2">
+          <div className="h-7 w-16 bg-[#f0f0f0] rounded" />
+          <div className="h-7 w-16 bg-[#f0f0f0] rounded" />
+        </div>
+      </div>
+      <div className="rounded-lg border border-[#e5e5e5] overflow-hidden">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div key={i} className={`flex items-center gap-4 px-4 py-3 ${i % 2 === 0 ? "bg-[#fcfcfc]" : "bg-[#f7f7f7]"} ${i > 0 ? "border-t border-[#f0f0f0]" : ""}`}>
+            <div className="flex-1 space-y-1.5">
+              <div className="h-4 w-1/2 bg-[#ebebeb] rounded" />
+              <div className="h-3 w-1/4 bg-[#f2f2f2] rounded" />
+            </div>
+            <div className="hidden md:block w-[15%]">
+              <div className="h-5 w-16 bg-[#f0f0f0] rounded-full" />
+            </div>
+            <div className="w-[5%] flex justify-end">
+              <div className="h-8 w-8 bg-[#f0f0f0] rounded-md" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }

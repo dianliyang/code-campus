@@ -1,7 +1,7 @@
 // ─── Cache names ────────────────────────────────────────────────────────────
 const CACHE_STATIC = 'cc-static-v2';   // /_next/static/* — immutable
 const CACHE_IMAGES = 'cc-images-v2';   // icons, webp, svg, png — cache-first LRU
-const CACHE_PAGES  = 'cc-pages-v2';    // HTML navigation — stale-while-revalidate
+const CACHE_PAGES  = 'cc-pages-v3';    // HTML/RSC navigation — stale-while-revalidate
 const CACHE_API    = 'cc-api-v2';      // /api/universities + /api/fields — SWR 5 min
 const ALL_CACHES   = [CACHE_STATIC, CACHE_IMAGES, CACHE_PAGES, CACHE_API];
 
@@ -77,6 +77,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(staleWhileRevalidatePages(request, event));
     return;
   }
+
+  // 6. App Router RSC/data requests — stale-while-revalidate
+  if (isAppDataRequest(request, url)) {
+    event.respondWith(staleWhileRevalidatePages(request, event));
+    return;
+  }
 });
 
 // ─── Strategy helpers ────────────────────────────────────────────────────────
@@ -136,8 +142,9 @@ async function staleWhileRevalidatePages(request, event) {
   const cached = await cache.match(request);
   const networkPromise = fetch(request)
     .then((res) => {
-      const cc = res.headers.get('cache-control') || '';
-      if (res.ok && !cc.includes('no-store')) cache.put(request, res.clone());
+      if (res.ok && shouldCachePageRequest(request, new URL(request.url))) {
+        cache.put(request, res.clone());
+      }
       return res;
     })
     .catch(() => null);
@@ -148,6 +155,19 @@ async function staleWhileRevalidatePages(request, event) {
   const response = await networkPromise;
   if (response) return response;
   return (await cache.match(OFFLINE_URL)) || new Response('Offline', { status: 503 });
+}
+
+function isAppDataRequest(request, url) {
+  // Next.js App Router sends RSC flight requests with either this query param or this header.
+  return url.searchParams.has('_rsc') || request.headers.has('RSC');
+}
+
+function shouldCachePageRequest(request, url) {
+  if (request.method !== 'GET') return false;
+  if (url.origin !== self.location.origin) return false;
+  if (url.pathname.startsWith('/api/')) return false;
+  if (url.pathname === '/auth/callback' || url.pathname === '/logout') return false;
+  return true;
 }
 
 function putWithTimestamp(cache, request, response) {

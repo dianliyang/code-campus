@@ -12,6 +12,7 @@ CodeCampus is a comprehensive platform for students and learners, acting as a co
 - **Study Logging**: Log individual study sessions and mark them as completed
 - **Study Calendar**: Visual calendar view of scheduled study sessions
 - **Email Reminders**: Daily study reminder emails via Resend
+- **AI Learning Path**: AI-generated personalized study recommendations
 - **PWA Support**: Install as a native app on mobile/desktop with offline support
 - **Passwordless Auth**: Secure login via Supabase Magic Link
 
@@ -21,6 +22,7 @@ CodeCampus is a comprehensive platform for students and learners, acting as a co
 - **Database**: [Supabase](https://supabase.com/) (PostgreSQL)
 - **Authentication**: Supabase Auth (Magic Link / OTP)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **AI**: [Vercel AI SDK](https://sdk.vercel.ai/) + OpenAI
 - **Email**: [Resend](https://resend.com/)
 - **Scraping**: [Cheerio](https://cheerio.js.org/) & [Undici](https://undici.nodejs.org/)
 - **Monitoring**: [Sentry](https://sentry.io/)
@@ -62,7 +64,7 @@ public/
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/your-repo/code-campus.git
+git clone https://github.com/dianliyang/code-campus.git
 cd code-campus
 npm install
 ```
@@ -169,4 +171,4 @@ To install, look for "Add to Home Screen" or the install icon in your browser.
 
 ## License
 
-MIT
+MIT — see [LICENSE](./LICENSE)

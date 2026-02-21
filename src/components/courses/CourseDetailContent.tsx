@@ -8,6 +8,7 @@ import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, type S
 import { Check, Clock, ExternalLink, Globe, Info, Loader2, PenSquare, Trash2, Users, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
+import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
 
 interface CourseDetailContentProps {
   course: Course;
@@ -50,6 +51,10 @@ export default function CourseDetailContent({
     [course.university, course.units]
   );
   const estimatedWorkload = unitInfo.estimate?.details || "-";
+  const codeBreakdown = useMemo(
+    () => getCourseCodeBreakdown(course.university, course.courseCode),
+    [course.university, course.courseCode]
+  );
   const categoryRaw = typeof course.details?.category === "string" ? course.details.category : "";
   const categoryLabel =
     categoryRaw === "Compulsory elective modules in Computer Science"
@@ -576,6 +581,21 @@ export default function CourseDetailContent({
                       )}
                     </dd>
                   </div>
+                  {codeBreakdown.length > 0 && (
+                    <div className="flex flex-col py-1 gap-2">
+                      <dt className="text-[#666]">Code Breakdown</dt>
+                      <dd className="space-y-1.5">
+                        {codeBreakdown.map((item, idx) => (
+                          <div key={`${item.label}-${idx}`} className="text-right">
+                            <p className="font-medium text-[#222]">{item.label}: {item.value}</p>
+                            {item.detail && (
+                              <p className="text-[11px] text-[#666]">{item.detail}</p>
+                            )}
+                          </div>
+                        ))}
+                      </dd>
+                    </div>
+                  )}
                   {course.details?.internalId && (
                     <div className="flex justify-between py-1">
                       <dt className="text-[#666]">ID</dt>

@@ -234,36 +234,61 @@ export class MIT extends BaseScraper {
     subject: number;
     suffix2: string;
     numericLength: number;
+    subjectPrefix: string;
+    firstDigit: number;
+    lastDigit: number;
     subjectSuffix: string;
   } | null {
-    const match = code.trim().match(/^(\d+)\.(\d+)([A-Z]?)$/i);
+    const match = code.trim().toUpperCase().match(/^([A-Z0-9]+)\.([A-Z]?)(\d+)([A-Z]?)$/);
     if (!match) return null;
     const dept = match[1];
-    const subject = Number(match[2]);
+    const subjectPrefix = match[2] || "";
+    const subject = Number(match[3]);
     if (!Number.isFinite(subject)) return null;
     const suffix2 = String(subject % 100).padStart(2, "0");
+    const firstDigit = Number(String(match[3])[0] || "0");
+    const lastDigit = Number(String(match[3]).slice(-1));
     return {
       dept,
       subject,
       suffix2,
-      numericLength: match[2].length,
-      subjectSuffix: (match[3] || "").toUpperCase(),
+      numericLength: match[3].length,
+      subjectPrefix,
+      firstDigit: Number.isFinite(firstDigit) ? firstDigit : 0,
+      lastDigit: Number.isFinite(lastDigit) ? lastDigit : 0,
+      subjectSuffix: (match[4] || "").toUpperCase(),
     };
   }
 
   private inferLevelFromCourseCode(code: string): string {
     const parsed = this.parseCourseCode(code);
     if (!parsed) return "undergraduate";
-    const leadingDigit = Number(String(parsed.subject)[0] || "0");
-    if (leadingDigit >= 6) return "graduate";
+
+    // Modern MIT 4-digit scheme often uses final digit as audience variant.
+    if (parsed.numericLength === 4) {
+      const lastDigit = parsed.lastDigit;
+      if (lastDigit === 1) return "undergraduate";
+      if (lastDigit === 0 || lastDigit === 2) return "graduate";
+    }
+
+    // General MIT rule: first digit after decimal indicates tier.
+    if (parsed.firstDigit >= 5) return "graduate";
     return "undergraduate";
   }
 
   private getLevelRank(code: string): number {
     const parsed = this.parseCourseCode(code);
     if (!parsed) return 0;
-    const leadingDigit = Number(String(parsed.subject)[0] || "0");
-    return Number.isFinite(leadingDigit) ? leadingDigit : 0;
+
+    if (parsed.numericLength === 4) {
+      const lastDigit = parsed.lastDigit;
+      if (lastDigit === 1) return 1;
+      if (lastDigit === 0 || lastDigit === 2) return 2;
+    }
+
+    if (parsed.firstDigit >= 5) return 2;
+    if (parsed.firstDigit >= 1) return 1;
+    return 0;
   }
 
   private getDepartmentFromCourseCode(code: string): string {
@@ -300,15 +325,15 @@ export class MIT extends BaseScraper {
       }
 
       // MIT has paired undergrad/grad variants in modern 4-digit numbering
-      // where only the last digit differs (commonly ...0 / ...2).
-      // Collapse those pairs while keeping stricter matching for other cases.
+      // where only the last digit differs (commonly ...0 / ...1 / ...2).
+      // Collapse only these known variants while keeping stricter matching otherwise.
       const pairedMitGroup =
-        parsed.numericLength === 4 && (parsed.subject % 10 === 0 || parsed.subject % 10 === 2)
-          ? `${parsed.dept}-${Math.floor(parsed.subject / 10)}-paired-${parsed.subjectSuffix}`
+        parsed.numericLength === 4 && [0, 1, 2].includes(parsed.lastDigit)
+          ? `${parsed.dept}-${Math.floor(parsed.subject / 10)}-paired-${parsed.subjectPrefix}-${parsed.subjectSuffix}`
           : null;
       const key = pairedMitGroup
         ? `${pairedMitGroup}::${titleKey}`
-        : `${parsed.dept}-${parsed.suffix2}-${parsed.numericLength}-${parsed.subjectSuffix}::${titleKey}`;
+        : `${parsed.dept}-${parsed.suffix2}-${parsed.numericLength}-${parsed.subjectPrefix}-${parsed.subjectSuffix}::${titleKey}`;
       const list = grouped.get(key) || [];
       list.push(course);
       grouped.set(key, list);

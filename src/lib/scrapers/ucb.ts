@@ -405,21 +405,28 @@ export class UCB extends BaseScraper {
     numberSuffix: string;
   } | null {
     const trimmed = code.trim().toUpperCase();
-    const match = trimmed.match(/^([A-Z&]+)\s+([A-Z]*)(\d+)([A-Z]?)$/);
+    const match = trimmed.match(/^([A-Z&]+)\s+([A-Z]*)(\d+)([A-Z]*)$/);
     if (!match) return null;
     const subject = match[1];
     const rawPrefix = (match[2] || "").toUpperCase();
     const numericPart = parseInt(match[3], 10);
     if (!Number.isFinite(numericPart)) return null;
-    // Berkeley "W" prefixes are web/format variants of the same catalog course.
-    const numberPrefixNormalized = rawPrefix.replace(/W/g, "");
+    const rawSuffix = (match[4] || "").toUpperCase();
+
+    // Berkeley prefix modifiers C/S/W generally indicate delivery/cross-list variants.
+    const numberPrefixNormalized = rawPrefix.replace(/[CSW]/g, "");
+    // Keep substantive suffixes (e.g., AC/H/N) distinct; only normalize web suffix "W".
+    const numberSuffix = rawSuffix.endsWith("W")
+      ? rawSuffix.slice(0, -1)
+      : rawSuffix;
+
     return {
       subject,
       number: numericPart,
       suffix2: String(numericPart % 100).padStart(2, "0"),
       numericLength: match[3].length,
       numberPrefixNormalized,
-      numberSuffix: (match[4] || "").toUpperCase(),
+      numberSuffix,
     };
   }
 

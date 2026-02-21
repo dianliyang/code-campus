@@ -80,4 +80,34 @@ describe("MIT scraper dedupe", () => {
     expect(deduped).toHaveLength(1);
     expect(deduped[0].courseCode).toBe("6.3952");
   });
+
+  test("uses last digit to pick graduate over undergraduate for 4-digit pairs", () => {
+    const scraper = new MIT();
+    const input: Course[] = [
+      {
+        university: "mit",
+        courseCode: "6.5830",
+        title: "Database Systems",
+      },
+      {
+        university: "mit",
+        courseCode: "6.5831",
+        title: "Database Systems",
+      },
+    ];
+
+    const deduped = (scraper as unknown as { dedupeCoursesByTitleAndPattern: (courses: Course[]) => Course[] })
+      .dedupeCoursesByTitleAndPattern(input);
+    expect(deduped).toHaveLength(1);
+    expect(deduped[0].courseCode).toBe("6.5830");
+    expect(deduped[0].level).toBe("graduate");
+  });
+
+  test("uses first digit after decimal as baseline level for non-4-digit codes", () => {
+    const scraper = new MIT();
+    const infer = (code: string) =>
+      (scraper as unknown as { inferLevelFromCourseCode: (code: string) => string }).inferLevelFromCourseCode(code);
+    expect(infer("6.121")).toBe("undergraduate");
+    expect(infer("6.821")).toBe("graduate");
+  });
 });

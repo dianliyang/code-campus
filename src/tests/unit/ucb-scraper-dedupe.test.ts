@@ -80,4 +80,49 @@ describe("UCB scraper dedupe", () => {
     expect(deduped).toHaveLength(1);
     expect(deduped[0].courseCode).toBe("ELENG W242B");
   });
+
+  test("merges C/S modifier prefixes with the base course code", () => {
+    const scraper = new UCB();
+    const input: Course[] = [
+      {
+        university: "ucb",
+        courseCode: "COMPSCI 106A",
+        title: "Programming Methodology",
+      },
+      {
+        university: "ucb",
+        courseCode: "COMPSCI C106A",
+        title: "Programming Methodology",
+      },
+      {
+        university: "ucb",
+        courseCode: "COMPSCI S106A",
+        title: "Programming Methodology",
+      },
+    ];
+
+    const deduped = (scraper as unknown as { dedupeCoursesByTitleAndPattern: (courses: Course[]) => Course[] })
+      .dedupeCoursesByTitleAndPattern(input);
+    expect(deduped).toHaveLength(1);
+  });
+
+  test("does not merge substantive suffix variants like AC", () => {
+    const scraper = new UCB();
+    const input: Course[] = [
+      {
+        university: "ucb",
+        courseCode: "COMPSCI 106A",
+        title: "Programming Methodology",
+      },
+      {
+        university: "ucb",
+        courseCode: "COMPSCI 106AC",
+        title: "Programming Methodology",
+      },
+    ];
+
+    const deduped = (scraper as unknown as { dedupeCoursesByTitleAndPattern: (courses: Course[]) => Course[] })
+      .dedupeCoursesByTitleAndPattern(input);
+    expect(deduped).toHaveLength(2);
+  });
 });

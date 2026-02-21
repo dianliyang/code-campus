@@ -58,6 +58,48 @@ const stanfordSuffixMeaning = (suffix: string): string => {
   return `Variant ${normalized}`;
 };
 
+const mitDepartmentDetail = (dept: string): string => {
+  if (/^\d{1,3}$/.test(dept)) {
+    const n = Number(dept);
+    if (n >= 1 && n <= 24) return "Numeric MIT department (1-24 standard range)";
+    return "Numeric MIT department";
+  }
+  return "Letter-based MIT subject group (e.g., CMS, STS)";
+};
+
+const mitFirstDigitLevel = (digit: number): string => {
+  if (digit === 1) return "Undergraduate Foundational";
+  if (digit >= 2 && digit <= 4) return "Undergraduate Advanced";
+  if (digit === 5) return "Graduate Foundation";
+  if (digit >= 6 && digit <= 8) return "Graduate Advanced";
+  if (digit === 9) return "Special Programs";
+  return "Other / Unspecified";
+};
+
+const mitSecondDigitArea = (digit: number): string => {
+  if (digit === 0) return "Software & Programming";
+  if (digit === 1) return "Programming Languages";
+  if (digit === 2) return "Theory";
+  if (digit === 3) return "Signal Processing / Control";
+  if (digit === 4) return "Artificial Intelligence / Vision";
+  if (digit === 5) return "Systems";
+  if (digit === 8) return "Computer Systems";
+  if (digit === 9) return "Architecture / Hardware";
+  return "General";
+};
+
+const mitVariantMeaning = (lastDigit: number | null, suffix: string): string => {
+  if (lastDigit !== null) {
+    if (lastDigit === 0) return "Graduate Credit (full semester)";
+    if (lastDigit === 1) return "Undergraduate Credit (full semester)";
+  }
+  if (suffix === "A") return "First-Half Module";
+  if (suffix === "B") return "Second-Half Module";
+  if (suffix === "L") return "Lab-based Variant";
+  if (suffix === "J") return "Joint / Cross-listed Variant";
+  return "Standard Variant";
+};
+
 export const getCourseCodeBreakdown = (university: string | undefined, courseCode: string | undefined): CodeBreakdownItem[] => {
   const rawSchool = (university || "").trim().toLowerCase();
   const school = (
@@ -151,48 +193,16 @@ export const getCourseCodeBreakdown = (university: string | undefined, courseCod
     const suffix = match[4] || "";
     const firstDigit = Number(digits[0] || "0");
     const secondDigit = Number(digits[1] || "0");
-    const thirdDigit = Number(digits[2] || "0");
-    const lastDigit = Number(digits[digits.length - 1] || "0");
-
-    const firstDigitLevel = (() => {
-      if (firstDigit >= 1 && firstDigit <= 4) return "Undergraduate (Foundational/Advanced)";
-      if (firstDigit === 5) return "Graduate Foundation";
-      if (firstDigit >= 6 && firstDigit <= 8) return "Graduate Advanced";
-      if (firstDigit === 9) return "Special Programs";
-      return "Other";
-    })();
-
-    const subDiscipline = (() => {
-      if (secondDigit === 0) return "Software & Programming";
-      if (secondDigit === 1) return "Programming Languages";
-      if (secondDigit === 2) return "Theory";
-      if (secondDigit === 3) return "Signal Processing / Control";
-      if (secondDigit === 4) return "AI / Vision / HCI";
-      if (secondDigit === 5) return "Systems";
-      if (secondDigit === 9) return "Architecture / Hardware";
-      return "General";
-    })();
-
-    const versionMeaning = (() => {
-      if (digits.length >= 4) {
-        if (lastDigit === 0) return "Graduate Credit Variant";
-        if (lastDigit === 1) return "Undergraduate Credit Variant";
-        if (lastDigit === 2) return "Alternate Graduate Variant";
-      }
-      if (suffix === "A") return "First-Half Module";
-      if (suffix === "B") return "Second-Half Module";
-      if (suffix === "L") return "Lab-focused Variant";
-      if (suffix === "J") return "Joint / Cross-listed Variant";
-      return "Standard Variant";
-    })();
+    const thirdDigit = digits.length >= 3 ? Number(digits[2]) : null;
+    const fourthDigit = digits.length >= 4 ? Number(digits[3]) : null;
 
     return [
-      { label: "Department", value: dept, detail: "Owning MIT department/subject" },
-      { label: "Level Digit", value: String(firstDigit), detail: firstDigitLevel },
-      { label: "Sub-discipline", value: String(secondDigit), detail: subDiscipline },
-      { label: "Subject ID", value: String(thirdDigit), detail: "Unique identifier within track" },
-      { label: "Version / Variant", value: digits.length >= 4 ? String(lastDigit) : (suffix || "-"), detail: versionMeaning },
-      ...(specialPrefix ? [{ label: "Special Prefix", value: specialPrefix, detail: "Special/temporary subject marker" }] : []),
+      { label: "Before Decimal (Department)", value: dept, detail: mitDepartmentDetail(dept) },
+      ...(specialPrefix ? [{ label: "Special Subject Prefix", value: specialPrefix, detail: specialPrefix === "S" ? "Special Subject (temporary/experimental)" : "Special prefix modifier" }] : []),
+      { label: "First Digit After Decimal", value: String(firstDigit), detail: mitFirstDigitLevel(firstDigit) },
+      { label: "Second Digit After Decimal", value: String(secondDigit), detail: mitSecondDigitArea(secondDigit) },
+      { label: "Third Digit After Decimal", value: thirdDigit === null ? "-" : String(thirdDigit), detail: "Subject ID within sub-discipline" },
+      { label: "Fourth Digit / Suffix", value: fourthDigit !== null ? String(fourthDigit) : (suffix || "-"), detail: mitVariantMeaning(fourthDigit, suffix) },
     ];
   }
 

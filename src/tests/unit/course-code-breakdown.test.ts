@@ -25,9 +25,16 @@ describe("getCourseCodeBreakdown", () => {
   test("parses MIT code 6.5831", () => {
     const items = getCourseCodeBreakdown("mit", "6.5831");
     expect(items.length).toBeGreaterThan(0);
-    expect(items.find((x) => x.label === "Department")?.value).toBe("6");
-    expect(items.find((x) => x.label === "Level Digit")?.value).toBe("5");
-    expect(items.find((x) => x.label === "Version / Variant")?.detail).toContain("Undergraduate");
+    expect(items.find((x) => x.label === "Before Decimal (Department)")?.value).toBe("6");
+    expect(items.find((x) => x.label === "First Digit After Decimal")?.value).toBe("5");
+    expect(items.find((x) => x.label === "Second Digit After Decimal")?.detail).toContain("Systems");
+    expect(items.find((x) => x.label === "Fourth Digit / Suffix")?.detail).toContain("Undergraduate");
+  });
+
+  test("parses MIT special subject prefix like 6.S974", () => {
+    const items = getCourseCodeBreakdown("mit", "6.S974");
+    expect(items.find((x) => x.label === "Special Subject Prefix")?.value).toBe("S");
+    expect(items.find((x) => x.label === "First Digit After Decimal")?.value).toBe("9");
   });
 
   test("parses UCB code ELENG W242B", () => {

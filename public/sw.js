@@ -167,6 +167,7 @@ function openDB() {
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains(STORE)) {
+        // url index used for deduplication of /api/study-plans/update entries by planId
         const store = db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
         store.createIndex('url', 'url', { unique: false });
       }
@@ -176,8 +177,11 @@ function openDB() {
   });
 }
 
+// Singleton connection — reused across all queue operations to avoid blocking future upgrades
+const dbPromise = openDB();
+
 async function queueWrite(url, method, body) {
-  const db = await openDB();
+  const db = await dbPromise;
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite');
     const store = tx.objectStore(STORE);
@@ -201,40 +205,46 @@ async function queueWrite(url, method, body) {
   });
 }
 
+let draining = false;  // mutex — prevents concurrent sync+ONLINE from double-sending entries
+
 async function drainQueue() {
-  const db = await openDB();
-  const entries = await new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).getAll();
-    req.onsuccess = () =>
-      resolve(req.result.filter((e) => !e.failed).sort((a, b) => a.timestamp - b.timestamp));
-    req.onerror = () => reject(req.error);
-  });
+  if (draining) return;
+  draining = true;
+  try {
+    const db = await dbPromise;
+    // Snapshot queue at start; entries added mid-drain are picked up on next sync
+    const entries = await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = () =>
+        resolve(req.result.filter((e) => !e.failed).sort((a, b) => a.timestamp - b.timestamp));
+      req.onerror = () => reject(req.error);
+    });
 
-  let remaining = entries.length;
-
-  for (const entry of entries) {
-    try {
-      const res = await fetch(entry.url, {
-        method: entry.method,
-        headers: { 'Content-Type': 'application/json' },
-        body: entry.body,
-      });
-      // 2xx or 4xx (bad request — won't succeed on retry) → remove
-      if (res.ok || (res.status >= 400 && res.status < 500)) {
-        await dbDelete(db, entry.id);
-        remaining--;
-      } else {
-        throw new Error(`HTTP ${res.status}`);
+    for (const entry of entries) {
+      try {
+        const res = await fetch(entry.url, {
+          method: entry.method,
+          headers: { 'Content-Type': 'application/json' },
+          body: entry.body,
+        });
+        // 2xx or 4xx (bad request — won't succeed on retry) → remove
+        if (res.ok || (res.status >= 400 && res.status < 500)) {
+          await dbDelete(db, entry.id);
+        } else {
+          throw new Error(`HTTP ${res.status}`);
+        }
+      } catch {
+        const retries = entry.retries + 1;
+        await dbPut(db, { ...entry, retries, failed: retries >= 3 });
       }
-    } catch {
-      const retries = entry.retries + 1;
-      await dbPut(db, { ...entry, retries, failed: retries >= 3 });
+      broadcast({ type: 'SYNC_PROGRESS', remaining: await getPendingCount() });
     }
-    broadcast({ type: 'SYNC_PROGRESS', remaining });
-  }
 
-  broadcast({ type: 'SYNC_COMPLETE' });
+    broadcast({ type: 'SYNC_COMPLETE' });
+  } finally {
+    draining = false;
+  }
 }
 
 function dbDelete(db, id) {
@@ -242,7 +252,7 @@ function dbDelete(db, id) {
     const tx = db.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).delete(id);
     tx.oncomplete = res;
-    tx.onerror = rej;
+    tx.onerror = () => rej(tx.error);
   });
 }
 
@@ -251,7 +261,7 @@ function dbPut(db, entry) {
     const tx = db.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).put(entry);
     tx.oncomplete = res;
-    tx.onerror = rej;
+    tx.onerror = () => rej(tx.error);
   });
 }
 
@@ -261,7 +271,7 @@ async function broadcast(msg) {
 }
 
 async function getPendingCount() {
-  const db = await openDB();
+  const db = await dbPromise;
   return new Promise((resolve) => {
     const tx = db.transaction(STORE, 'readonly');
     const req = tx.objectStore(STORE).getAll();
@@ -282,13 +292,16 @@ self.addEventListener('message', (event) => {
 
 // ─── Offline write handler (full implementation) ─────────────────────────────
 async function handleOfflineWrite(request) {
-  const clone = request.clone();
-  let body = {};
-  try { body = await clone.json(); } catch { /* non-JSON body */ }
+  // Clone before fetch so body stream is available if fetch fails
+  const cloned = request.clone();
 
   try {
     return await fetch(request);
   } catch {
+    // Only parse body on offline path — avoids wasted work on the happy path
+    let body = {};
+    try { body = await cloned.json(); } catch { /* non-JSON body */ }
+
     await queueWrite(new URL(request.url).pathname, request.method, body);
     try { await self.registration.sync.register('offline-writes'); } catch { /* not supported */ }
     const pending = await getPendingCount();

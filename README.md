@@ -31,25 +31,59 @@ CodeCampus is a comprehensive platform for students and learners, acting as a co
 
 ```
 src/
-├── app/                    # Next.js routes and API endpoints
-│   ├── (dashboard)/        # Protected dashboard routes
-│   ├── api/                # API routes
-│   └── auth/               # Auth callback
-├── components/             # React components
-├── lib/                    # Utilities and services
-│   ├── scrapers/           # University scrapers
-│   └── supabase/           # Supabase client
-└── scripts/                # Utility scripts
+├── actions/                # Next.js server actions
+├── app/
+│   ├── (dashboard)/        # Protected routes (auth required)
+│   │   ├── courses/        # Course catalog + detail
+│   │   ├── import/         # Bulk course import
+│   │   ├── profile/        # User profile & stats
+│   │   ├── projects-seminars/  # Projects & seminars
+│   │   ├── settings/       # User settings
+│   │   ├── study-plan/     # Study planner & calendar
+│   │   └── workouts/       # Workout tracking
+│   ├── api/
+│   │   ├── ai/             # AI learning path & course description
+│   │   ├── courses/        # Enrollment & import endpoints
+│   │   ├── cron/           # Scheduled jobs (daily reminder)
+│   │   ├── external/       # Public external API
+│   │   ├── schedule/       # Study schedule management
+│   │   ├── study-plans/    # Study plan CRUD
+│   │   └── user/           # User account management
+│   ├── auth/               # Magic link callback & verify
+│   └── login/logout/offline/
+├── components/
+│   ├── auth/               # Login form
+│   ├── common/             # Shared UI (icons, back-to-top)
+│   ├── courses/            # Course detail components
+│   ├── dashboard/          # Dashboard layout shell
+│   ├── home/               # Course list, cards, study plan
+│   ├── import/             # Import UI
+│   ├── layout/             # Navbar, sidebar, tab bar
+│   ├── profile/            # Profile cards & stats
+│   ├── projects-seminars/  # Project/seminar components
+│   ├── ui/                 # Base UI primitives (button, etc.)
+│   └── workouts/           # Workout list & cards
+├── data/                   # Static data files
+├── dictionaries/           # i18n strings (en, zh, de)
+├── lib/
+│   ├── ai/                 # AI prompt helpers
+│   ├── scrapers/           # University scrapers (CMU, MIT, Stanford, UCB, CAU)
+│   └── supabase/           # Supabase client, server, storage helpers
+├── scripts/                # One-off data migration scripts
+├── tests/
+│   ├── integration/        # External API integration tests
+│   ├── mocks/              # Test mocks
+│   └── unit/               # Component & utility unit tests
+└── types/                  # TypeScript type definitions
 
 supabase/
-├── config.toml             # Local Supabase config
-├── migrations/             # Database migrations
-├── seed.sql                # Seed data
-└── templates/              # Email templates
+├── migrations/             # Database schema migrations
+├── seed.sql                # Dev seed data
+└── templates/              # Transactional email templates
 
 public/
-├── icons/                  # PWA icons
-├── manifest.json           # PWA manifest
+├── icons/                  # PWA icons (all sizes)
+├── manifest.json           # PWA web app manifest
 └── sw.js                   # Service worker
 ```
 
@@ -133,23 +167,35 @@ SELECT seed_user_data('YOUR-USER-ID-HERE');
 
 ### Environment Variables
 
-```env
-# Supabase (Production)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+Copy `.env.example` to `.env.local` and fill in the values.
 
-# App
-NEXT_PUBLIC_APP_URL=https://your-domain.com
+**Required**
 
-# Email (Resend)
-RESEND_API_KEY=your-resend-api-key
-EMAIL_FROM=noreply@your-domain.com
+| Variable | Description |
+|:---------|:------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous (public) key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key — server only, never expose |
+| `NEXT_PUBLIC_APP_URL` | Canonical app URL (e.g. `https://your-domain.com`) |
+| `RESEND_API_KEY` | [Resend](https://resend.com) API key for transactional email |
+| `EMAIL_FROM` | Sender address (e.g. `noreply@your-domain.com`) |
 
-# Sentry (Optional)
-SENTRY_ORG=your-org
-SENTRY_PROJECT=your-project
-```
+**Optional — AI Features**
+
+| Variable | Description |
+|:---------|:------------|
+| `PERPLEXITY_API_KEY` | Perplexity API key — powers AI learning path recommendations |
+| `GEMINI_API_KEY` | Google Gemini API key — powers AI course categorization |
+
+**Optional — Infrastructure**
+
+| Variable | Description |
+|:---------|:------------|
+| `CRON_SECRET` | Bearer token to authenticate cron job endpoints |
+| `INTERNAL_API_KEY` | API key for the public external course API (`/api/external/`) |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry DSN for client-side error tracking |
+| `SENTRY_ORG` | Sentry org slug — used during build for source map upload |
+| `SENTRY_PROJECT` | Sentry project slug — used during build for source map upload |
 
 ## Authentication Flow
 

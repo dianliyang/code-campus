@@ -15,11 +15,12 @@ const QUEUED_ENDPOINTS  = ['/api/study-plans/update', '/api/schedule'];
 // ─── Install ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_PAGES).then((cache) =>
-      cache.addAll([OFFLINE_URL, '/manifest.json', '/icons/icon-192x192.png', '/icons/icon-512x512.png'])
-    )
+    caches.open(CACHE_PAGES)
+      .then((cache) =>
+        cache.addAll([OFFLINE_URL, '/manifest.json', '/icons/icon-192x192.png', '/icons/icon-512x512.png'])
+      )
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 // ─── Activate — evict old caches ─────────────────────────────────────────────
@@ -79,23 +80,25 @@ self.addEventListener('fetch', (event) => {
 
 // ─── Strategy helpers ────────────────────────────────────────────────────────
 async function cacheFirst(request, cacheName) {
-  const cached = await caches.match(request);
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
   if (cached) return cached;
-  const response = await fetch(request);
-  if (response.ok) {
-    const cache = await caches.open(cacheName);
-    cache.put(request, response.clone());
+  try {
+    const response = await fetch(request);
+    if (response.ok) cache.put(request, response.clone());
+    return response;
+  } catch {
+    return new Response('', { status: 503 });
   }
-  return response;
 }
 
 async function cacheFirstImages(request) {
-  const cached = await caches.match(request);
+  const cache = await caches.open(CACHE_IMAGES);
+  const cached = await cache.match(request);
   if (cached) return cached;
   try {
     const response = await fetch(request);
     if (!response.ok) return response;
-    const cache = await caches.open(CACHE_IMAGES);
     const keys = await cache.keys();
     if (keys.length >= IMAGES_MAX) cache.delete(keys[0]); // evict oldest
     cache.put(request, response.clone());
@@ -131,7 +134,11 @@ async function staleWhileRevalidatePages(request, event) {
   const cache = await caches.open(CACHE_PAGES);
   const cached = await cache.match(request);
   const networkPromise = fetch(request)
-    .then((res) => { if (res.ok) cache.put(request, res.clone()); return res; })
+    .then((res) => {
+      const cc = res.headers.get('cache-control') || '';
+      if (res.ok && !cc.includes('no-store')) cache.put(request, res.clone());
+      return res;
+    })
     .catch(() => null);
   if (cached) {
     event.waitUntil(networkPromise);  // keep background revalidation alive

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { WifiOff, RefreshCw, AlertTriangle } from "lucide-react";
+import { RefreshCw, AlertTriangle } from "lucide-react";
+
+const Dot = () => <span className="text-[0.55rem] leading-none">●</span>;
 
 type Status = "online" | "offline" | "pending" | "syncing" | "failed";
 
@@ -15,17 +17,21 @@ async function getCounts(): Promise<{ pending: number; failed: number }> {
       req.onerror = () => resolve({ pending: 0, failed: 0 });
       req.onsuccess = () => {
         const db = req.result;
-        if (!db.objectStoreNames.contains(STORE)) return resolve({ pending: 0, failed: 0 });
+        if (!db.objectStoreNames.contains(STORE)) {
+          db.close();
+          return resolve({ pending: 0, failed: 0 });
+        }
         const tx = db.transaction(STORE, "readonly");
         const all = tx.objectStore(STORE).getAll();
         all.onsuccess = () => {
+          db.close();
           const rows = all.result as Array<{ failed: boolean }>;
           resolve({
             pending: rows.filter((r) => !r.failed).length,
             failed:  rows.filter((r) => r.failed).length,
           });
         };
-        all.onerror = () => resolve({ pending: 0, failed: 0 });
+        all.onerror = () => { db.close(); resolve({ pending: 0, failed: 0 }); };
       };
     } catch {
       resolve({ pending: 0, failed: 0 });
@@ -53,7 +59,7 @@ export default function OfflineIndicator() {
 
     refresh();
 
-    const onOffline = () => setStatus("offline");
+    const onOffline = () => { void refresh(); };
     const onOnline  = () => {
       setStatus("syncing");
       navigator.serviceWorker?.controller?.postMessage({ type: "ONLINE" });
@@ -62,7 +68,7 @@ export default function OfflineIndicator() {
     const onMessage = async (e: MessageEvent) => {
       const { type, remaining, pending } = e.data ?? {};
       if (type === "QUEUED")        { setStatus("pending"); setCount(pending); }
-      if (type === "SYNC_PROGRESS") { setStatus(remaining > 0 ? "syncing" : "online"); setCount(remaining); }
+      if (type === "SYNC_PROGRESS") { setStatus("syncing"); setCount(remaining); }
       if (type === "SYNC_COMPLETE") { await refresh(); }
     };
 
@@ -80,13 +86,13 @@ export default function OfflineIndicator() {
   if (status === "online") return null;
 
   const cfg: Record<Exclude<Status, "online">, { icon: React.ReactNode; label: string; cls: string }> = {
-    offline: { icon: <WifiOff className="w-3 h-3" />,                  label: "Offline",          cls: "bg-[#f0f0f0] text-[#666] border-[#e0e0e0]" },
-    pending: { icon: <WifiOff className="w-3 h-3" />,                  label: `${count} pending`, cls: "bg-amber-50 text-amber-700 border-amber-200" },
-    syncing: { icon: <RefreshCw className="w-3 h-3 animate-spin" />,   label: "Syncing…",         cls: "bg-blue-50 text-blue-700 border-blue-200" },
-    failed:  { icon: <AlertTriangle className="w-3 h-3" />,            label: `${count} failed`,  cls: "bg-red-50 text-red-700 border-red-200" },
+    offline: { icon: <Dot />,                                          label: "Offline",          cls: "bg-[#f0f0f0] text-[#666] border-[#e0e0e0]" },
+    pending: { icon: <Dot />,                                          label: `${count} pending`, cls: "bg-amber-50 text-amber-700 border-amber-200" },
+    syncing: { icon: <RefreshCw className="w-3 h-3 animate-spin" />,  label: "Syncing…",         cls: "bg-blue-50 text-blue-700 border-blue-200" },
+    failed:  { icon: <AlertTriangle className="w-3 h-3" />,           label: `${count} failed`,  cls: "bg-red-50 text-red-700 border-red-200" },
   };
 
-  const { icon, label, cls } = cfg[status as Exclude<Status, "online">];
+  const { icon, label, cls } = cfg[status];
 
   return (
     <div className={`fixed bottom-16 right-3 sm:bottom-3 z-50 flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-sm ${cls}`}>

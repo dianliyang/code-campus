@@ -72,7 +72,7 @@ self.addEventListener('fetch', (event) => {
 
   // 5. HTML navigation — stale-while-revalidate
   if (request.mode === 'navigate') {
-    event.respondWith(staleWhileRevalidatePages(request));
+    event.respondWith(staleWhileRevalidatePages(request, event));
     return;
   }
 });
@@ -127,13 +127,16 @@ async function staleWhileRevalidateApi(request) {
   }
 }
 
-async function staleWhileRevalidatePages(request) {
+async function staleWhileRevalidatePages(request, event) {
   const cache = await caches.open(CACHE_PAGES);
   const cached = await cache.match(request);
   const networkPromise = fetch(request)
     .then((res) => { if (res.ok) cache.put(request, res.clone()); return res; })
     .catch(() => null);
-  if (cached) { networkPromise; return cached; }  // return stale, update bg
+  if (cached) {
+    event.waitUntil(networkPromise);  // keep background revalidation alive
+    return cached;
+  }
   const response = await networkPromise;
   if (response) return response;
   return (await cache.match(OFFLINE_URL)) || new Response('Offline', { status: 503 });

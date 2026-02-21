@@ -210,7 +210,7 @@ export class SupabaseDatabase {
     const upsertCourseCodes = coursesForUpsert.map((c) => c.courseCode);
     const { data: existingCourseRows } = await supabase
       .from("courses")
-      .select("course_code, description, related_urls")
+      .select("course_code, description, related_urls, details")
       .eq("university", university)
       .in("course_code", upsertCourseCodes);
     const existingCourseByCode = new Map(
@@ -220,6 +220,10 @@ export class SupabaseDatabase {
     // Separate courses into those that need full update and those that are partially scraped
     const toUpsert = coursesForUpsert.map((c) => {
       const existing = existingCourseByCode.get(c.courseCode);
+      const existingDetails =
+        typeof existing?.details === "string"
+          ? (JSON.parse(existing.details || "{}") as Record<string, unknown>)
+          : ((existing?.details as Record<string, unknown> | null) || {});
       const rawDescription = c.description || existing?.description || "";
       const { cleanText: cleanedDescription, links: extractedLinks } = extractContentLinks(rawDescription);
       const detailsRelatedLinks =
@@ -289,6 +293,17 @@ export class SupabaseDatabase {
         if (c.semesters && c.semesters.length > 0) {
           payload.latest_semester = { term: c.semesters[0].term, year: c.semesters[0].year };
         }
+      } else if (
+        university === "CMU" &&
+        c.details &&
+        typeof c.details === "object" &&
+        Array.isArray((c.details as Record<string, unknown>).cmu_code_links)
+      ) {
+        payload.details = {
+          ...existingDetails,
+          ...((c.details as Record<string, unknown>) || {}),
+          cmu_code_links: (c.details as Record<string, unknown>).cmu_code_links,
+        } as Json;
       }
 
       return payload;

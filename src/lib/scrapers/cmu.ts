@@ -232,15 +232,16 @@ export class CMU extends BaseScraper {
 
         const getText = (idx: number) => $(cols[idx]).text().trim().replace(/\u00a0/g, " ");
         const rawId = getText(0);
+        const normalizedCode = this.normalizeCourseCode(rawId);
 
         // CMU course IDs usually look like "15-112" or "15112"
-        if (rawId && (/\d{2}-\d{3}/.test(rawId) || /^\d{5}$/.test(rawId))) {
+        if (normalizedCode && (/\d{2}-\d{3}/.test(normalizedCode) || /^\d{5}$/.test(normalizedCode))) {
           if (currentCourse) {
             rawCourses.push(currentCourse);
           }
 
           // Check if we should skip detail fetching
-          const shouldSkip = existingCodes.has(rawId);
+          const shouldSkip = existingCodes.has(normalizedCode) || existingCodes.has(rawId);
           
           // Extract URL from onclick attribute if present
           const onclick = $(cols[0]).find('a').attr('onclick') || '';
@@ -253,20 +254,20 @@ export class CMU extends BaseScraper {
           // Determine Level: CMU levels are like 15-112.
           // 100-500 are Undergraduate, 600+ are Graduate.
           let level = "undergraduate";
-          const numMatch = rawId.match(/-(\d+)/);
-          if (numMatch) {
-            const num = parseInt(numMatch[1]);
+          const parts = this.getCodeParts(normalizedCode);
+          if (parts) {
+            const num = parts.number;
             if (num >= 600) level = "graduate";
           }
 
           let department = "Computer Science";
-          if (rawId.startsWith("18")) {
+          if (normalizedCode.startsWith("18")) {
             department = "Electrical & Computer Engineering";
           }
 
           currentCourse = {
             university: this.name,
-            courseCode: rawId,
+            courseCode: normalizedCode,
             title: getText(1),
             units: getText(2),
             description: "", // Populated later
@@ -316,11 +317,13 @@ export class CMU extends BaseScraper {
       }
     }
 
+    const dedupedCourses = this.dedupeCoursesByTitleAndPattern(rawCourses);
+
     // Now fetch details for rawCourses concurrently
     const pLimit = (await import("p-limit")).default;
     const limit = pLimit(10); // 10 concurrent detail fetches
 
-    const toFetch = rawCourses.filter(c => !c.details?.is_partially_scraped);
+    const toFetch = dedupedCourses.filter(c => !c.details?.is_partially_scraped);
     console.log(`[${this.name}] Starting concurrent detail retrieval for ${toFetch.length} courses...`);
 
     await Promise.all(toFetch.map(course => limit(async () => {
@@ -339,6 +342,98 @@ export class CMU extends BaseScraper {
        }
     })));
 
-    return rawCourses;
+    return dedupedCourses;
+  }
+
+  private normalizeCourseCode(code: string): string {
+    const trimmed = code.trim();
+    if (/^\d{2}-\d{3}$/.test(trimmed)) return trimmed;
+    if (/^\d{5}$/.test(trimmed)) {
+      return `${trimmed.slice(0, 2)}-${trimmed.slice(2)}`;
+    }
+    return trimmed;
+  }
+
+  private getCodeParts(code: string): { prefix: string; number: number; suffix: string } | null {
+    const normalized = this.normalizeCourseCode(code);
+    const match = normalized.match(/^(\d{2})-(\d{3})$/);
+    if (!match) return null;
+    const prefix = match[1];
+    const number = Number(match[2]);
+    if (!Number.isFinite(number)) return null;
+    return { prefix, number, suffix: String(number % 100).padStart(2, "0") };
+  }
+
+  private getLevelRank(code: string): number {
+    const parts = this.getCodeParts(code);
+    if (!parts) return 0;
+    const n = parts.number;
+    if (n >= 700) return 7;
+    if (n >= 600) return 6;
+    if (n >= 500) return 5;
+    if (n >= 400) return 4;
+    if (n >= 300) return 3;
+    if (n >= 200) return 2;
+    if (n >= 100) return 1;
+    return 0;
+  }
+
+  private dedupeCoursesByTitleAndPattern(courses: Course[]): Course[] {
+    const grouped = new Map<string, Course[]>();
+
+    for (const course of courses) {
+      const parts = this.getCodeParts(course.courseCode);
+      if (!parts) {
+        const fallbackKey = `__raw__:${course.courseCode}:${(course.title || "").trim().toLowerCase()}`;
+        const list = grouped.get(fallbackKey) || [];
+        list.push(course);
+        grouped.set(fallbackKey, list);
+        continue;
+      }
+      const titleKey = (course.title || "").trim().toLowerCase();
+      const key = `${parts.prefix}-${parts.suffix}::${titleKey}`;
+      const list = grouped.get(key) || [];
+      list.push(course);
+      grouped.set(key, list);
+    }
+
+    const deduped: Course[] = [];
+    for (const entries of grouped.values()) {
+      if (entries.length === 1) {
+        deduped.push(entries[0]);
+        continue;
+      }
+
+      const sorted = [...entries].sort((a, b) => {
+        const rankDiff = this.getLevelRank(b.courseCode) - this.getLevelRank(a.courseCode);
+        if (rankDiff !== 0) return rankDiff;
+        const aNum = this.getCodeParts(a.courseCode)?.number || 0;
+        const bNum = this.getCodeParts(b.courseCode)?.number || 0;
+        return bNum - aNum;
+      });
+      const winner = sorted[0];
+
+      // Store all duplicate code->detail links on the winning record.
+      const cmuCodeLinks = sorted
+        .map((c) => ({ id: c.courseCode, link: c.url || "" }))
+        .filter((item) => item.id)
+        .filter((item, idx, arr) => arr.findIndex((x) => x.id === item.id) === idx);
+
+      const mergedSections = sorted.flatMap((c) => {
+        const sections = (c.details as Record<string, unknown> | undefined)?.sections;
+        return Array.isArray(sections) ? sections : [];
+      });
+
+      const winnerDetails = ((winner.details as Record<string, unknown>) || {});
+      winner.details = {
+        ...winnerDetails,
+        sections: mergedSections,
+        cmu_code_links: cmuCodeLinks,
+      };
+
+      deduped.push(winner);
+    }
+
+    return deduped;
   }
 }

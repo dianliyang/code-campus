@@ -6,7 +6,6 @@ import AILearningPlanner from "@/components/home/AILearningPlanner";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
 import SemesterFilter from "@/components/home/SemesterFilter";
 import StudyCalendar from "@/components/home/StudyCalendar";
-import TranscriptExportButton from "@/components/home/TranscriptExportButton";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -334,19 +333,6 @@ async function StudyPlanContent({
                 selectedSemester={selectedSemester}
               />
             )}
-            <TranscriptExportButton
-              rows={filteredAchievements.map((course) => ({
-                university: course.university,
-                courseCode: course.courseCode,
-                title: course.title,
-                credit: course.credit,
-                gpa: course.gpa,
-                score: course.score,
-                completionDate: course.updated_at,
-                semesters: course.semesters,
-              }))}
-              selectedSemester={selectedSemester}
-            />
           </div>
         </div>
 

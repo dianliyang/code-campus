@@ -1,9 +1,12 @@
-import * as cheerio from "cheerio";
 import { BaseScraper } from "./BaseScraper";
 import { Course } from "./types";
 import { parseSemesterCode } from "./utils/semester";
 
 export class UCB extends BaseScraper {
+  private static readonly CATALOG_BASE = "https://graduate.catalog.berkeley.edu/courses";
+  private static readonly CATALOG_DEPARTMENTS = ["COMPSCI", "EECS", "ELENG"];
+  private static readonly COURSE_DOG_API_BASE = "https://app.coursedog.com/api/v1";
+
   constructor() {
     super("ucb");
   }
@@ -37,107 +40,287 @@ export class UCB extends BaseScraper {
 
   // Override retrieve to implement early exit if a term is not published
   async retrieve(): Promise<Course[]> {
-    const termCode = this.getSemesterParam();
-    // Use numeric subject IDs: 5582=COMPSCI, 5475=EECS, 5476=EL ENG
-    const subjects = ["5582", "5475", "5476"];
-    const allCourses: Course[] = [];
-    const maxPages = 10;
-
-    console.log(`[${this.name}] Starting sequential retrieval for term ${termCode}...`);
-
-    for (const subject of subjects) {
-      console.log(`[${this.name}] Processing subject ID: ${subject}`);
-      
-      for (let page = 0; page < maxPages; page++) {
-        const url = `https://classes.berkeley.edu/search/class?f%5B0%5D=term%3A${termCode}&f%5B1%5D=subject_area%3A${subject}&page=${page}`;
-        const html = await this.fetchPage(url);
-        
-        if (!html) break;
-
-        const $ = cheerio.load(html);
-        
-        // Check for "No results found"
-        if (html.includes("No results found") || $(".views-row").length === 0) {
-          console.log(`[${this.name}] No results found for ${subject} on page ${page}. Skipping remaining pages for this subject.`);
-          break;
-        }
-
-        const courses = await this.parser(html);
-        allCourses.push(...courses);
-
-        // If we got fewer than 20 rows (UCB default page size), it's likely the last page
-        if ($(".views-row").length < 20) break;
-      }
-    }
-
-    // Deduplicate by courseCode to prevent Supabase ON CONFLICT errors
-    const uniqueMap = new Map<string, Course>();
-    allCourses.forEach(c => {
-        if (!uniqueMap.has(c.courseCode)) {
-            uniqueMap.set(c.courseCode, c);
-        }
+    const csvCourses = await this.retrieveFromCatalogCsv();
+    const uniqueCsv = new Map<string, Course>();
+    csvCourses.forEach((c) => {
+      if (!uniqueCsv.has(c.courseCode)) uniqueCsv.set(c.courseCode, c);
     });
-
-    return Array.from(uniqueMap.values());
+    console.log(`[${this.name}] Retrieved ${uniqueCsv.size} unique courses via catalog CSV export.`);
+    return Array.from(uniqueCsv.values());
   }
 
-  async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {
-    const $ = cheerio.load(html);
-    const courses: Course[] = [];
-    const rows = $("div.views-row");
+  private async retrieveFromCatalogCsv(): Promise<Course[]> {
+    const all: Course[] = [];
+    for (const dept of UCB.CATALOG_DEPARTMENTS) {
+      const pageUrl = `${UCB.CATALOG_BASE}?cq=&sortBy=code&departments=${encodeURIComponent(dept)}&page=1`;
+      const html = await this.fetchPage(pageUrl);
+      if (!html) continue;
 
-    // Parse requested semester
+      let csvText = "";
+
+      // 1) Legacy case: direct CSV URL discoverable in markup.
+      const csvUrl = this.extractCsvUrl(html, pageUrl);
+      if (csvUrl) {
+        csvText = await this.fetchCsv(csvUrl);
+      } else {
+        // 2) Current Coursedog case: "Export all results as CSV" is a JS button
+        // that POSTs filters to a CSV export API endpoint.
+        csvText = await this.fetchCatalogButtonCsv(html, dept);
+      }
+
+      if (!csvText) {
+        console.log(`[${this.name}] CSV export unavailable for department ${dept}.`);
+        continue;
+      }
+
+      const courses = this.parseCatalogCsv(csvText);
+      all.push(...courses);
+    }
+
+    return all;
+  }
+
+  private extractCsvUrl(html: string, pageUrl: string): string | null {
+    // 1) Direct anchor/button href containing csv.
+    const directHref = html.match(/data-test="export-all-results-as-csv"[^>]*href="([^"]+)"/i);
+    if (directHref?.[1]) {
+      return new URL(directHref[1], pageUrl).toString();
+    }
+
+    // 2) Any explicit CSV URL in markup/scripts (absolute or relative).
+    const csvLike = html.match(/https?:\\u002F\\u002F[^"'\\s<>]*csv[^"'\\s<>]*/i)
+      || html.match(/https?:\/\/[^"'\s<>]*csv[^"'\s<>]*/i)
+      || html.match(/\/[^"'\s<>]*csv[^"'\s<>]*/i);
+    if (csvLike?.[0]) {
+      const normalized = csvLike[0].replaceAll("\\u002F", "/");
+      return normalized.startsWith("http")
+        ? normalized
+        : new URL(normalized, pageUrl).toString();
+    }
+
+    // 3) Some catalog pages expose the API route in JSON blobs as ".../export...csv...".
+    const exportLike = html.match(/https?:\\u002F\\u002F[^"'\\s<>]*export[^"'\\s<>]*csv[^"'\\s<>]*/i)
+      || html.match(/https?:\/\/[^"'\s<>]*export[^"'\s<>]*csv[^"'\s<>]*/i)
+      || html.match(/\/[^"'\s<>]*export[^"'\s<>]*csv[^"'\s<>]*/i);
+    if (exportLike?.[0]) {
+      const normalized = exportLike[0].replaceAll("\\u002F", "/");
+      return normalized.startsWith("http")
+        ? normalized
+        : new URL(normalized, pageUrl).toString();
+    }
+
+    return null;
+  }
+
+  private async fetchCsv(url: string): Promise<string> {
+    const headers = {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept: "text/csv,application/csv,text/plain;q=0.9,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+    };
+    try {
+      const response = await fetch(url, { headers });
+      if (!response.ok) {
+        console.log(`[${this.name}] CSV fetch failed ${response.status} for ${url}`);
+        return "";
+      }
+      return await response.text();
+    } catch (error) {
+      console.error(`[${this.name}] CSV fetch error for ${url}:`, error);
+      return "";
+    }
+  }
+
+  private extractCatalogRuntimeConfig(html: string): { school: string; activeCatalog: string } | null {
+    const schoolMatch = html.match(/school:"([^"]+)"/);
+    const catalogMatch = html.match(/activeCatalog:"([^"]+)"/);
+    if (!schoolMatch?.[1] || !catalogMatch?.[1]) return null;
+    return { school: schoolMatch[1], activeCatalog: catalogMatch[1] };
+  }
+
+  private async fetchCatalogButtonCsv(html: string, department: string): Promise<string> {
+    const runtime = this.extractCatalogRuntimeConfig(html);
+    if (!runtime) {
+      console.log(`[${this.name}] Could not extract Coursedog runtime config for CSV button export.`);
+      return "";
+    }
+
+    const endpoint = `${UCB.COURSE_DOG_API_BASE}/ca/${encodeURIComponent(runtime.school)}/catalogs/${encodeURIComponent(runtime.activeCatalog)}/courses/csv/$filters?orderBy=code&ignoreEffectiveDating=false`;
+    const headers = {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+      Accept: "application/json, text/plain, */*",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Content-Type": "application/json",
+      Origin: "https://graduate.catalog.berkeley.edu",
+      Referer: "https://graduate.catalog.berkeley.edu/",
+      "X-Requested-With": "catalog",
+    };
+
+    // Match the browser's filter payload used by the "Export all results as CSV" button.
+    const payload = {
+      condition: "AND",
+      filters: [
+        {
+          id: "sNyIzT2q",
+          condition: "and",
+          filters: [
+            {
+              id: "status-course",
+              condition: "field",
+              name: "status",
+              inputType: "select",
+              group: "course",
+              type: "is",
+              value: "Active",
+            },
+            {
+              id: "departments-course",
+              condition: "field",
+              name: "departments",
+              inputType: "select",
+              group: "course",
+              type: "doesNotContain",
+              value: ["GGAGECH"],
+            },
+            {
+              id: "departments-course",
+              condition: "field",
+              name: "departments",
+              inputType: "select",
+              group: "course",
+              type: "doesNotContain",
+              value: ["NONUCB"],
+            },
+            {
+              id: "catalogPrint-course",
+              condition: "field",
+              name: "catalogPrint",
+              inputType: "boolean",
+              group: "course",
+              type: "is",
+              value: true,
+              customField: false,
+            },
+            {
+              id: "courseApproved-course",
+              condition: "field",
+              name: "courseApproved",
+              inputType: "select",
+              group: "course",
+              type: "is",
+              value: "Approved",
+              customField: false,
+            },
+          ],
+        },
+        {
+          condition: "AND",
+          filters: [
+            {
+              group: "course",
+              id: "departments-course",
+              inputType: "select",
+              name: "departments",
+              type: "is",
+              value: department,
+            },
+          ],
+        },
+      ],
+    };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        console.log(`[${this.name}] CSV button export failed ${response.status} for ${department}`);
+        return "";
+      }
+
+      const text = await response.text();
+      if (text.includes(",") && /code|course/i.test(text.split("\n")[0] || "")) {
+        return text;
+      }
+
+      // Some tenants can respond as JSON wrapper (e.g. with a file URL).
+      try {
+        const parsed = JSON.parse(text) as { url?: string; fileUrl?: string; downloadUrl?: string };
+        const fileUrl = parsed.downloadUrl || parsed.fileUrl || parsed.url;
+        if (fileUrl) {
+          return await this.fetchCsv(fileUrl);
+        }
+      } catch {
+        // Ignore JSON parse failures and return empty.
+      }
+    } catch (error) {
+      console.error(`[${this.name}] CSV button export request failed:`, error);
+    }
+
+    return "";
+  }
+
+  private parseCatalogCsv(csvText: string): Course[] {
+    const rows = this.parseCsvRows(csvText);
+    if (rows.length === 0) return [];
+
+    const headers = rows[0].map((h) => h.trim().toLowerCase());
+    const idx = (names: string[]) => {
+      for (const name of names) {
+        const i = headers.indexOf(name);
+        if (i >= 0) return i;
+      }
+      return -1;
+    };
+
+    const subjectIdx = idx(["subject"]);
+    const courseNumberIdx = idx(["course number"]);
+    const codeIdx = idx(["code", "course code", "course_number", "catalogdisplayname"]);
+    const titleIdx = idx(["course title", "title", "name"]);
+    const deptIdx = idx(["department", "department(s)", "departments"]);
+    const minUnitsIdx = idx([
+      "credits - units - minimum units",
+      "minimum units",
+      "credits",
+      "credit",
+      "units",
+    ]);
+    const maxUnitsIdx = idx([
+      "credits - units - maximum units",
+      "maximum units",
+    ]);
+    const descIdx = idx(["course description", "description"]);
+
+    if ((codeIdx < 0 && (subjectIdx < 0 || courseNumberIdx < 0)) || titleIdx < 0) {
+      console.log(`[${this.name}] CSV parsed but required columns not found.`);
+      return [];
+    }
+
     const input = this.semester?.toLowerCase() || "";
     const { term: termName, year: fullYear } = parseSemesterCode(input);
 
-    rows.each((_, rowElement) => {
-      const row = $(rowElement);
-      const article = row.find("article.st");
-      if (article.length === 0) return;
+    const courses: Course[] = [];
+    for (let i = 1; i < rows.length; i += 1) {
+      const row = rows[i];
+      const subject = subjectIdx >= 0 ? (row[subjectIdx] || "").trim() : "";
+      const courseNumber = courseNumberIdx >= 0 ? (row[courseNumberIdx] || "").trim() : "";
+      const legacyCode = codeIdx >= 0 ? (row[codeIdx] || "").trim() : "";
+      const courseCode = legacyCode || [subject, courseNumber].filter(Boolean).join(" ").trim();
+      const title = (row[titleIdx] || "").trim();
+      if (!courseCode || !title) continue;
 
-      const sectionNameSpan = article.find("span.st--section-name");
-      const courseCode = sectionNameSpan.text().trim();
+      const department = deptIdx >= 0 ? (row[deptIdx] || "").trim() : "";
+      const minUnits = minUnitsIdx >= 0 ? (row[minUnitsIdx] || "").trim() : "";
+      const maxUnits = maxUnitsIdx >= 0 ? (row[maxUnitsIdx] || "").trim() : "";
+      const units = minUnits && maxUnits && minUnits !== maxUnits
+        ? `${minUnits}-${maxUnits}`
+        : (minUnits || maxUnits);
+      const description = descIdx >= 0 ? (row[descIdx] || "").trim() : "";
 
-      const titleDiv = article.find("div.st--title");
-      const title = titleDiv.find("h2").text().trim();
-
-      // OPTIMIZATION: If course already exists for this semester, skip parsing details
-      if (existingCodes.has(courseCode)) {
-        courses.push({
-          university: this.name,
-          courseCode: courseCode,
-          title: title,
-          semesters: [{ term: termName, year: fullYear }],
-          details: { is_partially_scraped: true }
-        });
-        return;
-      }
-
-      const urlPath = article
-        .find("div.st--section-name-wraper a")
-        .attr("href");
-      const courseUrl = urlPath ? `https://classes.berkeley.edu${urlPath}` : "";
-
-      const deptLink = article.find("span.st-section-dept a");
-      const department =
-        deptLink.length > 0 ? deptLink.first().text().trim() : "";
-
-      const sectionCodeSpan = article.find("span.st--section-code");
-      const sectionCode = sectionCodeSpan.text().trim();
-
-      const sectionCountSpans = article.find("span.st--section-count");
-      const sectionNumber = sectionCountSpans.last().text().trim();
-
-      const fullSection = `${sectionCode} ${sectionNumber}`.trim();
-
-      const unitsDiv = article.find("div.st--details-unit");
-      const units =
-        unitsDiv.length > 0 ? unitsDiv.text().replace("Units:", "").trim() : "";
-
-      const descDiv = article.find("div.st--description");
-      const description = descDiv.length > 0 ? descDiv.text().trim() : "";
-
-      // Determine level: UC Berkeley undergraduate is 1-199, graduate is 200+
       let level = "undergraduate";
       const codeNumMatch = courseCode.match(/\d+/);
       if (codeNumMatch) {
@@ -145,67 +328,74 @@ export class UCB extends BaseScraper {
         if (num >= 200) level = "graduate";
       }
 
-      // Extract corequisites from description if possible
-      let corequisites = "";
-      const coreqMatch = description.match(/(?:Corequisites?|Prerequisites?|Prereq):\s*(.*?)(?=\.|$)/i);
-      if (coreqMatch) {
-        corequisites = coreqMatch[1].trim();
-      }
-
-      const meetingsDiv = article.find("div.st--meetings");
-      let days = "";
-      let time = "";
-      let location = "";
-
-      if (meetingsDiv.length > 0) {
-        const daysDiv = meetingsDiv.find("div.st--meeting-days");
-        if (daysDiv.length > 0) {
-          const spans = daysDiv.find("span");
-          if (spans.length > 1) {
-            days = $(spans[1]).text().trim();
-          }
-        }
-
-        const timeDiv = meetingsDiv.find("div.st--meeting-time");
-        if (timeDiv.length > 0) {
-          const spans = timeDiv.find("span");
-          if (spans.length > 1) {
-            time = $(spans[1]).text().trim();
-          }
-        }
-
-        const locDiv = meetingsDiv.find("div.st--location");
-        if (locDiv.length > 0) {
-          const aTag = locDiv.find("a");
-          if (aTag.length > 0) {
-            aTag.find("svg").remove();
-            location = aTag.text().trim();
-          } else {
-            location = locDiv.text().trim();
-          }
-        }
-      }
-
       courses.push({
         university: this.name,
-        courseCode: courseCode,
-        title: title,
-        units: units,
-        description: description,
-        url: courseUrl,
-        department: department,
-        level: level,
-        corequisites: corequisites,
+        courseCode,
+        title,
+        units,
+        description,
+        url: `https://graduate.catalog.berkeley.edu/courses?cq=${encodeURIComponent(courseCode)}&sortBy=code`,
+        department,
+        level,
         semesters: [{ term: termName, year: fullYear }],
-        details: {
-          section: fullSection,
-          days: days,
-          time: time,
-          location: location,
-        },
       });
-    });
+    }
 
     return courses;
+  }
+
+  private parseCsvRows(input: string): string[][] {
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let cell = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < input.length; i += 1) {
+      const ch = input[i];
+      const next = input[i + 1];
+
+      if (ch === '"') {
+        if (inQuotes && next === '"') {
+          cell += '"';
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (ch === "," && !inQuotes) {
+        row.push(cell);
+        cell = "";
+        continue;
+      }
+
+      if ((ch === "\n" || ch === "\r") && !inQuotes) {
+        if (ch === "\r" && next === "\n") i += 1;
+        row.push(cell);
+        cell = "";
+        if (row.length > 1 || (row.length === 1 && row[0].trim() !== "")) {
+          rows.push(row);
+        }
+        row = [];
+        continue;
+      }
+
+      cell += ch;
+    }
+
+    if (cell.length > 0 || row.length > 0) {
+      row.push(cell);
+      rows.push(row);
+    }
+
+    return rows;
+  }
+
+  async parser(_html: string, _existingCodes?: Set<string>): Promise<Course[]> {
+    // UCB now uses CSV export only; no HTML parsing path remains.
+    void _html;
+    void _existingCodes;
+    return [];
   }
 }

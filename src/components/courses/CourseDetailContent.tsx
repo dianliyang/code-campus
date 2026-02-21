@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
@@ -69,6 +69,19 @@ export default function CourseDetailContent({
         : categoryRaw === "Seminar"
           ? "Seminar"
           : categoryRaw;
+  const cmuCodeLinks = useMemo(() => {
+    const raw = (course.details as Record<string, unknown> | undefined)?.cmu_code_links;
+    if (!Array.isArray(raw)) return [] as Array<{ id: string; link: string }>;
+    return raw
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const id = typeof (item as Record<string, unknown>).id === "string" ? (item as Record<string, unknown>).id : "";
+        const link = typeof (item as Record<string, unknown>).link === "string" ? (item as Record<string, unknown>).link : "";
+        if (!id) return null;
+        return { id, link };
+      })
+      .filter((item): item is { id: string; link: string } => item !== null);
+  }, [course.details]);
 
   useEffect(() => {
     const updateHeight = () => {
@@ -572,7 +585,7 @@ export default function CourseDetailContent({
                 </dl>
               </div>
 
-              {(course.crossListedCourses || (course.relatedUrls && course.relatedUrls.length > 0)) && (
+              {(course.crossListedCourses || (course.relatedUrls && course.relatedUrls.length > 0) || cmuCodeLinks.length > 0) && (
                 <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
                   <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">Resources</h3>
                   <div className="space-y-4">
@@ -592,6 +605,24 @@ export default function CourseDetailContent({
                       <div>
                         <span className="text-xs font-medium text-[#777] block mb-2">Cross-Listed</span>
                         <p className="text-sm text-[#555] leading-relaxed">{course.crossListedCourses}</p>
+                      </div>
+                    )}
+                    {cmuCodeLinks.length > 0 && (
+                      <div>
+                        <span className="text-xs font-medium text-[#777] block mb-2">CMU Course Variants</span>
+                        <ul className="space-y-2">
+                          {cmuCodeLinks.map((item) => (
+                            <li key={item.id} className="text-sm text-[#555]">
+                              {item.link ? (
+                                <a href={item.link} target="_blank" rel="noreferrer" className="text-[#335b9a] hover:underline">
+                                  {item.id}
+                                </a>
+                              ) : (
+                                <span>{item.id}</span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>

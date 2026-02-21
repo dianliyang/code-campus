@@ -229,14 +229,26 @@ export class MIT extends BaseScraper {
     return this.dedupeCoursesByTitleAndPattern(courses);
   }
 
-  private parseCourseCode(code: string): { dept: string; subject: number; suffix2: string } | null {
-    const match = code.trim().match(/^(\d+)\.(\d+)[A-Z]?$/i);
+  private parseCourseCode(code: string): {
+    dept: string;
+    subject: number;
+    suffix2: string;
+    numericLength: number;
+    subjectSuffix: string;
+  } | null {
+    const match = code.trim().match(/^(\d+)\.(\d+)([A-Z]?)$/i);
     if (!match) return null;
     const dept = match[1];
     const subject = Number(match[2]);
     if (!Number.isFinite(subject)) return null;
     const suffix2 = String(subject % 100).padStart(2, "0");
-    return { dept, subject, suffix2 };
+    return {
+      dept,
+      subject,
+      suffix2,
+      numericLength: match[2].length,
+      subjectSuffix: (match[3] || "").toUpperCase(),
+    };
   }
 
   private inferLevelFromCourseCode(code: string): string {
@@ -288,7 +300,7 @@ export class MIT extends BaseScraper {
       }
 
       // Same strategy as CMU aggregation: same canonical pattern + same title.
-      const key = `${parsed.dept}-${parsed.suffix2}::${titleKey}`;
+      const key = `${parsed.dept}-${parsed.suffix2}-${parsed.numericLength}-${parsed.subjectSuffix}::${titleKey}`;
       const list = grouped.get(key) || [];
       list.push(course);
       grouped.set(key, list);

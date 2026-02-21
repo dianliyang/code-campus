@@ -396,9 +396,15 @@ export class UCB extends BaseScraper {
     return [];
   }
 
-  private parseCourseCode(code: string): { subject: string; number: number; suffix2: string } | null {
+  private parseCourseCode(code: string): {
+    subject: string;
+    number: number;
+    suffix2: string;
+    numericLength: number;
+    numberSuffix: string;
+  } | null {
     const trimmed = code.trim().toUpperCase();
-    const match = trimmed.match(/^([A-Z&]+)\s+(\d+[A-Z]?)$/);
+    const match = trimmed.match(/^([A-Z&]+)\s+(\d+)([A-Z]?)$/);
     if (!match) return null;
     const subject = match[1];
     const numericPart = parseInt(match[2], 10);
@@ -407,6 +413,8 @@ export class UCB extends BaseScraper {
       subject,
       number: numericPart,
       suffix2: String(numericPart % 100).padStart(2, "0"),
+      numericLength: match[2].length,
+      numberSuffix: (match[3] || "").toUpperCase(),
     };
   }
 
@@ -430,7 +438,7 @@ export class UCB extends BaseScraper {
         continue;
       }
 
-      const key = `${parsed.subject}-${parsed.suffix2}::${titleKey}`;
+      const key = `${parsed.subject}-${parsed.suffix2}-${parsed.numericLength}-${parsed.numberSuffix}::${titleKey}`;
       const list = grouped.get(key) || [];
       list.push(course);
       grouped.set(key, list);

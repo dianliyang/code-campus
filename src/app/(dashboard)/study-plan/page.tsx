@@ -6,6 +6,7 @@ import AILearningPlanner from "@/components/home/AILearningPlanner";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
 import SemesterFilter from "@/components/home/SemesterFilter";
 import StudyCalendar from "@/components/home/StudyCalendar";
+import TranscriptExportButton from "@/components/home/TranscriptExportButton";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -326,12 +327,27 @@ async function StudyPlanContent({
       <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
         <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <h3 className="text-base font-semibold text-[#1f1f1f]">{dict.dashboard.roadmap.phase_2_title}</h3>
-          {availableSemesters.length > 0 && (
-            <SemesterFilter
-              availableSemesters={availableSemesters}
+          <div className="flex flex-wrap items-center gap-2">
+            {availableSemesters.length > 0 && (
+              <SemesterFilter
+                availableSemesters={availableSemesters}
+                selectedSemester={selectedSemester}
+              />
+            )}
+            <TranscriptExportButton
+              rows={filteredAchievements.map((course) => ({
+                university: course.university,
+                courseCode: course.courseCode,
+                title: course.title,
+                credit: course.credit,
+                gpa: course.gpa,
+                score: course.score,
+                completionDate: course.updated_at,
+                semesters: course.semesters,
+              }))}
               selectedSemester={selectedSemester}
             />
-          )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

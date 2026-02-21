@@ -581,21 +581,6 @@ export default function CourseDetailContent({
                       )}
                     </dd>
                   </div>
-                  {codeBreakdown.length > 0 && (
-                    <div className="flex flex-col py-1 gap-2">
-                      <dt className="text-[#666]">Code Breakdown</dt>
-                      <dd className="space-y-1.5">
-                        {codeBreakdown.map((item, idx) => (
-                          <div key={`${item.label}-${idx}`} className="text-right">
-                            <p className="font-medium text-[#222]">{item.label}: {item.value}</p>
-                            {item.detail && (
-                              <p className="text-[11px] text-[#666]">{item.detail}</p>
-                            )}
-                          </div>
-                        ))}
-                      </dd>
-                    </div>
-                  )}
                   {course.details?.internalId && (
                     <div className="flex justify-between py-1">
                       <dt className="text-[#666]">ID</dt>
@@ -604,6 +589,25 @@ export default function CourseDetailContent({
                   )}
                 </dl>
               </div>
+
+              {codeBreakdown.length > 0 && (
+                <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+                  <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">Code Breakdown</h3>
+                  <dl className="space-y-4 text-sm">
+                    {codeBreakdown.map((item, idx) => (
+                      <div key={`${item.label}-${idx}`} className="flex justify-between py-1">
+                        <dt className="text-[#666] flex-shrink-0">{item.label}</dt>
+                        <dd className="text-right pl-4">
+                          <p className="font-medium text-[#222] break-words">{item.value}</p>
+                          {item.detail && (
+                            <p className="text-[11px] text-[#666] break-words">{item.detail}</p>
+                          )}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              )}
 
               {(course.crossListedCourses || (course.relatedUrls && course.relatedUrls.length > 0) || variantCodeLinks.length > 0) && (
                 <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">

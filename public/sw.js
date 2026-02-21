@@ -156,7 +156,146 @@ function putWithTimestamp(cache, request, response) {
   cache.put(request, new Response(response.body, { status: response.status, statusText: response.statusText, headers }));
 }
 
-// ─── Offline write handler (stub — replaced in Task 2) ───────────────────────
+// ─── IndexedDB queue ─────────────────────────────────────────────────────────
+const DB_NAME    = 'cc-offline-queue';
+const DB_VERSION = 1;
+const STORE      = 'sync-queue';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        const store = db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+        store.createIndex('url', 'url', { unique: false });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function queueWrite(url, method, body) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+
+    // Deduplicate study-plan updates by planId
+    if (url.includes('/api/study-plans/update') && body.planId) {
+      const idx = store.index('url').getAll(url);
+      idx.onsuccess = () => {
+        const dup = idx.result.find((e) => {
+          try { return JSON.parse(e.body).planId === body.planId; } catch { return false; }
+        });
+        if (dup) store.delete(dup.id);
+        store.add({ url, method, body: JSON.stringify(body), timestamp: Date.now(), retries: 0, failed: false });
+      };
+    } else {
+      store.add({ url, method, body: JSON.stringify(body), timestamp: Date.now(), retries: 0, failed: false });
+    }
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function drainQueue() {
+  const db = await openDB();
+  const entries = await new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () =>
+      resolve(req.result.filter((e) => !e.failed).sort((a, b) => a.timestamp - b.timestamp));
+    req.onerror = () => reject(req.error);
+  });
+
+  let remaining = entries.length;
+
+  for (const entry of entries) {
+    try {
+      const res = await fetch(entry.url, {
+        method: entry.method,
+        headers: { 'Content-Type': 'application/json' },
+        body: entry.body,
+      });
+      // 2xx or 4xx (bad request — won't succeed on retry) → remove
+      if (res.ok || (res.status >= 400 && res.status < 500)) {
+        await dbDelete(db, entry.id);
+        remaining--;
+      } else {
+        throw new Error(`HTTP ${res.status}`);
+      }
+    } catch {
+      const retries = entry.retries + 1;
+      await dbPut(db, { ...entry, retries, failed: retries >= 3 });
+    }
+    broadcast({ type: 'SYNC_PROGRESS', remaining });
+  }
+
+  broadcast({ type: 'SYNC_COMPLETE' });
+}
+
+function dbDelete(db, id) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete = res;
+    tx.onerror = rej;
+  });
+}
+
+function dbPut(db, entry) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(entry);
+    tx.oncomplete = res;
+    tx.onerror = rej;
+  });
+}
+
+async function broadcast(msg) {
+  const clients = await self.clients.matchAll();
+  clients.forEach((c) => c.postMessage(msg));
+}
+
+async function getPendingCount() {
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).count();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(0);
+  });
+}
+
+// ─── Background Sync ─────────────────────────────────────────────────────────
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'offline-writes') event.waitUntil(drainQueue());
+});
+
+// ─── Online fallback (posted by OfflineIndicator) ────────────────────────────
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'ONLINE') drainQueue();
+});
+
+// ─── Offline write handler (full implementation) ─────────────────────────────
 async function handleOfflineWrite(request) {
-  return fetch(request);
+  const clone = request.clone();
+  let body = {};
+  try { body = await clone.json(); } catch { /* non-JSON body */ }
+
+  try {
+    return await fetch(request);
+  } catch {
+    await queueWrite(new URL(request.url).pathname, request.method, body);
+    try { await self.registration.sync.register('offline-writes'); } catch { /* not supported */ }
+    const pending = await getPendingCount();
+    broadcast({ type: 'QUEUED', pending });
+    return new Response(JSON.stringify({ queued: true }), {
+      status: 202,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }

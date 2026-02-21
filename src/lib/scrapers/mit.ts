@@ -332,7 +332,7 @@ export class MIT extends BaseScraper {
         ...(winner.details as Record<string, unknown>),
         terms: mergedTerms,
         instructors: mergedInstructors,
-        mit_code_links: mitCodeLinks,
+        variant_code_links: mitCodeLinks,
       };
       winner.level = this.inferLevelFromCourseCode(winner.courseCode);
 

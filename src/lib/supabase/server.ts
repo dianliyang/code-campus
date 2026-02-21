@@ -294,15 +294,21 @@ export class SupabaseDatabase {
           payload.latest_semester = { term: c.semesters[0].term, year: c.semesters[0].year };
         }
       } else if (
-        university === "CMU" &&
         c.details &&
         typeof c.details === "object" &&
-        Array.isArray((c.details as Record<string, unknown>).cmu_code_links)
+        (
+          Array.isArray((c.details as Record<string, unknown>).variant_code_links) ||
+          Array.isArray((c.details as Record<string, unknown>).cmu_code_links)
+        )
       ) {
+        const incomingDetails = (c.details as Record<string, unknown>) || {};
+        const incomingVariantLinks = Array.isArray(incomingDetails.variant_code_links)
+          ? incomingDetails.variant_code_links
+          : incomingDetails.cmu_code_links;
         payload.details = {
           ...existingDetails,
-          ...((c.details as Record<string, unknown>) || {}),
-          cmu_code_links: (c.details as Record<string, unknown>).cmu_code_links,
+          ...incomingDetails,
+          ...(incomingVariantLinks ? { variant_code_links: incomingVariantLinks } : {}),
         } as Json;
       }
 

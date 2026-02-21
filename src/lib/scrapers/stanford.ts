@@ -94,7 +94,7 @@ export class Stanford extends BaseScraper {
       }
     }
 
-    return allCourses;
+    return this.dedupeCoursesByTitleAndPattern(allCourses);
   }
 
   async fetchPage(url: string): Promise<string> {
@@ -133,6 +133,7 @@ export class Stanford extends BaseScraper {
         courseCode: "",
         title: "",
         description: "",
+        url: "",
         semesters: semesterInfo ? [semesterInfo] : [],
         details: {
           terms: [],
@@ -146,6 +147,7 @@ export class Stanford extends BaseScraper {
         if (numberSpan.length > 0) {
           const rawCode = numberSpan.text().trim().replace(/:$/, "");
           course.courseCode = rawCode;
+          course.url = `https://explorecourses.stanford.edu/search?q=${encodeURIComponent(rawCode)}&view=catalog`;
 
           // OPTIMIZATION: If course already exists for this semester, skip parsing details
           if (existingCodes.has(rawCode)) {
@@ -258,5 +260,96 @@ export class Stanford extends BaseScraper {
     });
 
     return courses;
+  }
+
+  private parseCourseCode(code: string): { subject: string; number: number; suffix2: string } | null {
+    const trimmed = code.trim().toUpperCase();
+    const match = trimmed.match(/^([A-Z&]+)\s+(\d+)([A-Z]*)$/);
+    if (!match) return null;
+    const subject = match[1];
+    const number = parseInt(match[2], 10);
+    if (!Number.isFinite(number)) return null;
+    return {
+      subject,
+      number,
+      suffix2: String(number % 100).padStart(2, "0"),
+    };
+  }
+
+  private getLevelRank(code: string): number {
+    const parsed = this.parseCourseCode(code);
+    if (!parsed) return 0;
+    if (parsed.number >= 300) return 4;
+    if (parsed.number >= 200) return 3;
+    if (parsed.number >= 100) return 2;
+    return 1;
+  }
+
+  private dedupeCoursesByTitleAndPattern(courses: Course[]): Course[] {
+    const grouped = new Map<string, Course[]>();
+
+    for (const course of courses) {
+      const parsed = this.parseCourseCode(course.courseCode);
+      const titleKey = (course.title || "").trim().toLowerCase();
+      if (!parsed) {
+        const fallbackKey = `__raw__:${course.courseCode}:${titleKey}`;
+        const list = grouped.get(fallbackKey) || [];
+        list.push(course);
+        grouped.set(fallbackKey, list);
+        continue;
+      }
+
+      const key = `${parsed.subject}-${parsed.suffix2}::${titleKey}`;
+      const list = grouped.get(key) || [];
+      list.push(course);
+      grouped.set(key, list);
+    }
+
+    const deduped: Course[] = [];
+    for (const entries of grouped.values()) {
+      if (entries.length === 1) {
+        deduped.push(entries[0]);
+        continue;
+      }
+
+      const sorted = [...entries].sort((a, b) => {
+        const rankDiff = this.getLevelRank(b.courseCode) - this.getLevelRank(a.courseCode);
+        if (rankDiff !== 0) return rankDiff;
+        return b.courseCode.localeCompare(a.courseCode);
+      });
+      const winner = sorted[0];
+
+      const mergedTerms = Array.from(
+        new Set(
+          sorted.flatMap((c) => {
+            const terms = (c.details as Record<string, unknown> | undefined)?.terms;
+            return Array.isArray(terms) ? terms.map((t) => String(t)) : [];
+          })
+        )
+      );
+      const mergedInstructors = Array.from(
+        new Set(
+          sorted.flatMap((c) => {
+            const instructors = (c.details as Record<string, unknown> | undefined)?.instructors;
+            return Array.isArray(instructors) ? instructors.map((t) => String(t)) : [];
+          })
+        )
+      );
+      const stanfordCodeLinks = sorted
+        .map((c) => ({ id: c.courseCode, link: c.url || "" }))
+        .filter((item, idx, arr) => arr.findIndex((x) => x.id === item.id) === idx);
+
+      winner.details = {
+        ...(winner.details as Record<string, unknown>),
+        terms: mergedTerms,
+        instructors: mergedInstructors,
+        variant_code_links: stanfordCodeLinks,
+      };
+      winner.level = this.getLevelRank(winner.courseCode) >= 3 ? "graduate" : "undergraduate";
+
+      deduped.push(winner);
+    }
+
+    return deduped;
   }
 }

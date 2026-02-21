@@ -41,12 +41,9 @@ export class UCB extends BaseScraper {
   // Override retrieve to implement early exit if a term is not published
   async retrieve(): Promise<Course[]> {
     const csvCourses = await this.retrieveFromCatalogCsv();
-    const uniqueCsv = new Map<string, Course>();
-    csvCourses.forEach((c) => {
-      if (!uniqueCsv.has(c.courseCode)) uniqueCsv.set(c.courseCode, c);
-    });
-    console.log(`[${this.name}] Retrieved ${uniqueCsv.size} unique courses via catalog CSV export.`);
-    return Array.from(uniqueCsv.values());
+    const deduped = this.dedupeCoursesByTitleAndPattern(csvCourses);
+    console.log(`[${this.name}] Retrieved ${deduped.length} unique courses via catalog CSV export.`);
+    return deduped;
   }
 
   private async retrieveFromCatalogCsv(): Promise<Course[]> {
@@ -397,5 +394,75 @@ export class UCB extends BaseScraper {
     void _html;
     void _existingCodes;
     return [];
+  }
+
+  private parseCourseCode(code: string): { subject: string; number: number; suffix2: string } | null {
+    const trimmed = code.trim().toUpperCase();
+    const match = trimmed.match(/^([A-Z&]+)\s+(\d+[A-Z]?)$/);
+    if (!match) return null;
+    const subject = match[1];
+    const numericPart = parseInt(match[2], 10);
+    if (!Number.isFinite(numericPart)) return null;
+    return {
+      subject,
+      number: numericPart,
+      suffix2: String(numericPart % 100).padStart(2, "0"),
+    };
+  }
+
+  private getLevelRank(code: string): number {
+    const parsed = this.parseCourseCode(code);
+    if (!parsed) return 0;
+    return Math.floor(parsed.number / 100);
+  }
+
+  private dedupeCoursesByTitleAndPattern(courses: Course[]): Course[] {
+    const grouped = new Map<string, Course[]>();
+
+    for (const course of courses) {
+      const parsed = this.parseCourseCode(course.courseCode);
+      const titleKey = (course.title || "").trim().toLowerCase();
+      if (!parsed) {
+        const fallbackKey = `__raw__:${course.courseCode}:${titleKey}`;
+        const list = grouped.get(fallbackKey) || [];
+        list.push(course);
+        grouped.set(fallbackKey, list);
+        continue;
+      }
+
+      const key = `${parsed.subject}-${parsed.suffix2}::${titleKey}`;
+      const list = grouped.get(key) || [];
+      list.push(course);
+      grouped.set(key, list);
+    }
+
+    const deduped: Course[] = [];
+    for (const entries of grouped.values()) {
+      if (entries.length === 1) {
+        deduped.push(entries[0]);
+        continue;
+      }
+
+      const sorted = [...entries].sort((a, b) => {
+        const rankDiff = this.getLevelRank(b.courseCode) - this.getLevelRank(a.courseCode);
+        if (rankDiff !== 0) return rankDiff;
+        return b.courseCode.localeCompare(a.courseCode);
+      });
+      const winner = sorted[0];
+
+      const ucbCodeLinks = sorted
+        .map((c) => ({ id: c.courseCode, link: c.url || "" }))
+        .filter((item, idx, arr) => arr.findIndex((x) => x.id === item.id) === idx);
+
+      winner.details = {
+        ...(winner.details as Record<string, unknown>),
+        variant_code_links: ucbCodeLinks,
+      };
+      winner.level = this.getLevelRank(winner.courseCode) >= 2 ? "graduate" : "undergraduate";
+
+      deduped.push(winner);
+    }
+
+    return deduped;
   }
 }

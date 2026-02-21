@@ -31,7 +31,7 @@ describe("MIT scraper dedupe", () => {
     expect(courses[0].courseCode).toBe("6.602");
     expect(courses[0].level).toBe("graduate");
 
-    const mitLinks = (courses[0].details as Record<string, unknown>)?.mit_code_links as Array<{ id: string; link: string }>;
+    const mitLinks = (courses[0].details as Record<string, unknown>)?.variant_code_links as Array<{ id: string; link: string }>;
     expect(Array.isArray(mitLinks)).toBe(true);
     expect(mitLinks.map((x) => x.id)).toContain("6.102");
     expect(mitLinks.map((x) => x.id)).toContain("6.602");

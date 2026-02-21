@@ -428,7 +428,7 @@ export class CMU extends BaseScraper {
       winner.details = {
         ...winnerDetails,
         sections: mergedSections,
-        cmu_code_links: cmuCodeLinks,
+        variant_code_links: cmuCodeLinks,
       };
 
       deduped.push(winner);

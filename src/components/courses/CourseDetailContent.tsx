@@ -63,7 +63,7 @@ export default function CourseDetailContent({
           : categoryRaw;
   const variantCodeLinks = useMemo(() => {
     const details = (course.details as Record<string, unknown> | undefined) || {};
-    const raw = details.cmu_code_links || details.mit_code_links;
+    const raw = details.variant_code_links || details.cmu_code_links || details.mit_code_links || details.ucb_code_links || details.stanford_code_links;
     if (!Array.isArray(raw)) return [] as Array<{ id: string; link: string }>;
     return raw
       .map((item) => {
@@ -75,7 +75,13 @@ export default function CourseDetailContent({
       })
       .filter((item): item is { id: string; link: string } => item !== null);
   }, [course.details]);
-  const variantLabel = course.university?.toLowerCase() === "mit" ? "MIT Course Variants" : "CMU Course Variants";
+  const variantLabel = course.university?.toLowerCase() === "mit"
+    ? "MIT Course Variants"
+    : course.university?.toLowerCase() === "ucb"
+      ? "UCB Course Variants"
+      : course.university?.toLowerCase() === "stanford"
+        ? "Stanford Course Variants"
+      : "CMU Course Variants";
 
   useEffect(() => {
     const updateHeight = () => {

@@ -299,8 +299,16 @@ export class MIT extends BaseScraper {
         continue;
       }
 
-      // Same strategy as CMU aggregation: same canonical pattern + same title.
-      const key = `${parsed.dept}-${parsed.suffix2}-${parsed.numericLength}-${parsed.subjectSuffix}::${titleKey}`;
+      // MIT has paired undergrad/grad variants in modern 4-digit numbering
+      // where only the last digit differs (commonly ...0 / ...2).
+      // Collapse those pairs while keeping stricter matching for other cases.
+      const pairedMitGroup =
+        parsed.numericLength === 4 && (parsed.subject % 10 === 0 || parsed.subject % 10 === 2)
+          ? `${parsed.dept}-${Math.floor(parsed.subject / 10)}-paired-${parsed.subjectSuffix}`
+          : null;
+      const key = pairedMitGroup
+        ? `${pairedMitGroup}::${titleKey}`
+        : `${parsed.dept}-${parsed.suffix2}-${parsed.numericLength}-${parsed.subjectSuffix}::${titleKey}`;
       const list = grouped.get(key) || [];
       list.push(course);
       grouped.set(key, list);

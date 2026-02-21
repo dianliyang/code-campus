@@ -59,4 +59,25 @@ describe("UCB scraper dedupe", () => {
       .dedupeCoursesByTitleAndPattern(input);
     expect(deduped).toHaveLength(2);
   });
+
+  test("merges ELENG web variant codes like 242B and W242B", () => {
+    const scraper = new UCB();
+    const input: Course[] = [
+      {
+        university: "ucb",
+        courseCode: "ELENG 242B",
+        title: "Advanced Integrated Circuits for Communications",
+      },
+      {
+        university: "ucb",
+        courseCode: "ELENG W242B",
+        title: "Advanced Integrated Circuits for Communications",
+      },
+    ];
+
+    const deduped = (scraper as unknown as { dedupeCoursesByTitleAndPattern: (courses: Course[]) => Course[] })
+      .dedupeCoursesByTitleAndPattern(input);
+    expect(deduped).toHaveLength(1);
+    expect(deduped[0].courseCode).toBe("ELENG W242B");
+  });
 });

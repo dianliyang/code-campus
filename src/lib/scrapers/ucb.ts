@@ -401,20 +401,25 @@ export class UCB extends BaseScraper {
     number: number;
     suffix2: string;
     numericLength: number;
+    numberPrefixNormalized: string;
     numberSuffix: string;
   } | null {
     const trimmed = code.trim().toUpperCase();
-    const match = trimmed.match(/^([A-Z&]+)\s+(\d+)([A-Z]?)$/);
+    const match = trimmed.match(/^([A-Z&]+)\s+([A-Z]*)(\d+)([A-Z]?)$/);
     if (!match) return null;
     const subject = match[1];
-    const numericPart = parseInt(match[2], 10);
+    const rawPrefix = (match[2] || "").toUpperCase();
+    const numericPart = parseInt(match[3], 10);
     if (!Number.isFinite(numericPart)) return null;
+    // Berkeley "W" prefixes are web/format variants of the same catalog course.
+    const numberPrefixNormalized = rawPrefix.replace(/W/g, "");
     return {
       subject,
       number: numericPart,
       suffix2: String(numericPart % 100).padStart(2, "0"),
-      numericLength: match[2].length,
-      numberSuffix: (match[3] || "").toUpperCase(),
+      numericLength: match[3].length,
+      numberPrefixNormalized,
+      numberSuffix: (match[4] || "").toUpperCase(),
     };
   }
 
@@ -438,7 +443,7 @@ export class UCB extends BaseScraper {
         continue;
       }
 
-      const key = `${parsed.subject}-${parsed.suffix2}-${parsed.numericLength}-${parsed.numberSuffix}::${titleKey}`;
+      const key = `${parsed.subject}-${parsed.suffix2}-${parsed.numericLength}-${parsed.numberPrefixNormalized}-${parsed.numberSuffix}::${titleKey}`;
       const list = grouped.get(key) || [];
       list.push(course);
       grouped.set(key, list);

@@ -57,4 +57,27 @@ describe("MIT scraper dedupe", () => {
       .dedupeCoursesByTitleAndPattern(input);
     expect(deduped).toHaveLength(2);
   });
+
+  test("merges MIT undergrad/grad paired numbering like 3950/3952", () => {
+    const scraper = new MIT();
+    const input: Course[] = [
+      {
+        university: "mit",
+        courseCode: "6.3950",
+        title: "AI, Decision Making, and Society",
+        level: "undergraduate",
+      },
+      {
+        university: "mit",
+        courseCode: "6.3952",
+        title: "AI, Decision Making, and Society",
+        level: "graduate",
+      },
+    ];
+
+    const deduped = (scraper as unknown as { dedupeCoursesByTitleAndPattern: (courses: Course[]) => Course[] })
+      .dedupeCoursesByTitleAndPattern(input);
+    expect(deduped).toHaveLength(1);
+    expect(deduped[0].courseCode).toBe("6.3952");
+  });
 });

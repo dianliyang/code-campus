@@ -39,20 +39,29 @@ export default async function CoursesPage({ searchParams }: PageProps) {
 async function CoursesStatsStrip({ userId }: { userId?: string }) {
   const supabase = await createClient();
 
-  const [catalogCountRes, universitiesRes, newCountRes, enrolledRes] = await Promise.all([
+  const [catalogCountRes, universitiesRes, newCountRes, enrolledRes, hiddenRes] = await Promise.all([
     supabase.from("courses").select("id", { count: "exact", head: true }).eq("is_hidden", false),
     supabase.from("courses").select("university").eq("is_hidden", false),
     supabase.from("courses").select("id", { count: "exact", head: true }).eq("is_hidden", false),
     userId
       ? supabase
           .from("user_courses")
-          .select("course_id", { count: "exact", head: true })
+          .select("course_id, courses!inner(id)", { count: "exact", head: true })
           .eq("user_id", userId)
           .neq("status", "hidden")
+          .eq("courses.is_hidden", false)
+      : Promise.resolve({ count: 0 }),
+    userId
+      ? supabase
+          .from("user_courses")
+          .select("course_id, courses!inner(id)", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "hidden")
+          .eq("courses.is_hidden", false)
       : Promise.resolve({ count: 0 }),
   ]);
 
-  const totalCatalog = catalogCountRes.count || 0;
+  const totalCatalog = Math.max(0, (catalogCountRes.count || 0) - (hiddenRes.count || 0));
   const totalEnrolled = enrolledRes.count || 0;
   const uniqueUniversityCount = new Set((universitiesRes.data || []).map((row) => row.university)).size;
   const newThisWeek = newCountRes.count ? Math.max(0, Math.floor(newCountRes.count * 0.08)) : 0;

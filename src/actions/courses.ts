@@ -1433,6 +1433,31 @@ export async function hideCourseAction(courseId: number) {
   revalidatePath('/courses');
 }
 
+export async function hideCoursesAction(courseIds: number[]) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const uniqueCourseIds = Array.from(new Set((courseIds || []).filter((id) => Number.isFinite(id))));
+  if (uniqueCourseIds.length < 1) {
+    return { hidden: 0 };
+  }
+
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+  const payload = uniqueCourseIds.map((courseId) => ({
+    user_id: user.id,
+    course_id: courseId,
+    status: 'hidden',
+    updated_at: now,
+  }));
+
+  const { error } = await supabase.from("user_courses").upsert(payload);
+  if (error) throw error;
+
+  revalidatePath('/courses');
+  return { hidden: uniqueCourseIds.length };
+}
+
 export async function toggleCourseEnrollmentAction(courseId: number, isEnrolled: boolean) {
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
@@ -1475,7 +1500,8 @@ export async function fetchCoursesAction({
   userId = null as string | null
 }) {
   // Ensure this is treated as a dynamic action to prevent caching stale hidden status
-  await getUser(); 
+  const currentUser = await getUser(); 
+  const effectiveUserId = userId ?? currentUser?.id ?? null;
   
   const supabase = await createClient(); 
   const offset = (page - 1) * size;
@@ -1499,12 +1525,12 @@ export async function fetchCoursesAction({
 
   let supabaseQuery = buildQuery();
 
-  const needsHiddenFilter = !enrolledOnly && !!userId;
+  const needsHiddenFilter = !enrolledOnly && !!effectiveUserId;
   const needsFieldFilter = fields.length > 0;
 
   const [hiddenResult, fieldFilterResult] = await Promise.all([
     needsHiddenFilter
-      ? supabase.from('user_courses').select('course_id').eq('user_id', userId!).eq('status', 'hidden')
+      ? supabase.from('user_courses').select('course_id').eq('user_id', effectiveUserId!).eq('status', 'hidden')
       : Promise.resolve({ data: null }),
     needsFieldFilter
       ? supabase.from('fields').select('course_fields(course_id)').in('name', fields)
@@ -1512,8 +1538,8 @@ export async function fetchCoursesAction({
   ]);
 
   if (enrolledOnly) {
-    if (!userId) return { items: [], total: 0, pages: 0 };
-    supabaseQuery = supabaseQuery.eq('user_courses.user_id', userId);
+    if (!effectiveUserId) return { items: [], total: 0, pages: 0 };
+    supabaseQuery = supabaseQuery.eq('user_courses.user_id', effectiveUserId);
     supabaseQuery = supabaseQuery.neq('user_courses.status', 'hidden');
   } else if (needsHiddenFilter) {
     const hiddenIds = hiddenResult.data?.map(h => h.course_id) || [];

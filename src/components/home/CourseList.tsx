@@ -7,8 +7,8 @@ import CourseCard from "./CourseCard";
 import CourseListHeader from "./CourseListHeader";
 import Pagination from "./Pagination";
 import Toast from "../common/Toast";
-import { Check, Loader2, Trash2, WandSparkles } from "lucide-react";
-import { clearTopicsForCoursesAction, fetchCoursesAction, generateTopicsForCoursesAction } from "@/actions/courses";
+import { Check, EyeOff, Loader2, Trash2, WandSparkles } from "lucide-react";
+import { clearTopicsForCoursesAction, fetchCoursesAction, generateTopicsForCoursesAction, hideCoursesAction } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface CourseListProps {
@@ -39,6 +39,7 @@ export default function CourseList({
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingTopics, setIsGeneratingTopics] = useState(false);
   const [isClearingTopics, setIsClearingTopics] = useState(false);
+  const [isHidingSelected, setIsHidingSelected] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
   const selectAllRef = useRef<HTMLInputElement>(null);
@@ -82,6 +83,29 @@ export default function CourseList({
     setCourses((prev) => prev.filter((c) => c.id !== courseId));
     setSelectedCourseIds((prev) => prev.filter((id) => id !== courseId));
     setToast({ message: "Course hidden successfully", type: "success" });
+  };
+
+  const handleHideSelected = async () => {
+    if (selectedCourseIds.length < 1 || isHidingSelected) return;
+    setIsHidingSelected(true);
+    try {
+      const result = await hideCoursesAction(selectedCourseIds);
+      const hiddenSet = new Set(selectedCourseIds);
+      setCourses((prev) => prev.filter((c) => !hiddenSet.has(c.id)));
+      setSelectedCourseIds([]);
+      setToast({
+        type: "success",
+        message: `Hidden ${result.hidden} course(s).`,
+      });
+      router.refresh();
+    } catch (error) {
+      setToast({
+        type: "error",
+        message: error instanceof Error ? error.message : "Failed to hide selected courses.",
+      });
+    } finally {
+      setIsHidingSelected(false);
+    }
   };
 
   const toggleSelectAll = (checked: boolean) => {
@@ -246,6 +270,22 @@ export default function CourseList({
                   <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
                   <WandSparkles className="h-3 w-3" />
+                )}
+              </button>
+            ) : null}
+            {selectedCourseIds.length >= 1 ? (
+              <button
+                type="button"
+                onClick={handleHideSelected}
+                disabled={isHidingSelected}
+                className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
+                title="Hide selected courses"
+                aria-label="Hide selected courses"
+              >
+                {isHidingSelected ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <EyeOff className="h-3 w-3" />
                 )}
               </button>
             ) : null}

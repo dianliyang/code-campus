@@ -61,10 +61,10 @@ export default function CourseCard({
   const handleHide = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (loading) return;
-    onHide?.(course.id);
     setLoading(true);
     try {
       await hideCourseAction(course.id);
+      onHide?.(course.id);
       router.refresh();
     } catch (e) {
       console.error("Hide failed:", e);

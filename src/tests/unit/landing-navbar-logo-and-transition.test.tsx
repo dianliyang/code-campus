@@ -9,8 +9,12 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("next/image", () => ({
-  // eslint-disable-next-line @next/next/no-img-element
-  default: ({ priority: _priority, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { priority?: boolean }) => (
+  default: ({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    priority,
+    ...props
+  }: React.ImgHTMLAttributes<HTMLImageElement> & { priority?: boolean }) => (
+    // eslint-disable-next-line @next/next/no-img-element
     <img {...props} alt={props.alt || ""} />
   ),
 }));

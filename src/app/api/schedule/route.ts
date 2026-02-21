@@ -133,14 +133,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
 
-      // Check if plan already exists for this course to prevent duplicates if needed
-      // For now, we assume user might want multiple, but UI enforces one. 
-      // If we want to enforce single plan per course:
-      /*
-      const { data: existing } = await supabase.from('study_plans').select('id').eq('user_id', userId).eq('course_id', courseId).single();
-      if (existing) { ... update logic ... }
-      */
-
       const { error } = await supabase
         .from('study_plans')
         .insert({

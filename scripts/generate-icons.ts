@@ -15,7 +15,6 @@ const SOURCE_SVG = path.join(process.cwd(), 'public/code-campus-logo-bw.svg');
 const OUTPUT_DIR = path.join(process.cwd(), 'public/icons');
 
 async function generateIcons() {
-  // Ensure output directory exists
   if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
@@ -26,21 +25,13 @@ async function generateIcons() {
     const outputPath = path.join(OUTPUT_DIR, `icon-${size}x${size}.png`);
 
     try {
-      // Add padding around the logo (15% on each side)
-      const padding = Math.round(size * 0.15);
-      const logoSize = size - (padding * 2);
-
+      // Render the SVG at full size with transparent background so the
+      // rounded corners of the SVG rect show as transparent in the PNG.
+      // macOS then applies its own squircle mask on top.
       await sharp(SOURCE_SVG)
-        .resize(logoSize, logoSize, {
+        .resize(size, size, {
           fit: 'contain',
-          background: { r: 255, g: 255, b: 255, alpha: 1 }
-        })
-        .extend({
-          top: padding,
-          bottom: padding,
-          left: padding,
-          right: padding,
-          background: { r: 255, g: 255, b: 255, alpha: 1 }
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
         .png()
         .toFile(outputPath);
@@ -50,6 +41,11 @@ async function generateIcons() {
       console.error(`✗ Failed to generate ${size}x${size}:`, error);
     }
   }
+
+  // Also copy SVG as icon.svg for browser favicon use
+  const svgSrc = fs.readFileSync(SOURCE_SVG, 'utf-8');
+  fs.writeFileSync(path.join(process.cwd(), 'public/icon.svg'), svgSrc);
+  console.log('✓ Copied: icon.svg');
 
   console.log('\nDone! Icons saved to:', OUTPUT_DIR);
 }

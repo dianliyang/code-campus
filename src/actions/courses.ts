@@ -12,9 +12,6 @@ function applyPromptTemplate(template: string, values: Record<string, string>) {
 }
 
 export async function updateCourse(courseId: number, data: {
-  university: string;
-  courseCode: string;
-  title: string;
   units: string;
   description: string;
   url: string;
@@ -59,9 +56,6 @@ export async function updateCourse(courseId: number, data: {
   const { error } = await supabase
     .from("courses")
     .update({
-      university: data.university,
-      course_code: data.courseCode,
-      title: data.title,
       units: data.units,
       description: data.description,
       url: data.url,
@@ -150,9 +144,6 @@ interface EditableStudyPlanInput {
 }
 
 interface UpdateCourseFullInput {
-  university: string;
-  courseCode: string;
-  title: string;
   units: string;
   credit: number | null;
   description: string;
@@ -748,9 +739,6 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
   };
 
   const nextCoursePayload = {
-    university: input.university,
-    course_code: input.courseCode,
-    title: input.title,
     units: input.units,
     credit: input.credit,
     description: input.description,
@@ -776,9 +764,6 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
       : (existingCourse.details as Record<string, unknown> | null) || {};
 
   const existingCourseComparable = {
-    university: existingCourse.university || "",
-    course_code: existingCourse.course_code || "",
-    title: existingCourse.title || "",
     units: existingCourse.units || "",
     credit: existingCourse.credit,
     description: existingCourse.description || "",

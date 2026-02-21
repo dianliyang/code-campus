@@ -276,22 +276,6 @@ export default function CourseList({
             {selectedCourseIds.length >= 1 ? (
               <button
                 type="button"
-                onClick={handleHideSelected}
-                disabled={isHidingSelected}
-                className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
-                title="Hide selected courses"
-                aria-label="Hide selected courses"
-              >
-                {isHidingSelected ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <EyeOff className="h-3 w-3" />
-                )}
-              </button>
-            ) : null}
-            {selectedCourseIds.length >= 1 ? (
-              <button
-                type="button"
                 onClick={handleClearTopicsForSelected}
                 disabled={isClearingTopics}
                 className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
@@ -310,7 +294,25 @@ export default function CourseList({
           <div className="w-[8%]">Credit</div>
           <div className="w-[10%]">Semester</div>
           <div className="w-[8%]">Interest</div>
-          <div className="w-[5%] text-right pr-1">Action</div>
+          <div className="w-[5%] flex items-center justify-end gap-1 pr-1">
+            {selectedCourseIds.length >= 1 ? (
+              <button
+                type="button"
+                onClick={handleHideSelected}
+                disabled={isHidingSelected}
+                className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
+                title="Hide selected courses"
+                aria-label="Hide selected courses"
+              >
+                {isHidingSelected ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <EyeOff className="h-3 w-3" />
+                )}
+              </button>
+            ) : null}
+            <span>Action</span>
+          </div>
         </div>
 
         <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>

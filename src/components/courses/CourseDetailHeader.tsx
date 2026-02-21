@@ -6,7 +6,7 @@ import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PenSquare, Loader2, Trash2, ArrowUpRight } from "lucide-react";
+import { PenSquare, Loader2, Trash2, ArrowUpRight, Search } from "lucide-react";
 
 interface CourseDetailHeaderProps {
   course: Course;
@@ -24,6 +24,8 @@ export default function CourseDetailHeader({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isDeleting, setIsDeleting] = useState(false);
+  const searchQuery = `${course.university || ""} ${course.courseCode || ""}`.trim();
+  const searchHref = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this course? This action cannot be undone.")) {
@@ -52,6 +54,16 @@ export default function CourseDetailHeader({
   return (
     <header data-course-title-header className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-4 relative group">
       <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+        <a
+          href={searchHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="h-8 w-8 rounded-md border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] inline-flex items-center justify-center"
+          title="Search on Google"
+          aria-label="Search on Google"
+        >
+          <Search className="w-3.5 h-3.5" />
+        </a>
         <button
           onClick={() => onToggleEdit?.()}
           className="h-8 w-8 rounded-md border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] cursor-pointer"

@@ -71,9 +71,6 @@ export default function CourseDetailTopSection({
   const hasAiRegenerated = (description || "").toLowerCase().includes(AI_DESCRIPTION_MARK.toLowerCase());
 
   const [formData, setFormData] = useState({
-    university: course.university || "",
-    courseCode: course.courseCode || "",
-    title: course.title || "",
     units: course.units || "",
     credit: course.credit?.toString() || "",
     description: course.description || "",
@@ -155,9 +152,6 @@ export default function CourseDetailTopSection({
       }
 
       await updateCourseFull(course.id, {
-        university: formData.university,
-        courseCode: formData.courseCode,
-        title: formData.title,
         units: formData.units,
         credit: formData.credit.trim() ? Number(formData.credit) : null,
         description: formData.description,
@@ -316,9 +310,6 @@ export default function CourseDetailTopSection({
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input value={formData.university} onChange={(e) => setFormData((p) => ({ ...p, university: e.target.value }))} className={inputClass} placeholder="University" />
-              <input value={formData.courseCode} onChange={(e) => setFormData((p) => ({ ...p, courseCode: e.target.value }))} className={inputClass} placeholder="Course code" />
-              <input value={formData.title} onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))} className={`md:col-span-2 ${inputClass}`} placeholder="Title" />
               <input value={formData.url} onChange={(e) => setFormData((p) => ({ ...p, url: e.target.value }))} className={`md:col-span-2 ${inputClass}`} placeholder="URL" />
               <input value={formData.units} onChange={(e) => setFormData((p) => ({ ...p, units: e.target.value }))} className={inputClass} placeholder="Units" />
               <input value={formData.credit} onChange={(e) => setFormData((p) => ({ ...p, credit: e.target.value }))} className={inputClass} placeholder="Credit" />

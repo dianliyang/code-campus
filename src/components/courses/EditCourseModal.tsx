@@ -18,9 +18,6 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
-    university: course.university,
-    courseCode: course.courseCode,
-    title: course.title,
     units: course.units || "",
     description: course.description || "",
     url: course.url || "",

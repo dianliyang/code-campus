@@ -4,7 +4,7 @@ import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { rateLimit } from '@/lib/rate-limit';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 const perplexity = createOpenAI({
   apiKey: process.env.PERPLEXITY_API_KEY || '',

@@ -9,6 +9,14 @@ export interface TranscriptRow {
   semesters?: string[];
 }
 
+interface TranscriptPdfInput {
+  title: string;
+  rows: TranscriptRow[];
+  generatedBy: string;
+  universityFilter: string;
+  semesterFilter: string;
+}
+
 function escapePdfText(value: string): string {
   return value.replaceAll("\\", "\\\\").replaceAll("(", "\\(").replaceAll(")", "\\)");
 }
@@ -24,57 +32,130 @@ function formatDate(value?: string): string {
   return d.toLocaleDateString("en-US");
 }
 
-function buildTranscriptLines(title: string, rows: TranscriptRow[]): string[] {
-  const lines: string[] = [];
-  lines.push(title);
-  lines.push(`Generated: ${new Date().toLocaleString("en-US")}`);
-  lines.push("");
-
-  rows.forEach((row, idx) => {
-    const gpaText = row.gpa !== undefined ? Number(row.gpa).toFixed(2) : "-";
-    const scoreText = row.score !== undefined ? `${Number(row.score).toFixed(1)}%` : "-";
-    const creditText = row.credit !== undefined ? String(row.credit) : "-";
-    const semesters = (row.semesters || []).join(", ") || "-";
-
-    lines.push(
-      `${idx + 1}. ${row.university} | ${row.courseCode} | Credits: ${creditText} | GPA: ${gpaText} | Score: ${scoreText}`
-    );
-    lines.push(`   ${row.title}`);
-    lines.push(`   Semesters: ${semesters} | Completed: ${formatDate(row.completionDate)}`);
-    lines.push("");
-  });
-
-  lines.push(`Total courses: ${rows.length}`);
-  return lines.map((line) => toAscii(line));
+function truncate(value: string, max: number): string {
+  if (value.length <= max) return value;
+  if (max <= 1) return value.slice(0, max);
+  return `${value.slice(0, max - 1)}~`;
 }
 
-function paginateLines(lines: string[], linesPerPage = 46): string[][] {
+function wrap(value: string, max: number): string[] {
+  const text = value.trim();
+  if (!text) return [""];
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= max) {
+      current = next;
+      continue;
+    }
+    if (current) lines.push(current);
+    if (word.length > max) {
+      lines.push(truncate(word, max));
+      current = "";
+    } else {
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.length ? lines : [""];
+}
+
+function pad(value: string, width: number, align: "left" | "right" = "left"): string {
+  const trimmed = truncate(toAscii(value), width);
+  return align === "right" ? trimmed.padStart(width, " ") : trimmed.padEnd(width, " ");
+}
+
+function tableDivider(widths: number[]): string {
+  return `+${widths.map((w) => "-".repeat(w + 2)).join("+")}+`;
+}
+
+function renderCourseRows(rows: TranscriptRow[]): string[] {
+  // idx, code, credits, gpa, score, completed, university, title
+  const widths = [4, 12, 7, 5, 7, 10, 15, 38];
+  const divider = tableDivider(widths);
+
+  const lines: string[] = [];
+  lines.push(divider);
+  lines.push(
+    `| ${pad("No.", widths[0])} | ${pad("Code", widths[1])} | ${pad("Credit", widths[2])} | ${pad("GPA", widths[3])} | ${pad("Score", widths[4])} | ${pad("Completed", widths[5])} | ${pad("University", widths[6])} | ${pad("Course Title", widths[7])} |`
+  );
+  lines.push(divider);
+
+  rows.forEach((row, index) => {
+    const titleLines = wrap(row.title || "-", widths[7]);
+    const semText = (row.semesters || []).join(", ") || "-";
+
+    const mainLine = `| ${pad(String(index + 1), widths[0], "right")} | ${pad(row.courseCode || "-", widths[1])} | ${pad(row.credit !== undefined ? String(row.credit) : "-", widths[2], "right")} | ${pad(row.gpa !== undefined ? row.gpa.toFixed(2) : "-", widths[3], "right")} | ${pad(row.score !== undefined ? `${row.score.toFixed(1)}%` : "-", widths[4], "right")} | ${pad(formatDate(row.completionDate), widths[5])} | ${pad(row.university || "-", widths[6])} | ${pad(titleLines[0], widths[7])} |`;
+    lines.push(mainLine);
+
+    for (let i = 1; i < titleLines.length; i += 1) {
+      lines.push(
+        `| ${pad("", widths[0])} | ${pad("", widths[1])} | ${pad("", widths[2])} | ${pad("", widths[3])} | ${pad("", widths[4])} | ${pad("", widths[5])} | ${pad("", widths[6])} | ${pad(titleLines[i], widths[7])} |`
+      );
+    }
+
+    lines.push(
+      `| ${pad("", widths[0])} | ${pad("", widths[1])} | ${pad("", widths[2])} | ${pad("", widths[3])} | ${pad("", widths[4])} | ${pad("", widths[5])} | ${pad("Sem:", widths[6])} | ${pad(semText, widths[7])} |`
+    );
+    lines.push(divider);
+  });
+
+  return lines;
+}
+
+function paginateLines(lines: string[], linesPerPage = 48): string[][] {
   const pages: string[][] = [];
   for (let i = 0; i < lines.length; i += linesPerPage) {
     pages.push(lines.slice(i, i + linesPerPage));
   }
-  return pages.length > 0 ? pages : [["No transcript rows available."]];
+  return pages.length ? pages : [["No transcript data available."]];
+}
+
+function buildLines(input: TranscriptPdfInput): string[] {
+  const now = new Date().toLocaleString("en-US");
+  const scoreRows = input.rows.filter((r) => typeof r.score === "number");
+  const avgScore =
+    scoreRows.length > 0
+      ? (scoreRows.reduce((sum, r) => sum + (r.score || 0), 0) / scoreRows.length).toFixed(2)
+      : "-";
+
+  const lines: string[] = [];
+  lines.push("CODE CAMPUS");
+  lines.push("OFFICIAL ACADEMIC TRANSCRIPT");
+  lines.push("=".repeat(108));
+  lines.push(`Title      : ${input.title}`);
+  lines.push(`University : ${input.universityFilter}`);
+  lines.push(`Semester   : ${input.semesterFilter}`);
+  lines.push(`Generated  : ${now}`);
+  lines.push(`Generated by user : ${toAscii(input.generatedBy)}`);
+  lines.push(`Records    : ${input.rows.length}`);
+  lines.push(`Average score (where available): ${avgScore}`);
+  lines.push("");
+  lines.push(...renderCourseRows(input.rows));
+  lines.push("");
+  lines.push("This document is generated by CodeCampus and intended for personal academic tracking.");
+  return lines.map((line) => toAscii(line));
 }
 
 function buildPageStream(lines: string[]): string {
-  const fontSize = 10;
-  const startY = 760;
-  const lineHeight = 16;
-  const x = 45;
+  const fontSize = 9;
+  const startY = 770;
+  const lineHeight = 14;
+  const x = 28;
 
-  const ops: string[] = ["BT", `/F1 ${fontSize} Tf`];
+  const ops: string[] = ["BT", `/F1 ${fontSize} Tf`, `${x} ${startY} Td`];
   lines.forEach((line, index) => {
-    const y = startY - index * lineHeight;
-    ops.push(`${x} ${y} Td (${escapePdfText(line)}) Tj`);
-    if (index < lines.length - 1) ops.push(`${-x} ${-lineHeight} Td`);
+    if (index > 0) ops.push(`0 ${-lineHeight} Td`);
+    ops.push(`(${escapePdfText(line)}) Tj`);
   });
   ops.push("ET");
   return ops.join("\n");
 }
 
-export function generateTranscriptPdf(title: string, rows: TranscriptRow[]): Buffer {
-  const lines = buildTranscriptLines(title, rows);
-  const pages = paginateLines(lines);
+export function generateTranscriptPdf(input: TranscriptPdfInput): Buffer {
+  const pages = paginateLines(buildLines(input));
 
   const objectMap = new Map<number, string>();
   const pageCount = pages.length;
@@ -85,8 +166,7 @@ export function generateTranscriptPdf(title: string, rows: TranscriptRow[]): Buf
 
   const kids: string[] = [];
   for (let i = 0; i < pageCount; i += 1) {
-    const pageObjectId = firstPageObjectId + i * 2;
-    kids.push(`${pageObjectId} 0 R`);
+    kids.push(`${firstPageObjectId + i * 2} 0 R`);
   }
   objectMap.set(2, `<< /Type /Pages /Kids [${kids.join(" ")}] /Count ${pageCount} >>`);
 
@@ -100,13 +180,10 @@ export function generateTranscriptPdf(title: string, rows: TranscriptRow[]): Buf
       pageObjectId,
       `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontObjectId} 0 R >> >> /Contents ${contentObjectId} 0 R >>`
     );
-    objectMap.set(
-      contentObjectId,
-      `<< /Length ${streamLength} >>\nstream\n${stream}\nendstream`
-    );
+    objectMap.set(contentObjectId, `<< /Length ${streamLength} >>\nstream\n${stream}\nendstream`);
   }
 
-  objectMap.set(fontObjectId, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  objectMap.set(fontObjectId, "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>");
 
   const maxObjectId = fontObjectId;
   let pdf = "%PDF-1.4\n";

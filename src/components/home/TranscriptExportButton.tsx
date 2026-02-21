@@ -42,7 +42,6 @@ export default function TranscriptExportButton({ rows, selectedSemester }: Trans
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          rows: filteredRows,
           university: selectedUniversity,
           semester: selectedSemester,
         }),

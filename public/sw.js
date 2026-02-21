@@ -264,8 +264,8 @@ async function getPendingCount() {
   const db = await openDB();
   return new Promise((resolve) => {
     const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).count();
-    req.onsuccess = () => resolve(req.result);
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => resolve(req.result.filter((e) => !e.failed).length);
     req.onerror = () => resolve(0);
   });
 }
@@ -277,7 +277,7 @@ self.addEventListener('sync', (event) => {
 
 // ─── Online fallback (posted by OfflineIndicator) ────────────────────────────
 self.addEventListener('message', (event) => {
-  if (event.data?.type === 'ONLINE') drainQueue();
+  if (event.data?.type === 'ONLINE') event.waitUntil(drainQueue());
 });
 
 // ─── Offline write handler (full implementation) ─────────────────────────────

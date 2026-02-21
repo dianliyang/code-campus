@@ -300,14 +300,14 @@ export default function CourseList({
                 type="button"
                 onClick={handleHideSelected}
                 disabled={isHidingSelected}
-                className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
+                className="inline-flex h-4 w-4 items-center justify-center rounded text-[#666] hover:text-[#2f2f2f] disabled:opacity-50"
                 title="Hide selected courses"
                 aria-label="Hide selected courses"
               >
                 {isHidingSelected ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="h-2.5 w-2.5 animate-spin" />
                 ) : (
-                  <EyeOff className="h-3 w-3" />
+                  <EyeOff className="h-2.5 w-2.5" />
                 )}
               </button>
             ) : null}

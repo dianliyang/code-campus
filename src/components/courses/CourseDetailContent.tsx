@@ -382,9 +382,9 @@ export default function CourseDetailContent({
                       <Users className="w-4 h-4 text-[#777]" />
                       Teaching Staff
                     </h3>
-                    <ul className="space-y-3">
+                    <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                       {course.instructors.map((inst, idx) => (
-                        <li key={idx} className="flex items-center gap-3">
+                        <li key={idx} className="flex items-center gap-3 rounded-md border border-[#e7e7e7] bg-white px-2.5 py-2">
                           <div className="w-8 h-8 rounded-full bg-[#efefef] flex items-center justify-center text-[#666] text-xs font-medium">
                             {inst.charAt(0)}
                           </div>

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateTranscriptPdf, TranscriptRow } from "@/lib/pdf/transcript";
+import { generateTranscriptPdfWithReact } from "@/lib/pdf/transcript-react";
+
+export const runtime = "nodejs";
 
 type ExportPayload = {
   university?: string;
@@ -85,13 +88,21 @@ export async function POST(req: NextRequest) {
     const titleSemester = body.semester && body.semester !== "all" ? body.semester : "All Semesters";
     const title = `Academic Transcript - ${titleUniversity} - ${titleSemester}`;
 
-    const pdfBuffer = generateTranscriptPdf({
+    const pdfInput = {
       title,
       rows,
       generatedBy: user.email || user.id,
       universityFilter: titleUniversity,
       semesterFilter: titleSemester,
-    });
+    };
+
+    let pdfBuffer: Buffer;
+    try {
+      pdfBuffer = await generateTranscriptPdfWithReact(pdfInput);
+    } catch (reactPdfError) {
+      console.error("React PDF transcript generation failed, falling back:", reactPdfError);
+      pdfBuffer = generateTranscriptPdf(pdfInput);
+    }
     const uniSafe = toSafeFilenamePart(titleUniversity);
     const semSafe = toSafeFilenamePart(titleSemester);
     const filename = `transcript_${uniSafe}_${semSafe}.pdf`;

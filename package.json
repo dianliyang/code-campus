@@ -20,7 +20,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^3.0.24",
     "@ai-sdk/react": "^3.0.69",
-    "@sentry/nextjs": "^10.38.0",
+    "@sentry/nextjs": "^10.39.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.90.1",
     "@vercel/analytics": "^1.6.1",

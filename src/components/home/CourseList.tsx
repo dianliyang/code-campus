@@ -292,7 +292,6 @@ export default function CourseList({
           </div>
           <div className="w-[8%]">Credit</div>
           <div className="w-[10%]">Semester</div>
-          <div className="w-[8%]">Interest</div>
           <div className="w-[5%] flex items-center justify-end gap-1 pr-1">
             {selectedCourseIds.length >= 1 ? (
               <button

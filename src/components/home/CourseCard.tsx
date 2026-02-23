@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Button } from "@/components/ui/button";
-import { Loader2, Check, Plus, EyeOff, Flame } from "lucide-react";
+import { Loader2, Check, Plus, EyeOff } from "lucide-react";
 import { toggleCourseEnrollmentAction, hideCourseAction } from "@/actions/courses";
 
 interface CourseCardProps {
@@ -70,7 +70,6 @@ export default function CourseCard({
     }
   };
 
-  const popularity = typeof course.popularity === "number" ? `${course.popularity}%` : "-";
   const credit = course.credit ?? null;
   const primaryField = course.fields?.[0];
   const topics = course.fields || [];
@@ -126,10 +125,6 @@ export default function CourseCard({
 
         <div className="w-[10%] hidden md:block text-sm text-[#484848]">{latestSemester ?? "-"}</div>
 
-        <div className="w-[8%] hidden md:flex items-center gap-1 text-xs text-[#666]">
-          <Flame className="w-3.5 h-3.5 text-amber-500" />
-          <span>{popularity}</span>
-        </div>
 
         <div className="w-[5%] flex items-center justify-end gap-2">
           <Button
@@ -192,13 +187,6 @@ export default function CourseCard({
         <div className="rounded-md bg-white px-2 py-1.5">
           <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Semester</p>
           <p className="text-[13px] font-medium text-[#3b3b3b]">{latestSemester ?? "-"}</p>
-        </div>
-        <div className="rounded-md bg-white px-2 py-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Interest</p>
-          <p className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3b3b3b]">
-            <Flame className="w-3.5 h-3.5 text-amber-500" />
-            {popularity}
-          </p>
         </div>
       </div>
       {progress ? <div className="mt-3 h-1 rounded-full bg-slate-100"><div className="h-full bg-slate-900 rounded-full" style={{ width: `${progress}%` }} /></div> : null}

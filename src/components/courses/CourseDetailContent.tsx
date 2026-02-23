@@ -537,35 +537,37 @@ export default function CourseDetailContent({
                     {enrolled ? "Enrolled" : "Not Enrolled"}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleEnrollToggle}
-                  disabled={isEnrolling}
-                  className={`inline-flex h-8 items-center justify-center w-full gap-2 rounded-md border px-2.5 text-[13px] font-medium transition-colors disabled:opacity-50 ${
-                    enrolled
-                      ? "border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
-                      : "border-[#c3d9c3] bg-[#f0f7f0] text-[#2d6a2d] hover:bg-[#e4f0e4]"
-                  }`}
-                >
-                  {isEnrolling ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : enrolled ? (
-                    <X className="w-3.5 h-3.5" />
-                  ) : (
-                    <Plus className="w-3.5 h-3.5" />
-                  )}
-                  {enrolled ? "Unenroll" : "Enroll"}
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleEnrollToggle}
+                    disabled={isEnrolling}
+                    className={`inline-flex h-8 items-center justify-center w-full gap-2 rounded-md border px-2.5 text-[13px] font-medium transition-colors disabled:opacity-50 ${
+                      enrolled
+                        ? "border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
+                        : "border-[#c3d9c3] bg-[#f0f7f0] text-[#2d6a2d] hover:bg-[#e4f0e4]"
+                    }`}
+                  >
+                    {isEnrolling ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : enrolled ? (
+                      <X className="w-3.5 h-3.5" />
+                    ) : (
+                      <Plus className="w-3.5 h-3.5" />
+                    )}
+                    {enrolled ? "Unenroll" : "Enroll"}
+                  </button>
+                  <a
+                    href={course.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-8 items-center justify-center w-full gap-2 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+                  >
+                    <span>Visit</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-[#777]" />
+                  </a>
                 </div>
-                <a
-                  href={course.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-8 items-center justify-center w-full gap-2 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-                >
-                  <span>Visit Course Page</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#777]" />
-                </a>
+                </div>
               </div>
 
               {(course.crossListedCourses || (course.relatedUrls && course.relatedUrls.length > 0) || variantCodeLinks.length > 0) && (

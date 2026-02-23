@@ -322,7 +322,6 @@ export default function CourseList({
               isInitialEnrolled={enrolledIds.includes(course.id)}
               onEnrollToggle={fetchEnrolled}
               onHide={handleHide}
-              dict={dict}
               viewMode={viewMode}
               rowIndex={idx}
               isSelected={selectedCourseIds.includes(course.id)}

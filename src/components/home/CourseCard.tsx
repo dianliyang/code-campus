@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
-import { Dictionary } from "@/lib/dictionary";
 import { Button } from "@/components/ui/button";
 import { Loader2, Check, Plus, EyeOff, Flame } from "lucide-react";
 import { toggleCourseEnrollmentAction, hideCourseAction } from "@/actions/courses";
@@ -18,7 +17,6 @@ interface CourseCardProps {
   isSelected?: boolean;
   onSelectChange?: (courseId: number, checked: boolean) => void;
   progress?: number;
-  dict: Dictionary["dashboard"]["courses"];
   viewMode?: "list" | "grid";
   rowIndex?: number;
 }
@@ -31,7 +29,6 @@ export default function CourseCard({
   isSelected = false,
   onSelectChange,
   progress,
-  dict,
   viewMode = "grid",
   rowIndex = 0,
 }: CourseCardProps) {

@@ -142,7 +142,7 @@ describe('GET /api/external/courses/[course_code]', () => {
       details: null,
       course_fields: [],
       study_plans: [{ id: 11, course_id: 1, updated_at: '2026-02-14T12:00:00.000Z', created_at: '2026-02-13T12:00:00.000Z' }],
-      user_courses: [],
+      user_courses: [{ status: 'in_progress', progress: 0, gpa: null, score: null, notes: null, priority: 0, updated_at: null }],
     };
 
     const { mockFrom } = makeMock({ data: mockData, error: null });

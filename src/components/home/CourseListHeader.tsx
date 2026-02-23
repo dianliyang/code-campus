@@ -39,20 +39,14 @@ export default function CourseListHeader({ viewMode, setViewMode, dict }: Course
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  useEffect(() => {
-    if (query === lastPushedQuery.current) return;
-
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (query) params.set("q", query);
-      else params.delete("q");
-      params.set("page", "1");
-      lastPushedQuery.current = query;
-      router.push(`?${params.toString()}`, { scroll: false });
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query, router, searchParams]);
+  const commitSearch = (q: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (q) params.set("q", q);
+    else params.delete("q");
+    params.set("page", "1");
+    lastPushedQuery.current = q;
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -121,12 +115,13 @@ export default function CourseListHeader({ viewMode, setViewMode, dict }: Course
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") commitSearch(query); }}
               placeholder="Search..."
               className="h-8 w-full md:w-[220px] rounded-md border border-[#dddddd] bg-white pl-8 pr-8 text-[13px] text-[#333] placeholder:text-[#a3a3a3] outline-none focus:border-[#c8c8c8]"
             />
             {query ? (
               <button
-                onClick={() => setQuery("")}
+                onClick={() => { setQuery(""); commitSearch(""); }}
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#9a9a9a] hover:text-[#555]"
                 aria-label="Clear search"
               >

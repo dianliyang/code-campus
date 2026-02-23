@@ -115,11 +115,16 @@ export async function GET(
       );
     }
 
-    if (!data || (Array.isArray(data) && data.length === 0)) {
+    const activeData = (Array.isArray(data) ? data : data ? [data] : []).filter((c) => {
+      const uc = Array.isArray(c.user_courses) ? c.user_courses : [];
+      return uc.some((r) => r.status !== 'hidden');
+    });
+
+    if (!activeData.length) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    const course = Array.isArray(data) ? data[0] : data;
+    const course = activeData[0];
     const lastUpdatedMs = courseLastUpdatedAt(course as Record<string, unknown>);
     const clientLastUpdate = parseTimestamp(request.headers.get('if-modified-since'));
     if (

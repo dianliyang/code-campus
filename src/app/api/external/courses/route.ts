@@ -128,7 +128,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const coursesWithEnrollment = (data ?? []).map((course) => {
+    const coursesWithEnrollment = (data ?? [])
+      .filter((course) => {
+        const uc = Array.isArray(course.user_courses) ? course.user_courses : [];
+        return uc.some((r) => r.status !== 'hidden');
+      })
+      .map((course) => {
       const { study_plans, course_fields, user_courses, ...courseFields } = course;
       const publicCourseFields = { ...courseFields } as Record<string, unknown>;
       delete publicCourseFields.is_hidden;

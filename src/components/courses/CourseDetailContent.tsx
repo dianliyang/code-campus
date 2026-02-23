@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
-import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, type SchedulePlanPreview } from "@/actions/courses";
-import { Check, Clock, ExternalLink, Globe, Info, Loader2, PenSquare, Trash2, Users, WandSparkles, X } from "lucide-react";
+import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, toggleCourseEnrollmentAction, type SchedulePlanPreview } from "@/actions/courses";
+import { Check, Clock, ExternalLink, Globe, Info, Loader2, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
@@ -29,6 +29,8 @@ export default function CourseDetailContent({
   studyPlans,
   projectSeminarRef = null,
 }: CourseDetailContentProps) {
+  const [enrolled, setEnrolled] = useState(isEnrolled);
+  const [isEnrolling, setIsEnrolling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isGeneratingPlans, setIsGeneratingPlans] = useState(false);
   const [isConfirmingPlans, setIsConfirmingPlans] = useState(false);
@@ -147,6 +149,19 @@ export default function CourseDetailContent({
   const handleDiscardPlans = () => {
     setPlanPreview(null);
     setSelectedPlanIds([]);
+  };
+
+  const handleEnrollToggle = async () => {
+    setIsEnrolling(true);
+    try {
+      await toggleCourseEnrollmentAction(course.id, enrolled);
+      setEnrolled(!enrolled);
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsEnrolling(false);
+    }
   };
 
   const handleDeleteSinglePlan = async (index: number) => {
@@ -518,10 +533,29 @@ export default function CourseDetailContent({
                 <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-[#666]">Your Status</span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${isEnrolled ? "bg-green-50 text-green-700 border-green-100" : "bg-[#f3f3f3] text-[#666] border-[#e5e5e5]"}`}>
-                    {isEnrolled ? "Enrolled" : "Not Enrolled"}
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${enrolled ? "bg-green-50 text-green-700 border-green-100" : "bg-[#f3f3f3] text-[#666] border-[#e5e5e5]"}`}>
+                    {enrolled ? "Enrolled" : "Not Enrolled"}
                   </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleEnrollToggle}
+                  disabled={isEnrolling}
+                  className={`inline-flex h-8 items-center justify-center w-full gap-2 rounded-md border px-2.5 text-[13px] font-medium transition-colors disabled:opacity-50 ${
+                    enrolled
+                      ? "border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
+                      : "border-[#c3d9c3] bg-[#f0f7f0] text-[#2d6a2d] hover:bg-[#e4f0e4]"
+                  }`}
+                >
+                  {isEnrolling ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : enrolled ? (
+                    <X className="w-3.5 h-3.5" />
+                  ) : (
+                    <Plus className="w-3.5 h-3.5" />
+                  )}
+                  {enrolled ? "Unenroll" : "Enroll"}
+                </button>
                 </div>
                 <a
                   href={course.url}

@@ -1,9 +1,10 @@
 "use client";
 
-import { startTransition, useEffect, useMemo, useState } from "react";
+import { startTransition, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
+import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
 import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, toggleCourseEnrollmentAction, updateCourseRelatedUrls, type SchedulePlanPreview } from "@/actions/courses";
 import { Check, Clock, ExternalLink, Globe, Info, Loader2, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,6 @@ export default function CourseDetailContent({
     generatedPlans: SchedulePlanPreview[];
   } | null>(null);
   const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([]);
-  const [statusCardMinHeight, setStatusCardMinHeight] = useState<number | null>(null);
   const [localRelatedUrls, setLocalRelatedUrls] = useState<string[]>(course.relatedUrls || []);
   const [showAddUrl, setShowAddUrl] = useState(false);
   const [newUrl, setNewUrl] = useState("");
@@ -93,18 +93,6 @@ export default function CourseDetailContent({
       : course.university?.toLowerCase() === "stanford"
         ? "Stanford Course Variants"
       : "CMU Course Variants";
-
-  useEffect(() => {
-    const updateHeight = () => {
-      const header = document.querySelector<HTMLElement>("[data-course-title-header]");
-      if (!header) return;
-      setStatusCardMinHeight(header.offsetHeight);
-    };
-
-    updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
-  }, [course.title, course.university, course.courseCode]);
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);
@@ -244,18 +232,25 @@ export default function CourseDetailContent({
 
   return (
     <div className="space-y-4 pb-4">
-      <CourseDetailTopSection
+      <CourseDetailHeader
         course={course}
-        descriptionEmptyText={descriptionEmptyText}
-        availableTopics={availableTopics}
-        availableSemesters={availableSemesters}
-        studyPlans={studyPlans}
         isEditing={isEditing}
-        onEditingChange={setIsEditing}
+        onToggleEdit={() => setIsEditing(!isEditing)}
         projectSeminarRef={projectSeminarRef}
       />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 space-y-4">
+          <CourseDetailTopSection
+            course={course}
+            descriptionEmptyText={descriptionEmptyText}
+            availableTopics={availableTopics}
+            availableSemesters={availableSemesters}
+            studyPlans={studyPlans}
+            isEditing={isEditing}
+            onEditingChange={setIsEditing}
+            projectSeminarRef={projectSeminarRef}
+            showHeader={false}
+          />
 
           {(hasStudyPlans || course.details?.schedule || (course.instructors && course.instructors.length > 0)) && (
             <section>
@@ -550,10 +545,7 @@ export default function CourseDetailContent({
 
         <aside className="lg:col-span-4 space-y-4">
           <div className="sticky top-0 space-y-4">
-              <div
-                className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 flex flex-col justify-between"
-                style={statusCardMinHeight ? { minHeight: `${statusCardMinHeight}px` } : undefined}
-              >
+              <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
                 <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-[#666]">Your Status</span>

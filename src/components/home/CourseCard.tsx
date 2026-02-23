@@ -165,36 +165,14 @@ export default function CourseCard({
 
   return (
     <div className="bg-[#fafafa] border border-[#e3e3e3] rounded-xl p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <UniversityIcon name={course.university} size={30} className="bg-white rounded-md" />
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-slate-900 truncate">
-              <Link href={detailHref}>{course.title}</Link>
-            </h2>
-            <p className="text-xs text-slate-500 truncate">
-              {course.courseCode} · {course.university}
-            </p>
-          </div>
+      <div className="flex items-center gap-3 min-w-0">
+        <UniversityIcon name={course.university} size={30} className="bg-white rounded-md" />
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-slate-900 truncate">{course.title}</h2>
+          <p className="text-xs text-slate-500 truncate">
+            {course.courseCode} · {course.university}
+          </p>
         </div>
-        <Button
-          onClick={handleEnroll}
-          disabled={loading}
-          size="xs"
-          className={`transition-colors ${
-            isEnrolled
-              ? "h-8 w-8 p-0 rounded-md border border-green-100 bg-green-50 text-green-700 hover:bg-green-100"
-              : "h-8 w-8 p-0 rounded-md border border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
-          }`}
-        >
-          {loading ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : isEnrolled ? (
-            <Check className="w-3.5 h-3.5" />
-          ) : (
-            <Plus className="w-3.5 h-3.5" />
-          )}
-        </Button>
       </div>
 
       <div className="mt-3 flex items-center gap-1.5">
@@ -223,7 +201,34 @@ export default function CourseCard({
           </p>
         </div>
       </div>
-  {progress ? <div className="mt-3 h-1 rounded-full bg-slate-100"><div className="h-full bg-slate-900 rounded-full" style={{ width: `${progress}%` }} /></div> : null}
+      {progress ? <div className="mt-3 h-1 rounded-full bg-slate-100"><div className="h-full bg-slate-900 rounded-full" style={{ width: `${progress}%` }} /></div> : null}
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <Link
+          href={detailHref}
+          className="h-8 flex items-center justify-center rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+        >
+          View
+        </Link>
+        <Button
+          onClick={handleEnroll}
+          disabled={loading}
+          size="xs"
+          className={`h-8 w-full transition-colors ${
+            isEnrolled
+              ? "rounded-md border border-green-100 bg-green-50 text-green-700 hover:bg-green-100"
+              : "rounded-md border border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
+          }`}
+        >
+          {loading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : isEnrolled ? (
+            <><Check className="w-3.5 h-3.5" /> Enrolled</>
+          ) : (
+            <><Plus className="w-3.5 h-3.5" /> Enroll</>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

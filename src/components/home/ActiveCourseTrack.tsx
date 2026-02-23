@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useState } from "react";
 import { Course } from "@/types";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -58,7 +58,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
       });
       if (res.ok) {
         onUpdate?.();
-        router.refresh();
+        startTransition(() => router.refresh());
       }
     } catch (e) {
       console.error("Failed to update progress:", e);
@@ -84,7 +84,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
       });
       if (res.ok) {
         onUpdate?.();
-        router.refresh();
+        startTransition(() => router.refresh());
       }
     } catch (e) {
       console.error("Failed to complete course:", e);

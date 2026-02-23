@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
@@ -137,7 +137,7 @@ export default function CourseDetailContent({
       alert(`Updated Weekly Schedule with ${result.created} plan(s).`);
       setPlanPreview(null);
       setSelectedPlanIds([]);
-      router.refresh();
+      startTransition(() => router.refresh());
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : "Failed to save generated study plans");
@@ -156,7 +156,7 @@ export default function CourseDetailContent({
     try {
       await toggleCourseEnrollmentAction(course.id, enrolled);
       setEnrolled(!enrolled);
-      router.refresh();
+      startTransition(() => router.refresh());
     } catch (error) {
       console.error(error);
     } finally {
@@ -176,7 +176,7 @@ export default function CourseDetailContent({
         body: JSON.stringify({ action: "remove_plan", planId: plan.id }),
       });
       if (!res.ok) throw new Error("Failed to delete study plan");
-      router.refresh();
+      startTransition(() => router.refresh());
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : "Failed to delete study plan");
@@ -209,7 +209,7 @@ export default function CourseDetailContent({
         if (!res.ok) throw new Error("Failed to update study plan");
       }
       setEditingPlanIndex(null);
-      router.refresh();
+      startTransition(() => router.refresh());
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : "Failed to save study plan");

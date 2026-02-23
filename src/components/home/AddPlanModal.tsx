@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 
 interface AddPlanModalProps {
   isOpen: boolean;
@@ -59,14 +59,14 @@ export default function AddPlanModal({ isOpen, onClose, course, existingPlan }: 
       });
 
       if (res.ok) {
-        router.refresh();
         onClose();
+        startTransition(() => router.refresh());
       } else {
-        alert("Failed to save plan");
+        alert("Failed to save schedule");
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving plan");
+      alert("Error saving schedule");
     } finally {
       setLoading(false);
     }
@@ -81,115 +81,122 @@ export default function AddPlanModal({ isOpen, onClose, course, existingPlan }: 
     }));
   };
 
-  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekdays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  const inputClass = "h-8 w-full rounded-md border border-[#d8d8d8] bg-white px-2.5 text-[13px] text-[#333] outline-none transition-colors focus:border-[#bcbcbc]";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-bold text-gray-900">{existingPlan ? 'Edit Study Plan' : 'Add Study Plan'}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="w-5 h-5" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+      <div className="bg-white rounded-lg border border-[#e5e5e5] shadow-lg p-5 w-full max-w-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-[#1f1f1f]">
+            {existingPlan ? 'Edit Schedule' : 'Add Schedule'}
+          </h3>
+          <button
+            onClick={onClose}
+            className="w-6 h-6 rounded flex items-center justify-center text-[#999] hover:text-[#444] hover:bg-[#f5f5f5] transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="mb-6">
-          <p className="text-sm text-gray-500 uppercase tracking-wide font-bold">Course</p>
-          <p className="text-base font-medium text-gray-900">{course.title}</p>
+        <div className="mb-4 rounded-md bg-[#fafafa] border border-[#f0f0f0] px-3 py-2">
+          <p className="text-[10px] font-medium text-[#999] uppercase tracking-wide">Course</p>
+          <p className="text-[13px] font-medium text-[#1f1f1f] mt-0.5 line-clamp-1">{course.title}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Start Date</label>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-[#666]">Start Date</label>
               <input
                 type="date"
                 required
-                className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                className={inputClass}
                 value={formData.startDate}
                 onChange={e => setFormData({ ...formData, startDate: e.target.value })}
               />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">End Date</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-[#666]">End Date</label>
               <input
                 type="date"
                 required
-                className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                className={inputClass}
                 value={formData.endDate}
                 onChange={e => setFormData({ ...formData, endDate: e.target.value })}
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Days of Week</label>
-            <div className="flex justify-between gap-1">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-[#666]">Days of Week</label>
+            <div className="flex gap-1">
               {weekdays.map((day, idx) => (
                 <button
                   key={day}
                   type="button"
                   onClick={() => toggleDay(idx)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex-1 h-8 rounded-md text-[11px] font-medium transition-colors border ${
                     formData.days.includes(idx)
-                      ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/20'
-                      : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                      ? 'bg-[#1f1f1f] text-white border-[#1f1f1f]'
+                      : 'bg-white text-[#777] border-[#d8d8d8] hover:bg-[#f6f6f6]'
                   }`}
                 >
-                  {day[0]}
+                  {day}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Start Time</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-[#666]">Start Time</label>
               <input
                 type="time"
                 required
-                className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                className={inputClass}
                 value={formData.startTime}
                 onChange={e => setFormData({ ...formData, startTime: e.target.value })}
               />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">End Time</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-[#666]">End Time</label>
               <input
                 type="time"
                 required
-                className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                className={inputClass}
                 value={formData.endTime}
                 onChange={e => setFormData({ ...formData, endTime: e.target.value })}
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Location</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-[#666]">Location</label>
             <input
               type="text"
-              className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+              className={inputClass}
               placeholder="e.g. Library, Home, Cafe"
               value={formData.location}
               onChange={e => setFormData({ ...formData, location: e.target.value })}
             />
           </div>
 
-          <div className="pt-4 flex gap-3">
+          <div className="pt-1 flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-50 rounded-xl"
+              className="h-8 rounded-md border border-[#d3d3d3] bg-white px-3 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 bg-violet-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-violet-500/20 hover:bg-violet-600 disabled:opacity-50"
+              className="h-8 rounded-md bg-[#1f1f1f] text-white px-3 text-[13px] font-medium hover:bg-[#333] disabled:opacity-50 transition-colors inline-flex items-center gap-1.5"
             >
-              {loading ? 'Saving...' : (existingPlan ? 'Update Plan' : 'Create Plan')}
+              {loading && <Loader2 className="w-3 h-3 animate-spin" />}
+              {existingPlan ? 'Update' : 'Save'}
             </button>
           </div>
         </form>

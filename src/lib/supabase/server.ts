@@ -293,23 +293,30 @@ export class SupabaseDatabase {
         if (c.semesters && c.semesters.length > 0) {
           payload.latest_semester = { term: c.semesters[0].term, year: c.semesters[0].year };
         }
-      } else if (
-        c.details &&
-        typeof c.details === "object" &&
-        (
-          Array.isArray((c.details as Record<string, unknown>).variant_code_links) ||
-          Array.isArray((c.details as Record<string, unknown>).cmu_code_links)
-        )
-      ) {
-        const incomingDetails = (c.details as Record<string, unknown>) || {};
-        const incomingVariantLinks = Array.isArray(incomingDetails.variant_code_links)
-          ? incomingDetails.variant_code_links
-          : incomingDetails.cmu_code_links;
-        payload.details = {
-          ...existingDetails,
-          ...incomingDetails,
-          ...(incomingVariantLinks ? { variant_code_links: incomingVariantLinks } : {}),
-        } as Json;
+      } else {
+        const incomingDescription = cleanedDescription || c.description || "";
+        const existingHasDescription = (existing?.description || "").trim().length > 0;
+        if (incomingDescription && !existingHasDescription) {
+          payload.description = incomingDescription;
+        }
+        if (
+          c.details &&
+          typeof c.details === "object" &&
+          (
+            Array.isArray((c.details as Record<string, unknown>).variant_code_links) ||
+            Array.isArray((c.details as Record<string, unknown>).cmu_code_links)
+          )
+        ) {
+          const incomingDetails = (c.details as Record<string, unknown>) || {};
+          const incomingVariantLinks = Array.isArray(incomingDetails.variant_code_links)
+            ? incomingDetails.variant_code_links
+            : incomingDetails.cmu_code_links;
+          payload.details = {
+            ...existingDetails,
+            ...incomingDetails,
+            ...(incomingVariantLinks ? { variant_code_links: incomingVariantLinks } : {}),
+          } as Json;
+        }
       }
 
       return payload;
@@ -601,11 +608,13 @@ export class SupabaseDatabase {
     }
   }
 
-  async getExistingCourseCodes(university: string): Promise<Map<string, { term: string, year: number } | null>> {
+  async getExistingCourseCodes(
+    university: string
+  ): Promise<Map<string, { term: string; year: number; hasDescription: boolean } | null>> {
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from('courses')
-      .select('course_code, latest_semester')
+      .select('course_code, latest_semester, description')
       .eq('university', university);
 
     if (error) {
@@ -613,9 +622,18 @@ export class SupabaseDatabase {
       return new Map();
     }
 
-    const map = new Map<string, { term: string, year: number } | null>();
+    const map = new Map<string, { term: string; year: number; hasDescription: boolean } | null>();
     (data || []).forEach(row => {
-      map.set(row.course_code, row.latest_semester as { term: string, year: number } | null);
+      const latest = row.latest_semester as { term: string; year: number } | null;
+      map.set(
+        row.course_code,
+        latest
+          ? {
+              ...latest,
+              hasDescription: (row.description || "").trim().length > 0,
+            }
+          : null
+      );
     });
     return map;
   }

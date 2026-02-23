@@ -65,7 +65,7 @@ export class Stanford extends BaseScraper {
       if (this.db) {
         const existingMap = await this.db.getExistingCourseCodes("Stanford");
         for (const [code, latest] of existingMap.entries()) {
-          if (latest && compareSemesters(latest, { term: dbTerm, year }) >= 0) {
+          if (latest && compareSemesters(latest, { term: dbTerm, year }) >= 0 && latest.hasDescription) {
             upToDateCodes.add(code);
           }
         }
@@ -153,6 +153,10 @@ export class Stanford extends BaseScraper {
           if (existingCodes.has(rawCode)) {
             const titleSpan = courseInfo.find(".courseTitle");
             course.title = titleSpan.text().trim();
+            const descDiv = courseInfo.find(".courseDescription");
+            if (descDiv.length > 0) {
+              course.description = descDiv.text().trim();
+            }
             course.semesters = semesterInfo ? [semesterInfo] : [];
             course.details = { is_partially_scraped: true };
             courses.push(course);

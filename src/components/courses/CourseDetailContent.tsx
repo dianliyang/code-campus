@@ -157,9 +157,12 @@ export default function CourseDetailContent({
   };
 
   const handleAddUrl = async () => {
-    const trimmed = newUrl.trim();
-    if (!trimmed) return;
-    const updated = [...localRelatedUrls, trimmed];
+    const urls = newUrl
+      .split("\n")
+      .map((url) => url.trim())
+      .filter(Boolean);
+    if (!urls.length) return;
+    const updated = [...localRelatedUrls, ...urls];
     setLocalRelatedUrls(updated);
     setNewUrl("");
     setShowAddUrl(false);
@@ -169,7 +172,7 @@ export default function CourseDetailContent({
     } catch (error) {
       console.error(error);
       setLocalRelatedUrls(localRelatedUrls);
-      setNewUrl(trimmed);
+      setNewUrl(urls.join("\n"));
       setShowAddUrl(true);
     } finally {
       setIsAddingUrl(false);
@@ -647,8 +650,8 @@ export default function CourseDetailContent({
                         onKeyDown={e => {
                           if (e.key === "Escape") { setShowAddUrl(false); setNewUrl(""); }
                         }}
-                        placeholder="https://..."
-                        rows={2}
+                        placeholder={"https://...\nhttps://... (one per line)"}
+                        rows={4}
                         className="w-full rounded-md border border-[#d8d8d8] bg-white px-2.5 py-1.5 text-[13px] text-[#333] outline-none focus:border-[#bcbcbc] resize-none"
                         autoFocus
                       />

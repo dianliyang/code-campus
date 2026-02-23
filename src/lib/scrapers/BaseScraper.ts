@@ -71,7 +71,7 @@ export abstract class BaseScraper {
       
       // Filter codes where latest_semester >= requestedSemester
       for (const [code, latest] of existingMap.entries()) {
-        if (latest && compareSemesters(latest, requestedSemester) >= 0) {
+        if (latest && compareSemesters(latest, requestedSemester) >= 0 && latest.hasDescription) {
           upToDateCodes.add(code);
         }
       }

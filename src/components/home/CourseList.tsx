@@ -298,7 +298,7 @@ export default function CourseList({
                 type="button"
                 onClick={handleHideSelected}
                 disabled={isHidingSelected}
-                className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
+                className="inline-flex h-5 w-5 shrink-0 p-0 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
                 title="Hide selected courses"
                 aria-label="Hide selected courses"
               >

@@ -72,7 +72,7 @@ export class CMU extends BaseScraper {
     if (this.db) {
       const existingMap = await this.db.getExistingCourseCodes("CMU");
       for (const [code, latest] of existingMap.entries()) {
-        if (latest && compareSemesters(latest, { term, year }) >= 0) {
+        if (latest && compareSemesters(latest, { term, year }) >= 0 && latest.hasDescription) {
           upToDateCodes.add(code);
         }
       }

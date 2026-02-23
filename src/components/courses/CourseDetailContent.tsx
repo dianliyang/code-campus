@@ -568,6 +568,50 @@ export default function CourseDetailContent({
                 </a>
               </div>
 
+              {(course.crossListedCourses || (course.relatedUrls && course.relatedUrls.length > 0) || variantCodeLinks.length > 0) && (
+                <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+                  <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">Resources</h3>
+                  <div className="space-y-4">
+                    {course.relatedUrls && course.relatedUrls.length > 0 && (
+                      <ul className="space-y-3">
+                        {course.relatedUrls.map((url: string, i: number) => (
+                          <li key={i}>
+                            <a href={url} target="_blank" rel="noreferrer" className="text-sm font-medium text-[#335b9a] hover:underline flex items-start gap-2 break-all">
+                              <Globe className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#778fb8]" />
+                              {url}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {course.crossListedCourses && (
+                      <div>
+                        <span className="text-xs font-medium text-[#777] block mb-2">Cross-Listed</span>
+                        <p className="text-sm text-[#555] leading-relaxed">{course.crossListedCourses}</p>
+                      </div>
+                    )}
+                    {variantCodeLinks.length > 0 && (
+                      <div>
+                        <span className="text-xs font-medium text-[#777] block mb-2">{variantLabel}</span>
+                        <ul className="space-y-2">
+                          {variantCodeLinks.map((item) => (
+                            <li key={item.id} className="text-sm text-[#555]">
+                              {item.link ? (
+                                <a href={item.link} target="_blank" rel="noreferrer" className="text-[#335b9a] hover:underline">
+                                  {item.id}
+                                </a>
+                              ) : (
+                                <span>{item.id}</span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
                 <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">Course Facts</h3>
                 <dl className="space-y-4 text-sm">
@@ -643,49 +687,6 @@ export default function CourseDetailContent({
                 </div>
               )}
 
-              {(course.crossListedCourses || (course.relatedUrls && course.relatedUrls.length > 0) || variantCodeLinks.length > 0) && (
-                <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-                  <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">Resources</h3>
-                  <div className="space-y-4">
-                    {course.relatedUrls && course.relatedUrls.length > 0 && (
-                      <ul className="space-y-3">
-                        {course.relatedUrls.map((url: string, i: number) => (
-                          <li key={i}>
-                            <a href={url} target="_blank" rel="noreferrer" className="text-sm font-medium text-[#335b9a] hover:underline flex items-start gap-2 break-all">
-                              <Globe className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#778fb8]" />
-                              {url}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    {course.crossListedCourses && (
-                      <div>
-                        <span className="text-xs font-medium text-[#777] block mb-2">Cross-Listed</span>
-                        <p className="text-sm text-[#555] leading-relaxed">{course.crossListedCourses}</p>
-                      </div>
-                    )}
-                    {variantCodeLinks.length > 0 && (
-                      <div>
-                        <span className="text-xs font-medium text-[#777] block mb-2">{variantLabel}</span>
-                        <ul className="space-y-2">
-                          {variantCodeLinks.map((item) => (
-                            <li key={item.id} className="text-sm text-[#555]">
-                              {item.link ? (
-                                <a href={item.link} target="_blank" rel="noreferrer" className="text-[#335b9a] hover:underline">
-                                  {item.id}
-                                </a>
-                              ) : (
-                                <span>{item.id}</span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
           </div>
         </aside>
       </div>

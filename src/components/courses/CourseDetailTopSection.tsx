@@ -255,7 +255,7 @@ export default function CourseDetailTopSection({
               type="button"
               onClick={handleRegenerateDescription}
               disabled={isSaving || isGeneratingDescription}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
               title="AI Regenerate Description"
             >
               {isGeneratingDescription ? (
@@ -263,7 +263,6 @@ export default function CourseDetailTopSection({
               ) : (
                 <Sparkles className="w-3.5 h-3.5" />
               )}
-              AI
             </button>
           )}
         </div>

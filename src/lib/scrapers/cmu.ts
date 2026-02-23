@@ -89,6 +89,7 @@ export class CMU extends BaseScraper {
     params.append("PRG_LOCATION", "All");
     params.append("DEPT", "CS");
     params.append("DEPT", "ECE");
+    params.append("DEPT", "MSC");
     params.append("BEG_TIME", "All");
     params.append("KEYWORD", "");
     params.append("TITLE_ONLY", "NO");
@@ -208,6 +209,7 @@ export class CMU extends BaseScraper {
     const ALLOWED_DEPTS = [
       "ELECTRICAL & COMPUTER ENGINEERING",
       "COMPUTER SCIENCE",
+      "MATHEMATICAL SCIENCES",
     ];
 
     const tables = $("table#search-results-table");
@@ -263,6 +265,8 @@ export class CMU extends BaseScraper {
           let department = "Computer Science";
           if (normalizedCode.startsWith("18")) {
             department = "Electrical & Computer Engineering";
+          } else if (normalizedCode.startsWith("21")) {
+            department = "Mathematical Sciences";
           }
 
           currentCourse = {

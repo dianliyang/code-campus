@@ -40,4 +40,22 @@ describe("Stanford scraper dedupe", () => {
     expect(Array.isArray(links)).toBe(true);
     expect(links.map((l) => l.id)).toEqual(expect.arrayContaining(["CS 101A", "CS 201A", "CS 301A"]));
   });
+
+  test("parser assigns Mathematics department to MATH courses", async () => {
+    const scraper = new Stanford();
+    const html = `
+      <html><body>
+        <div class="searchResult">
+          <div class="courseInfo">
+            <span class="courseNumber">MATH 51:</span>
+            <span class="courseTitle">Linear Algebra, Multivariable Calculus, and Modern Applications</span>
+            <div class="courseDescription">Study of linear algebra and multivariable calculus.</div>
+          </div>
+        </div>
+      </body></html>
+    `;
+    const courses = await scraper.parser(html, new Set(), { term: "Spring", year: 2026 });
+    expect(courses).toHaveLength(1);
+    expect(courses[0].department).toBe("Mathematics");
+  });
 });

@@ -29,8 +29,9 @@ function courseLastUpdatedAt(course: Record<string, unknown>): number | null {
 }
 
 /**
- * External API for a single CAU Kiel course by course_code.
+ * External API for a single enrolled course by course_code.
  *
+ * Returns the course only if it is enrolled (user_courses.status != 'hidden').
  * Auth: Requires x-api-key header when INTERNAL_API_KEY is set.
  */
 export async function GET(
@@ -92,10 +93,18 @@ export async function GET(
           type,
           created_at,
           updated_at
+        ),
+        user_courses!inner(
+          status,
+          progress,
+          gpa,
+          score,
+          notes,
+          priority,
+          updated_at
         )
       `)
-      .eq('university', 'CAU Kiel')
-      .eq('is_hidden', false)
+      .neq('user_courses.status', 'hidden')
       .eq('course_code', courseCode);
 
     if (error) {
@@ -127,7 +136,7 @@ export async function GET(
       });
     }
 
-    const { study_plans, course_fields, ...courseFields } = course;
+    const { study_plans, course_fields, user_courses, ...courseFields } = course;
     const publicCourseFields = { ...courseFields } as Record<string, unknown>;
     delete publicCourseFields.is_hidden;
     delete publicCourseFields.is_internal;
@@ -159,12 +168,17 @@ export async function GET(
           })()
         : rawDetails;
 
+    const enrollment = Array.isArray(user_courses) && user_courses.length > 0
+      ? user_courses[0]
+      : null;
+
     return NextResponse.json(
       {
         ...publicCourseFields,
         details,
         topics,
         schedule: study_plans ?? [],
+        enrollment,
       },
       {
         headers: {

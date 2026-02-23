@@ -80,9 +80,13 @@ export class MIT extends BaseScraper {
       }
     }
 
-    return ['a', 'b', 'c', 'd', 'e'].map(
+    const eecsPaths = ['a', 'b', 'c', 'd', 'e'].map(
       (i) => `https://student.mit.edu/catalog${termPath}/m6${i}.html`
     );
+    const mathPaths = ['a', 'b'].map(
+      (i) => `https://student.mit.edu/catalog${termPath}/m18${i}.html`
+    );
+    return [...eecsPaths, ...mathPaths];
   }
 
   async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {

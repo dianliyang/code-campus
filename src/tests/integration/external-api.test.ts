@@ -2,13 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '@/app/api/external/courses/route';
 import { NextRequest } from 'next/server';
 
-// Mock createAdminClient
 vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: vi.fn(),
 }));
 
-// Re-import after mock
 import { createAdminClient } from '@/lib/supabase/server';
+
+function makeMock(resolvedValue: { data: unknown; error: unknown }) {
+  const mockNeq = vi.fn().mockResolvedValue(resolvedValue);
+  const mockSelect = vi.fn().mockReturnValue({ neq: mockNeq });
+  const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+  return { mockFrom, mockSelect, mockNeq };
+}
 
 describe('GET /api/external/courses', () => {
   beforeEach(() => {
@@ -24,7 +29,7 @@ describe('GET /api/external/courses', () => {
     expect(res.status).toBe(401);
   });
 
-  it('should query Supabase with correct filters', async () => {
+  it('should query enrolled courses excluding hidden', async () => {
     const mockData = [{
       id: 1,
       title: 'Course 1',
@@ -44,22 +49,18 @@ describe('GET /api/external/courses', () => {
         { fields: { name: 'Computer Science' } },
         { fields: { name: 'Machine Learning' } },
       ],
-      study_plans: [{ id: 11, course_id: 1 }]
+      study_plans: [{ id: 11, course_id: 1 }],
+      user_courses: [{ status: 'in_progress', progress: 50, gpa: null, score: null, notes: null, priority: 0, updated_at: null }],
     }];
-    
-    // Setup deep mock for supabase.from().select().eq().eq()
-    const mockEq2 = vi.fn().mockResolvedValue({ data: mockData, error: null });
-    const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
-    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
-    const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
-    
+
+    const { mockFrom, mockSelect, mockNeq } = makeMock({ data: mockData, error: null });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (createAdminClient as any).mockReturnValue({ from: mockFrom });
 
     const req = new NextRequest('http://localhost:3000/api/external/courses', {
-      headers: { 'x-api-key': 'test-internal-key' }
+      headers: { 'x-api-key': 'test-internal-key' },
     });
-    
+
     const res = await GET(req);
     const data = await res.json();
 
@@ -74,18 +75,18 @@ describe('GET /api/external/courses', () => {
       cross_listed_courses: 'CS-101',
       details: { internalId: 'x1' },
       topics: ['Computer Science', 'Machine Learning'],
-      schedule: [{ id: 11, course_id: 1 }]
+      schedule: [{ id: 11, course_id: 1 }],
+      enrollment: { status: 'in_progress', progress: 50, gpa: null, score: null, notes: null, priority: 0, updated_at: null },
     }]);
 
     expect(mockFrom).toHaveBeenCalledWith('courses');
     const selectArg = mockSelect.mock.calls[0][0] as string;
     expect(selectArg).toContain('study_plans');
     expect(selectArg).toContain('course_fields');
+    expect(selectArg).toContain('user_courses');
     expect(selectArg).not.toContain('is_hidden');
     expect(selectArg).not.toContain('is_internal');
-    expect(selectArg).not.toContain('user_id');
-    expect(mockEq1).toHaveBeenCalledWith('university', 'CAU Kiel');
-    expect(mockEq2).toHaveBeenCalledWith('is_hidden', false);
+    expect(mockNeq).toHaveBeenCalledWith('user_courses.status', 'hidden');
   });
 
   it('should return 304 when x-last-update is up to date', async () => {
@@ -95,21 +96,19 @@ describe('GET /api/external/courses', () => {
       created_at: '2026-02-14T12:00:00.000Z',
       details: null,
       course_fields: [],
-      study_plans: [{ id: 11, course_id: 1, updated_at: '2026-02-14T12:00:00.000Z', created_at: '2026-02-13T12:00:00.000Z' }]
+      study_plans: [{ id: 11, course_id: 1, updated_at: '2026-02-14T12:00:00.000Z', created_at: '2026-02-13T12:00:00.000Z' }],
+      user_courses: [],
     }];
 
-    const mockEq2 = vi.fn().mockResolvedValue({ data: mockData, error: null });
-    const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
-    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
-    const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+    const { mockFrom } = makeMock({ data: mockData, error: null });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (createAdminClient as any).mockReturnValue({ from: mockFrom });
 
     const req = new NextRequest('http://localhost:3000/api/external/courses', {
       headers: {
         'x-api-key': 'test-internal-key',
-        'if-modified-since': 'Sat, 14 Feb 2026 12:00:00 GMT'
-      }
+        'if-modified-since': 'Sat, 14 Feb 2026 12:00:00 GMT',
+      },
     });
 
     const res = await GET(req);
@@ -117,22 +116,17 @@ describe('GET /api/external/courses', () => {
   });
 
   it('should handle database errors', async () => {
-    const mockEq2 = vi.fn().mockResolvedValue({ data: null, error: { message: 'DB Error' } });
-    const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
-    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
-    const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
-    
+    const { mockFrom } = makeMock({ data: null, error: { message: 'DB Error' } });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (createAdminClient as any).mockReturnValue({ from: mockFrom });
 
     const req = new NextRequest('http://localhost:3000/api/external/courses', {
-      headers: { 'x-api-key': 'test-internal-key' }
+      headers: { 'x-api-key': 'test-internal-key' },
     });
-    
+
     const res = await GET(req);
     expect(res.status).toBe(500);
     const data = await res.json();
     expect(data.error).toBe('Database error');
   });
-
 });

@@ -110,4 +110,26 @@ describe("MIT scraper dedupe", () => {
     expect(infer("6.121")).toBe("undergraduate");
     expect(infer("6.821")).toBe("graduate");
   });
+
+  test("links() includes math catalog pages m18a.html and m18b.html", async () => {
+    const scraper = new MIT();
+    const links = await scraper.links();
+    expect(links).toContain("https://student.mit.edu/catalog/m18a.html");
+    expect(links).toContain("https://student.mit.edu/catalog/m18b.html");
+  });
+
+  test("parser assigns Mathematics department to 18.xxx courses", async () => {
+    const scraper = new MIT();
+    const html = `
+      <html><body>
+        <h3>18.01 Calculus</h3>
+        <img alt="Undergrad" />
+        <img alt="______" />
+        <p>Units: 5-0-7</p>
+      </body></html>
+    `;
+    const courses = await scraper.parser(html);
+    expect(courses).toHaveLength(1);
+    expect(courses[0].department).toBe("Mathematics");
+  });
 });

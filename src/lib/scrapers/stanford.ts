@@ -35,7 +35,7 @@ export class Stanford extends BaseScraper {
   }
 
   async retrieve(): Promise<Course[]> {
-    const DEPTS = ["CS"];
+    const DEPTS = ["CS", "MATH"];
     const allCourses: Course[] = [];
 
     let termsToScrape: { term: string; year: number }[] = [];
@@ -178,6 +178,8 @@ export class Stanford extends BaseScraper {
             course.department = "Computer Science";
           } else if (rawCode.startsWith("EE")) {
             course.department = "Electrical Engineering";
+          } else if (rawCode.startsWith("MATH")) {
+            course.department = "Mathematics";
           }
         }
 

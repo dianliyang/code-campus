@@ -29,14 +29,12 @@ function courseLastUpdatedAt(course: Record<string, unknown>): number | null {
 }
 
 /**
- * External API for CAU Kiel courses.
- * 
- * Provides course data to other services.
- * Filters: university=CAU Kiel, is_hidden=false
- * Auth: Requires x-api-key header
+ * External API for enrolled courses.
+ *
+ * Returns all courses the user is enrolled in (user_courses.status != 'hidden').
+ * Auth: Requires x-api-key header when INTERNAL_API_KEY is set.
  */
 export async function GET(request: NextRequest) {
-  // 1. Authenticate the incoming request
   const authHeader = request.headers.get('x-api-key');
   const internalKey = process.env.INTERNAL_API_KEY;
 
@@ -45,10 +43,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 2. Initialize Supabase Admin Client to query the database directly
     const supabase = createAdminClient();
 
-    // 3. Query CAU courses and attach schedules from study_plans
     const { data, error } = await supabase
       .from('courses')
       .select(`
@@ -89,10 +85,18 @@ export async function GET(request: NextRequest) {
           type,
           created_at,
           updated_at
+        ),
+        user_courses!inner(
+          status,
+          progress,
+          gpa,
+          score,
+          notes,
+          priority,
+          updated_at
         )
       `)
-      .eq('university', 'CAU Kiel')
-      .eq('is_hidden', false);
+      .neq('user_courses.status', 'hidden');
 
     if (error) {
       console.error('Supabase query error:', error);
@@ -124,16 +128,18 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const coursesWithSchedule = (data ?? []).map((course) => {
-      const { study_plans, course_fields, ...courseFields } = course;
+    const coursesWithEnrollment = (data ?? []).map((course) => {
+      const { study_plans, course_fields, user_courses, ...courseFields } = course;
       const publicCourseFields = { ...courseFields } as Record<string, unknown>;
       delete publicCourseFields.is_hidden;
       delete publicCourseFields.is_internal;
+
       const topics = Array.isArray(course_fields)
         ? course_fields
             .map((item) => item?.fields?.name)
             .filter((name): name is string => typeof name === 'string' && name.length > 0)
         : [];
+
       const rawDetails = courseFields.details;
       const details =
         rawDetails && typeof rawDetails === 'object' && !Array.isArray(rawDetails)
@@ -155,16 +161,20 @@ export async function GET(request: NextRequest) {
             })()
           : rawDetails;
 
+      const enrollment = Array.isArray(user_courses) && user_courses.length > 0
+        ? user_courses[0]
+        : null;
+
       return {
         ...publicCourseFields,
         details,
         topics,
         schedule: study_plans ?? [],
+        enrollment,
       };
     });
 
-    // 4. Return all courses with schedule
-    return NextResponse.json(coursesWithSchedule, {
+    return NextResponse.json(coursesWithEnrollment, {
       headers: {
         'Cache-Control': EXTERNAL_API_CACHE_CONTROL,
         ...(lastUpdatedMs !== null

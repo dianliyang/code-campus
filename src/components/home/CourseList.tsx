@@ -290,7 +290,6 @@ export default function CourseList({
               </button>
             ) : null}
           </div>
-          <div className="w-[10%]">Status</div>
           <div className="w-[8%]">Credit</div>
           <div className="w-[10%]">Semester</div>
           <div className="w-[8%]">Interest</div>

@@ -125,16 +125,6 @@ export default function CourseCard({
           )}
         </div>
 
-        <div className="w-[10%] hidden md:block">
-          <span
-            className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-              isEnrolled ? "border-green-100 bg-green-50 text-green-700" : "border-[#e5e5e5] bg-[#f3f3f3] text-[#666]"
-            }`}
-          >
-            {isEnrolled ? (dict?.enrolled || "Enrolled") : "Not Enrolled"}
-          </span>
-        </div>
-
         <div className="w-[8%] hidden md:block text-sm text-[#484848]">{credit ?? "-"}</div>
 
         <div className="w-[10%] hidden md:block text-sm text-[#484848]">{latestSemester ?? "-"}</div>
@@ -211,13 +201,6 @@ export default function CourseCard({
       </div>
 
       <div className="mt-3 flex items-center gap-1.5">
-        <span
-          className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-            isEnrolled ? "border-green-100 bg-green-50 text-green-700" : "border-[#e5e5e5] bg-[#f3f3f3] text-[#666]"
-          }`}
-        >
-          {isEnrolled ? (dict?.enrolled || "Enrolled") : "Not Enrolled"}
-        </span>
         {primaryField ? (
           <span className="inline-flex rounded bg-[#efefef] px-2 py-0.5 text-[11px] font-medium text-[#666]">{primaryField}</span>
         ) : null}

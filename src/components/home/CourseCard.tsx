@@ -148,10 +148,10 @@ export default function CourseCard({
           <button
             onClick={handleHide}
             disabled={loading}
-            className="w-7 h-7 flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors"
+            className="inline-flex h-5 items-center rounded bg-[#efefef] px-1.5 text-[10px] font-medium text-[#666] hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-50"
             aria-label="Hide course"
           >
-            <EyeOff className="w-3.5 h-3.5" />
+            <EyeOff className="w-3 h-3" />
           </button>
         </div>
       </div>

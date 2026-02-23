@@ -4,7 +4,7 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
-import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, toggleCourseEnrollmentAction, type SchedulePlanPreview } from "@/actions/courses";
+import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, toggleCourseEnrollmentAction, updateCourseRelatedUrls, type SchedulePlanPreview } from "@/actions/courses";
 import { Check, Clock, ExternalLink, Globe, Info, Loader2, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
@@ -44,6 +44,10 @@ export default function CourseDetailContent({
   } | null>(null);
   const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([]);
   const [statusCardMinHeight, setStatusCardMinHeight] = useState<number | null>(null);
+  const [localRelatedUrls, setLocalRelatedUrls] = useState<string[]>(course.relatedUrls || []);
+  const [showAddUrl, setShowAddUrl] = useState(false);
+  const [newUrl, setNewUrl] = useState("");
+  const [isAddingUrl, setIsAddingUrl] = useState(false);
   const router = useRouter();
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const hasStudyPlans = editablePlans.length > 0;
@@ -164,6 +168,26 @@ export default function CourseDetailContent({
     }
   };
 
+  const handleAddUrl = async () => {
+    const trimmed = newUrl.trim();
+    if (!trimmed) return;
+    const updated = [...localRelatedUrls, trimmed];
+    setLocalRelatedUrls(updated);
+    setNewUrl("");
+    setShowAddUrl(false);
+    setIsAddingUrl(true);
+    try {
+      await updateCourseRelatedUrls(course.id, updated);
+    } catch (error) {
+      console.error(error);
+      setLocalRelatedUrls(localRelatedUrls);
+      setNewUrl(trimmed);
+      setShowAddUrl(true);
+    } finally {
+      setIsAddingUrl(false);
+    }
+  };
+
   const handleDeleteSinglePlan = async (index: number) => {
     const plan = editablePlans[index];
     if (!plan) return;
@@ -220,18 +244,18 @@ export default function CourseDetailContent({
 
   return (
     <div className="space-y-4 pb-4">
+      <CourseDetailTopSection
+        course={course}
+        descriptionEmptyText={descriptionEmptyText}
+        availableTopics={availableTopics}
+        availableSemesters={availableSemesters}
+        studyPlans={studyPlans}
+        isEditing={isEditing}
+        onEditingChange={setIsEditing}
+        projectSeminarRef={projectSeminarRef}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 space-y-4">
-          <CourseDetailTopSection
-            course={course}
-            descriptionEmptyText={descriptionEmptyText}
-            availableTopics={availableTopics}
-            availableSemesters={availableSemesters}
-            studyPlans={studyPlans}
-            isEditing={isEditing}
-            onEditingChange={setIsEditing}
-            projectSeminarRef={projectSeminarRef}
-          />
 
           {(hasStudyPlans || course.details?.schedule || (course.instructors && course.instructors.length > 0)) && (
             <section>
@@ -570,49 +594,94 @@ export default function CourseDetailContent({
                 </div>
               </div>
 
-              {(course.crossListedCourses || (course.relatedUrls && course.relatedUrls.length > 0) || variantCodeLinks.length > 0) && (
-                <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-                  <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">Resources</h3>
-                  <div className="space-y-4">
-                    {course.relatedUrls && course.relatedUrls.length > 0 && (
-                      <ul className="space-y-3">
-                        {course.relatedUrls.map((url: string, i: number) => (
-                          <li key={i}>
-                            <a href={url} target="_blank" rel="noreferrer" className="text-sm font-medium text-[#335b9a] hover:underline flex items-start gap-2 break-all">
-                              <Globe className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#778fb8]" />
-                              {url}
-                            </a>
+              <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-[#1f1f1f]">Resources</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddUrl(v => !v)}
+                    disabled={isAddingUrl}
+                    className="w-6 h-6 rounded flex items-center justify-center text-[#999] hover:text-[#444] hover:bg-[#f0f0f0] transition-colors disabled:opacity-50"
+                    title="Add resource URL"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {localRelatedUrls.length > 0 && (
+                    <ul className="space-y-3">
+                      {localRelatedUrls.map((url: string, i: number) => (
+                        <li key={i}>
+                          <a href={url} target="_blank" rel="noreferrer" className="text-sm font-medium text-[#335b9a] hover:underline flex items-start gap-2 break-all">
+                            <Globe className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#778fb8]" />
+                            {url}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {course.crossListedCourses && (
+                    <div>
+                      <span className="text-xs font-medium text-[#777] block mb-2">Cross-Listed</span>
+                      <p className="text-sm text-[#555] leading-relaxed">{course.crossListedCourses}</p>
+                    </div>
+                  )}
+                  {variantCodeLinks.length > 0 && (
+                    <div>
+                      <span className="text-xs font-medium text-[#777] block mb-2">{variantLabel}</span>
+                      <ul className="space-y-2">
+                        {variantCodeLinks.map((item) => (
+                          <li key={item.id} className="text-sm text-[#555]">
+                            {item.link ? (
+                              <a href={item.link} target="_blank" rel="noreferrer" className="text-[#335b9a] hover:underline">
+                                {item.id}
+                              </a>
+                            ) : (
+                              <span>{item.id}</span>
+                            )}
                           </li>
                         ))}
                       </ul>
-                    )}
-                    {course.crossListedCourses && (
-                      <div>
-                        <span className="text-xs font-medium text-[#777] block mb-2">Cross-Listed</span>
-                        <p className="text-sm text-[#555] leading-relaxed">{course.crossListedCourses}</p>
+                    </div>
+                  )}
+                  {localRelatedUrls.length === 0 && !course.crossListedCourses && variantCodeLinks.length === 0 && !showAddUrl && (
+                    <p className="text-sm text-[#9a9a9a]">No resources yet.</p>
+                  )}
+                  {showAddUrl && (
+                    <div className="space-y-2">
+                      <textarea
+                        value={newUrl}
+                        onChange={e => setNewUrl(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Escape") { setShowAddUrl(false); setNewUrl(""); }
+                        }}
+                        placeholder="https://..."
+                        rows={2}
+                        className="w-full rounded-md border border-[#d8d8d8] bg-white px-2.5 py-1.5 text-[13px] text-[#333] outline-none focus:border-[#bcbcbc] resize-none"
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { setShowAddUrl(false); setNewUrl(""); }}
+                          className="h-7 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[12px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAddUrl}
+                          disabled={!newUrl.trim() || isAddingUrl}
+                          className="h-7 rounded-md bg-[#1f1f1f] text-white px-2.5 text-[12px] font-medium hover:bg-[#333] disabled:opacity-50 transition-colors inline-flex items-center gap-1.5"
+                        >
+                          {isAddingUrl && <Loader2 className="w-3 h-3 animate-spin" />}
+                          Add
+                        </button>
                       </div>
-                    )}
-                    {variantCodeLinks.length > 0 && (
-                      <div>
-                        <span className="text-xs font-medium text-[#777] block mb-2">{variantLabel}</span>
-                        <ul className="space-y-2">
-                          {variantCodeLinks.map((item) => (
-                            <li key={item.id} className="text-sm text-[#555]">
-                              {item.link ? (
-                                <a href={item.link} target="_blank" rel="noreferrer" className="text-[#335b9a] hover:underline">
-                                  {item.id}
-                                </a>
-                              ) : (
-                                <span>{item.id}</span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
                 <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">Course Facts</h3>

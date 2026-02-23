@@ -110,6 +110,27 @@ export async function deleteCourse(courseId: number) {
   revalidatePath("/courses");
 }
 
+export async function updateCourseRelatedUrls(courseId: number, relatedUrls: string[]) {
+  const user = await getUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("courses")
+    .update({ related_urls: relatedUrls })
+    .eq("id", courseId);
+
+  if (error) {
+    console.error("Failed to update course related URLs:", error);
+    throw new Error("Failed to update course related URLs");
+  }
+
+  revalidatePath(`/courses/${courseId}`);
+}
+
 export async function updateCourseDescription(courseId: number, description: string) {
   const user = await getUser();
   if (!user) {

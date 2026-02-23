@@ -75,6 +75,7 @@ export async function GET(
         difficulty,
         popularity,
         workload,
+        is_hidden,
         created_at,
         course_fields(
           fields(
@@ -116,6 +117,7 @@ export async function GET(
     }
 
     const activeData = (Array.isArray(data) ? data : data ? [data] : []).filter((c) => {
+      if (c.is_hidden === true) return false;
       const uc = Array.isArray(c.user_courses) ? c.user_courses : [];
       return uc.some((r) => r.status !== 'hidden');
     });

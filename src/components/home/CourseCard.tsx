@@ -133,8 +133,8 @@ export default function CourseCard({
             size="xs"
             className={
               isEnrolled
-                ? "h-8 w-8 p-0 rounded-md border border-green-100 bg-green-50 text-green-700 hover:bg-green-100"
-                : "h-8 w-8 p-0 rounded-md border border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
+                ? "h-6 w-6 p-0 rounded-md border border-green-100 bg-green-50 text-green-700 hover:bg-green-100"
+                : "h-6 w-6 p-0 rounded-md border border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
             }
           >
             {loading ? (
@@ -148,7 +148,7 @@ export default function CourseCard({
           <button
             onClick={handleHide}
             disabled={loading}
-            className="inline-flex h-5 items-center rounded bg-[#efefef] px-1.5 text-[10px] font-medium text-[#666] hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-50"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-[#d3d3d3] bg-white text-[#666] hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-50"
             aria-label="Hide course"
           >
             <EyeOff className="w-3 h-3" />

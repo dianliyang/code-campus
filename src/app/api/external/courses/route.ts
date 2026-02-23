@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 
-const EXTERNAL_API_CACHE_CONTROL = 'private, max-age=300, stale-while-revalidate=600';
+const EXTERNAL_API_CACHE_CONTROL = 'private, max-age=3600, stale-while-revalidate=600';
 const LAST_MODIFIED_HEADER = 'Last-Modified';
 
 function parseTimestamp(value: unknown): number | null {
@@ -112,21 +112,6 @@ export async function GET(request: NextRequest) {
       if (maxTime === null || candidate > maxTime) return candidate;
       return maxTime;
     }, null);
-
-    const clientLastUpdate = parseTimestamp(request.headers.get('if-modified-since'));
-    if (
-      lastUpdatedMs !== null &&
-      clientLastUpdate !== null &&
-      clientLastUpdate >= lastUpdatedMs
-    ) {
-      return new NextResponse(null, {
-        status: 304,
-        headers: {
-          'Cache-Control': EXTERNAL_API_CACHE_CONTROL,
-          [LAST_MODIFIED_HEADER]: new Date(lastUpdatedMs).toUTCString(),
-        },
-      });
-    }
 
     const coursesWithEnrollment = (data ?? [])
       .filter((course) => {

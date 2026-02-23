@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 
-const EXTERNAL_API_CACHE_CONTROL = 'private, max-age=300, stale-while-revalidate=600';
+const EXTERNAL_API_CACHE_CONTROL = 'private, max-age=3600, stale-while-revalidate=600';
 const LAST_MODIFIED_HEADER = 'Last-Modified';
 
 function parseTimestamp(value: unknown): number | null {
@@ -126,21 +126,6 @@ export async function GET(
 
     const course = activeData[0];
     const lastUpdatedMs = courseLastUpdatedAt(course as Record<string, unknown>);
-    const clientLastUpdate = parseTimestamp(request.headers.get('if-modified-since'));
-    if (
-      lastUpdatedMs !== null &&
-      clientLastUpdate !== null &&
-      clientLastUpdate >= lastUpdatedMs
-    ) {
-      return new NextResponse(null, {
-        status: 304,
-        headers: {
-          'Cache-Control': EXTERNAL_API_CACHE_CONTROL,
-          [LAST_MODIFIED_HEADER]: new Date(lastUpdatedMs).toUTCString(),
-        },
-      });
-    }
-
     const { study_plans, course_fields, user_courses, ...courseFields } = course;
     const publicCourseFields = { ...courseFields } as Record<string, unknown>;
     delete publicCourseFields.is_hidden;

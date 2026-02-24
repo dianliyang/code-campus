@@ -31,6 +31,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
   const [isUpdating, setIsInUpdating] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showAddPlanModal, setShowAddPlanModal] = useState(false);
+  const [localPlan, setLocalPlan] = useState(plan);
   const [gpa, setGpa] = useState("");
   const [score, setScore] = useState("");
 
@@ -101,14 +102,13 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
   return (
     <div className="bg-white border border-[#e5e5e5] rounded-md p-3 flex flex-col gap-3">
       {/* Modals */}
-      {showAddPlanModal && (
-        <AddPlanModal
-          isOpen={showAddPlanModal}
-          onClose={() => setShowAddPlanModal(false)}
-          course={{ id: course.id, title: course.title }}
-          existingPlan={plan}
-        />
-      )}
+      <AddPlanModal
+        isOpen={showAddPlanModal}
+        onClose={() => setShowAddPlanModal(false)}
+        onSuccess={(saved) => setLocalPlan(saved)}
+        course={{ id: course.id, title: course.title }}
+        existingPlan={localPlan}
+      />
 
       {showCompleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/10 backdrop-blur-md animate-in fade-in duration-300">
@@ -207,10 +207,10 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
         <div className="flex items-end justify-between">
           <div className="flex flex-col">
             <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Focus_Intensity</span>
-            {plan && (
+            {localPlan && (
               <div className="flex items-center gap-1 text-[8px] font-medium text-gray-400">
                 <Clock className="w-2.5 h-2.5" />
-                <span>{plan.days_of_week.map(d => weekdaysShort[d].toUpperCase()).join('/')} • {plan.start_time.slice(0, 5)} • {new Date(plan.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-{new Date(plan.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                <span>{localPlan.days_of_week.map(d => weekdaysShort[d].toUpperCase()).join('/')} • {localPlan.start_time.slice(0, 5)} • {new Date(localPlan.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-{new Date(localPlan.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
               </div>
             )}
           </div>
@@ -269,12 +269,12 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           <button
             onClick={() => setShowAddPlanModal(true)}
             className={`w-7 h-7 rounded-md flex items-center justify-center transition-all ${
-              plan 
+              localPlan 
                 ? "bg-teal-50 text-teal-600 border border-teal-100" 
                 : "bg-violet-50 text-violet-500 border border-violet-100 hover:bg-violet-100"
             }`}
           >
-            {plan ? <CalendarCheck className="w-3 h-3" /> : <CalendarPlus className="w-3 h-3" />}
+            {localPlan ? <CalendarCheck className="w-3 h-3" /> : <CalendarPlus className="w-3 h-3" />}
           </button>
 
           <button

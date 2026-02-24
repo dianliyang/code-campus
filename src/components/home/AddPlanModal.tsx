@@ -1,25 +1,28 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, X } from "lucide-react";
+
+interface PlanData {
+  id: number;
+  start_date: string;
+  end_date: string;
+  days_of_week: number[];
+  start_time: string;
+  end_time: string;
+  location: string;
+}
 
 interface AddPlanModalProps {
   isOpen: boolean;
   onClose: () => void;
-  course: { id: number; title: string };
-  existingPlan?: {
-    id: number;
-    start_date: string;
-    end_date: string;
-    days_of_week: number[];
-    start_time: string;
-    end_time: string;
-    location: string;
-  } | null;
+  onSuccess?: (plan: PlanData) => void;
+  course: { id: number; title: string; courseCode?: string; university?: string };
+  existingPlan?: PlanData | null;
 }
 
-export default function AddPlanModal({ isOpen, onClose, course, existingPlan }: AddPlanModalProps) {
+export default function AddPlanModal({ isOpen, onClose, onSuccess, course, existingPlan }: AddPlanModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -59,7 +62,10 @@ export default function AddPlanModal({ isOpen, onClose, course, existingPlan }: 
       });
 
       if (res.ok) {
+        const saved: PlanData = await res.json();
         onClose();
+        onSuccess?.(saved);
+        // Background refresh without blocking UI
         startTransition(() => router.refresh());
       } else {
         alert("Failed to save schedule");

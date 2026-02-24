@@ -133,7 +133,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
 
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('study_plans')
         .insert({
           user_id: userId,
@@ -144,11 +144,13 @@ export async function POST(request: Request) {
           start_time: startTime || '09:00:00',
           end_time: endTime || '11:00:00',
           location: location || 'Home'
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
       revalidatePath('/study-plan');
-      return NextResponse.json({ success: true, message: "Plan created" });
+      return NextResponse.json(inserted);
     }
 
     // Update a plan
@@ -159,7 +161,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
 
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from('study_plans')
         .update({
           start_date: startDate,
@@ -171,11 +173,13 @@ export async function POST(request: Request) {
           updated_at: new Date().toISOString()
         })
         .eq('id', planId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select()
+        .single();
 
       if (error) throw error;
       revalidatePath('/study-plan');
-      return NextResponse.json({ success: true, message: "Plan updated" });
+      return NextResponse.json(updated);
     }
 
     // Remove a plan

@@ -58,14 +58,13 @@ Rules:
 - no explanation text
 `.trim();
 
-export const DEFAULT_COURSE_UPDATE_PROMPT = `Search the web for the latest information about this course and return a JSON object matching this schema:
+export const DEFAULT_COURSE_UPDATE_PROMPT = `Search the web for the latest official and reliable links about this course and return ONLY a JSON object:
 {
-  "title": "string",
-  "description": "string (2-4 paragraphs)",
-  "instructors": ["string"],
-  "prerequisites": "string",
-  "related_urls": ["string"],
-  "difficulty": "number (1-5)",
-  "workload": "light|moderate|heavy"
+  "related_urls": ["string"]
 }
-Only include fields where you found reliable current data. Course: {course_code} at {university}.`.trim();
+Rules:
+- Return only related_urls (no title/description/instructors/prerequisites/difficulty/workload/other fields).
+- Prefer official university pages, catalog pages, instructor pages, and syllabus links.
+- Keep only valid absolute URLs.
+- Remove duplicates.
+Course: {course_code} at {university}.`.trim();

@@ -57,14 +57,20 @@ export async function POST(request: NextRequest) {
 
     const updates = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
 
-    // Never overwrite user-managed fields
-    delete updates.is_hidden;
-    delete updates.is_internal;
+    const rawUrls = Array.isArray(updates.related_urls) ? updates.related_urls : [];
+    const relatedUrls = Array.from(
+      new Set(
+        rawUrls
+          .filter((u): u is string => typeof u === 'string')
+          .map((u) => u.trim())
+          .filter((u) => /^https?:\/\//i.test(u))
+      )
+    );
 
     const adminSupabase = createAdminClient();
     const { error: updateError } = await adminSupabase
       .from('courses')
-      .update(updates)
+      .update({ related_urls: relatedUrls })
       .eq('id', courseId);
 
     if (updateError) {
@@ -72,7 +78,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, updated: Object.keys(updates) });
+    return NextResponse.json({ success: true, updated: ["related_urls"], count: relatedUrls.length });
   } catch (err) {
     console.error('[course-update] AI call failed:', err);
     return NextResponse.json(

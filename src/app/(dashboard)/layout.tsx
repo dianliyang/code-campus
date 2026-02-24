@@ -14,7 +14,7 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <main className="h-[100dvh] bg-[#f5f5f5] overflow-hidden">
+      <main className="h-[100svh] bg-[#f5f5f5] overflow-hidden">
         <div className="h-full flex overflow-hidden">
           <LeftRail
             labels={{
@@ -26,7 +26,7 @@ export default async function DashboardLayout({
               settings: dict.navbar?.settings || "Settings",
             }}
           />
-          <section className="flex-1 min-w-0 h-full overflow-y-auto p-1.5 sm:p-2">
+          <section className="flex-1 min-w-0 h-full overflow-hidden p-1.5 sm:p-2">
             <div id="dashboard-scroll" className="h-full rounded-lg bg-[#fcfcfc] px-2 pt-[2.75rem] pb-0 sm:px-3 sm:pt-3 sm:pb-3 overflow-y-auto">
               {children}
             </div>

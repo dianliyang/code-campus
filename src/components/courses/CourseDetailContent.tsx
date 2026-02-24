@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
@@ -93,6 +93,10 @@ export default function CourseDetailContent({
       : course.university?.toLowerCase() === "stanford"
         ? "Stanford Course Variants"
       : "CMU Course Variants";
+
+  useEffect(() => {
+    setLocalRelatedUrls(course.relatedUrls || []);
+  }, [course.relatedUrls]);
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);

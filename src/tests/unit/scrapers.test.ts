@@ -34,8 +34,8 @@ describe('CMU Scraper', () => {
     expect(scraper.getSemesterParam()).toBe('S26');
   });
 
-  test('links should return the search URL', () => {
-    const links = scraper.links();
+  test('links should return the search URL', async () => {
+    const links = await scraper.links();
     expect(links).toHaveLength(1);
     expect(links[0]).toContain('SOCServlet/search');
   });

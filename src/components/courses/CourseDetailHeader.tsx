@@ -6,7 +6,7 @@ import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PenSquare, Loader2, Trash2, ArrowUpRight, Search } from "lucide-react";
+import { PenSquare, Loader2, Trash2, ArrowUpRight, Search, Sparkles } from "lucide-react";
 
 interface CourseDetailHeaderProps {
   course: Course;
@@ -24,8 +24,33 @@ export default function CourseDetailHeader({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAiUpdating, setIsAiUpdating] = useState(false);
+  const [aiStatus, setAiStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const searchQuery = `${course.university || ""} ${course.courseCode || ""}`.trim();
   const searchHref = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+
+  const handleAiUpdate = async () => {
+    setIsAiUpdating(true);
+    setAiStatus('idle');
+    try {
+      const res = await fetch('/api/ai/course-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId: course.id }),
+      });
+      if (res.ok) {
+        setAiStatus('success');
+        router.refresh();
+      } else {
+        setAiStatus('error');
+      }
+    } catch {
+      setAiStatus('error');
+    } finally {
+      setIsAiUpdating(false);
+      setTimeout(() => setAiStatus('idle'), 3000);
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this course? This action cannot be undone.")) {
@@ -53,7 +78,26 @@ export default function CourseDetailHeader({
 
   return (
     <header data-course-title-header className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-4 relative group">
-      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+      <div className="absolute top-4 right-4 flex gap-2">
+        {/* AI Update — always visible */}
+        <button
+          onClick={handleAiUpdate}
+          disabled={isAiUpdating}
+          className={`h-8 w-8 rounded-md border bg-white inline-flex items-center justify-center transition-all disabled:opacity-50 ${
+            aiStatus === 'success'
+              ? 'border-emerald-300 text-emerald-600'
+              : aiStatus === 'error'
+                ? 'border-rose-300 text-rose-500'
+                : 'border-[#d3d3d3] text-[#666] hover:bg-[#f8f8f8]'
+          }`}
+          title="AI Update — fetch latest course info from web"
+          aria-label="AI Update"
+        >
+          {isAiUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+        </button>
+
+        {/* Hover-only actions */}
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
         <a
           href={searchHref}
           target="_blank"
@@ -83,6 +127,7 @@ export default function CourseDetailHeader({
             <Trash2 className="w-3.5 h-3.5 mx-auto" />
           )}
         </button>
+        </div>
       </div>
 
       <div className="flex items-start gap-3">

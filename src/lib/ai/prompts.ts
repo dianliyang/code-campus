@@ -57,3 +57,15 @@ Rules:
 - no markdown
 - no explanation text
 `.trim();
+
+export const DEFAULT_COURSE_UPDATE_PROMPT = `Search the web for the latest information about this course and return a JSON object matching this schema:
+{
+  "title": "string",
+  "description": "string (2-4 paragraphs)",
+  "instructors": ["string"],
+  "prerequisites": "string",
+  "related_urls": ["string"],
+  "difficulty": "number (1-5)",
+  "workload": "light|moderate|heavy"
+}
+Only include fields where you found reliable current data. Course: {course_code} at {university}.`.trim();

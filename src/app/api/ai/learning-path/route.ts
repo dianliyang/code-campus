@@ -3,6 +3,7 @@ import { buildSystemPrompt, fetchUserContext } from '@/lib/ai/perplexity';
 import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { rateLimit } from '@/lib/rate-limit';
+import { logAiUsage } from '@/lib/ai/log-usage';
 
 export const runtime = 'nodejs';
 
@@ -107,6 +108,18 @@ export async function POST(req: Request) {
       temperature: 0.7,
       maxOutputTokens: 2000,
     });
+
+    // Log usage after stream completes (fire-and-forget)
+    Promise.resolve(result.usage).then((usage) => {
+      logAiUsage({
+        userId: user.id,
+        provider: 'perplexity',
+        model: 'sonar',
+        feature: 'learning-path',
+        tokensInput: usage.inputTokens,
+        tokensOutput: usage.outputTokens,
+      });
+    }).catch(() => {});
 
     return result.toTextStreamResponse();
   } catch (error) {

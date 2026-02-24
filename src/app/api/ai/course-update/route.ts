@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { DEFAULT_COURSE_UPDATE_PROMPT } from '@/lib/ai/prompts';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
+import { logAiUsage } from '@/lib/ai/log-usage';
 
 export const runtime = 'nodejs';
 
@@ -44,10 +45,19 @@ export async function POST(request: NextRequest) {
     .replace('{university}', course.university);
 
   try {
-    const { text } = await generateText({
+    const { text, usage } = await generateText({
       model: perplexity.chat('sonar'),
       prompt,
       maxOutputTokens: 1024,
+    });
+
+    logAiUsage({
+      userId: user.id,
+      provider: 'perplexity',
+      model: 'sonar',
+      feature: 'course-update',
+      tokensInput: usage.inputTokens,
+      tokensOutput: usage.outputTokens,
     });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);

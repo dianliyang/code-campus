@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, getUser } from "@/lib/supabase/server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
+import { logAiUsage } from "@/lib/ai/log-usage";
 
 export const runtime = "nodejs";
 
@@ -139,11 +140,20 @@ Rules:
 - No markdown, no extra text.`;
 
   try {
-    const { text } = await generateText({
+    const { text, usage } = await generateText({
       model: perplexity.chat("sonar"),
       prompt,
       maxOutputTokens: 1800,
       temperature: 0.3,
+    });
+
+    logAiUsage({
+      userId: user.id,
+      provider: "perplexity",
+      model: "sonar",
+      feature: "planner",
+      tokensInput: usage.inputTokens,
+      tokensOutput: usage.outputTokens,
     });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);

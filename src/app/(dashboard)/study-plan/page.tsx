@@ -444,7 +444,8 @@ function StudyPlanSkeleton() {
       {/* Active courses section */}
       <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
         <div className="h-4 w-32 bg-[#f0f0f0] rounded" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="h-28 bg-[#f5f5f5] rounded-lg" />
           <div className="h-28 bg-[#f5f5f5] rounded-lg" />
           <div className="h-28 bg-[#f5f5f5] rounded-lg" />
         </div>

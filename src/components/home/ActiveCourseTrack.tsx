@@ -282,6 +282,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             disabled={isUpdating || progress === 100}
             className="w-7 h-7 rounded-md flex items-center justify-center transition-all bg-brand-green/10 text-brand-green hover:bg-brand-green/20 disabled:opacity-30"
             title="Finalize"
+            aria-label="Finalize course"
           >
             {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
           </button>

@@ -88,11 +88,22 @@ describe('external-api utils', () => {
     expect(result.enrollment).toEqual({ status: 'active' });
   });
 
-  it('notModifiedResponse returns a 304 NextResponse with the given headers', () => {
+  it('notModifiedResponse returns a 304 NextResponse with the given headers', async () => {
     const headers = { 'Cache-Control': 'private, max-age=3600', 'Last-Modified': 'Sat, 14 Feb 2026 12:00:00 GMT' };
     const res = notModifiedResponse(headers);
     expect(res.status).toBe(304);
     expect(res.headers.get('Cache-Control')).toBe(headers['Cache-Control']);
     expect(res.headers.get('Last-Modified')).toBe(headers['Last-Modified']);
+    expect(await res.text()).toBe('');
+  });
+
+  it('courseLastUpdatedAt returns course created_at when study_plans is absent', () => {
+    const course = { created_at: '2026-02-13T00:00:00.000Z' };
+    const ms = courseLastUpdatedAt(course as Record<string, unknown>);
+    expect(ms).toBe(Date.parse('2026-02-13T00:00:00.000Z'));
+  });
+
+  it('checkNotModified returns false when header is an invalid date string', () => {
+    expect(checkNotModified('garbage', 1739534400000)).toBe(false);
   });
 });

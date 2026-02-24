@@ -7,7 +7,16 @@ import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
 import AddPlanModal from "./AddPlanModal";
-import { ExternalLink, Trophy, CheckCheck, CalendarCheck, CalendarPlus, Check, Clock, Loader2 } from "lucide-react";
+import {
+  ExternalLink,
+  Trophy,
+  CheckCheck,
+  CalendarCheck,
+  CalendarPlus,
+  Check,
+  Clock,
+  Loader2,
+} from "lucide-react";
 
 interface ActiveCourseTrackProps {
   course: Course;
@@ -22,10 +31,15 @@ interface ActiveCourseTrackProps {
     location: string;
   } | null;
   onUpdate?: () => void;
-  dict: Dictionary['dashboard']['roadmap'];
+  dict: Dictionary["dashboard"]["roadmap"];
 }
 
-export default function ActiveCourseTrack({ course, initialProgress, plan, onUpdate }: Omit<ActiveCourseTrackProps, 'dict'>) {
+export default function ActiveCourseTrack({
+  course,
+  initialProgress,
+  plan,
+  onUpdate,
+}: Omit<ActiveCourseTrackProps, "dict">) {
   const router = useRouter();
   const [progress, setProgress] = useState(initialProgress);
   const [isUpdating, setIsInUpdating] = useState(false);
@@ -53,8 +67,8 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
         body: JSON.stringify({
           courseId: course.id,
           action: "update_progress",
-          progress: validatedProgress
-        })
+          progress: validatedProgress,
+        }),
       });
       if (res.ok) {
         onUpdate?.();
@@ -79,7 +93,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           action: "update_progress",
           progress: 100,
           gpa: gpa ? parseFloat(gpa) : 0,
-        })
+        }),
       });
       if (res.ok) {
         onUpdate?.();
@@ -93,7 +107,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
   };
 
   const quickIncrements = [10, 25, 50, 75];
-  const weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekdaysShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const focusSegments = 20;
   const activeFocusSegments = Math.round((progress / 100) * focusSegments);
 
@@ -116,7 +130,9 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
                 <Trophy className="w-3.5 h-3.5" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-[#1f1f1f]">Mark as complete</h3>
+                <h3 className="text-sm font-semibold text-[#1f1f1f]">
+                  Mark as complete
+                </h3>
                 <p className="text-xs text-[#555] truncate">{course.title}</p>
               </div>
             </div>
@@ -144,7 +160,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
               </button>
               <button
                 onClick={executeCompletion}
-                className="flex-1 h-9 rounded-md border border-[#1f1f1f] bg-white text-[13px] font-medium text-[#1f1f1f] hover:bg-[#f5f5f5] transition-colors inline-flex items-center justify-center gap-1.5"
+                className="flex-1 h-9 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#1f1f1f] hover:bg-[#f5f5f5] transition-colors inline-flex items-center justify-center gap-1.5"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
                 Finalize
@@ -164,9 +180,13 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-[11px] font-medium text-[#4d4d4d] leading-none">{course.university}</span>
+              <span className="text-[11px] font-medium text-[#4d4d4d] leading-none">
+                {course.university}
+              </span>
               <span className="w-0.5 h-0.5 bg-gray-200 rounded-full"></span>
-              <span className="text-[11px] text-[#777]">{course.courseCode}</span>
+              <span className="text-[11px] text-[#777]">
+                {course.courseCode}
+              </span>
             </div>
             <h3 className="text-base font-semibold text-[#1f1f1f] tracking-tight leading-tight line-clamp-1">
               <Link href={detailHref}>{course.title}</Link>
@@ -188,19 +208,37 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
       <div className="space-y-2">
         <div className="flex items-end justify-between">
           <div className="flex flex-col">
-            <span className="text-[9px] font-bold text-[#c0c0c0] uppercase tracking-wider mb-0.5">Focus_Intensity</span>
+            <span className="text-[9px] font-bold text-[#c0c0c0] uppercase tracking-wider mb-0.5">
+              Focus_Intensity
+            </span>
             {localPlan && (
               <div className="flex items-center gap-1 text-[10px] font-medium text-[#666]">
                 <Clock className="w-2.5 h-2.5" />
-                <span>{localPlan.days_of_week.map(d => weekdaysShort[d].toUpperCase()).join('/')} • {localPlan.start_time.slice(0, 5)} • {new Date(localPlan.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-{new Date(localPlan.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                <span>
+                  {localPlan.days_of_week
+                    .map((d) => weekdaysShort[d].toUpperCase())
+                    .join("/")}{" "}
+                  • {localPlan.start_time.slice(0, 5)} •{" "}
+                  {new Date(localPlan.start_date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                  -
+                  {new Date(localPlan.end_date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
               </div>
             )}
           </div>
-          <span className={`text-lg font-semibold tracking-tight transition-colors ${isUpdating ? 'text-[#333] animate-pulse' : 'text-[#1f1f1f]'}`}>
+          <span
+            className={`text-lg font-semibold tracking-tight transition-colors ${isUpdating ? "text-[#333] animate-pulse" : "text-[#1f1f1f]"}`}
+          >
             {progress}%
           </span>
         </div>
-        
+
         <div className="relative h-3 flex items-center">
           <div className="absolute inset-0 flex items-center gap-1">
             {Array.from({ length: focusSegments }).map((_, index) => (
@@ -208,8 +246,8 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
                 key={index}
                 className={`h-2 flex-1 rounded-[2px] transition-colors ${
                   index < activeFocusSegments
-                    ? `bg-brand-blue ${isUpdating ? 'animate-pulse' : ''}`
-                    : 'bg-gray-100 border border-gray-100'
+                    ? `bg-brand-blue ${isUpdating ? "animate-pulse" : ""}`
+                    : "bg-gray-100 border border-gray-100"
                 }`}
               />
             ))}
@@ -221,8 +259,16 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             max="100"
             value={progress}
             onChange={(e) => setProgress(parseInt(e.target.value))}
-            onMouseUp={(e) => handleProgressChange(parseInt((e.target as HTMLInputElement).value))}
-            onTouchEnd={(e) => handleProgressChange(parseInt((e.target as HTMLInputElement).value))}
+            onMouseUp={(e) =>
+              handleProgressChange(
+                parseInt((e.target as HTMLInputElement).value),
+              )
+            }
+            onTouchEnd={(e) =>
+              handleProgressChange(
+                parseInt((e.target as HTMLInputElement).value),
+              )
+            }
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
         </div>
@@ -238,8 +284,8 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
               disabled={isUpdating}
               className={`text-[10px] font-bold w-8 h-7 flex items-center justify-center rounded-md border transition-all ${
                 progress === inc
-                  ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
-                  : 'bg-white text-[#888] border-gray-200 hover:border-gray-400 hover:text-[#444]'
+                  ? "bg-gray-900 text-white border-gray-900 shadow-sm"
+                  : "bg-white text-[#888] border-gray-200 hover:border-gray-400 hover:text-[#444]"
               }`}
             >
               {inc}
@@ -256,17 +302,25 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
                 : "bg-white text-[#666] border-[#d3d3d3] hover:bg-[#f0f0f0] hover:text-[#1f1f1f]"
             }`}
           >
-            {localPlan ? <CalendarCheck className="w-3 h-3" /> : <CalendarPlus className="w-3 h-3" />}
+            {localPlan ? (
+              <CalendarCheck className="w-3 h-3" />
+            ) : (
+              <CalendarPlus className="w-3 h-3" />
+            )}
           </button>
 
           <button
             onClick={() => handleProgressChange(100)}
             disabled={isUpdating || progress === 100}
-            className="w-7 h-7 rounded-md flex items-center justify-center transition-all border bg-white text-[#1f1f1f] border-[#1f1f1f] hover:bg-[#f5f5f5] disabled:opacity-30"
+            className="w-7 h-7 rounded-md flex items-center justify-center transition-all border bg-white text-[#1f1f1f] border-[#d3d3d3] hover:bg-[#f5f5f5] disabled:opacity-30"
             title="Finalize"
             aria-label="Finalize course"
           >
-            {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+            {isUpdating ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Check className="w-3 h-3" />
+            )}
           </button>
         </div>
       </div>

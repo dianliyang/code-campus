@@ -3,19 +3,14 @@
 import { useEffect, useMemo } from "react";
 import AchievementCard from "@/components/home/AchievementCard";
 import { useRoadmapStore } from "@/store/useRoadmapStore";
+import { Course } from "@/types";
 
-interface CompletedCourse {
-  id: number;
-  title: string;
-  courseCode: string;
-  university: string;
-  credit?: number;
+type CompletedCourse = Course & {
   gpa?: number;
   score?: number;
   attendance?: { attended: number; total: number };
-  semesters: string[];
   updated_at: string;
-}
+};
 
 interface RoadmapAchievementsSectionProps {
   availableSemesters: string[];

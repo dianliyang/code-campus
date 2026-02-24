@@ -18,7 +18,10 @@ import {
   Search
 } from "lucide-react";
 
+type AISectionId = "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage";
+
 interface AISettingsCardProps {
+  section: AISectionId;
   initialProvider: string;
   initialModel: string;
   initialWebSearchEnabled: boolean;
@@ -100,6 +103,7 @@ const StatusDisplay = ({ panel, status }: { panel: string; status: Status }) => 
 };
 
 export default function AISettingsCard({
+  section,
   initialProvider,
   initialModel,
   initialWebSearchEnabled,
@@ -212,335 +216,347 @@ export default function AISettingsCard({
   };
 
   return (
-    <div className="space-y-4">
+    <div>
       {/* 1. Provider Configuration */}
-      <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-        <div className="flex items-center gap-2 text-[#222] mb-4 pb-3 border-b border-[#efefef]">
-          <Cpu className="w-4 h-4 text-[#777]" />
-          <span className="text-sm font-semibold">Engine Configuration</span>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-[#666] block">Intelligence Provider</label>
-              <div className="flex gap-2">
-                {AI_PROVIDERS.map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => {
-                      setProvider(p as "gemini" | "perplexity");
-                      setDefaultModel(p === "gemini" ? GEMINI_MODELS[0] : PERPLEXITY_MODELS[0]);
-                    }}
-                    className={`flex-1 h-8 rounded-md border transition-colors text-[13px] font-medium ${
-                      provider === p
-                        ? "bg-[#1f1f1f] border-[#1f1f1f] text-white"
-                        : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-[#666] block">Active Language Model</label>
-              <div className="grid grid-cols-2 gap-2">
-                {(provider === "gemini" ? GEMINI_MODELS : PERPLEXITY_MODELS).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setDefaultModel(m)}
-                    className={`h-8 px-2.5 rounded-md border transition-colors text-[12px] font-medium ${
-                      defaultModel === m
-                        ? "bg-[#efefef] border-[#cfcfcf] text-[#222]"
-                        : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
-                    }`}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-1">
-              <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-md border border-[#e5e5e5] hover:bg-[#fafafa] transition-colors">
-                <input
-                  type="checkbox"
-                  checked={webSearchEnabled}
-                  onChange={(e) => setWebSearchEnabled(e.target.checked)}
-                  disabled={isSavingProvider}
-                  className="w-4 h-4 rounded border-gray-300 text-[#1f1f1f] focus:ring-[#1f1f1f] transition-all"
-                />
-                <div>
-                  <span className="block text-[13px] font-medium text-[#222]">Web Grounding</span>
-                  <span className="text-xs text-[#777]">Real-time data synthesis enabled.</span>
-                </div>
-              </label>
-            </div>
-
-            <div className="pt-2">
-              <button
-                onClick={saveProviderSettings}
-                disabled={isSavingProvider}
-                className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
-              >
-                {isSavingProvider ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Sync Engine
-              </button>
-              <StatusDisplay panel="provider" status={status} />
-            </div>
+      <div className={section === "engine" ? "" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
+          <div className="flex items-center gap-2 text-[#222] mb-4 pb-3 border-b border-[#efefef]">
+            <Cpu className="w-4 h-4 text-[#777]" />
+            <span className="text-sm font-semibold">Engine Configuration</span>
           </div>
 
-          <div className="bg-[#fafafa] rounded-md p-4 border border-[#e5e5e5] flex flex-col justify-center">
-            <p className="text-xs text-[#666] leading-relaxed">
-              &quot;System Preferences define the core execution parameters for all synthesized responses. Choosing a specific provider alters the latency and grounding capabilities of the intelligence layer.&quot;
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-[#666] block">Intelligence Provider</label>
+                <div className="flex gap-2">
+                  {AI_PROVIDERS.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => {
+                        setProvider(p as "gemini" | "perplexity");
+                        setDefaultModel(p === "gemini" ? GEMINI_MODELS[0] : PERPLEXITY_MODELS[0]);
+                      }}
+                      className={`flex-1 h-8 rounded-md border transition-colors text-[13px] font-medium ${
+                        provider === p
+                          ? "bg-[#1f1f1f] border-[#1f1f1f] text-white"
+                          : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-[#666] block">Active Language Model</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(provider === "gemini" ? GEMINI_MODELS : PERPLEXITY_MODELS).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setDefaultModel(m)}
+                      className={`h-8 px-2.5 rounded-md border transition-colors text-[12px] font-medium ${
+                        defaultModel === m
+                          ? "bg-[#efefef] border-[#cfcfcf] text-[#222]"
+                          : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-1">
+                <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-md border border-[#e5e5e5] hover:bg-[#fafafa] transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={webSearchEnabled}
+                    onChange={(e) => setWebSearchEnabled(e.target.checked)}
+                    disabled={isSavingProvider}
+                    className="w-4 h-4 rounded border-gray-300 text-[#1f1f1f] focus:ring-[#1f1f1f] transition-all"
+                  />
+                  <div>
+                    <span className="block text-[13px] font-medium text-[#222]">Web Grounding</span>
+                    <span className="text-xs text-[#777]">Real-time data synthesis enabled.</span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={saveProviderSettings}
+                  disabled={isSavingProvider}
+                  className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                >
+                  {isSavingProvider ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  Sync Engine
+                </button>
+                <StatusDisplay panel="provider" status={status} />
+              </div>
+            </div>
+
+            <div className="bg-[#fafafa] rounded-md p-4 border border-[#e5e5e5] flex flex-col justify-center">
+              <p className="text-xs text-[#666] leading-relaxed">
+                &quot;System Preferences define the core execution parameters for all synthesized responses. Choosing a specific provider alters the latency and grounding capabilities of the intelligence layer.&quot;
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* 2. Metadata Instruction Set */}
-      <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
-          <div className="flex items-center gap-2 text-[#222]">
-            <FileCode className="w-4 h-4 text-[#777]" />
-            <span className="text-sm font-semibold">Metadata Logic</span>
-          </div>
-          <button
-            onClick={() => setPromptTemplate(DEFAULT_COURSE_DESCRIPTION_PROMPT)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-          >
-            <RefreshCcw className="w-3 h-3" />
-            Reset
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <textarea
-            value={promptTemplate}
-            onChange={(e) => setPromptTemplate(e.target.value)}
-            className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
-            placeholder="ENTER_INSTRUCTION_SET..."
-            disabled={isSavingDescription}
-          />
-
-          <div className="flex flex-col gap-4">
+      <div className={section === "metadata" ? "" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+            <div className="flex items-center gap-2 text-[#222]">
+              <FileCode className="w-4 h-4 text-[#777]" />
+              <span className="text-sm font-semibold">Metadata Logic</span>
+            </div>
             <button
-              onClick={saveDescriptionPrompt}
-              disabled={isSavingDescription}
-              className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              onClick={() => setPromptTemplate(DEFAULT_COURSE_DESCRIPTION_PROMPT)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
             >
-              {isSavingDescription ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Push Metadata Logic
+              <RefreshCcw className="w-3 h-3" />
+              Reset
             </button>
-            <StatusDisplay panel="description" status={status} />
+          </div>
+
+          <div className="space-y-3">
+            <textarea
+              value={promptTemplate}
+              onChange={(e) => setPromptTemplate(e.target.value)}
+              className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingDescription}
+            />
+
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={saveDescriptionPrompt}
+                disabled={isSavingDescription}
+                className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              >
+                {isSavingDescription ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Push Metadata Logic
+              </button>
+              <StatusDisplay panel="description" status={status} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* 3. Scheduling Instruction Set */}
-      <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
-          <div className="flex items-center gap-2 text-[#222]">
-            <CalendarDays className="w-4 h-4 text-[#777]" />
-            <span className="text-sm font-semibold">Scheduling Logic</span>
-          </div>
-          <button
-            onClick={() => setStudyPlanPromptTemplate(DEFAULT_STUDY_PLAN_PROMPT)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-          >
-            <RefreshCcw className="w-3 h-3" />
-            Reset
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <textarea
-            value={studyPlanPromptTemplate}
-            onChange={(e) => setStudyPlanPromptTemplate(e.target.value)}
-            className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
-            placeholder="ENTER_INSTRUCTION_SET..."
-            disabled={isSavingStudyPlan}
-          />
-
-          <div className="flex flex-col gap-4">
+      <div className={section === "scheduling" ? "" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+            <div className="flex items-center gap-2 text-[#222]">
+              <CalendarDays className="w-4 h-4 text-[#777]" />
+              <span className="text-sm font-semibold">Scheduling Logic</span>
+            </div>
             <button
-              onClick={saveStudyPlanPrompt}
-              disabled={isSavingStudyPlan}
-              className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              onClick={() => setStudyPlanPromptTemplate(DEFAULT_STUDY_PLAN_PROMPT)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
             >
-              {isSavingStudyPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Push Schedule Logic
+              <RefreshCcw className="w-3 h-3" />
+              Reset
             </button>
-            <StatusDisplay panel="studyplan" status={status} />
+          </div>
+
+          <div className="space-y-3">
+            <textarea
+              value={studyPlanPromptTemplate}
+              onChange={(e) => setStudyPlanPromptTemplate(e.target.value)}
+              className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingStudyPlan}
+            />
+
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={saveStudyPlanPrompt}
+                disabled={isSavingStudyPlan}
+                className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              >
+                {isSavingStudyPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Push Schedule Logic
+              </button>
+              <StatusDisplay panel="studyplan" status={status} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* 4. Topic Classification Logic */}
-      <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
-          <div className="flex items-center gap-2 text-[#222]">
-            <Tag className="w-4 h-4 text-[#777]" />
-            <span className="text-sm font-semibold">Topic Classification Logic</span>
-          </div>
-          <button
-            onClick={() => setTopicsPromptTemplate(DEFAULT_TOPICS_PROMPT)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-          >
-            <RefreshCcw className="w-3 h-3" />
-            Reset
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <textarea
-            value={topicsPromptTemplate}
-            onChange={(e) => setTopicsPromptTemplate(e.target.value)}
-            className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
-            placeholder="ENTER_INSTRUCTION_SET..."
-            disabled={isSavingTopics}
-          />
-
-          <div className="flex flex-col gap-4">
+      <div className={section === "topics" ? "" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+            <div className="flex items-center gap-2 text-[#222]">
+              <Tag className="w-4 h-4 text-[#777]" />
+              <span className="text-sm font-semibold">Topic Classification Logic</span>
+            </div>
             <button
-              onClick={saveTopicsPrompt}
-              disabled={isSavingTopics}
-              className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              onClick={() => setTopicsPromptTemplate(DEFAULT_TOPICS_PROMPT)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
             >
-              {isSavingTopics ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Push Topic Logic
+              <RefreshCcw className="w-3 h-3" />
+              Reset
             </button>
-            <StatusDisplay panel="topics" status={status} />
+          </div>
+
+          <div className="space-y-3">
+            <textarea
+              value={topicsPromptTemplate}
+              onChange={(e) => setTopicsPromptTemplate(e.target.value)}
+              className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingTopics}
+            />
+
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={saveTopicsPrompt}
+                disabled={isSavingTopics}
+                className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              >
+                {isSavingTopics ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Push Topic Logic
+              </button>
+              <StatusDisplay panel="topics" status={status} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* 5. Course Update Search Logic */}
-      <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
-          <div className="flex items-center gap-2 text-[#222]">
-            <Search className="w-4 h-4 text-[#777]" />
-            <span className="text-sm font-semibold">Course Update Search Logic</span>
-          </div>
-          <button
-            onClick={() => setCourseUpdatePromptTemplate(DEFAULT_COURSE_UPDATE_PROMPT)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-          >
-            <RefreshCcw className="w-3 h-3" />
-            Reset
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <textarea
-            value={courseUpdatePromptTemplate}
-            onChange={(e) => setCourseUpdatePromptTemplate(e.target.value)}
-            className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
-            placeholder="ENTER_INSTRUCTION_SET..."
-            disabled={isSavingCourseUpdate}
-          />
-
-          <div className="flex flex-col gap-4">
+      <div className={section === "course-update" ? "" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+            <div className="flex items-center gap-2 text-[#222]">
+              <Search className="w-4 h-4 text-[#777]" />
+              <span className="text-sm font-semibold">Course Update Search Logic</span>
+            </div>
             <button
-              onClick={saveCourseUpdatePrompt}
-              disabled={isSavingCourseUpdate}
-              className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              onClick={() => setCourseUpdatePromptTemplate(DEFAULT_COURSE_UPDATE_PROMPT)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
             >
-              {isSavingCourseUpdate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Push Update Search Logic
+              <RefreshCcw className="w-3 h-3" />
+              Reset
             </button>
-            <StatusDisplay panel="course-update" status={status} />
+          </div>
+
+          <div className="space-y-3">
+            <textarea
+              value={courseUpdatePromptTemplate}
+              onChange={(e) => setCourseUpdatePromptTemplate(e.target.value)}
+              className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingCourseUpdate}
+            />
+
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={saveCourseUpdatePrompt}
+                disabled={isSavingCourseUpdate}
+                className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              >
+                {isSavingCourseUpdate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Push Update Search Logic
+              </button>
+              <StatusDisplay panel="course-update" status={status} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* 6. Usage Statistics */}
-      <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-        <div className="flex items-center gap-2 text-[#222] mb-4 pb-3 border-b border-[#efefef]">
-          <BarChart2 className="w-4 h-4 text-[#777]" />
-          <span className="text-sm font-semibold">Usage Statistics</span>
-        </div>
-
-        {usageLoading ? (
-          <div className="flex items-center justify-center py-6">
-            <Loader2 className="w-4 h-4 animate-spin text-[#aaa]" />
+      <div className={section === "usage" ? "" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
+          <div className="flex items-center gap-2 text-[#222] mb-4 pb-3 border-b border-[#efefef]">
+            <BarChart2 className="w-4 h-4 text-[#777]" />
+            <span className="text-sm font-semibold">Usage Statistics</span>
           </div>
-        ) : !usageStats || usageStats.totals.requests === 0 ? (
-          <p className="text-[11px] text-[#aaa] text-center py-4">No AI calls tracked yet.</p>
-        ) : (
-          <div className="space-y-3">
-            {/* Totals row */}
-            <div className="rounded-md bg-[#fafafa] border border-[#f0f0f0] p-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Requests</p>
-                <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.requests.toLocaleString()}</p>
-                <p className="text-[10px] text-[#aaa]">{usageStats.recentTotals.requests} this week</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Input Tokens</p>
-                <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.tokens_input.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Output Tokens</p>
-                <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.tokens_output.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Total Cost</p>
-                <p className="text-lg font-bold text-[#1f1f1f]">${usageStats.totals.cost_usd.toFixed(4)}</p>
-                <p className="text-[10px] text-[#aaa]">${usageStats.recentTotals.cost_usd.toFixed(4)} this week</p>
-              </div>
+
+          {usageLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-4 h-4 animate-spin text-[#aaa]" />
             </div>
-
-            {/* 7-day bar chart */}
-            {usageStats.daily && <UsageBarChart daily={usageStats.daily} />}
-
-            {/* By feature */}
-            {Object.keys(usageStats.byFeature).length > 0 && (
-              <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
-                <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
-                  <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Feature</p>
+          ) : !usageStats || usageStats.totals.requests === 0 ? (
+            <p className="text-[11px] text-[#aaa] text-center py-4">No AI calls tracked yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {/* Totals row */}
+              <div className="rounded-md bg-[#fafafa] border border-[#f0f0f0] p-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Requests</p>
+                  <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.requests.toLocaleString()}</p>
+                  <p className="text-[10px] text-[#aaa]">{usageStats.recentTotals.requests} this week</p>
                 </div>
-                <div className="divide-y divide-[#f5f5f5]">
-                  {Object.entries(usageStats.byFeature)
-                    .sort((a, b) => b[1].requests - a[1].requests)
-                    .map(([feature, stat]) => (
-                      <div key={feature} className="px-3 py-2 flex items-center justify-between">
-                        <span className="text-[13px] text-[#444]">{FEATURE_LABELS[feature] ?? feature}</span>
-                        <div className="flex items-center gap-4 text-right">
-                          <span className="text-[11px] text-[#888]">{stat.requests} req</span>
-                          <span className="text-[11px] font-medium text-[#555] w-16">${stat.cost_usd.toFixed(4)}</span>
-                        </div>
-                      </div>
-                    ))}
+                <div>
+                  <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Input Tokens</p>
+                  <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.tokens_input.toLocaleString()}</p>
                 </div>
-              </div>
-            )}
-
-            {/* By model */}
-            {Object.keys(usageStats.byModel).length > 0 && (
-              <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
-                <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
-                  <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Model</p>
+                <div>
+                  <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Output Tokens</p>
+                  <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.tokens_output.toLocaleString()}</p>
                 </div>
-                <div className="divide-y divide-[#f5f5f5]">
-                  {Object.entries(usageStats.byModel)
-                    .sort((a, b) => b[1].requests - a[1].requests)
-                    .map(([model, stat]) => (
-                      <div key={model} className="px-3 py-2 flex items-center justify-between">
-                        <span className="text-[13px] font-mono text-[#444]">{model}</span>
-                        <div className="flex items-center gap-4 text-right">
-                          <span className="text-[11px] text-[#888]">{stat.requests} req</span>
-                          <span className="text-[11px] font-medium text-[#555] w-16">${stat.cost_usd.toFixed(4)}</span>
-                        </div>
-                      </div>
-                    ))}
+                <div>
+                  <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Total Cost</p>
+                  <p className="text-lg font-bold text-[#1f1f1f]">${usageStats.totals.cost_usd.toFixed(4)}</p>
+                  <p className="text-[10px] text-[#aaa]">${usageStats.recentTotals.cost_usd.toFixed(4)} this week</p>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+
+              {/* 7-day bar chart */}
+              {usageStats.daily && <UsageBarChart daily={usageStats.daily} />}
+
+              {/* By feature */}
+              {Object.keys(usageStats.byFeature).length > 0 && (
+                <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
+                  <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
+                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Feature</p>
+                  </div>
+                  <div className="divide-y divide-[#f5f5f5]">
+                    {Object.entries(usageStats.byFeature)
+                      .sort((a, b) => b[1].requests - a[1].requests)
+                      .map(([feature, stat]) => (
+                        <div key={feature} className="px-3 py-2 flex items-center justify-between">
+                          <span className="text-[13px] text-[#444]">{FEATURE_LABELS[feature] ?? feature}</span>
+                          <div className="flex items-center gap-4 text-right">
+                            <span className="text-[11px] text-[#888]">{stat.requests} req</span>
+                            <span className="text-[11px] font-medium text-[#555] w-16">${stat.cost_usd.toFixed(4)}</span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* By model */}
+              {Object.keys(usageStats.byModel).length > 0 && (
+                <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
+                  <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
+                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Model</p>
+                  </div>
+                  <div className="divide-y divide-[#f5f5f5]">
+                    {Object.entries(usageStats.byModel)
+                      .sort((a, b) => b[1].requests - a[1].requests)
+                      .map(([model, stat]) => (
+                        <div key={model} className="px-3 py-2 flex items-center justify-between">
+                          <span className="text-[13px] font-mono text-[#444]">{model}</span>
+                          <div className="flex items-center gap-4 text-right">
+                            <span className="text-[11px] text-[#888]">{stat.requests} req</span>
+                            <span className="text-[11px] font-medium text-[#555] w-16">${stat.cost_usd.toFixed(4)}</span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

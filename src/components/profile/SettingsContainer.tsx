@@ -1,89 +1,131 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import AISettingsCard from "./AISettingsCard";
 import SecurityIdentitySection from "./SecurityIdentitySection";
 import SystemMaintenanceCard from "./SystemMaintenanceCard";
 import { User } from "@supabase/supabase-js";
-import { Brain, Shield, Database } from "lucide-react";
+import { LucideIcon, Cpu, FileCode, CalendarDays, Tag, Search, BarChart2, Shield, UserX, Database } from "lucide-react";
+
+export type SectionId =
+  | "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage"
+  | "identity" | "account"
+  | "sync";
+
+type NavItem = { id: SectionId; label: string; icon: LucideIcon };
+
+const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
+  {
+    label: "Intelligence",
+    items: [
+      { id: "engine",        label: "Engine Configuration", icon: Cpu },
+      { id: "metadata",      label: "Metadata Logic",       icon: FileCode },
+      { id: "scheduling",    label: "Scheduling Logic",     icon: CalendarDays },
+      { id: "topics",        label: "Topic Classification", icon: Tag },
+      { id: "course-update", label: "Course Update Search", icon: Search },
+      { id: "usage",         label: "Usage Statistics",     icon: BarChart2 },
+    ],
+  },
+  {
+    label: "Security",
+    items: [
+      { id: "identity", label: "Identity & Security", icon: Shield },
+      { id: "account",  label: "Account",             icon: UserX },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { id: "sync", label: "Data Synchronization", icon: Database },
+    ],
+  },
+];
+
+const ALL_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
+
+const SECTION_META: Record<SectionId, { title: string; desc: string }> = {
+  "engine":        { title: "Engine Configuration",   desc: "Configure AI providers, models and web grounding." },
+  "metadata":      { title: "Metadata Logic",         desc: "Prompt template for course description generation." },
+  "scheduling":    { title: "Scheduling Logic",       desc: "Prompt template for study plan generation." },
+  "topics":        { title: "Topic Classification",   desc: "Prompt template for topic tagging." },
+  "course-update": { title: "Course Update Search",   desc: "Prompt template for web search queries." },
+  "usage":         { title: "Usage Statistics",       desc: "AI call history, token usage, and cost breakdown." },
+  "identity":      { title: "Identity & Security",    desc: "Authentication provider and account status." },
+  "account":       { title: "Account",                desc: "Danger zone — irreversible operations." },
+  "sync":          { title: "Data Synchronization",   desc: "Synchronize course catalogs from institution scrapers." },
+};
+
+const AI_SECTIONS: SectionId[] = ["engine", "metadata", "scheduling", "topics", "course-update", "usage"];
 
 interface SettingsContainerProps {
   user: User;
   profile: Record<string, unknown> | null;
 }
 
-const NAV_ITEMS = [
-  { id: "intelligence", label: "Intelligence", icon: Brain },
-  { id: "security",     label: "Security",     icon: Shield },
-  { id: "maintenance",  label: "System",        icon: Database },
-] as const;
-
 export default function SettingsContainer({ user, profile }: SettingsContainerProps) {
-  const [activeSection, setActiveSection] = useState<string>("intelligence");
-  const scrollContainerRef = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    scrollContainerRef.current = document.getElementById("dashboard-scroll");
-    const root = scrollContainerRef.current;
-
-    const sections = NAV_ITEMS.map((item) => document.getElementById(item.id)).filter(Boolean) as HTMLElement[];
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
-        }
-      },
-      { root, rootMargin: "-10% 0px -70% 0px", threshold: 0 }
-    );
-
-    sections.forEach((s) => observer.observe(s));
-    return () => observer.disconnect();
-  }, []);
-
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    const container = scrollContainerRef.current;
-    if (!el || !container) return;
-    const top = el.offsetTop - container.getBoundingClientRect().top + container.scrollTop - 16;
-    container.scrollTo({ top, behavior: "smooth" });
-  };
+  const [active, setActive] = useState<SectionId>("engine");
+  const meta = SECTION_META[active];
 
   return (
-    <div className="sm:flex sm:gap-4 sm:items-start pb-2">
+    <div className="flex h-full gap-0">
 
-      {/* Sub-sidebar — desktop only */}
-      <aside className="hidden sm:block w-[148px] shrink-0 sticky top-0 self-start">
-        <nav className="space-y-0.5 pt-0.5">
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+      {/* ── Desktop sidebar ── */}
+      <aside className="hidden sm:flex flex-col w-[172px] shrink-0 h-full overflow-y-auto border-r border-[#f0f0f0] pr-2 py-0.5">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.label} className="mb-3">
+            <p className="px-3 mb-1 text-[10px] font-bold text-[#bbb] uppercase tracking-widest">
+              {group.label}
+            </p>
+            {group.items.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActive(id)}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium transition-colors text-left ${
+                  active === id
+                    ? "bg-[#e7e7e7] text-[#1f1f1f]"
+                    : "text-[#767676] hover:text-[#2a2a2a] hover:bg-[#ededed]"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{label}</span>
+              </button>
+            ))}
+          </div>
+        ))}
+      </aside>
+
+      {/* ── Content panel ── */}
+      <div className="flex-1 min-w-0 h-full overflow-y-auto sm:pl-5 pb-4">
+
+        {/* Mobile nav — horizontal scrollable pills */}
+        <div className="sm:hidden flex gap-1.5 overflow-x-auto pb-2 mb-3 no-scrollbar">
+          {ALL_ITEMS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              onClick={() => scrollTo(id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium transition-colors text-left ${
-                activeSection === id
-                  ? "bg-[#e7e7e7] text-[#1f1f1f]"
-                  : "text-[#767676] hover:text-[#2a2a2a] hover:bg-[#ededed]"
+              onClick={() => setActive(id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-medium whitespace-nowrap transition-colors shrink-0 ${
+                active === id
+                  ? "bg-[#1f1f1f] text-white border-[#1f1f1f]"
+                  : "bg-white text-[#666] border-[#d8d8d8] hover:bg-[#f5f5f5]"
               }`}
             >
-              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <Icon className="w-3 h-3" />
               {label}
             </button>
           ))}
-        </nav>
-      </aside>
+        </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 space-y-4">
-        <div id="intelligence" className="space-y-2">
-          <header className="space-y-1">
-            <h3 className="text-base font-semibold text-[#1f1f1f]">Intelligence Preference</h3>
-            <p className="text-xs text-[#7a7a7a]">Configure AI providers and prompt behavioral patterns.</p>
-          </header>
+        {/* Section header */}
+        <div className="mb-3">
+          <h3 className="text-base font-semibold text-[#1f1f1f]">{meta.title}</h3>
+          <p className="text-xs text-[#7a7a7a] mt-0.5">{meta.desc}</p>
+        </div>
 
+        {/* AI sections — always mounted, shown/hidden via CSS to preserve state */}
+        <div className={AI_SECTIONS.includes(active) ? "" : "hidden"}>
           <AISettingsCard
             key={profile ? JSON.stringify(profile) : "default-ai"}
+            section={active as "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage"}
             initialProvider={(profile?.ai_provider as string) || "perplexity"}
             initialModel={(profile?.ai_default_model as string) || "sonar"}
             initialWebSearchEnabled={(profile?.ai_web_search_enabled as boolean | undefined) ?? false}
@@ -94,21 +136,19 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
           />
         </div>
 
-        <div id="security" className="space-y-2">
-          <header className="space-y-1">
-            <h3 className="text-base font-semibold text-[#1f1f1f]">Identity & Security</h3>
-            <p className="text-xs text-[#7a7a7a]">Manage account access, authentication, and privacy.</p>
-          </header>
-
-          <SecurityIdentitySection key="security-section" provider={user.app_metadata.provider} />
+        {/* Identity & Security */}
+        <div className={active === "identity" ? "" : "hidden"}>
+          <SecurityIdentitySection view="identity" provider={user.app_metadata.provider} />
         </div>
 
-        <div id="maintenance" className="space-y-2">
-          <header className="space-y-1">
-            <h3 className="text-base font-semibold text-[#1f1f1f]">System Operations</h3>
-            <p className="text-xs text-[#7a7a7a]">Synchronize academic catalogs and manage data integrity.</p>
-          </header>
-          <SystemMaintenanceCard key="maintenance-section" />
+        {/* Account / Danger Zone */}
+        <div className={active === "account" ? "" : "hidden"}>
+          <SecurityIdentitySection view="account" provider={user.app_metadata.provider} />
+        </div>
+
+        {/* Data Synchronization */}
+        <div className={active === "sync" ? "" : "hidden"}>
+          <SystemMaintenanceCard />
         </div>
       </div>
     </div>

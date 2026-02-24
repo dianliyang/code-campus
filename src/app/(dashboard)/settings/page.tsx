@@ -52,8 +52,8 @@ export default async function SettingsPage() {
   }
 
   return (
-    <main className="w-full space-y-3 px-1 sm:px-1.5">
+    <div className="h-full">
       <SettingsContainer user={user} profile={profile} />
-    </main>
+    </div>
   );
 }

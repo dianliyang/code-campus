@@ -51,17 +51,17 @@ export default function BottomTabBar({ labels }: BottomTabBarProps) {
   ];
 
   return (
-    <div className="lg:hidden fixed left-0 right-0 z-50 px-3 bottom-[calc(env(safe-area-inset-bottom,0px)+4px)]">
-      <nav className="mx-auto w-full max-w-[600px] rounded-[24px] border border-white/45 bg-white/55 backdrop-blur-xl supports-[backdrop-filter]:bg-white/45 shadow-[0_10px_30px_rgba(15,23,42,0.16)]">
-        <div className="flex items-center justify-around h-[56px] px-2">
+    <div className="lg:hidden fixed left-0 right-0 z-50 px-4 bottom-[calc(env(safe-area-inset-bottom,0px)+2px)]">
+      <nav className="mx-auto w-full max-w-[600px] rounded-full border border-white/40 bg-white/55 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/45 shadow-[0_14px_34px_rgba(15,23,42,0.16)]">
+        <div className="flex items-center justify-between p-1.5">
           {tabs.map((tab) => (
             <Link
               key={tab.href}
               href={tab.href}
               aria-current={tab.isActive ? "page" : undefined}
-              className={`flex flex-col items-center justify-center flex-1 gap-1 py-1.5 rounded-2xl transition-all ${
+              className={`flex flex-col items-center justify-center flex-1 gap-0.5 py-2 rounded-full transition-all ${
                 tab.isActive
-                  ? "bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_1px_8px_rgba(15,23,42,0.12)]"
+                  ? "bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_1px_8px_rgba(15,23,42,0.12)]"
                   : "hover:bg-white/35"
               }`}
             >

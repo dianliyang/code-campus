@@ -106,10 +106,10 @@ export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, d
         />
       ) : null}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
-        <div className="inline-flex h-9 md:h-8 items-center rounded-md border border-[#dddddd] overflow-hidden bg-white self-start">
+        <div className="inline-flex h-9 md:h-8 w-full md:w-auto items-center rounded-md border border-[#dddddd] overflow-hidden bg-white">
           <button
             onClick={() => setViewMode("list")}
-            className={`inline-flex h-9 md:h-8 items-center gap-1.5 px-3 md:px-2.5 text-[13px] transition-colors ${
+            className={`inline-flex h-9 md:h-8 flex-1 md:flex-none items-center justify-center gap-1.5 px-3 md:px-2.5 text-[13px] transition-colors ${
               viewMode === "list"
                 ? "bg-[#e9e9e9] text-[#1f1f1f] font-medium shadow-[inset_0_0_0_1px_#d8d8d8]"
                 : "text-[#7b7b7b] hover:bg-[#f6f6f6]"
@@ -121,7 +121,7 @@ export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, d
           </button>
           <button
             onClick={() => setViewMode("grid")}
-            className={`inline-flex h-9 md:h-8 items-center gap-1.5 px-3 md:px-2.5 text-[13px] transition-colors ${
+            className={`inline-flex h-9 md:h-8 flex-1 md:flex-none items-center justify-center gap-1.5 px-3 md:px-2.5 text-[13px] transition-colors ${
               viewMode === "grid"
                 ? "bg-[#e9e9e9] text-[#1f1f1f] font-medium shadow-[inset_0_0_0_1px_#d8d8d8]"
                 : "text-[#7b7b7b] hover:bg-[#f6f6f6]"

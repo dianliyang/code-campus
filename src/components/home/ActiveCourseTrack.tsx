@@ -109,46 +109,45 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
       />
 
       {showCompleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/10 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-300 shadow-2xl">
-            <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-12 h-12 bg-brand-green/10 rounded-xl flex items-center justify-center text-brand-green mb-4">
-                <Trophy className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#fcfcfc] border border-[#e5e5e5] rounded-xl p-4 w-full max-w-xs animate-in zoom-in-95 duration-200 shadow-xl">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-7 h-7 rounded-md bg-[#f5f5f5] border border-[#e5e5e5] flex items-center justify-center text-[#555] shrink-0">
+                <Trophy className="w-3.5 h-3.5" />
               </div>
-              <h3 className="text-xl font-black text-gray-900 tracking-tighter mb-1 uppercase italic">Complete_Module</h3>
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.1em] leading-relaxed">
-                Log final academic performance for: <br /> <span className="text-gray-900">{course.title}</span>
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">GPA</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="5"
-                  placeholder="0.00"
-                  className="bg-gray-50 border border-gray-100 focus:border-brand-blue rounded-xl px-4 py-2.5 outline-none font-black text-lg transition-all"
-                  value={gpa}
-                  onChange={(e) => setGpa(e.target.value)}
-                />
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-[#1f1f1f]">Mark as complete</h3>
+                <p className="text-xs text-[#7a7a7a] truncate">{course.title}</p>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={executeCompletion}
-                className="w-full bg-gray-900 text-white py-3.5 rounded-xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all"
-              >
-                COMMIT_DATA <CheckCheck className="w-3 h-3" />
-              </button>
+            <label className="flex flex-col gap-1.5 mb-4">
+              <span className="text-[11px] font-medium text-[#666]">GPA</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max="5"
+                placeholder="0.00"
+                className="h-10 rounded-md border border-[#d8d8d8] bg-white px-3 text-[14px] font-medium text-[#222] outline-none focus:border-[#bcbcbc] transition-colors"
+                value={gpa}
+                onChange={(e) => setGpa(e.target.value)}
+              />
+            </label>
+
+            <div className="flex gap-2">
               <button
                 onClick={() => setShowCompleteModal(false)}
-                className="w-full text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors py-2"
+                className="flex-1 h-9 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
-                Abort
+                Cancel
+              </button>
+              <button
+                onClick={executeCompletion}
+                className="flex-1 h-9 rounded-md border border-[#1f1f1f] bg-[#1f1f1f] text-[13px] font-medium text-white hover:bg-[#2a2a2a] transition-colors inline-flex items-center justify-center gap-1.5"
+              >
+                <CheckCheck className="w-3.5 h-3.5" />
+                Finalize
               </button>
             </div>
           </div>

@@ -63,7 +63,7 @@ export default function RoadmapAchievementsSection({
         )}
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-1.5">
         {filteredAchievements.length > 0 ? (
           filteredAchievements.map((course) => (
             <AchievementCard key={course.id} course={course} completionDate={course.updated_at} />

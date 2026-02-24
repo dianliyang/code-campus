@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
   const now = new Date().toISOString();
 
-  const enrollRows = selectedCourseIds.map((courseId) => ({
+  const enrollRows = selectedCourseIds.map((courseId: number) => ({
     user_id: user.id,
     course_id: courseId,
     status: "in_progress",

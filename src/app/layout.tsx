@@ -43,8 +43,8 @@ export const metadata: Metadata = {
     ],
     shortcut: ["/icon.svg?v=3", "/icons/icon-192x192.png?v=3"],
     apple: [
-      { url: "/icons/icon-180x180.png?v=3", sizes: "180x180", type: "image/png" },
-      { url: "/icons/icon-192x192.png?v=3", sizes: "192x192", type: "image/png" },
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" },
     ],
   },
   appleWebApp: {
@@ -70,10 +70,11 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/icon.svg?v=3" type="image/svg+xml" />
         <link rel="shortcut icon" href="/icon.svg?v=3" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icons/icon-180x180.png?v=3" />
-        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png?v=3" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png?v=3" />
-        <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-180x180.png?v=3" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-precomposed.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

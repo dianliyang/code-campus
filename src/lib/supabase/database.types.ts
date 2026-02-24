@@ -624,6 +624,10 @@ export type Database = {
     }
     Functions: {
       decrement_popularity: { Args: { row_id: number }; Returns: undefined }
+      increment_ai_usage: {
+        Args: { p_calls?: number; p_tokens?: number; p_user_id: string }
+        Returns: undefined
+      }
       increment_popularity: { Args: { row_id: number }; Returns: undefined }
       seed_user_data: { Args: { p_user_id: string }; Returns: undefined }
     }

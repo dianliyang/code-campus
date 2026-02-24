@@ -485,7 +485,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                       return (
                         <div
                           key={`${event.planId}-${idx}`}
-                          className={`rounded-lg border cursor-pointer transition-all flex flex-col px-3 py-1.5 group/item ${bgColor}`}
+                          className={`rounded-lg border cursor-pointer transition-all flex flex-col px-3 py-2 group/item ${bgColor}`}
                           style={shouldShake ? { animation: "studyScheduleShake 280ms ease-in-out 1" } : undefined}
                           aria-disabled={isPending}
                           onClick={() => {
@@ -497,7 +497,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                             <span className={`text-xs font-semibold truncate ${effectiveCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                               {event.title}
                             </span>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-shrink-0">
                               {isFailed && (
                                 <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
                                   Failed
@@ -505,35 +505,40 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                               )}
                               {isPending && <Loader2 className="w-3 h-3 text-gray-400 animate-spin" />}
                               {effectiveCompleted && <Check className="w-3 h-3 text-gray-400" />}
+                              {!effectiveCompleted && !isPending && (
+                                <Check className="w-3 h-3 text-gray-200 group-hover/item:text-gray-400 transition-colors" />
+                              )}
                             </div>
                           </div>
 
-                          <div className="flex items-end justify-between gap-2">
-                            <div className="flex items-center gap-1 min-w-0">
-                              <MapPin className="w-2.5 h-2.5 opacity-50" />
-                              <span className="text-[8px] font-bold text-gray-600 truncate">{event.location || 'Campus'}</span>
-                            </div>
-                            <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                              <span className={`text-[8px] font-bold uppercase tracking-wider ${
-                                effectiveCompleted
-                                  ? 'text-gray-400'
-                                  : event.type.toLowerCase().includes('lecture')
-                                    ? 'text-violet-600'
-                                    : event.type.toLowerCase().includes('exercise') || event.type.toLowerCase().includes('lab')
-                                      ? 'text-emerald-600'
-                                      : event.type.toLowerCase().includes('exam')
-                                        ? 'text-rose-600'
-                                        : 'text-brand-blue'
-                              }`}>
-                                {event.type}
+                          <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-0.5">
+                            <span className="flex items-center gap-0.5 flex-shrink-0">
+                              <Clock className="w-2.5 h-2.5 inline" />
+                              {event.startTime.slice(0, 5)}-{event.endTime.slice(0, 5)}
+                            </span>
+                            {event.location && (
+                              <span className="flex items-center gap-0.5 truncate">
+                                <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+                                {event.location}
                               </span>
-                              <span className="text-[8px] font-bold text-gray-600 whitespace-nowrap">
-                                {event.startTime.slice(0, 5)}-{event.endTime.slice(0, 5)}
-                              </span>
-                            </div>
+                            )}
+                            <span className={`uppercase font-semibold flex-shrink-0 ml-auto text-[10px] ${
+                              effectiveCompleted
+                                ? 'text-gray-400'
+                                : event.type.toLowerCase().includes('lecture')
+                                  ? 'text-violet-600'
+                                  : event.type.toLowerCase().includes('exercise') || event.type.toLowerCase().includes('lab')
+                                    ? 'text-emerald-600'
+                                    : event.type.toLowerCase().includes('exam')
+                                      ? 'text-rose-600'
+                                      : 'text-brand-blue'
+                            }`}>
+                              {event.type}
+                            </span>
                           </div>
                         </div>
                       );
+
                     })}
                   </div>
                 </div>

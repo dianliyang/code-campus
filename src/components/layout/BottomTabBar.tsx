@@ -52,23 +52,27 @@ export default function BottomTabBar({ labels }: BottomTabBarProps) {
 
   return (
     <div className="lg:hidden fixed left-0 right-0 bottom-0 z-50 px-0">
-      <nav className="mx-auto w-full max-w-[600px] rounded-t-[20px] border-x border-t border-gray-200/80 bg-white shadow-[0_-2px_16px_rgba(15,23,42,0.08)]">
-        <div className="flex items-center justify-around h-[56px] px-2 pb-[env(safe-area-inset-bottom,0px)]">
+      <nav className="mx-auto w-full max-w-[600px] rounded-t-[24px] border border-white/45 bg-white/55 backdrop-blur-xl supports-[backdrop-filter]:bg-white/45 shadow-[0_-10px_30px_rgba(15,23,42,0.16)]">
+        <div className="flex items-center justify-around h-[58px] px-2 pb-[env(safe-area-inset-bottom,0px)]">
           {tabs.map((tab) => (
             <Link
               key={tab.href}
               href={tab.href}
               aria-current={tab.isActive ? "page" : undefined}
-              className="flex flex-col items-center justify-center flex-1 gap-1 py-1.5"
+              className={`flex flex-col items-center justify-center flex-1 gap-1 py-1.5 rounded-2xl transition-all ${
+                tab.isActive
+                  ? "bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_1px_8px_rgba(15,23,42,0.12)]"
+                  : "hover:bg-white/35"
+              }`}
             >
               <tab.icon
-                className={`w-[20px] h-[20px] ${
-                  tab.isActive ? "text-brand-blue" : "text-gray-400"
+                className={`w-[20px] h-[20px] transition-colors ${
+                  tab.isActive ? "text-slate-800" : "text-slate-500"
                 }`}
               />
               <span
-                className={`text-[10px] font-medium tracking-tight ${
-                  tab.isActive ? "text-brand-blue" : "text-gray-400"
+                className={`text-[10px] font-medium tracking-tight transition-colors ${
+                  tab.isActive ? "text-slate-800" : "text-slate-500"
                 }`}
               >
                 {tab.name}

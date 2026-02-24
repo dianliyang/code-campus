@@ -305,7 +305,7 @@ async function StudyPlanContent({
         <div className="mb-3">
           <h3 className="text-base font-semibold text-[#1f1f1f]">{dict.dashboard.roadmap.phase_1_title}</h3>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {inProgress.length > 0 && inProgress.map(course => (
             <ActiveCourseTrack
               key={`course-${course.id}`}

@@ -186,7 +186,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
               <span className="w-0.5 h-0.5 bg-gray-200 rounded-full"></span>
               <span className="text-[11px] text-[#9a9a9a]">{course.courseCode}</span>
             </div>
-            <h3 className="text-sm font-semibold text-[#1f1f1f] tracking-tight leading-tight line-clamp-1">
+            <h3 className="text-base font-semibold text-[#1f1f1f] tracking-tight leading-tight line-clamp-1">
               <Link href={detailHref}>{course.title}</Link>
             </h3>
           </div>
@@ -280,10 +280,10 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           <button
             onClick={() => handleProgressChange(100)}
             disabled={isUpdating || progress === 100}
-            className="px-3 h-7 text-[9px] font-bold uppercase tracking-widest rounded-md bg-brand-green text-white hover:bg-green-600 disabled:opacity-30 transition-all flex items-center justify-center gap-1.5"
+            className="w-7 h-7 rounded-md flex items-center justify-center transition-all bg-brand-green/10 text-brand-green hover:bg-brand-green/20 disabled:opacity-30"
+            title="Finalize"
           >
-            {isUpdating ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Check className="w-2.5 h-2.5" />}
-            <span className="hidden sm:inline">Finalize</span>
+            {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
           </button>
         </div>
       </div>

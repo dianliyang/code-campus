@@ -51,7 +51,7 @@ export default function BottomTabBar({ labels }: BottomTabBarProps) {
   ];
 
   return (
-    <div className="lg:hidden fixed left-0 right-0 z-50 px-4 bottom-[calc(env(safe-area-inset-bottom,0px)+8px)]">
+    <div className="lg:hidden fixed left-0 right-0 z-50 px-4 bottom-[calc(env(safe-area-inset-bottom,0px)+4px)]">
       <nav className="mx-auto w-full max-w-[600px] rounded-full border border-white/40 bg-white/55 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/45 shadow-[0_14px_34px_rgba(15,23,42,0.16)]">
         <div className="flex items-center justify-between p-1.5">
           {tabs.map((tab) => (

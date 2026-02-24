@@ -193,6 +193,9 @@ export type Database = {
       profiles: {
         Row: {
           ai_default_model: string
+          ai_usage_calls: number
+          ai_usage_tokens: number
+          ai_usage_updated_at: string | null
           ai_prompt_template: string | null
           ai_provider: string
           ai_study_plan_prompt_template: string | null
@@ -206,6 +209,9 @@ export type Database = {
         }
         Insert: {
           ai_default_model?: string
+          ai_usage_calls?: number
+          ai_usage_tokens?: number
+          ai_usage_updated_at?: string | null
           ai_prompt_template?: string | null
           ai_provider?: string
           ai_study_plan_prompt_template?: string | null
@@ -219,6 +225,9 @@ export type Database = {
         }
         Update: {
           ai_default_model?: string
+          ai_usage_calls?: number
+          ai_usage_tokens?: number
+          ai_usage_updated_at?: string | null
           ai_prompt_template?: string | null
           ai_provider?: string
           ai_study_plan_prompt_template?: string | null

@@ -28,6 +28,8 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
           initialStudyPlanPromptTemplate={(profile?.ai_study_plan_prompt_template as string) || ""}
           initialTopicsPromptTemplate={(profile?.ai_topics_prompt_template as string) || ""}
           initialCourseUpdatePromptTemplate={(profile?.ai_course_update_prompt_template as string) || ""}
+          initialUsageCalls={Number(profile?.ai_usage_calls || 0)}
+          initialUsageTokens={Number(profile?.ai_usage_tokens || 0)}
         />
       </section>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS, GEMINI_MODELS, PERPLEXITY_MODELS } from "@/lib/ai/models";
 import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_COURSE_UPDATE_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
@@ -27,6 +27,8 @@ interface AISettingsCardProps {
   initialStudyPlanPromptTemplate: string;
   initialTopicsPromptTemplate: string;
   initialCourseUpdatePromptTemplate: string;
+  initialUsageCalls: number;
+  initialUsageTokens: number;
 }
 
 interface Status {
@@ -57,6 +59,8 @@ export default function AISettingsCard({
   initialStudyPlanPromptTemplate,
   initialTopicsPromptTemplate,
   initialCourseUpdatePromptTemplate,
+  initialUsageCalls,
+  initialUsageTokens,
 }: AISettingsCardProps) {
   const [provider, setProvider] = useState(initialProvider === "gemini" ? "gemini" : "perplexity");
   const [defaultModel, setDefaultModel] = useState(initialModel);
@@ -72,18 +76,20 @@ export default function AISettingsCard({
   const [isSavingTopics, setIsSavingTopics] = useState(false);
   const [isSavingCourseUpdate, setIsSavingCourseUpdate] = useState(false);
   const [status, setStatus] = useState<Status>({ type: "idle" });
-  const [aiUsage, setAiUsage] = useState({ calls: 0, tokens: 0 });
+  const [aiUsage, setAiUsage] = useState({ calls: initialUsageCalls || 0, tokens: initialUsageTokens || 0 });
 
-  useEffect(() => {
+  const clearAiUsage = async () => {
     try {
-      const stored = localStorage.getItem("cc_ai_usage");
-      if (stored) setAiUsage(JSON.parse(stored));
-    } catch { /* ignore */ }
-  }, []);
-
-  const clearAiUsage = () => {
-    localStorage.removeItem("cc_ai_usage");
-    setAiUsage({ calls: 0, tokens: 0 });
+      const res = await fetch("/api/ai/usage", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        setAiUsage({ calls: 0, tokens: 0 });
+      }
+    } catch {
+      // ignore
+    }
   };
 
   const clearStatus = () => setStatus({ type: "idle" });

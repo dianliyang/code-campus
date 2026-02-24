@@ -12,8 +12,8 @@ interface SettingsContainerProps {
 
 export default function SettingsContainer({ user, profile }: SettingsContainerProps) {
   return (
-    <div className="space-y-4 pb-2">
-      <section id="intelligence" className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
+    <div className="space-y-3 pb-2">
+      <section id="intelligence" className="rounded-lg bg-[#fcfcfc] p-3 sm:p-4 space-y-2.5">
         <header className="space-y-1">
           <h3 className="text-base font-semibold text-[#1f1f1f]">Intelligence Preference</h3>
           <p className="text-xs text-[#7a7a7a]">Configure AI providers and prompt behavioral patterns.</p>
@@ -30,7 +30,7 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
         />
       </section>
 
-      <section id="security" className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
+      <section id="security" className="rounded-lg bg-[#fcfcfc] p-3 sm:p-4 space-y-2.5">
         <header className="space-y-1">
           <h3 className="text-base font-semibold text-[#1f1f1f]">Identity & Security</h3>
           <p className="text-xs text-[#7a7a7a]">Manage account access, authentication, and privacy.</p>
@@ -39,7 +39,7 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
         <SecurityIdentitySection key="security-section" provider={user.app_metadata.provider} />
       </section>
 
-      <section id="maintenance" className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
+      <section id="maintenance" className="rounded-lg bg-[#fcfcfc] p-3 sm:p-4 space-y-2.5">
         <header className="space-y-1">
           <h3 className="text-base font-semibold text-[#1f1f1f]">System Operations</h3>
           <p className="text-xs text-[#7a7a7a]">Synchronize academic catalogs and manage data integrity.</p>

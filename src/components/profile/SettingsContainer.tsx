@@ -27,6 +27,7 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
           initialPromptTemplate={(profile?.ai_prompt_template as string) || ""}
           initialStudyPlanPromptTemplate={(profile?.ai_study_plan_prompt_template as string) || ""}
           initialTopicsPromptTemplate={(profile?.ai_topics_prompt_template as string) || ""}
+          initialCourseUpdatePromptTemplate={(profile?.ai_course_update_prompt_template as string) || ""}
         />
       </section>
 

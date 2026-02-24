@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS, GEMINI_MODELS, PERPLEXITY_MODELS } from "@/lib/ai/models";
-import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
+import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_COURSE_UPDATE_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
 import { 
   Save, 
   CheckCircle2,
@@ -15,7 +15,8 @@ import {
   CalendarDays,
   Tag,
   BarChart2,
-  Trash2
+  Trash2,
+  Search
 } from "lucide-react";
 
 interface AISettingsCardProps {
@@ -25,6 +26,7 @@ interface AISettingsCardProps {
   initialPromptTemplate: string;
   initialStudyPlanPromptTemplate: string;
   initialTopicsPromptTemplate: string;
+  initialCourseUpdatePromptTemplate: string;
 }
 
 interface Status {
@@ -54,6 +56,7 @@ export default function AISettingsCard({
   initialPromptTemplate,
   initialStudyPlanPromptTemplate,
   initialTopicsPromptTemplate,
+  initialCourseUpdatePromptTemplate,
 }: AISettingsCardProps) {
   const [provider, setProvider] = useState(initialProvider === "gemini" ? "gemini" : "perplexity");
   const [defaultModel, setDefaultModel] = useState(initialModel);
@@ -61,11 +64,13 @@ export default function AISettingsCard({
   const [promptTemplate, setPromptTemplate] = useState(initialPromptTemplate || DEFAULT_COURSE_DESCRIPTION_PROMPT);
   const [studyPlanPromptTemplate, setStudyPlanPromptTemplate] = useState(initialStudyPlanPromptTemplate || DEFAULT_STUDY_PLAN_PROMPT);
   const [topicsPromptTemplate, setTopicsPromptTemplate] = useState(initialTopicsPromptTemplate || DEFAULT_TOPICS_PROMPT);
-  
+  const [courseUpdatePromptTemplate, setCourseUpdatePromptTemplate] = useState(initialCourseUpdatePromptTemplate || DEFAULT_COURSE_UPDATE_PROMPT);
+
   const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [isSavingDescription, setIsSavingDescription] = useState(false);
   const [isSavingStudyPlan, setIsSavingStudyPlan] = useState(false);
   const [isSavingTopics, setIsSavingTopics] = useState(false);
+  const [isSavingCourseUpdate, setIsSavingCourseUpdate] = useState(false);
   const [status, setStatus] = useState<Status>({ type: "idle" });
   const [aiUsage, setAiUsage] = useState({ calls: 0, tokens: 0 });
 
@@ -139,6 +144,21 @@ export default function AISettingsCard({
         setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "topics" });
       } finally {
         setIsSavingTopics(false);
+      }
+    })();
+  };
+
+  const saveCourseUpdatePrompt = () => {
+    clearStatus();
+    setIsSavingCourseUpdate(true);
+    void (async () => {
+      try {
+        await updateAiPromptTemplates({ courseUpdatePromptTemplate });
+        setStatus({ type: "success", message: "Course update search logic updated.", panel: "course-update" });
+      } catch (error) {
+        setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "course-update" });
+      } finally {
+        setIsSavingCourseUpdate(false);
       }
     })();
   };
@@ -349,7 +369,46 @@ export default function AISettingsCard({
         </div>
       </div>
 
-      {/* 5. Usage Statistics */}
+      {/* 5. Course Update Search Logic */}
+      <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+          <div className="flex items-center gap-2 text-[#222]">
+            <Search className="w-4 h-4 text-[#777]" />
+            <span className="text-sm font-semibold">Course Update Search Logic</span>
+          </div>
+          <button
+            onClick={() => setCourseUpdatePromptTemplate(DEFAULT_COURSE_UPDATE_PROMPT)}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+          >
+            <RefreshCcw className="w-3 h-3" />
+            Reset
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <textarea
+            value={courseUpdatePromptTemplate}
+            onChange={(e) => setCourseUpdatePromptTemplate(e.target.value)}
+            className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+            placeholder="ENTER_INSTRUCTION_SET..."
+            disabled={isSavingCourseUpdate}
+          />
+
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={saveCourseUpdatePrompt}
+              disabled={isSavingCourseUpdate}
+              className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+            >
+              {isSavingCourseUpdate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Push Update Search Logic
+            </button>
+            <StatusDisplay panel="course-update" status={status} />
+          </div>
+        </div>
+      </div>
+
+      {/* 6. Usage Statistics */}
       <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
           <div className="flex items-center gap-2 text-[#222]">

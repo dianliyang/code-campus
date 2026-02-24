@@ -31,7 +31,13 @@ export async function POST(request: NextRequest) {
     .single();
   if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 });
 
-  const template = DEFAULT_COURSE_UPDATE_PROMPT;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('ai_course_update_prompt_template')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const template = (profile?.ai_course_update_prompt_template || '').trim() || DEFAULT_COURSE_UPDATE_PROMPT;
 
   const prompt = template
     .replace('{course_code}', course.course_code)

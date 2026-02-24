@@ -36,10 +36,10 @@ export async function sendStudyReminderEmail(data: StudyReminderEmailData) {
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; }
-    .container { max-width: 600px; margin: 0 auto; padding: 32px 16px; }
+    .container { max-width: 600px; margin: 0 auto; padding: 16px 12px; }
     .logo { color: #000000; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.05em; margin-bottom: 32px; }
     .dot { color: #3b82f6; }
-    .content { background-color: #fcfcfc; border: 1px solid #f0f0f0; padding: 24px; border-radius: 16px; }
+    .content { background-color: #fcfcfc; border: 1px solid #f0f0f0; padding: 16px; border-radius: 12px; }
     h1 { font-size: 20px; font-weight: 900; color: #111827; margin-top: 0; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.02em; }
     p { color: #6b7280; font-size: 15px; line-height: 1.6; margin-bottom: 24px; }
     .button { display: inline-block; background-color: #000000; color: #ffffff !important; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; padding: 16px 32px; border-radius: 12px; text-decoration: none; text-align: center; }
@@ -49,7 +49,7 @@ export async function sendStudyReminderEmail(data: StudyReminderEmailData) {
     .security { font-size: 12px; color: #9ca3af; line-height: 1.5; }
 
     /* Study Schedule Specific */
-    .schedule-card { background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+    .schedule-card { background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; margin-bottom: 20px; }
     .course-item { padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
     .course-item:last-child { border-bottom: none; padding-bottom: 0; }
     .course-item:first-child { padding-top: 0; }
@@ -74,7 +74,9 @@ export async function sendStudyReminderEmail(data: StudyReminderEmailData) {
 </head>
 <body>
   <div class="container">
-    <div class="logo">CodeCampus<span class="dot">.</span></div>
+    <div class="logo">CodeCampus<span class="dot">.</span>
+      <div style="font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:0.15em;text-transform:uppercase;margin-top:2px;">Learn &middot; Build &middot; Achieve</div>
+    </div>
     <div class="content">
       <div class="date-banner">${date}</div>
       <h1>Time to Learn, ${recipientName.split(' ')[0]}</h1>
@@ -103,7 +105,7 @@ export async function sendStudyReminderEmail(data: StudyReminderEmailData) {
       </div>
     </div>
     <div class="footer">
-      <p class="footer-text">© 2026 CodeCampus Global Network // 0xFC</p>
+      <p class="footer-text">CodeCampus &middot; Smart Academic Planner &middot; 2026</p>
     </div>
   </div>
 </body>

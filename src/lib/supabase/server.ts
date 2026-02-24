@@ -202,6 +202,36 @@ export class SupabaseDatabase {
       }
     }
 
+    // CAU Sport: on force update, clear all existing records then insert fresh
+    if (university === "CAU Sport" && forceUpdate) {
+      const { error: deleteError } = await supabase
+        .from("courses")
+        .delete()
+        .eq("university", "CAU Sport");
+      if (deleteError) {
+        console.error("[Supabase] Failed to clear CAU Sport courses:", deleteError);
+        throw deleteError;
+      }
+      console.log("[Supabase] Cleared all CAU Sport courses for full overwrite.");
+    }
+
+    // Regular update: skip courses that already have a description and whose
+    // latest semester matches the incoming scraped semester.
+    if (!forceUpdate && university !== "CAU Sport") {
+      const existingMeta = await this.getExistingCourseCodes(university);
+      coursesForUpsert = coursesForUpsert.filter((c) => {
+        const meta = existingMeta.get(c.courseCode);
+        if (!meta) return true; // new course
+        if (!meta.hasDescription) return true; // no description yet
+        const scraped = c.semesters?.[0];
+        if (!scraped) return true;
+        if (meta.term === scraped.term && meta.year === scraped.year) {
+          return false; // same semester + has description → skip
+        }
+        return true;
+      });
+    }
+
     if (coursesForUpsert.length === 0) {
       console.log(`[Supabase] No new ${university} courses to upsert.`);
       return;
@@ -251,8 +281,8 @@ export class SupabaseDatabase {
         difficulty?: number;
         popularity: number;
         workload?: string;
-        is_hidden: boolean;
-        is_internal: boolean;
+        is_hidden?: boolean;
+        is_internal?: boolean;
         description?: string;
         details?: Json;
         latest_semester?: Json;
@@ -271,8 +301,12 @@ export class SupabaseDatabase {
         difficulty: c.difficulty,
         popularity: c.popularity || 0,
         workload: c.workload,
-        is_hidden: c.isHidden || false,
-        is_internal: c.isInternal || false,
+        // Never overwrite user-managed fields on force update;
+        // only set them on initial insert (new courses have no existing row).
+        ...(forceUpdate ? {} : {
+          is_hidden: c.isHidden || false,
+          is_internal: c.isInternal || false,
+        }),
       };
 
       if (mergedRelatedLinks.length > 0) {

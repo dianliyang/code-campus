@@ -68,6 +68,17 @@ export default async function ProfilePage() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4);
 
+  const learningProfileColors = [
+    "from-fuchsia-500 to-pink-500",
+    "from-cyan-500 to-blue-500",
+    "from-emerald-500 to-teal-500",
+    "from-amber-500 to-orange-500",
+    "from-violet-500 to-indigo-500",
+    "from-rose-500 to-red-500",
+    "from-lime-500 to-green-500",
+    "from-sky-500 to-cyan-500",
+  ];
+
   return (
     <main className="w-full space-y-4">
       <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
@@ -120,13 +131,14 @@ export default async function ProfilePage() {
       <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
-            <h2 className="text-base font-semibold text-[#1f1f1f]">{dict.dashboard.profile.fingerprint}</h2>
+            <h2 className="text-base font-semibold text-[#1f1f1f]">Learning Profile</h2>
             <p className="text-xs text-[#7a7a7a] mt-1 mb-3">{dict.dashboard.profile.neural_map}</p>
 
             {fieldTotal > 0 ? (
               <div className="space-y-2">
-                {allFieldStats.slice(0, 8).map((field) => {
+                {allFieldStats.slice(0, 8).map((field, idx) => {
                   const pct = Math.max(3, Math.round((field.count / fieldTotal) * 100));
+                  const barColor = learningProfileColors[idx % learningProfileColors.length];
                   return (
                     <div key={field.name} className="rounded-md border border-[#e8e8e8] bg-white px-3 py-2">
                       <div className="flex items-center justify-between gap-3">
@@ -135,8 +147,8 @@ export default async function ProfilePage() {
                           {field.count} {dict.dashboard.profile.units}
                         </p>
                       </div>
-                      <div className="mt-2 h-1.5 rounded-full bg-[#efefef] overflow-hidden">
-                        <div className="h-full bg-[#cfcfcf]" style={{ width: `${pct}%` }} />
+                      <div className="mt-2 h-2 rounded-full bg-[#efefef] overflow-hidden">
+                        <div className={`h-full bg-gradient-to-r ${barColor}`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   );

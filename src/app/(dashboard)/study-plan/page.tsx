@@ -89,9 +89,8 @@ async function StudyPlanContent({
     supabase
       .from('courses')
       .select(`
-        id, university, course_code, title, units, credit, url, description, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal,
+        id, university, course_code, title, units, credit, url, description, details, is_hidden,
         uc:user_courses!inner(status, progress, updated_at, gpa, score),
-        fields:course_fields(fields(name)),
         semesters:course_semesters(semesters(term, year))
       `)
       .eq('user_courses.user_id', userId)
@@ -143,14 +142,13 @@ async function StudyPlanContent({
 
   const enrolledCourses: EnrolledCourse[] = enrolledRows.map((row: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const course = mapCourseFromRow(row);
-    const fieldNames = (row.fields as { fields: { name: string } }[] | null)?.map((f) => f.fields.name) || [];
     const semesterNames = (row.semesters as { semesters: { term: string; year: number } }[] | null)?.map((s) => `${s.semesters.term} ${s.semesters.year}`) || [];
     const uc = (row.uc as { status: string, progress: number, updated_at: string, gpa?: number, score?: number }[] | null)?.[0] ||
                (row.user_courses as { status: string, progress: number, updated_at: string, gpa?: number, score?: number }[] | null)?.[0];
 
     return {
       ...course,
-      fields: fieldNames,
+      fields: [],
       semesters: semesterNames,
       status: uc?.status || 'pending',
       progress: uc?.progress || 0,

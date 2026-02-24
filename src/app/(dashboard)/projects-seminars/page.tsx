@@ -126,7 +126,7 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
       <div className="space-y-3">
         <ProjectsSeminarsToolbar categories={uniqueCategories} semesters={uniqueSemesters} />
 
-        <div className="rounded-lg overflow-hidden bg-[#fcfcfc]">
+        <div className="rounded-lg overflow-hidden bg-[#fcfcfc] border border-[#e3e3e3]">
           {view === "list" ? (
             <>
               <div className="hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide">
@@ -145,7 +145,7 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
                   return (
                     <article
                       key={item.id}
-                      className={`group flex flex-col md:flex-row md:items-center gap-2 md:gap-4 px-4 py-3 transition-colors ${
+                      className={`group flex flex-col md:flex-row md:items-center gap-2 md:gap-4 px-4 py-3 transition-colors border-t border-[#e9e9e9] first:border-t-0 ${
                         idx % 2 === 0 ? "bg-[#fcfcfc]" : "bg-[#f7f7f7]"
                       } hover:bg-[#f2f2f2]`}
                     >

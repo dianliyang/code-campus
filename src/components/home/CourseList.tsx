@@ -10,6 +10,7 @@ import Toast from "../common/Toast";
 import { Check, EyeOff, Loader2, Trash2, WandSparkles } from "lucide-react";
 import { clearTopicsForCoursesAction, fetchCoursesAction, generateTopicsForCoursesAction, hideCoursesAction } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
+import { trackAiUsage } from "@/lib/ai/usage";
 
 interface CourseListProps {
   initialCourses: Course[];
@@ -137,6 +138,9 @@ export default function CourseList({
             ? `Topics generated for ${result.updated} course(s), ${result.failed} failed.`
             : `Topics generated for ${result.updated} course(s).`,
       });
+      if (result.updated > 0) {
+        trackAiUsage({ calls: result.updated, tokens: result.updated * 220 });
+      }
       router.refresh();
     } catch (error) {
       setToast({

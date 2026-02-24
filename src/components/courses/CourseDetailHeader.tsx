@@ -7,6 +7,7 @@ import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PenSquare, Loader2, Trash2, ArrowUpRight, Search, Sparkles } from "lucide-react";
+import { trackAiUsage } from "@/lib/ai/usage";
 
 interface CourseDetailHeaderProps {
   course: Course;
@@ -40,6 +41,7 @@ export default function CourseDetailHeader({
       });
       if (res.ok) {
         setAiStatus('success');
+        trackAiUsage({ calls: 1, tokens: 1024 });
         router.refresh();
       } else {
         setAiStatus('error');

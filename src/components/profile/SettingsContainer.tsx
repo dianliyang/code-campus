@@ -70,7 +70,7 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
     <div className="flex h-full gap-0">
 
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden sm:flex flex-col w-[172px] shrink-0 h-full overflow-y-auto border-r border-[#f0f0f0] pr-2 py-0.5">
+      <aside className="hidden sm:flex flex-col w-[200px] shrink-0 h-full overflow-y-auto border-r border-[#f0f0f0] pr-2 py-0.5">
         {NAV_GROUPS.map((group) => (
           <div key={group.label} className="mb-3">
             <p className="px-3 mb-1 text-[10px] font-bold text-[#bbb] uppercase tracking-widest">
@@ -95,10 +95,10 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
       </aside>
 
       {/* ── Content panel ── */}
-      <div className="flex-1 min-w-0 h-full overflow-y-auto sm:pl-5 pb-4">
+      <div className="flex-1 min-w-0 h-full flex flex-col sm:pl-5 pb-4">
 
         {/* Mobile nav — horizontal scrollable pills */}
-        <div className="sm:hidden flex gap-1.5 overflow-x-auto pb-2 mb-3 no-scrollbar">
+        <div className="sm:hidden flex gap-1.5 overflow-x-auto pb-2 mb-3 no-scrollbar shrink-0">
           {ALL_ITEMS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -116,13 +116,13 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
         </div>
 
         {/* Section header */}
-        <div className="mb-3">
+        <div className="mb-3 shrink-0">
           <h3 className="text-base font-semibold text-[#1f1f1f]">{meta.title}</h3>
           <p className="text-xs text-[#7a7a7a] mt-0.5">{meta.desc}</p>
         </div>
 
         {/* AI sections — always mounted, shown/hidden via CSS to preserve state */}
-        <div className={AI_SECTIONS.includes(active) ? "" : "hidden"}>
+        <div className={AI_SECTIONS.includes(active) ? "flex-1 min-h-0 flex flex-col" : "hidden"}>
           <AISettingsCard
             key={profile ? JSON.stringify(profile) : "default-ai"}
             section={active as "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage"}
@@ -137,17 +137,17 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
         </div>
 
         {/* Identity & Security */}
-        <div className={active === "identity" ? "" : "hidden"}>
+        <div className={active === "identity" ? "flex-1 min-h-0" : "hidden"}>
           <SecurityIdentitySection view="identity" provider={user.app_metadata.provider} />
         </div>
 
         {/* Account / Danger Zone */}
-        <div className={active === "account" ? "" : "hidden"}>
+        <div className={active === "account" ? "flex-1 min-h-0" : "hidden"}>
           <SecurityIdentitySection view="account" provider={user.app_metadata.provider} />
         </div>
 
         {/* Data Synchronization */}
-        <div className={active === "sync" ? "" : "hidden"}>
+        <div className={active === "sync" ? "flex-1 min-h-0" : "hidden"}>
           <SystemMaintenanceCard />
         </div>
       </div>

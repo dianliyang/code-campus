@@ -91,7 +91,7 @@ const FEATURE_LABELS: Record<string, string> = {
 const StatusDisplay = ({ panel, status }: { panel: string; status: Status }) => {
   if (status.panel !== panel || status.type === "idle") return null;
   return (
-    <div className={`mt-3 rounded-md border px-3 py-2 text-xs font-medium flex items-center gap-2 ${
+    <div className={`rounded-md border px-3 py-2 text-xs font-medium flex items-center gap-2 ${
       status.type === "success"
         ? "bg-emerald-50 border-emerald-100 text-emerald-700"
         : "bg-red-50 border-red-100 text-red-700"
@@ -216,16 +216,26 @@ export default function AISettingsCard({
   };
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
       {/* 1. Provider Configuration */}
-      <div className={section === "engine" ? "" : "hidden"}>
-        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-          <div className="flex items-center gap-2 text-[#222] mb-4 pb-3 border-b border-[#efefef]">
-            <Cpu className="w-4 h-4 text-[#777]" />
-            <span className="text-sm font-semibold">Engine Configuration</span>
+      <div className={section === "engine" ? "h-full flex flex-col" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
+            <div className="flex items-center gap-2 text-[#222]">
+              <Cpu className="w-4 h-4 text-[#777]" />
+              <span className="text-sm font-semibold">Engine Configuration</span>
+            </div>
+            <button
+              onClick={saveProviderSettings}
+              disabled={isSavingProvider}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
+            >
+              {isSavingProvider ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+              Sync Engine
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-[#666] block">Intelligence Provider</label>
@@ -283,18 +293,6 @@ export default function AISettingsCard({
                   </div>
                 </label>
               </div>
-
-              <div className="pt-2">
-                <button
-                  onClick={saveProviderSettings}
-                  disabled={isSavingProvider}
-                  className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
-                >
-                  {isSavingProvider ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Sync Engine
-                </button>
-                <StatusDisplay panel="provider" status={status} />
-              </div>
             </div>
 
             <div className="bg-[#fafafa] rounded-md p-4 border border-[#e5e5e5] flex flex-col justify-center">
@@ -303,175 +301,172 @@ export default function AISettingsCard({
               </p>
             </div>
           </div>
+          <StatusDisplay panel="provider" status={status} />
         </div>
       </div>
 
       {/* 2. Metadata Instruction Set */}
-      <div className={section === "metadata" ? "" : "hidden"}>
-        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+      <div className={section === "metadata" ? "h-full flex flex-col" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
             <div className="flex items-center gap-2 text-[#222]">
               <FileCode className="w-4 h-4 text-[#777]" />
               <span className="text-sm font-semibold">Metadata Logic</span>
             </div>
-            <button
-              onClick={() => setPromptTemplate(DEFAULT_COURSE_DESCRIPTION_PROMPT)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-            >
-              <RefreshCcw className="w-3 h-3" />
-              Reset
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <textarea
-              value={promptTemplate}
-              onChange={(e) => setPromptTemplate(e.target.value)}
-              className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
-              placeholder="ENTER_INSTRUCTION_SET..."
-              disabled={isSavingDescription}
-            />
-
-            <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
               <button
                 onClick={saveDescriptionPrompt}
                 disabled={isSavingDescription}
-                className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
               >
-                {isSavingDescription ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isSavingDescription ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                 Push Metadata Logic
               </button>
-              <StatusDisplay panel="description" status={status} />
+              <button
+                onClick={() => setPromptTemplate(DEFAULT_COURSE_DESCRIPTION_PROMPT)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+              >
+                <RefreshCcw className="w-3 h-3" />
+                Reset
+              </button>
             </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0 gap-3">
+            <textarea
+              value={promptTemplate}
+              onChange={(e) => setPromptTemplate(e.target.value)}
+              className="w-full flex-1 min-h-0 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingDescription}
+            />
+            <StatusDisplay panel="description" status={status} />
           </div>
         </div>
       </div>
 
       {/* 3. Scheduling Instruction Set */}
-      <div className={section === "scheduling" ? "" : "hidden"}>
-        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+      <div className={section === "scheduling" ? "h-full flex flex-col" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
             <div className="flex items-center gap-2 text-[#222]">
               <CalendarDays className="w-4 h-4 text-[#777]" />
               <span className="text-sm font-semibold">Scheduling Logic</span>
             </div>
-            <button
-              onClick={() => setStudyPlanPromptTemplate(DEFAULT_STUDY_PLAN_PROMPT)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-            >
-              <RefreshCcw className="w-3 h-3" />
-              Reset
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <textarea
-              value={studyPlanPromptTemplate}
-              onChange={(e) => setStudyPlanPromptTemplate(e.target.value)}
-              className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
-              placeholder="ENTER_INSTRUCTION_SET..."
-              disabled={isSavingStudyPlan}
-            />
-
-            <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
               <button
                 onClick={saveStudyPlanPrompt}
                 disabled={isSavingStudyPlan}
-                className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
               >
-                {isSavingStudyPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isSavingStudyPlan ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                 Push Schedule Logic
               </button>
-              <StatusDisplay panel="studyplan" status={status} />
+              <button
+                onClick={() => setStudyPlanPromptTemplate(DEFAULT_STUDY_PLAN_PROMPT)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+              >
+                <RefreshCcw className="w-3 h-3" />
+                Reset
+              </button>
             </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0 gap-3">
+            <textarea
+              value={studyPlanPromptTemplate}
+              onChange={(e) => setStudyPlanPromptTemplate(e.target.value)}
+              className="w-full flex-1 min-h-0 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingStudyPlan}
+            />
+            <StatusDisplay panel="studyplan" status={status} />
           </div>
         </div>
       </div>
 
       {/* 4. Topic Classification Logic */}
-      <div className={section === "topics" ? "" : "hidden"}>
-        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+      <div className={section === "topics" ? "h-full flex flex-col" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
             <div className="flex items-center gap-2 text-[#222]">
               <Tag className="w-4 h-4 text-[#777]" />
               <span className="text-sm font-semibold">Topic Classification Logic</span>
             </div>
-            <button
-              onClick={() => setTopicsPromptTemplate(DEFAULT_TOPICS_PROMPT)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-            >
-              <RefreshCcw className="w-3 h-3" />
-              Reset
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <textarea
-              value={topicsPromptTemplate}
-              onChange={(e) => setTopicsPromptTemplate(e.target.value)}
-              className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
-              placeholder="ENTER_INSTRUCTION_SET..."
-              disabled={isSavingTopics}
-            />
-
-            <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
               <button
                 onClick={saveTopicsPrompt}
                 disabled={isSavingTopics}
-                className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
               >
-                {isSavingTopics ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isSavingTopics ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                 Push Topic Logic
               </button>
-              <StatusDisplay panel="topics" status={status} />
+              <button
+                onClick={() => setTopicsPromptTemplate(DEFAULT_TOPICS_PROMPT)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+              >
+                <RefreshCcw className="w-3 h-3" />
+                Reset
+              </button>
             </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0 gap-3">
+            <textarea
+              value={topicsPromptTemplate}
+              onChange={(e) => setTopicsPromptTemplate(e.target.value)}
+              className="w-full flex-1 min-h-0 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingTopics}
+            />
+            <StatusDisplay panel="topics" status={status} />
           </div>
         </div>
       </div>
 
       {/* 5. Course Update Search Logic */}
-      <div className={section === "course-update" ? "" : "hidden"}>
-        <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+      <div className={section === "course-update" ? "h-full flex flex-col" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
             <div className="flex items-center gap-2 text-[#222]">
               <Search className="w-4 h-4 text-[#777]" />
               <span className="text-sm font-semibold">Course Update Search Logic</span>
             </div>
-            <button
-              onClick={() => setCourseUpdatePromptTemplate(DEFAULT_COURSE_UPDATE_PROMPT)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-            >
-              <RefreshCcw className="w-3 h-3" />
-              Reset
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <textarea
-              value={courseUpdatePromptTemplate}
-              onChange={(e) => setCourseUpdatePromptTemplate(e.target.value)}
-              className="w-full h-40 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
-              placeholder="ENTER_INSTRUCTION_SET..."
-              disabled={isSavingCourseUpdate}
-            />
-
-            <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
               <button
                 onClick={saveCourseUpdatePrompt}
                 disabled={isSavingCourseUpdate}
-                className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
               >
-                {isSavingCourseUpdate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isSavingCourseUpdate ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                 Push Update Search Logic
               </button>
-              <StatusDisplay panel="course-update" status={status} />
+              <button
+                onClick={() => setCourseUpdatePromptTemplate(DEFAULT_COURSE_UPDATE_PROMPT)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+              >
+                <RefreshCcw className="w-3 h-3" />
+                Reset
+              </button>
             </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0 gap-3">
+            <textarea
+              value={courseUpdatePromptTemplate}
+              onChange={(e) => setCourseUpdatePromptTemplate(e.target.value)}
+              className="w-full flex-1 min-h-0 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingCourseUpdate}
+            />
+            <StatusDisplay panel="course-update" status={status} />
           </div>
         </div>
       </div>
 
       {/* 6. Usage Statistics */}
-      <div className={section === "usage" ? "" : "hidden"}>
+      <div className={section === "usage" ? "h-full flex flex-col overflow-y-auto" : "hidden"}>
         <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
           <div className="flex items-center gap-2 text-[#222] mb-4 pb-3 border-b border-[#efefef]">
             <BarChart2 className="w-4 h-4 text-[#777]" />

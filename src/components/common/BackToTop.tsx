@@ -7,36 +7,48 @@ export default function BackToTop() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    const scroller = document.getElementById("dashboard-scroll");
+
     const toggleVisibility = () => {
-      // Show button when page is scrolled down 500px
-      if (window.pageYOffset > 500) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
+      const offset = scroller ? scroller.scrollTop : window.pageYOffset;
+      setIsVisible(offset > 500);
     };
 
-    window.addEventListener("scroll", toggleVisibility);
-    return () => window.removeEventListener("scroll", toggleVisibility);
+    if (scroller) {
+      scroller.addEventListener("scroll", toggleVisibility);
+    } else {
+      window.addEventListener("scroll", toggleVisibility);
+    }
+
+    return () => {
+      if (scroller) {
+        scroller.removeEventListener("scroll", toggleVisibility);
+      } else {
+        window.removeEventListener("scroll", toggleVisibility);
+      }
+    };
   }, []);
 
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    const scroller = document.getElementById("dashboard-scroll");
+    if (scroller) {
+      scroller.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-40 right-6 z-40 md:right-8 md:bottom-8">
+    <div className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom,0px)+92px)] z-40 md:right-8 md:bottom-8">
       <button
         onClick={scrollToTop}
-        className="flex items-center justify-center w-14 h-14 bg-white text-brand-blue rounded-full shadow-2xl active:scale-90 transition-all border border-gray-200 hover:bg-gray-50 group"
+        className="flex items-center justify-center w-11 h-11 bg-white text-brand-blue rounded-full shadow-xl active:scale-90 transition-all border border-gray-200 hover:bg-gray-50 group"
         aria-label="Back to top"
       >
-        <ChevronUp className="w-6 h-6 group-hover:-translate-y-1 transition-transform" />
+        <ChevronUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
       </button>
     </div>
   );

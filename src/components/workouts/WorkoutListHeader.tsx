@@ -189,10 +189,16 @@ export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, d
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-[#6f6f6f]">
-          {totalItems} {dict?.found_suffix || "workouts"}
-          {formattedUpdate ? ` · Updated ${formattedUpdate}` : ""}
-        </span>
+        <div className="flex items-center gap-0">
+          <span className="text-xs font-medium text-[#1f1f1f]">
+            {totalItems} {dict?.found_suffix || "workouts"}
+          </span>
+          {formattedUpdate && (
+            <span className="text-xs font-medium text-brand-blue">
+              {" · "}Updated {formattedUpdate}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -178,7 +178,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           <UniversityIcon
             name={course.university}
             size={32}
-            className="flex-shrink-0 bg-gray-50 rounded-lg border border-gray-100 p-1"
+            className="flex-shrink-0 bg-gray-50 rounded-lg border border-gray-100"
           />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">

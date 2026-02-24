@@ -146,7 +146,7 @@ export default function AchievementCard({ course }: AchievementCardProps) {
           <UniversityIcon
             name={course.university}
             size={24}
-            className="bg-gray-50 rounded border border-gray-100 p-0.5 flex-shrink-0"
+            className="bg-gray-50 rounded border border-gray-100 flex-shrink-0"
           />
           <div className="flex flex-col min-w-0">
             <span className="text-[10px] font-medium text-[#4d4d4d] leading-none mb-0.5">
@@ -167,8 +167,8 @@ export default function AchievementCard({ course }: AchievementCardProps) {
 
       {/* Stats Grid */}
       <div>
-        {(course.gpa || course.score || (course.attendance && course.attendance.total > 0) || course.credit) ? (
-          <div className="grid grid-cols-4 gap-px bg-gray-50 border border-gray-50 rounded-md overflow-hidden">
+        {(course.gpa || (course.attendance && course.attendance.total > 0) || course.credit) ? (
+          <div className="grid grid-cols-3 gap-px bg-gray-50 border border-gray-50 rounded-md overflow-hidden">
             <div className="bg-white py-1.5 flex flex-col items-center justify-center">
               <span className="text-[6px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">CRED</span>
               <span className="text-[11px] font-black text-gray-900 italic">{course.credit || "—"}</span>
@@ -176,10 +176,6 @@ export default function AchievementCard({ course }: AchievementCardProps) {
             <div className="bg-white py-1.5 flex flex-col items-center justify-center border-l border-gray-50">
               <span className="text-[6px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">GPA</span>
               <span className="text-[11px] font-black text-gray-900 italic">{course.gpa ? Number(course.gpa).toFixed(1) : "—"}</span>
-            </div>
-            <div className="bg-white py-1.5 flex flex-col items-center justify-center border-l border-gray-50">
-              <span className="text-[6px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">SCORE</span>
-              <span className="text-[11px] font-black text-gray-900 italic">{course.score ? `${Number(course.score).toFixed(0)}%` : "—"}</span>
             </div>
             <div className="bg-white py-1.5 flex flex-col items-center justify-center border-l border-gray-50">
               <span className="text-[6px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">ATTND</span>

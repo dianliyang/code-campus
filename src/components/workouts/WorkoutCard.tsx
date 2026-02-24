@@ -96,18 +96,28 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
     const rowBg = rowIndex % 2 === 0 ? "bg-[#fcfcfc]" : "bg-[#f7f7f7]";
     return (
       <div className={rowBg}>
-        <div className="group flex items-center gap-4 px-4 py-3 hover:bg-[#f2f2f2] transition-colors">
+        <div className="group flex items-start md:items-center gap-3 md:gap-4 px-3 md:px-4 py-3 hover:bg-[#f2f2f2] transition-colors">
           {workout.url ? (
             <a href={workout.url} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-0 block">
-              <h2 className="text-[14px] font-medium text-[#2e2e2e] truncate hover:text-black transition-colors">
+              <h2 className="text-[14px] font-medium text-[#2e2e2e] line-clamp-2 md:truncate hover:text-black transition-colors">
                 {displayTitle}
               </h2>
               <p className="text-xs text-[#7a7a7a] truncate">{displayCategory}</p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                <span className="inline-flex rounded bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">{schedule}</span>
+                <span className="inline-flex rounded bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">{price}</span>
+                <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium ${statusClass}`}>{statusLabel}</span>
+              </div>
             </a>
           ) : (
             <div className="flex-1 min-w-0">
-              <h2 className="text-[14px] font-medium text-[#2e2e2e] truncate">{displayTitle}</h2>
+              <h2 className="text-[14px] font-medium text-[#2e2e2e] line-clamp-2 md:truncate">{displayTitle}</h2>
               <p className="text-xs text-[#7a7a7a] truncate">{displayCategory}</p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                <span className="inline-flex rounded bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">{schedule}</span>
+                <span className="inline-flex rounded bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">{price}</span>
+                <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium ${statusClass}`}>{statusLabel}</span>
+              </div>
             </div>
           )}
 
@@ -135,19 +145,19 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
             <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${statusClass}`}>{statusLabel}</span>
           </div>
 
-          <div className="w-[8%] flex items-center justify-end pr-1">
+          <div className="flex items-center justify-end pr-0 md:pr-1 self-center">
             {actionHref ? (
               <a
                 href={actionHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
+                className="h-8 w-8 md:h-7 md:w-7 inline-flex items-center justify-center rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
                 aria-label="Open booking"
               >
                 <ExternalLink className="w-3 h-3" />
               </a>
             ) : (
-              <span className="h-7 w-7 inline-flex items-center justify-center rounded-md bg-[#ececec] text-[#9a9a9a]">
+              <span className="h-8 w-8 md:h-7 md:w-7 inline-flex items-center justify-center rounded-md bg-[#ececec] text-[#9a9a9a]">
                 <ExternalLink className="w-3 h-3" />
               </span>
             )}

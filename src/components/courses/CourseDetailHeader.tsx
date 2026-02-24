@@ -77,8 +77,8 @@ export default function CourseDetailHeader({
   };
 
   return (
-    <header data-course-title-header className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-4 relative group">
-      <div className="absolute top-4 right-4 flex gap-2">
+    <header data-course-title-header className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4 space-y-3 sm:space-y-4 relative group">
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex gap-2">
         {/* AI Update — always visible */}
         <button
           onClick={handleAiUpdate}
@@ -97,7 +97,7 @@ export default function CourseDetailHeader({
         </button>
 
         {/* Hover-only actions */}
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+        <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
         <a
           href={searchHref}
           target="_blank"
@@ -130,7 +130,7 @@ export default function CourseDetailHeader({
         </div>
       </div>
 
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2.5 sm:gap-3 pr-20 sm:pr-0">
         <UniversityIcon
           name={course.university}
           size={56}
@@ -148,7 +148,7 @@ export default function CourseDetailHeader({
             )}
             <span className="text-[11px] text-[#999]">{course.courseCode}</span>
           </div>
-          <h1 className="text-[28px] md:text-[32px] font-semibold text-[#1f1f1f] tracking-tight mt-1 leading-tight break-words">
+          <h1 className="text-[22px] sm:text-[26px] md:text-[32px] font-semibold text-[#1f1f1f] tracking-tight mt-1 leading-tight break-words">
             {course.title}
           </h1>
         </div>

@@ -44,12 +44,20 @@ export default function CourseList({
   const observerTarget = useRef<HTMLDivElement>(null);
   const selectAllRef = useRef<HTMLInputElement>(null);
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const savedMode = localStorage.getItem("courseViewMode");
     if (savedMode === "grid" || savedMode === "list") {
       setViewMode(savedMode);
     }
+  }, []);
+
+  useEffect(() => {
+    const updateIsMobile = () => setIsMobile(window.innerWidth < 768);
+    updateIsMobile();
+    window.addEventListener("resize", updateIsMobile);
+    return () => window.removeEventListener("resize", updateIsMobile);
   }, []);
 
   useEffect(() => {
@@ -224,18 +232,20 @@ export default function CourseList({
     return () => observer.disconnect();
   }, [loadMore, isLoading]);
 
+  const effectiveViewMode: "list" | "grid" = isMobile ? "grid" : viewMode;
+
   return (
     <main className="flex-grow space-y-3 min-w-0">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <CourseListHeader
-        viewMode={viewMode}
+        viewMode={effectiveViewMode}
         setViewMode={handleViewModeChange}
         dict={dict}
       />
 
-      <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden border border-[#e5e5e5] ${viewMode === "grid" ? "p-3" : ""}`}>
-        <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${viewMode === "grid" ? "!hidden" : ""}`}>
+      <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden border border-[#e5e5e5] ${effectiveViewMode === "grid" ? "p-3" : ""}`}>
+        <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${effectiveViewMode === "grid" ? "!hidden" : ""}`}>
           <div className="w-4">
             <label className="relative inline-flex h-4 w-4 cursor-pointer items-center justify-center">
               <input
@@ -313,7 +323,7 @@ export default function CourseList({
           </div>
         </div>
 
-        <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>
+        <div className={effectiveViewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>
           {courses.map((course, idx) => (
             <CourseCard
               key={course.id}
@@ -321,7 +331,7 @@ export default function CourseList({
               isInitialEnrolled={enrolledIds.includes(course.id)}
               onEnrollToggle={fetchEnrolled}
               onHide={handleHide}
-              viewMode={viewMode}
+              viewMode={effectiveViewMode}
               rowIndex={idx}
               isSelected={selectedCourseIds.includes(course.id)}
               onSelectChange={toggleSelectOne}

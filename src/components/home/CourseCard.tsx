@@ -80,8 +80,8 @@ export default function CourseCard({
   if (viewMode === "list") {
     const rowBg = rowIndex % 2 === 0 ? "bg-[#fcfcfc]" : "bg-[#f7f7f7]";
     return (
-      <div className={`group flex items-center gap-4 px-4 py-3 ${rowBg} hover:bg-[#f2f2f2] transition-colors`}>
-        <div className="flex-1 min-w-0 flex items-center gap-3">
+      <div className={`group flex items-start md:items-center gap-3 md:gap-4 px-3 md:px-4 py-3 ${rowBg} hover:bg-[#f2f2f2] transition-colors`}>
+        <div className="flex-1 min-w-0 flex items-start md:items-center gap-3">
           <label className="relative inline-flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center">
             <input
               type="checkbox"
@@ -95,12 +95,23 @@ export default function CourseCard({
           </label>
           <UniversityIcon name={course.university} size={26} className="bg-white border border-[#dfdfdf] rounded-md" />
           <Link href={detailHref} className="flex-1 min-w-0 block">
-            <h2 className="text-[15px] font-medium text-[#2e2e2e] truncate hover:text-black transition-colors">
+            <h2 className="text-[14px] md:text-[15px] font-medium text-[#2e2e2e] line-clamp-2 md:truncate hover:text-black transition-colors">
               {course.title}
             </h2>
             <p className="text-xs text-[#7a7a7a] truncate">
               {course.courseCode} · {course.university}
             </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+              {latestSemester ? (
+                <span className="inline-flex rounded bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">{latestSemester}</span>
+              ) : null}
+              {credit != null ? (
+                <span className="inline-flex rounded bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">{credit} cr</span>
+              ) : null}
+              {primaryField ? (
+                <span className="inline-flex rounded bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666] truncate max-w-[130px]">{primaryField}</span>
+              ) : null}
+            </div>
           </Link>
         </div>
 
@@ -124,15 +135,15 @@ export default function CourseCard({
         <div className="w-[10%] hidden md:block text-sm text-[#484848]">{latestSemester ?? "-"}</div>
 
 
-        <div className="w-[5%] flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-1.5 md:gap-2 self-center">
           <Button
             onClick={handleEnroll}
             disabled={loading}
             size="xs"
             className={
               isEnrolled
-                ? "h-6 w-6 p-0 rounded-md border border-green-100 bg-green-50 text-green-700 hover:bg-green-100"
-                : "h-6 w-6 p-0 rounded-md border border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
+                ? "h-7 w-7 md:h-6 md:w-6 p-0 rounded-md border border-green-100 bg-green-50 text-green-700 hover:bg-green-100"
+                : "h-7 w-7 md:h-6 md:w-6 p-0 rounded-md border border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
             }
           >
             {loading ? (
@@ -146,7 +157,7 @@ export default function CourseCard({
           <button
             onClick={handleHide}
             disabled={loading}
-            className="inline-flex h-6 w-6 shrink-0 p-0 items-center justify-center rounded-md border border-[#d3d3d3] bg-white text-[#666] hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-50"
+            className="inline-flex h-7 w-7 md:h-6 md:w-6 shrink-0 p-0 items-center justify-center rounded-md border border-[#d3d3d3] bg-white text-[#666] hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-50"
             aria-label="Hide course"
           >
             <EyeOff className="w-3 h-3" />

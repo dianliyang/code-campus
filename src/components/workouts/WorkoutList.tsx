@@ -34,11 +34,19 @@ export default function WorkoutList({
   const [workouts, setWorkouts] = useState<Workout[]>(initialWorkouts);
   const [page, setPage] = useState(currentPage);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const savedMode = localStorage.getItem("workoutViewMode") as "list" | "grid";
     if (savedMode) setViewMode(savedMode);
+  }, []);
+
+  useEffect(() => {
+    const updateIsMobile = () => setIsMobile(window.innerWidth < 768);
+    updateIsMobile();
+    window.addEventListener("resize", updateIsMobile);
+    return () => window.removeEventListener("resize", updateIsMobile);
   }, []);
 
   useEffect(() => {
@@ -105,18 +113,20 @@ export default function WorkoutList({
     return () => observer.disconnect();
   }, [loadMore, isLoading]);
 
+  const effectiveViewMode: "list" | "grid" = isMobile ? "grid" : viewMode;
+
   return (
     <main className="flex-grow space-y-3 min-w-0">
       <WorkoutListHeader
         totalItems={totalItems}
-        viewMode={viewMode}
+        viewMode={effectiveViewMode}
         setViewMode={handleViewModeChange}
         dict={dict}
         lastUpdated={lastUpdated}
       />
 
-      <div className={`bg-[#fcfcfc] rounded-lg border border-[#e5e5e5] ${viewMode === "grid" ? "overflow-visible p-3" : "overflow-hidden"}`}>
-          <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${viewMode === "grid" ? "!hidden" : ""}`}>
+      <div className={`bg-[#fcfcfc] rounded-lg border border-[#e5e5e5] ${effectiveViewMode === "grid" ? "overflow-visible p-3" : "overflow-hidden"}`}>
+          <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${effectiveViewMode === "grid" ? "!hidden" : ""}`}>
             <div className="flex-1 min-w-0">Workout</div>
             <div className="w-[15%]">Schedule</div>
             <div className="w-[18%]">Location</div>
@@ -125,12 +135,12 @@ export default function WorkoutList({
             <div className="w-[8%] text-right pr-1">Action</div>
           </div>
 
-          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>
+          <div className={effectiveViewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>
             {workouts.map((workout, idx) => (
               <WorkoutCard
                 key={workout.id}
                 workout={workout}
-                viewMode={viewMode}
+                viewMode={effectiveViewMode}
                 dict={dict}
                 rowIndex={idx}
               />

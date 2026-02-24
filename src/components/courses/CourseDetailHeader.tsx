@@ -77,8 +77,8 @@ export default function CourseDetailHeader({
   };
 
   return (
-    <header data-course-title-header className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4 space-y-3 sm:space-y-4 relative group">
-      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex gap-2">
+    <header data-course-title-header className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4 space-y-3 sm:space-y-4 group">
+      <div className="flex items-center justify-end gap-2 flex-wrap">
         {/* AI Update — always visible */}
         <button
           onClick={handleAiUpdate}
@@ -130,11 +130,11 @@ export default function CourseDetailHeader({
         </div>
       </div>
 
-      <div className="flex items-start gap-2.5 sm:gap-3 pr-20 sm:pr-0">
+      <div className="flex items-start gap-2.5 sm:gap-3">
         <UniversityIcon
           name={course.university}
-          size={56}
-          className="flex-shrink-0 bg-white rounded-lg border border-[#e5e5e5]"
+          size={48}
+          className="sm:[width:56px] sm:[height:56px] flex-shrink-0 bg-white rounded-lg border border-[#e5e5e5]"
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

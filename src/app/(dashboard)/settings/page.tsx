@@ -51,9 +51,36 @@ export default async function SettingsPage() {
     console.error("[settings] profile select failed:", error.message);
   }
 
+  // Fetch enrolled course field distribution for Cognitive Fingerprint
+  let fingerprintFields: { name: string; count: number }[] = [];
+  try {
+    const { data: fieldRows } = await supabase
+      .from("user_courses")
+      .select("courses!inner(course_fields(fields(name)))")
+      .eq("user_id", user.id)
+      .neq("status", "hidden");
+
+    const fieldCount: Record<string, number> = {};
+    for (const row of fieldRows ?? []) {
+      const course = (row as Record<string, unknown>).courses as Record<string, unknown> | null;
+      const cfs = Array.isArray(course?.course_fields)
+        ? (course.course_fields as Array<{ fields: { name: string } }>)
+        : [];
+      for (const cf of cfs) {
+        const name = cf?.fields?.name;
+        if (name) fieldCount[name] = (fieldCount[name] || 0) + 1;
+      }
+    }
+    fingerprintFields = Object.entries(fieldCount)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  } catch (e) {
+    console.error("[settings] Cognitive Fingerprint fetch failed:", e);
+  }
+
   return (
     <main className="w-full space-y-4">
-      <SettingsContainer user={user} profile={profile} />
+      <SettingsContainer user={user} profile={profile} fingerprintFields={fingerprintFields} />
     </main>
   );
 }

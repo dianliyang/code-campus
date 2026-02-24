@@ -3,14 +3,16 @@
 import AISettingsCard from "./AISettingsCard";
 import SecurityIdentitySection from "./SecurityIdentitySection";
 import SystemMaintenanceCard from "./SystemMaintenanceCard";
+import CognitiveFingerprintCard from "./CognitiveFingerprintCard";
 import { User } from "@supabase/supabase-js";
 
 interface SettingsContainerProps {
   user: User;
   profile: Record<string, unknown> | null;
+  fingerprintFields?: { name: string; count: number }[];
 }
 
-export default function SettingsContainer({ user, profile }: SettingsContainerProps) {
+export default function SettingsContainer({ user, profile, fingerprintFields = [] }: SettingsContainerProps) {
   return (
     <div className="space-y-4 pb-2">
       <section id="intelligence" className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
@@ -49,6 +51,16 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
         </header>
         <SystemMaintenanceCard key="maintenance-section" />
       </section>
+
+      {fingerprintFields.length > 0 && (
+        <section id="cognitive-fingerprint" className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
+          <header className="space-y-1">
+            <h3 className="text-base font-semibold text-[#1f1f1f]">Learning Profile</h3>
+            <p className="text-xs text-[#7a7a7a]">Visual breakdown of your enrolled course domains.</p>
+          </header>
+          <CognitiveFingerprintCard fields={fingerprintFields} />
+        </section>
+      )}
     </div>
   );
 }

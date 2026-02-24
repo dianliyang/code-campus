@@ -94,7 +94,7 @@ export default function CourseCard({
             {isSelected ? <Check className="pointer-events-none absolute h-3 w-3 text-white" /> : null}
           </label>
           <UniversityIcon name={course.university} size={26} className="bg-white border border-[#dfdfdf] rounded-md" />
-          <Link href={detailHref} className="min-w-0 block">
+          <Link href={detailHref} className="flex-1 min-w-0 block">
             <h2 className="text-[15px] font-medium text-[#2e2e2e] truncate hover:text-black transition-colors">
               {course.title}
             </h2>

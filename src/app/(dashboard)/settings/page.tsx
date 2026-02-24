@@ -52,7 +52,7 @@ export default async function SettingsPage() {
   }
 
   return (
-    <main className="w-full space-y-3 -mx-1 sm:-mx-1.5">
+    <main className="w-full space-y-3 px-1 sm:px-1.5">
       <SettingsContainer user={user} profile={profile} />
     </main>
   );

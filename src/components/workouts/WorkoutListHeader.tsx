@@ -133,7 +133,7 @@ export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, d
           </button>
         </div>
 
-        <div className="w-full md:w-auto space-y-2">
+        <div className="w-full md:w-auto space-y-2 md:space-y-0 md:flex md:items-center md:gap-2">
           <div className="grid grid-cols-2 md:flex items-center gap-2 text-[13px] text-[#6a6a6a]">
             <button
               onClick={refreshList}

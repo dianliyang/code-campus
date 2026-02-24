@@ -18,6 +18,15 @@ const PRESET_KEYWORDS: Record<string, string> = {
   "Security Engineering": "security cryptography network security secure systems privacy",
 };
 
+function keywordScore(text: string, tokens: string[]) {
+  const target = text.toLowerCase();
+  let score = 0;
+  for (const token of tokens) {
+    if (target.includes(token)) score += 1;
+  }
+  return score;
+}
+
 export async function POST(request: NextRequest) {
   if (!process.env.PERPLEXITY_API_KEY) {
     return NextResponse.json({ error: "AI service not configured" }, { status: 503 });
@@ -34,6 +43,12 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient();
   const keywordQuery = PRESET_KEYWORDS[preset];
+  const tokens = keywordQuery
+    .toLowerCase()
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 3)
+    .slice(0, 10);
 
   const { data: rows, error } = await supabase
     .from("courses")
@@ -46,7 +61,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const catalog = (rows || []).map((c) => ({
+  let candidates = rows || [];
+
+  if (candidates.length === 0) {
+    const { data: fallbackRows, error: fallbackError } = await supabase
+      .from("courses")
+      .select("id, university, course_code, title, level, credit, description, popularity")
+      .eq("is_hidden", false)
+      .order("popularity", { ascending: false, nullsFirst: false })
+      .limit(300);
+
+    if (fallbackError) {
+      return NextResponse.json({ error: fallbackError.message }, { status: 500 });
+    }
+
+    const ranked = (fallbackRows || [])
+      .map((c) => {
+        const haystack = `${c.title || ""} ${c.course_code || ""} ${c.description || ""}`;
+        return { c, score: keywordScore(haystack, tokens) };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const withScore = ranked.filter((x) => x.score > 0).slice(0, 80).map((x) => x.c);
+    candidates = withScore.length > 0 ? withScore : ranked.slice(0, 80).map((x) => x.c);
+  }
+
+  const catalog = candidates.map((c) => ({
     id: c.id,
     title: c.title,
     course_code: c.course_code,

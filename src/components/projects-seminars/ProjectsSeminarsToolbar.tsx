@@ -97,7 +97,7 @@ export default function ProjectsSeminarsToolbar({ categories, semesters }: Proje
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9a9a9a]" />
           <input

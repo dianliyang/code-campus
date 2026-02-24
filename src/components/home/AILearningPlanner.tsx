@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CheckSquare, Loader2, Sparkles } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
 
 type PlannerResult = {
@@ -22,6 +22,36 @@ export default function AILearningPlanner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<PlannerResult | null>(null);
+  const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
+  const [applying, setApplying] = useState(false);
+
+  const allCourseIds = useMemo(
+    () => Array.from(new Set((result?.roadmap || []).flatMap((p) => (p.courses || []).map((c) => c.id)))),
+    [result]
+  );
+
+  const toggleCourse = (id: number) => {
+    setSelectedCourseIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
+  };
+
+  const applyRoadmap = async () => {
+    if (!result || selectedCourseIds.length === 0) return;
+    setApplying(true);
+    setError("");
+    try {
+      const res = await fetch("/api/ai/planner/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selectedCourseIds, studyPlan: result.study_plan }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || "Failed to apply roadmap");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to apply roadmap");
+    } finally {
+      setApplying(false);
+    }
+  };
 
   const generate = async () => {
     setLoading(true);
@@ -35,7 +65,12 @@ export default function AILearningPlanner() {
 
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body?.error || "Failed to generate roadmap");
-      setResult(body.result as PlannerResult);
+      const next = body.result as PlannerResult;
+      setResult(next);
+      const ids = Array.from(
+        new Set((next.roadmap || []).flatMap((p) => (p.courses || []).map((c) => c.id)))
+      );
+      setSelectedCourseIds(ids);
       trackAiUsage({ calls: 1, tokens: 1800 });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to generate roadmap");
@@ -77,6 +112,40 @@ export default function AILearningPlanner() {
 
       {result ? (
         <div className="space-y-3">
+          <div className="rounded-md border border-[#ececec] p-3">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="text-xs font-semibold text-[#1f1f1f]">Courses to enroll</p>
+              <button
+                onClick={() => setSelectedCourseIds(allCourseIds)}
+                className="text-[11px] text-[#3b82f6] hover:underline"
+                type="button"
+              >
+                Select all
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-40 overflow-auto pr-1">
+              {allCourseIds.map((id) => {
+                const c = (result.roadmap || []).flatMap((p) => p.courses || []).find((x) => x.id === id);
+                if (!c) return null;
+                const checked = selectedCourseIds.includes(id);
+                return (
+                  <label key={id} className="flex items-start gap-2 text-xs text-[#444]">
+                    <input type="checkbox" checked={checked} onChange={() => toggleCourse(id)} className="mt-0.5" />
+                    <span>{c.course_code} · {c.title}</span>
+                  </label>
+                );
+              })}
+            </div>
+            <button
+              onClick={applyRoadmap}
+              disabled={applying || selectedCourseIds.length === 0}
+              className="mt-3 h-8 rounded-md border border-[#d3d3d3] bg-white px-3 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] disabled:opacity-50 inline-flex items-center gap-1.5"
+            >
+              {applying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckSquare className="w-3.5 h-3.5" />}
+              Enroll selected + create study plans
+            </button>
+          </div>
+
           <div className="rounded-md border border-[#ececec] bg-[#fafafa] p-3">
             <p className="text-xs font-semibold text-[#1f1f1f]">{result.track}</p>
             <p className="text-xs text-[#666] mt-1">{result.overview}</p>

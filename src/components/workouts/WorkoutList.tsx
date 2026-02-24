@@ -34,19 +34,11 @@ export default function WorkoutList({
   const [workouts, setWorkouts] = useState<Workout[]>(initialWorkouts);
   const [page, setPage] = useState(currentPage);
   const [isLoading, setIsLoading] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const savedMode = localStorage.getItem("workoutViewMode") as "list" | "grid";
     if (savedMode) setViewMode(savedMode);
-  }, []);
-
-  useEffect(() => {
-    const updateIsMobile = () => setIsMobile(window.innerWidth < 768);
-    updateIsMobile();
-    window.addEventListener("resize", updateIsMobile);
-    return () => window.removeEventListener("resize", updateIsMobile);
   }, []);
 
   useEffect(() => {
@@ -113,7 +105,7 @@ export default function WorkoutList({
     return () => observer.disconnect();
   }, [loadMore, isLoading]);
 
-  const effectiveViewMode: "list" | "grid" = isMobile ? "grid" : viewMode;
+  const effectiveViewMode: "list" | "grid" = viewMode;
 
   return (
     <main className="flex-grow space-y-3 min-w-0">

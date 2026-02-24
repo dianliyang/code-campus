@@ -44,20 +44,12 @@ export default function CourseList({
   const observerTarget = useRef<HTMLDivElement>(null);
   const selectAllRef = useRef<HTMLInputElement>(null);
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const savedMode = localStorage.getItem("courseViewMode");
     if (savedMode === "grid" || savedMode === "list") {
       setViewMode(savedMode);
     }
-  }, []);
-
-  useEffect(() => {
-    const updateIsMobile = () => setIsMobile(window.innerWidth < 768);
-    updateIsMobile();
-    window.addEventListener("resize", updateIsMobile);
-    return () => window.removeEventListener("resize", updateIsMobile);
   }, []);
 
   useEffect(() => {
@@ -232,7 +224,7 @@ export default function CourseList({
     return () => observer.disconnect();
   }, [loadMore, isLoading]);
 
-  const effectiveViewMode: "list" | "grid" = isMobile ? "grid" : viewMode;
+  const effectiveViewMode: "list" | "grid" = viewMode;
 
   return (
     <main className="flex-grow space-y-3 min-w-0">

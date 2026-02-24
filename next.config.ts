@@ -3,6 +3,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  turbopack: {
+    root: process.cwd(),
+  },
   images: {
     dangerouslyAllowLocalIP: true,
     dangerouslyAllowSVG: true,

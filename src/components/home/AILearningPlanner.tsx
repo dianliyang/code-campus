@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckSquare, Loader2, Sparkles } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
 
@@ -17,6 +17,13 @@ type PlannerResult = {
 
 const PRESETS = ["AI Infra", "ML Systems", "LLM Engineering", "Data Engineering", "Security Engineering"];
 
+const COOKING_FRAMES = [
+  { icon: "🍳", text: "Analyzing courses..." },
+  { icon: "📚", text: "Building your roadmap..." },
+  { icon: "⚡", text: "Optimizing schedule..." },
+  { icon: "✨", text: "Almost ready..." },
+];
+
 export default function AILearningPlanner() {
   const [preset, setPreset] = useState(PRESETS[0]);
   const [loading, setLoading] = useState(false);
@@ -24,6 +31,16 @@ export default function AILearningPlanner() {
   const [result, setResult] = useState<PlannerResult | null>(null);
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
   const [applying, setApplying] = useState(false);
+  const [enrolled, setEnrolled] = useState(false);
+  const [cookingFrame, setCookingFrame] = useState(0);
+
+  useEffect(() => {
+    if (!loading) return;
+    const interval = setInterval(() => {
+      setCookingFrame((f) => (f + 1) % COOKING_FRAMES.length);
+    }, 1200);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const allCourseIds = useMemo(
     () => Array.from(new Set((result?.roadmap || []).flatMap((p) => (p.courses || []).map((c) => c.id)))),
@@ -46,6 +63,7 @@ export default function AILearningPlanner() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body?.error || "Failed to apply roadmap");
+      setEnrolled(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to apply roadmap");
     } finally {
@@ -56,6 +74,8 @@ export default function AILearningPlanner() {
   const generate = async () => {
     setLoading(true);
     setError("");
+    setEnrolled(false);
+    setCookingFrame(0);
     try {
       const res = await fetch("/api/ai/planner", {
         method: "POST",
@@ -72,12 +92,21 @@ export default function AILearningPlanner() {
       );
       setSelectedCourseIds(ids);
       trackAiUsage({ calls: 1, tokens: 1800 });
+
+      // Fire-and-forget: persist AI response to DB
+      fetch("/api/ai/planner/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preset, response: next }),
+      }).catch(() => {});
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to generate roadmap");
     } finally {
       setLoading(false);
     }
   };
+
+  const frame = COOKING_FRAMES[cookingFrame];
 
   return (
     <section className="rounded-md border border-[#e5e5e5] bg-white p-4 space-y-3">
@@ -110,7 +139,12 @@ export default function AILearningPlanner() {
 
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
 
-      {result ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-10 gap-3">
+          <span className="text-3xl">{frame.icon}</span>
+          <p className="text-sm text-[#666]">{frame.text}</p>
+        </div>
+      ) : result ? (
         <div className="space-y-3">
           <div className="rounded-md border border-[#ececec] p-3">
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -136,14 +170,20 @@ export default function AILearningPlanner() {
                 );
               })}
             </div>
-            <button
-              onClick={applyRoadmap}
-              disabled={applying || selectedCourseIds.length === 0}
-              className="mt-3 h-8 rounded-md border border-[#d3d3d3] bg-white px-3 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] disabled:opacity-50 inline-flex items-center gap-1.5"
-            >
-              {applying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckSquare className="w-3.5 h-3.5" />}
-              Enroll selected + create study plans
-            </button>
+            {enrolled ? (
+              <p className="mt-3 text-xs text-green-600 font-medium">
+                ✓ Enrolled {selectedCourseIds.length} course{selectedCourseIds.length !== 1 ? "s" : ""} + created study plans
+              </p>
+            ) : (
+              <button
+                onClick={applyRoadmap}
+                disabled={applying || selectedCourseIds.length === 0}
+                className="mt-3 h-8 rounded-md border border-[#d3d3d3] bg-white px-3 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                {applying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckSquare className="w-3.5 h-3.5" />}
+                Enroll selected + create study plans
+              </button>
+            )}
           </div>
 
           <div className="rounded-md border border-[#ececec] bg-[#fafafa] p-3">

@@ -385,7 +385,7 @@ export default function CourseDetailContent({
                                   {plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}
                                 </li>
                                 <li className="text-xs text-[#666] flex items-center gap-1.5">
-                                  <span className="inline-flex items-center rounded-full border border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444]">
+                                  <span className="inline-block rounded-md border border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] whitespace-normal break-words">
                                     {plan.type || "Session"}
                                   </span>
                                   <span>@ {plan.location || "TBD"}</span>
@@ -479,7 +479,7 @@ export default function CourseDetailContent({
                                     {daysText} • {plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}
                                   </span>
                                   <span className="block text-xs text-[#666]">
-                                    <span className="inline-flex items-center rounded-full border border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] mr-1.5">
+                                    <span className="inline-block rounded-md border border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] whitespace-normal break-words mr-1.5">
                                       {plan.type || "Session"}
                                     </span>
                                     @ {plan.location}

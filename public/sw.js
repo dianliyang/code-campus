@@ -1,7 +1,7 @@
 // ─── Cache names ────────────────────────────────────────────────────────────
 const CACHE_STATIC = 'cc-static-v2';   // /_next/static/* — immutable
 const CACHE_IMAGES = 'cc-images-v2';   // icons, webp, svg, png — cache-first LRU
-const CACHE_PAGES  = 'cc-pages-v4';    // HTML/RSC navigation — stale-while-revalidate
+const CACHE_PAGES  = 'cc-pages-v5';    // HTML/RSC navigation — stale-while-revalidate
 const CACHE_API    = 'cc-api-v2';      // /api/universities + /api/fields — SWR 5 min
 const ALL_CACHES   = [CACHE_STATIC, CACHE_IMAGES, CACHE_PAGES, CACHE_API];
 
@@ -74,8 +74,8 @@ self.addEventListener('fetch', (event) => {
 
   // 5. HTML navigation
   if (request.mode === 'navigate') {
-    // Course detail pages should feel real-time after AI update (avoid stale shell in PWA)
-    if (url.pathname.startsWith('/courses/')) {
+    // Frequently edited pages should feel real-time in PWA
+    if (url.pathname.startsWith('/courses/') || url.pathname.startsWith('/study-plan')) {
       event.respondWith(networkFirstPages(request));
       return;
     }
@@ -86,6 +86,11 @@ self.addEventListener('fetch', (event) => {
 
   // 6. App Router RSC/data requests — stale-while-revalidate
   if (isAppDataRequest(request, url)) {
+    if (url.pathname.startsWith('/courses/') || url.pathname.startsWith('/study-plan')) {
+      event.respondWith(networkFirstPages(request));
+      return;
+    }
+
     event.respondWith(staleWhileRevalidatePages(request, event));
     return;
   }

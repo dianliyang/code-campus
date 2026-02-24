@@ -117,12 +117,12 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
               </div>
               <div className="min-w-0">
                 <h3 className="text-sm font-semibold text-[#1f1f1f]">Mark as complete</h3>
-                <p className="text-xs text-[#7a7a7a] truncate">{course.title}</p>
+                <p className="text-xs text-[#555] truncate">{course.title}</p>
               </div>
             </div>
 
             <label className="flex flex-col gap-1.5 mb-4">
-              <span className="text-[11px] font-medium text-[#666]">GPA</span>
+              <span className="text-xs font-medium text-[#555]">GPA</span>
               <input
                 type="number"
                 step="0.01"
@@ -144,7 +144,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
               </button>
               <button
                 onClick={executeCompletion}
-                className="flex-1 h-9 rounded-md border border-[#1f1f1f] bg-[#1f1f1f] text-[13px] font-medium text-white hover:bg-[#2a2a2a] transition-colors inline-flex items-center justify-center gap-1.5"
+                className="flex-1 h-9 rounded-md border border-[#1f1f1f] bg-white text-[13px] font-medium text-[#1f1f1f] hover:bg-[#f5f5f5] transition-colors inline-flex items-center justify-center gap-1.5"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
                 Finalize
@@ -166,7 +166,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className="text-[11px] font-medium text-[#4d4d4d] leading-none">{course.university}</span>
               <span className="w-0.5 h-0.5 bg-gray-200 rounded-full"></span>
-              <span className="text-[11px] text-[#9a9a9a]">{course.courseCode}</span>
+              <span className="text-[11px] text-[#777]">{course.courseCode}</span>
             </div>
             <h3 className="text-base font-semibold text-[#1f1f1f] tracking-tight leading-tight line-clamp-1">
               <Link href={detailHref}>{course.title}</Link>
@@ -188,9 +188,9 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
       <div className="space-y-2">
         <div className="flex items-end justify-between">
           <div className="flex flex-col">
-            <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Focus_Intensity</span>
+            <span className="text-[9px] font-bold text-[#c0c0c0] uppercase tracking-wider mb-0.5">Focus_Intensity</span>
             {localPlan && (
-              <div className="flex items-center gap-1 text-[8px] font-medium text-gray-400">
+              <div className="flex items-center gap-1 text-[10px] font-medium text-[#666]">
                 <Clock className="w-2.5 h-2.5" />
                 <span>{localPlan.days_of_week.map(d => weekdaysShort[d].toUpperCase()).join('/')} • {localPlan.start_time.slice(0, 5)} • {new Date(localPlan.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-{new Date(localPlan.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
               </div>
@@ -236,10 +236,10 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
               key={inc}
               onClick={() => handleProgressChange(inc)}
               disabled={isUpdating}
-              className={`text-[8px] font-bold w-8 h-7 flex items-center justify-center rounded-md border transition-all ${
+              className={`text-[10px] font-bold w-8 h-7 flex items-center justify-center rounded-md border transition-all ${
                 progress === inc
                   ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
-                  : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600'
+                  : 'bg-white text-[#888] border-gray-200 hover:border-gray-400 hover:text-[#444]'
               }`}
             >
               {inc}
@@ -252,7 +252,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             onClick={() => setShowAddPlanModal(true)}
             className={`w-7 h-7 rounded-md flex items-center justify-center transition-all border ${
               localPlan
-                ? "bg-[#e7e7e7] text-[#1f1f1f] border-[#d3d3d3]"
+                ? "bg-white text-[#1f1f1f] border-[#d3d3d3] hover:bg-[#f5f5f5]"
                 : "bg-white text-[#666] border-[#d3d3d3] hover:bg-[#f0f0f0] hover:text-[#1f1f1f]"
             }`}
           >
@@ -262,7 +262,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           <button
             onClick={() => handleProgressChange(100)}
             disabled={isUpdating || progress === 100}
-            className="w-7 h-7 rounded-md flex items-center justify-center transition-all border bg-[#1f1f1f] text-white border-[#1f1f1f] hover:bg-[#333] disabled:opacity-30"
+            className="w-7 h-7 rounded-md flex items-center justify-center transition-all border bg-white text-[#1f1f1f] border-[#1f1f1f] hover:bg-[#f5f5f5] disabled:opacity-30"
             title="Finalize"
             aria-label="Finalize course"
           >

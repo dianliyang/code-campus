@@ -106,14 +106,14 @@ export default function AddPlanModal({ isOpen, onClose, onSuccess, course, exist
         </div>
 
         <div className="mb-4 rounded-md bg-[#fafafa] border border-[#f0f0f0] px-3 py-2">
-          <p className="text-[10px] font-medium text-[#999] uppercase tracking-wide">Course</p>
+          <p className="text-[10px] font-semibold text-[#777] uppercase tracking-wide">Course</p>
           <p className="text-[13px] font-medium text-[#1f1f1f] mt-0.5 line-clamp-1">{course.title}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-[#666]">Start Date</label>
+              <label className="text-xs font-medium text-[#444]">Start Date</label>
               <input
                 type="date"
                 required
@@ -123,7 +123,7 @@ export default function AddPlanModal({ isOpen, onClose, onSuccess, course, exist
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-[#666]">End Date</label>
+              <label className="text-xs font-medium text-[#444]">End Date</label>
               <input
                 type="date"
                 required
@@ -145,7 +145,7 @@ export default function AddPlanModal({ isOpen, onClose, onSuccess, course, exist
                   className={`flex-1 h-8 rounded-md text-[11px] font-medium transition-colors border ${
                     formData.days.includes(idx)
                       ? 'bg-[#1f1f1f] text-white border-[#1f1f1f]'
-                      : 'bg-white text-[#777] border-[#d8d8d8] hover:bg-[#f6f6f6]'
+                      : 'bg-white text-[#555] border-[#d8d8d8] hover:bg-[#f6f6f6] font-semibold'
                   }`}
                 >
                   {day}
@@ -156,7 +156,7 @@ export default function AddPlanModal({ isOpen, onClose, onSuccess, course, exist
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-[#666]">Start Time</label>
+              <label className="text-xs font-medium text-[#444]">Start Time</label>
               <input
                 type="time"
                 required
@@ -166,7 +166,7 @@ export default function AddPlanModal({ isOpen, onClose, onSuccess, course, exist
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-[#666]">End Time</label>
+              <label className="text-xs font-medium text-[#444]">End Time</label>
               <input
                 type="time"
                 required
@@ -199,7 +199,7 @@ export default function AddPlanModal({ isOpen, onClose, onSuccess, course, exist
             <button
               type="submit"
               disabled={loading}
-              className="h-8 rounded-md bg-[#1f1f1f] text-white px-3 text-[13px] font-medium hover:bg-[#333] disabled:opacity-50 transition-colors inline-flex items-center gap-1.5"
+              className="h-8 rounded-md border border-[#1f1f1f] bg-white text-[#1f1f1f] px-3 text-[13px] font-medium hover:bg-[#f5f5f5] disabled:opacity-50 transition-colors inline-flex items-center gap-1.5"
             >
               {loading && <Loader2 className="w-3 h-3 animate-spin" />}
               {existingPlan ? 'Update' : 'Save'}

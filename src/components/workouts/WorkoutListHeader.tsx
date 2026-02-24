@@ -177,7 +177,7 @@ export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, d
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search..."
-                className="h-9 md:h-8 w-full rounded-md border border-[#dddddd] bg-white pl-8 pr-8 text-[13px] text-[#333] placeholder:text-[#a3a3a3] outline-none focus:border-[#c8c8c8]"
+                className="h-9 md:h-8 w-full rounded-md border border-[#dddddd] bg-white pl-8 pr-8 text-[16px] md:text-[13px] text-[#333] placeholder:text-[#a3a3a3] outline-none focus:border-[#c8c8c8]"
               />
               {query ? (
                 <button

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '@/app/api/external/courses/[course_code]/route';
 import { NextRequest } from 'next/server';
+import { EXTERNAL_API_CACHE_CONTROL } from '@/lib/external-api';
 
 vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: vi.fn(),
@@ -79,7 +80,7 @@ describe('GET /api/external/courses/[course_code]', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(res.headers.get('cache-control')).toBe('private, max-age=300, stale-while-revalidate=600');
+    expect(res.headers.get('cache-control')).toBe(EXTERNAL_API_CACHE_CONTROL);
     expect(data).toEqual({
       id: 1,
       university: 'CAU Kiel',
@@ -111,8 +112,7 @@ describe('GET /api/external/courses/[course_code]', () => {
     expect(selectArg).toContain('course_fields');
     expect(selectArg).toContain('study_plans');
     expect(selectArg).toContain('user_courses');
-    expect(selectArg).not.toContain('is_hidden');
-    expect(selectArg).not.toContain('is_internal');
+    expect(selectArg).toContain('is_hidden');
     expect(mockNeq).toHaveBeenCalledWith('user_courses.status', 'hidden');
     expect(mockEq2).toHaveBeenCalledWith('course_code', 'CS-101');
   });

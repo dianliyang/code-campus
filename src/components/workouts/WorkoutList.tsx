@@ -115,7 +115,7 @@ export default function WorkoutList({
         lastUpdated={lastUpdated}
       />
 
-        <div className={`bg-[#fcfcfc] rounded-lg ${viewMode === "grid" ? "overflow-visible p-3" : "overflow-hidden"}`}>
+        <div className={`bg-[#fcfcfc] rounded-lg border border-[#e5e5e5] ${viewMode === "grid" ? "overflow-visible p-3" : "overflow-hidden"}`}>
           <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${viewMode === "grid" ? "!hidden" : ""}`}>
             <div className="flex-1 min-w-0">Workout</div>
             <div className="w-[15%]">Schedule</div>

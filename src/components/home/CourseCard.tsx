@@ -94,16 +94,14 @@ export default function CourseCard({
             {isSelected ? <Check className="pointer-events-none absolute h-3 w-3 text-white" /> : null}
           </label>
           <UniversityIcon name={course.university} size={26} className="bg-white border border-[#dfdfdf] rounded-md" />
-          <div className="min-w-0">
-            <h2 className="text-[15px] font-medium text-[#2e2e2e] truncate">
-              <Link href={detailHref} className="hover:text-black transition-colors">
-                {course.title}
-              </Link>
+          <Link href={detailHref} className="min-w-0 block">
+            <h2 className="text-[15px] font-medium text-[#2e2e2e] truncate hover:text-black transition-colors">
+              {course.title}
             </h2>
             <p className="text-xs text-[#7a7a7a] truncate">
               {course.courseCode} · {course.university}
             </p>
-          </div>
+          </Link>
         </div>
 
         <div className="w-[18%] hidden md:flex flex-wrap gap-1">

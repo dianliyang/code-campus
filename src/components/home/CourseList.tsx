@@ -234,7 +234,7 @@ export default function CourseList({
         dict={dict}
       />
 
-      <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden ${viewMode === "grid" ? "p-3" : ""}`}>
+      <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden border border-[#e5e5e5] ${viewMode === "grid" ? "p-3" : ""}`}>
         <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${viewMode === "grid" ? "!hidden" : ""}`}>
           <div className="w-4">
             <label className="relative inline-flex h-4 w-4 cursor-pointer items-center justify-center">

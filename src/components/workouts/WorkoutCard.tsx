@@ -97,18 +97,19 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
     return (
       <div className={rowBg}>
         <div className="group flex items-center gap-4 px-4 py-3 hover:bg-[#f2f2f2] transition-colors">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-[14px] font-medium text-[#2e2e2e] truncate">
-              {workout.url ? (
-                <a href={workout.url} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">
-                  {displayTitle}
-                </a>
-              ) : (
-                displayTitle
-              )}
-            </h2>
-            <p className="text-xs text-[#7a7a7a] truncate">{displayCategory}</p>
-          </div>
+          {workout.url ? (
+            <a href={workout.url} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-0 block">
+              <h2 className="text-[14px] font-medium text-[#2e2e2e] truncate hover:text-black transition-colors">
+                {displayTitle}
+              </h2>
+              <p className="text-xs text-[#7a7a7a] truncate">{displayCategory}</p>
+            </a>
+          ) : (
+            <div className="flex-1 min-w-0">
+              <h2 className="text-[14px] font-medium text-[#2e2e2e] truncate">{displayTitle}</h2>
+              <p className="text-xs text-[#7a7a7a] truncate">{displayCategory}</p>
+            </div>
+          )}
 
           <div className="w-[15%] hidden md:block">
             <p className="text-sm text-[#484848] truncate">{schedule}</p>

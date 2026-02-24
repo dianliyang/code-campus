@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS, GEMINI_MODELS, PERPLEXITY_MODELS } from "@/lib/ai/models";
 import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
@@ -13,7 +13,9 @@ import {
   Cpu,
   FileCode,
   CalendarDays,
-  Tag
+  Tag,
+  BarChart2,
+  Trash2
 } from "lucide-react";
 
 interface AISettingsCardProps {
@@ -65,6 +67,19 @@ export default function AISettingsCard({
   const [isSavingStudyPlan, setIsSavingStudyPlan] = useState(false);
   const [isSavingTopics, setIsSavingTopics] = useState(false);
   const [status, setStatus] = useState<Status>({ type: "idle" });
+  const [aiUsage, setAiUsage] = useState({ calls: 0, tokens: 0 });
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("cc_ai_usage");
+      if (stored) setAiUsage(JSON.parse(stored));
+    } catch { /* ignore */ }
+  }, []);
+
+  const clearAiUsage = () => {
+    localStorage.removeItem("cc_ai_usage");
+    setAiUsage({ calls: 0, tokens: 0 });
+  };
 
   const clearStatus = () => setStatus({ type: "idle" });
 
@@ -331,6 +346,43 @@ export default function AISettingsCard({
             </button>
             <StatusDisplay panel="topics" status={status} />
           </div>
+        </div>
+      </div>
+
+      {/* 5. Usage Statistics */}
+      <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
+          <div className="flex items-center gap-2 text-[#222]">
+            <BarChart2 className="w-4 h-4 text-[#777]" />
+            <span className="text-sm font-semibold">Usage Statistics</span>
+          </div>
+          <button
+            onClick={clearAiUsage}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+            title="Clear usage stats"
+          >
+            <Trash2 className="w-3 h-3" />
+            Clear
+          </button>
+        </div>
+        <div className="rounded-md bg-[#fafafa] border border-[#f0f0f0] p-3">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Requests</p>
+              <p className="text-lg font-bold text-gray-800">{aiUsage.calls.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tokens</p>
+              <p className="text-lg font-bold text-gray-800">{aiUsage.tokens.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Est. Cost</p>
+              <p className="text-lg font-bold text-gray-800">${(aiUsage.tokens * 0.000001).toFixed(4)}</p>
+            </div>
+          </div>
+          {aiUsage.calls === 0 && (
+            <p className="text-[10px] text-gray-400 mt-2 text-center">No AI calls tracked yet. Stats accumulate as you use AI features.</p>
+          )}
         </div>
       </div>
     </div>

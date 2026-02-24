@@ -218,7 +218,7 @@ export default function CourseList({
           loadMore();
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0, rootMargin: "0px 0px 320px 0px" },
     );
 
     if (observerTarget.current) {

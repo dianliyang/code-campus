@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS, GEMINI_MODELS, PERPLEXITY_MODELS } from "@/lib/ai/models";
 import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_COURSE_UPDATE_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
-import { 
-  Save, 
+import {
+  Save,
   CheckCircle2,
   AlertCircle,
   Loader2,
@@ -15,7 +15,6 @@ import {
   CalendarDays,
   Tag,
   BarChart2,
-  Trash2,
   Search
 } from "lucide-react";
 
@@ -27,8 +26,6 @@ interface AISettingsCardProps {
   initialStudyPlanPromptTemplate: string;
   initialTopicsPromptTemplate: string;
   initialCourseUpdatePromptTemplate: string;
-  initialUsageCalls: number;
-  initialUsageTokens: number;
 }
 
 interface Status {
@@ -37,12 +34,63 @@ interface Status {
   panel?: string;
 }
 
+type UsageStats = {
+  totals: { requests: number; tokens_input: number; tokens_output: number; cost_usd: number };
+  byFeature: Record<string, { requests: number; cost_usd: number }>;
+  byModel: Record<string, { requests: number; cost_usd: number }>;
+  recentTotals: { requests: number; cost_usd: number };
+  daily: Record<string, { requests: number; cost_usd: number }>;
+};
+
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function UsageBarChart({ daily }: { daily: Record<string, { requests: number; cost_usd: number }> }) {
+  const entries = Object.entries(daily); // sorted by date asc
+  const max = Math.max(...entries.map(([, v]) => v.requests), 1);
+  return (
+    <div className="rounded-md border border-[#f0f0f0] p-3">
+      <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest mb-3">Last 7 Days</p>
+      <div className="flex items-end gap-1.5 h-16">
+        {entries.map(([date, val]) => {
+          const pct = (val.requests / max) * 100;
+          const dayName = DAY_LABELS[new Date(date + "T12:00:00").getDay()];
+          return (
+            <div key={date} className="flex-1 flex flex-col items-center gap-1 group relative">
+              {/* tooltip */}
+              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-[#1f1f1f] text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                {val.requests} req · ${val.cost_usd.toFixed(3)}
+              </div>
+              <div className="w-full flex items-end" style={{ height: "52px" }}>
+                <div
+                  className="w-full rounded-t-sm transition-all"
+                  style={{
+                    height: `${Math.max(pct, val.requests > 0 ? 6 : 2)}%`,
+                    backgroundColor: val.requests > 0 ? "#1f1f1f" : "#e5e5e5",
+                  }}
+                />
+              </div>
+              <span className="text-[9px] text-[#aaa]">{dayName}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const FEATURE_LABELS: Record<string, string> = {
+  "planner": "AI Planner",
+  "course-update": "Course Update",
+  "learning-path": "Learning Path",
+  "schedule-parse": "Schedule Parse",
+};
+
 const StatusDisplay = ({ panel, status }: { panel: string; status: Status }) => {
   if (status.panel !== panel || status.type === "idle") return null;
   return (
     <div className={`mt-3 rounded-md border px-3 py-2 text-xs font-medium flex items-center gap-2 ${
-      status.type === "success" 
-        ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
+      status.type === "success"
+        ? "bg-emerald-50 border-emerald-100 text-emerald-700"
         : "bg-red-50 border-red-100 text-red-700"
     } animate-in fade-in duration-300`}>
       {status.type === "success" ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
@@ -59,8 +107,6 @@ export default function AISettingsCard({
   initialStudyPlanPromptTemplate,
   initialTopicsPromptTemplate,
   initialCourseUpdatePromptTemplate,
-  initialUsageCalls,
-  initialUsageTokens,
 }: AISettingsCardProps) {
   const [provider, setProvider] = useState(initialProvider === "gemini" ? "gemini" : "perplexity");
   const [defaultModel, setDefaultModel] = useState(initialModel);
@@ -76,21 +122,17 @@ export default function AISettingsCard({
   const [isSavingTopics, setIsSavingTopics] = useState(false);
   const [isSavingCourseUpdate, setIsSavingCourseUpdate] = useState(false);
   const [status, setStatus] = useState<Status>({ type: "idle" });
-  const [aiUsage, setAiUsage] = useState({ calls: initialUsageCalls || 0, tokens: initialUsageTokens || 0 });
 
-  const clearAiUsage = async () => {
-    try {
-      const res = await fetch("/api/ai/usage", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok) {
-        setAiUsage({ calls: 0, tokens: 0 });
-      }
-    } catch {
-      // ignore
-    }
-  };
+  const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
+  const [usageLoading, setUsageLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/ai/usage/stats")
+      .then((r) => r.json())
+      .then((d) => { if (!d.error) setUsageStats(d); })
+      .catch(() => {})
+      .finally(() => setUsageLoading(false));
+  }, []);
 
   const clearStatus = () => setStatus({ type: "idle" });
 
@@ -177,7 +219,7 @@ export default function AISettingsCard({
           <Cpu className="w-4 h-4 text-[#777]" />
           <span className="text-sm font-semibold">Engine Configuration</span>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -191,8 +233,8 @@ export default function AISettingsCard({
                       setDefaultModel(p === "gemini" ? GEMINI_MODELS[0] : PERPLEXITY_MODELS[0]);
                     }}
                     className={`flex-1 h-8 rounded-md border transition-colors text-[13px] font-medium ${
-                      provider === p 
-                        ? "bg-[#1f1f1f] border-[#1f1f1f] text-white" 
+                      provider === p
+                        ? "bg-[#1f1f1f] border-[#1f1f1f] text-white"
                         : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
                     }`}
                   >
@@ -416,39 +458,89 @@ export default function AISettingsCard({
 
       {/* 6. Usage Statistics */}
       <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef]">
-          <div className="flex items-center gap-2 text-[#222]">
-            <BarChart2 className="w-4 h-4 text-[#777]" />
-            <span className="text-sm font-semibold">Usage Statistics</span>
-          </div>
-          <button
-            onClick={clearAiUsage}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-            title="Clear usage stats"
-          >
-            <Trash2 className="w-3 h-3" />
-            Clear
-          </button>
+        <div className="flex items-center gap-2 text-[#222] mb-4 pb-3 border-b border-[#efefef]">
+          <BarChart2 className="w-4 h-4 text-[#777]" />
+          <span className="text-sm font-semibold">Usage Statistics</span>
         </div>
-        <div className="rounded-md bg-[#fafafa] border border-[#f0f0f0] p-3">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Requests</p>
-              <p className="text-lg font-bold text-gray-800">{aiUsage.calls.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tokens</p>
-              <p className="text-lg font-bold text-gray-800">{aiUsage.tokens.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Est. Cost</p>
-              <p className="text-lg font-bold text-gray-800">${(aiUsage.tokens * 0.000001).toFixed(4)}</p>
-            </div>
+
+        {usageLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-4 h-4 animate-spin text-[#aaa]" />
           </div>
-          {aiUsage.calls === 0 && (
-            <p className="text-[10px] text-gray-400 mt-2 text-center">No AI calls tracked yet. Stats accumulate as you use AI features.</p>
-          )}
-        </div>
+        ) : !usageStats || usageStats.totals.requests === 0 ? (
+          <p className="text-[11px] text-[#aaa] text-center py-4">No AI calls tracked yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {/* Totals row */}
+            <div className="rounded-md bg-[#fafafa] border border-[#f0f0f0] p-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Requests</p>
+                <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.requests.toLocaleString()}</p>
+                <p className="text-[10px] text-[#aaa]">{usageStats.recentTotals.requests} this week</p>
+              </div>
+              <div>
+                <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Input Tokens</p>
+                <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.tokens_input.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Output Tokens</p>
+                <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.tokens_output.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Total Cost</p>
+                <p className="text-lg font-bold text-[#1f1f1f]">${usageStats.totals.cost_usd.toFixed(4)}</p>
+                <p className="text-[10px] text-[#aaa]">${usageStats.recentTotals.cost_usd.toFixed(4)} this week</p>
+              </div>
+            </div>
+
+            {/* 7-day bar chart */}
+            {usageStats.daily && <UsageBarChart daily={usageStats.daily} />}
+
+            {/* By feature */}
+            {Object.keys(usageStats.byFeature).length > 0 && (
+              <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
+                <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
+                  <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Feature</p>
+                </div>
+                <div className="divide-y divide-[#f5f5f5]">
+                  {Object.entries(usageStats.byFeature)
+                    .sort((a, b) => b[1].requests - a[1].requests)
+                    .map(([feature, stat]) => (
+                      <div key={feature} className="px-3 py-2 flex items-center justify-between">
+                        <span className="text-[13px] text-[#444]">{FEATURE_LABELS[feature] ?? feature}</span>
+                        <div className="flex items-center gap-4 text-right">
+                          <span className="text-[11px] text-[#888]">{stat.requests} req</span>
+                          <span className="text-[11px] font-medium text-[#555] w-16">${stat.cost_usd.toFixed(4)}</span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* By model */}
+            {Object.keys(usageStats.byModel).length > 0 && (
+              <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
+                <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
+                  <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Model</p>
+                </div>
+                <div className="divide-y divide-[#f5f5f5]">
+                  {Object.entries(usageStats.byModel)
+                    .sort((a, b) => b[1].requests - a[1].requests)
+                    .map(([model, stat]) => (
+                      <div key={model} className="px-3 py-2 flex items-center justify-between">
+                        <span className="text-[13px] font-mono text-[#444]">{model}</span>
+                        <div className="flex items-center gap-4 text-right">
+                          <span className="text-[11px] text-[#888]">{stat.requests} req</span>
+                          <span className="text-[11px] font-medium text-[#555] w-16">${stat.cost_usd.toFixed(4)}</span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

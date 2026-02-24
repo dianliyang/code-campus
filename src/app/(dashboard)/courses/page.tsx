@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import Sidebar from "@/components/home/Sidebar";
 import CourseList from "@/components/home/CourseList";
@@ -39,7 +40,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
 async function CoursesStatsStrip({ userId }: { userId?: string }) {
   const supabase = await createClient();
 
-  const [catalogCountRes, universitiesRes, newCountRes, enrolledRes, hiddenRes] = await Promise.all([
+  const [catalogCountRes, universitiesRes, newCountRes, enrolledRes, hiddenRes, totalCountRes] = await Promise.all([
     supabase.from("courses").select("id", { count: "exact", head: true }).eq("is_hidden", false),
     supabase.from("courses").select("university").eq("is_hidden", false),
     supabase.from("courses").select("id", { count: "exact", head: true }).eq("is_hidden", false),
@@ -59,33 +60,44 @@ async function CoursesStatsStrip({ userId }: { userId?: string }) {
           .eq("status", "hidden")
           .eq("courses.is_hidden", false)
       : Promise.resolve({ count: 0 }),
+    supabase.from("courses").select("id", { count: "exact", head: true }), // total including hidden
   ]);
 
   const totalCatalog = Math.max(0, (catalogCountRes.count || 0) - (hiddenRes.count || 0));
+  const totalAllCourses = totalCountRes.count || 0;
   const totalEnrolled = enrolledRes.count || 0;
   const uniqueUniversityCount = new Set((universitiesRes.data || []).map((row) => row.university)).size;
   const newThisWeek = newCountRes.count ? Math.max(0, Math.floor(newCountRes.count * 0.08)) : 0;
 
   const metrics = [
-    { label: "Catalog size", value: totalCatalog.toLocaleString() },
-    { label: "Enrolled", value: totalEnrolled.toLocaleString() },
+    { label: "Catalog size", value: `${totalCatalog.toLocaleString()}/${totalAllCourses.toLocaleString()}`, compact: true },
+    { label: "Enrolled", value: totalEnrolled.toLocaleString(), href: "/study-plan#active-focus" },
     { label: "Universities", value: uniqueUniversityCount.toLocaleString() },
     { label: "New (7d)", value: newThisWeek.toLocaleString() },
   ];
 
   return (
     <section className="grid grid-cols-2 lg:grid-cols-4 rounded-lg overflow-hidden border border-[#e5e5e5] bg-[#fcfcfc]">
-      {metrics.map((metric, idx) => (
-        <div
-          key={metric.label}
-          className={`px-4 py-3 bg-[#fcfcfc] ${
-            idx % 2 === 0 ? "border-r border-[#e5e5e5] lg:border-r" : "lg:border-r lg:border-[#e5e5e5]"
-          } ${idx >= 2 ? "border-t border-[#e5e5e5] lg:border-t-0" : ""} ${idx === 3 ? "lg:border-r-0" : ""}`}
-        >
-          <p className="text-xs text-slate-500">{metric.label}</p>
-          <p className="mt-1 text-[26px] leading-none font-semibold tracking-tight text-slate-900">{metric.value}</p>
-        </div>
-      ))}
+      {metrics.map((metric, idx) => {
+        const cardClass = `px-4 py-3 bg-[#fcfcfc] ${
+          idx % 2 === 0 ? "border-r border-[#e5e5e5] lg:border-r" : "lg:border-r lg:border-[#e5e5e5]"
+        } ${idx >= 2 ? "border-t border-[#e5e5e5] lg:border-t-0" : ""} ${idx === 3 ? "lg:border-r-0" : ""}${metric.href ? " cursor-pointer hover:bg-[#f7f7f7] transition-colors" : ""}`;
+        const content = (
+          <>
+            <p className="text-xs text-slate-500">{metric.label}</p>
+            <p className={`mt-1 ${metric.compact ? "text-[20px]" : "text-[26px]"} leading-none font-semibold tracking-tight text-slate-900`}>{metric.value}</p>
+          </>
+        );
+        return metric.href ? (
+          <Link key={metric.label} href={metric.href} className={cardClass}>
+            {content}
+          </Link>
+        ) : (
+          <div key={metric.label} className={cardClass}>
+            {content}
+          </div>
+        );
+      })}
     </section>
   );
 }

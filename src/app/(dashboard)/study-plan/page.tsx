@@ -1,11 +1,10 @@
 import { Suspense } from "react";
 import { Course } from "@/types";
-import AchievementCard from "@/components/home/AchievementCard";
 import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
 import AILearningPlanner from "@/components/home/AILearningPlanner";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
-import SemesterFilter from "@/components/home/SemesterFilter";
 import StudyCalendar from "@/components/home/StudyCalendar";
+import RoadmapAchievementsSection from "@/components/home/RoadmapAchievementsSection";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -39,15 +38,10 @@ interface EnrolledProjectSeminar {
   updated_at: string;
 }
 
-interface PageProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-export default async function StudyPlanPage({ searchParams }: PageProps) {
-  const [user, lang, params] = await Promise.all([
+export default async function StudyPlanPage() {
+  const [user, lang] = await Promise.all([
     getUser(),
     getLanguage(),
-    searchParams,
   ]);
   const dict = await getDictionary(lang);
 
@@ -60,26 +54,19 @@ export default async function StudyPlanPage({ searchParams }: PageProps) {
     );
   }
 
-  const selectedSemester = (params.semester as string) || "all";
-
   return (
     <main className="w-full">
       <Suspense fallback={<StudyPlanSkeleton />}>
-        <StudyPlanContent
-          userId={user.id}
-          selectedSemester={selectedSemester}
-          dict={dict}
-        />
+        <StudyPlanContent userId={user.id} dict={dict} />
       </Suspense>
     </main>
   );
 }
 
 async function StudyPlanContent({
-  userId, selectedSemester, dict
+  userId, dict
 }: {
   userId: string;
-  selectedSemester: string;
   dict: Dictionary;
 }) {
   const supabase = await createClient();
@@ -264,10 +251,6 @@ async function StudyPlanContent({
     return (order[termB] || 0) - (order[termA] || 0);
   });
 
-  const filteredAchievements = selectedSemester === "all"
-    ? completed
-    : completed.filter(c => c.semesters.includes(selectedSemester));
-
   return (
     <div className="space-y-4">
       <StudyPlanHeader
@@ -321,33 +304,12 @@ async function StudyPlanContent({
         </div>
       </section>
 
-      <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
-        <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <h3 className="text-base font-semibold text-[#1f1f1f]">{dict.dashboard.roadmap.phase_2_title}</h3>
-          <div className="flex flex-wrap items-center gap-2">
-            {availableSemesters.length > 0 && (
-              <SemesterFilter
-                availableSemesters={availableSemesters}
-                selectedSemester={selectedSemester}
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filteredAchievements.length > 0 ? (
-            filteredAchievements.map(course => (
-              <AchievementCard
-                key={course.id}
-                course={course}
-                completionDate={course.updated_at}
-              />
-            ))
-          ) : (
-            <p className="text-sm text-[#8a8a8a]">{dict.dashboard.roadmap.peak_ahead}</p>
-          )}
-        </div>
-      </section>
+      <RoadmapAchievementsSection
+        availableSemesters={availableSemesters}
+        completed={completed}
+        title={dict.dashboard.roadmap.phase_2_title}
+        emptyText={dict.dashboard.roadmap.peak_ahead}
+      />
 
       {enrolledCourses.length === 0 && enrolledProjectsSeminars.length === 0 && (
         <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] py-16 text-center">

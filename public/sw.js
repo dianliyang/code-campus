@@ -1,7 +1,7 @@
 // ─── Cache names ────────────────────────────────────────────────────────────
 const CACHE_STATIC = 'cc-static-v2';   // /_next/static/* — immutable
 const CACHE_IMAGES = 'cc-images-v2';   // icons, webp, svg, png — cache-first LRU
-const CACHE_PAGES  = 'cc-pages-v3';    // HTML/RSC navigation — stale-while-revalidate
+const CACHE_PAGES  = 'cc-pages-v4';    // HTML/RSC navigation — stale-while-revalidate
 const CACHE_API    = 'cc-api-v2';      // /api/universities + /api/fields — SWR 5 min
 const ALL_CACHES   = [CACHE_STATIC, CACHE_IMAGES, CACHE_PAGES, CACHE_API];
 
@@ -72,8 +72,14 @@ self.addEventListener('fetch', (event) => {
   // 4. Other API — network-only
   if (url.pathname.startsWith('/api/')) return;
 
-  // 5. HTML navigation — stale-while-revalidate
+  // 5. HTML navigation
   if (request.mode === 'navigate') {
+    // Course detail pages should feel real-time after AI update (avoid stale shell in PWA)
+    if (url.pathname.startsWith('/courses/')) {
+      event.respondWith(networkFirstPages(request));
+      return;
+    }
+
     event.respondWith(staleWhileRevalidatePages(request, event));
     return;
   }
@@ -155,6 +161,21 @@ async function staleWhileRevalidatePages(request, event) {
   const response = await networkPromise;
   if (response) return response;
   return (await cache.match(OFFLINE_URL)) || new Response('Offline', { status: 503 });
+}
+
+async function networkFirstPages(request) {
+  const cache = await caches.open(CACHE_PAGES);
+  try {
+    const response = await fetch(request);
+    if (response.ok && shouldCachePageRequest(request, new URL(request.url))) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    return (await cache.match(OFFLINE_URL)) || new Response('Offline', { status: 503 });
+  }
 }
 
 function isAppDataRequest(request, url) {

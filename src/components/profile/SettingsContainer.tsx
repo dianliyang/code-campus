@@ -12,8 +12,8 @@ interface SettingsContainerProps {
 
 export default function SettingsContainer({ user, profile }: SettingsContainerProps) {
   return (
-    <div className="space-y-3 pb-2">
-      <section id="intelligence" className="rounded-lg bg-[#fcfcfc] p-3 sm:p-4 space-y-2.5">
+    <div className="space-y-4 pb-2">
+      <div id="intelligence" className="space-y-2">
         <header className="space-y-1">
           <h3 className="text-base font-semibold text-[#1f1f1f]">Intelligence Preference</h3>
           <p className="text-xs text-[#7a7a7a]">Configure AI providers and prompt behavioral patterns.</p>
@@ -31,24 +31,24 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
           initialUsageCalls={Number(profile?.ai_usage_calls || 0)}
           initialUsageTokens={Number(profile?.ai_usage_tokens || 0)}
         />
-      </section>
+      </div>
 
-      <section id="security" className="rounded-lg bg-[#fcfcfc] p-3 sm:p-4 space-y-2.5">
+      <div id="security" className="space-y-2">
         <header className="space-y-1">
           <h3 className="text-base font-semibold text-[#1f1f1f]">Identity & Security</h3>
           <p className="text-xs text-[#7a7a7a]">Manage account access, authentication, and privacy.</p>
         </header>
 
         <SecurityIdentitySection key="security-section" provider={user.app_metadata.provider} />
-      </section>
+      </div>
 
-      <section id="maintenance" className="rounded-lg bg-[#fcfcfc] p-3 sm:p-4 space-y-2.5">
+      <div id="maintenance" className="space-y-2">
         <header className="space-y-1">
           <h3 className="text-base font-semibold text-[#1f1f1f]">System Operations</h3>
           <p className="text-xs text-[#7a7a7a]">Synchronize academic catalogs and manage data integrity.</p>
         </header>
         <SystemMaintenanceCard key="maintenance-section" />
-      </section>
+      </div>
     </div>
   );
 }

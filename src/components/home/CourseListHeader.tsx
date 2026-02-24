@@ -39,6 +39,21 @@ export default function CourseListHeader({ viewMode, setViewMode, dict }: Course
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  useEffect(() => {
+    if (query === lastPushedQuery.current) return;
+
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (query) params.set("q", query);
+      else params.delete("q");
+      params.set("page", "1");
+      lastPushedQuery.current = query;
+      router.push(`?${params.toString()}`, { scroll: false });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query, router, searchParams]);
+
   const commitSearch = (q: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (q) params.set("q", q);

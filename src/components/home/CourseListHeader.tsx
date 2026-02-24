@@ -66,10 +66,10 @@ export default function CourseListHeader({ viewMode, setViewMode, dict }: Course
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
-        <div className="inline-flex h-8 items-center rounded-md border border-[#dddddd] overflow-hidden bg-white">
+        <div className="inline-flex h-9 md:h-8 items-center rounded-md border border-[#dddddd] overflow-hidden bg-white self-start">
           <button
             onClick={() => setViewMode("list")}
-            className={`inline-flex h-8 items-center gap-1.5 px-2.5 text-[13px] transition-colors ${
+            className={`inline-flex h-9 md:h-8 items-center gap-1.5 px-3 md:px-2.5 text-[13px] transition-colors ${
               viewMode === "list"
                 ? "bg-[#e9e9e9] text-[#1f1f1f] font-medium shadow-[inset_0_0_0_1px_#d8d8d8]"
                 : "text-[#7b7b7b] hover:bg-[#f6f6f6]"
@@ -81,7 +81,7 @@ export default function CourseListHeader({ viewMode, setViewMode, dict }: Course
           </button>
           <button
             onClick={() => setViewMode("grid")}
-            className={`inline-flex h-8 items-center gap-1.5 px-2.5 text-[13px] transition-colors ${
+            className={`inline-flex h-9 md:h-8 items-center gap-1.5 px-3 md:px-2.5 text-[13px] transition-colors ${
               viewMode === "grid"
                 ? "bg-[#e9e9e9] text-[#1f1f1f] font-medium shadow-[inset_0_0_0_1px_#d8d8d8]"
                 : "text-[#7b7b7b] hover:bg-[#f6f6f6]"
@@ -93,56 +93,61 @@ export default function CourseListHeader({ viewMode, setViewMode, dict }: Course
           </button>
         </div>
 
-        <div className="flex items-center gap-2 text-[13px] text-[#6a6a6a]">
-          <Link
-            href="/import"
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New course
-          </Link>
-          <button
-            onClick={openFilters}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            Filter
-          </button>
-          <select
-            value={sortBy}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="h-8 min-w-[150px] appearance-none rounded-md border border-[#d7d7d7] bg-white px-2 pr-7 text-[13px] font-medium text-[#454545] outline-none transition-colors hover:border-[#c7c7c7] focus:border-[#bcbcbc]"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23909090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "right 8px center",
-            }}
-          >
-            <option value="title">{dict?.sort_title || "Title (A-Z)"}</option>
-            <option value="popularity">{dict?.sort_popularity || "Popularity"}</option>
-            <option value="newest">{dict?.sort_newest || "Newest"}</option>
-          </select>
+        <div className="w-full md:w-auto space-y-2">
+          <div className="grid grid-cols-2 md:flex items-center gap-2 text-[13px] text-[#6a6a6a]">
+            <Link
+              href="/import"
+              className="inline-flex h-9 md:h-8 items-center justify-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New course
+            </Link>
+            <button
+              onClick={openFilters}
+              className="inline-flex h-9 md:h-8 items-center justify-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filter
+            </button>
+          </div>
 
-          <div className="relative flex-1 min-w-[140px] md:min-w-[220px]">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9a9a9a]" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") commitSearch(query); }}
-              placeholder="Search..."
-              className="h-8 w-full md:w-[220px] rounded-md border border-[#dddddd] bg-white pl-8 pr-8 text-[13px] text-[#333] placeholder:text-[#a3a3a3] outline-none focus:border-[#c8c8c8]"
-            />
-            {query ? (
-              <button
-                onClick={() => { setQuery(""); commitSearch(""); }}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#9a9a9a] hover:text-[#555]"
-                aria-label="Clear search"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            ) : null}
+          <div className="grid grid-cols-1 md:flex items-center gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => handleSortChange(e.target.value)}
+              className="h-9 md:h-8 w-full md:min-w-[150px] appearance-none rounded-md border border-[#d7d7d7] bg-white px-2 pr-7 text-[13px] font-medium text-[#454545] outline-none transition-colors hover:border-[#c7c7c7] focus:border-[#bcbcbc]"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23909090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 8px center",
+              }}
+            >
+              <option value="title">{dict?.sort_title || "Title (A-Z)"}</option>
+              <option value="popularity">{dict?.sort_popularity || "Popularity"}</option>
+              <option value="newest">{dict?.sort_newest || "Newest"}</option>
+            </select>
+
+            <div className="relative w-full md:min-w-[220px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9a9a9a]" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") commitSearch(query); }}
+                placeholder="Search..."
+                className="h-9 md:h-8 w-full rounded-md border border-[#dddddd] bg-white pl-8 pr-8 text-[13px] text-[#333] placeholder:text-[#a3a3a3] outline-none focus:border-[#c8c8c8]"
+              />
+              {query ? (
+                <button
+                  onClick={() => { setQuery(""); commitSearch(""); }}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#9a9a9a] hover:text-[#555]"
+                  aria-label="Clear search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>

@@ -37,6 +37,13 @@ export default async function CoursesPage({ searchParams }: PageProps) {
   );
 }
 
+interface Metric {
+  label: string;
+  value: string;
+  compact?: boolean;
+  href?: string;
+}
+
 async function CoursesStatsStrip({ userId }: { userId?: string }) {
   const supabase = await createClient();
 
@@ -64,13 +71,19 @@ async function CoursesStatsStrip({ userId }: { userId?: string }) {
   ]);
 
   const totalCatalog = Math.max(0, (catalogCountRes.count || 0) - (hiddenRes.count || 0));
-  const totalAllCourses = totalCountRes.count || 0;
+  const totalAllCourses = totalCountRes.error ? null : (totalCountRes.count ?? 0);
   const totalEnrolled = enrolledRes.count || 0;
   const uniqueUniversityCount = new Set((universitiesRes.data || []).map((row) => row.university)).size;
   const newThisWeek = newCountRes.count ? Math.max(0, Math.floor(newCountRes.count * 0.08)) : 0;
 
-  const metrics = [
-    { label: "Catalog size", value: `${totalCatalog.toLocaleString()}/${totalAllCourses.toLocaleString()}`, compact: true },
+  const metrics: Metric[] = [
+    {
+      label: "Catalog size",
+      value: totalAllCourses !== null
+        ? `${totalCatalog.toLocaleString()}/${totalAllCourses.toLocaleString()}`
+        : totalCatalog.toLocaleString(),
+      compact: true,
+    },
     { label: "Enrolled", value: totalEnrolled.toLocaleString(), href: "/study-plan#active-focus" },
     { label: "Universities", value: uniqueUniversityCount.toLocaleString() },
     { label: "New (7d)", value: newThisWeek.toLocaleString() },
@@ -81,7 +94,7 @@ async function CoursesStatsStrip({ userId }: { userId?: string }) {
       {metrics.map((metric, idx) => {
         const cardClass = `px-4 py-3 bg-[#fcfcfc] ${
           idx % 2 === 0 ? "border-r border-[#e5e5e5] lg:border-r" : "lg:border-r lg:border-[#e5e5e5]"
-        } ${idx >= 2 ? "border-t border-[#e5e5e5] lg:border-t-0" : ""} ${idx === 3 ? "lg:border-r-0" : ""}${metric.href ? " cursor-pointer hover:bg-[#f7f7f7] transition-colors" : ""}`;
+        } ${idx >= 2 ? "border-t border-[#e5e5e5] lg:border-t-0" : ""} ${idx === 3 ? "lg:border-r-0" : ""} ${metric.href ? " cursor-pointer hover:bg-[#f7f7f7] transition-colors" : ""}`;
         const content = (
           <>
             <p className="text-xs text-slate-500">{metric.label}</p>

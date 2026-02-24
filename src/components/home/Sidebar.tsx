@@ -72,7 +72,7 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
         className="absolute inset-0 bg-black/25 backdrop-blur-[1px]"
       />
 
-      <aside className="absolute inset-x-0 bottom-0 max-h-[86vh] overflow-y-auto rounded-t-2xl bg-white px-4 py-4 shadow-xl md:inset-y-0 md:right-0 md:left-auto md:w-[320px] md:max-h-none md:rounded-none md:border-l md:border-slate-200">
+      <aside className="absolute inset-x-0 bottom-0 max-h-[86vh] overflow-y-auto rounded-t-2xl bg-white px-4 pt-4 pb-1 shadow-xl md:inset-y-0 md:right-0 md:left-auto md:w-[320px] md:max-h-none md:rounded-none md:border-l md:border-slate-200 md:py-4">
           <div className="md:hidden flex justify-center mb-5">
             <div className="w-12 h-1.5 bg-gray-100 rounded-full" />
           </div>

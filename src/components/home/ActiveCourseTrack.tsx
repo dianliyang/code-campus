@@ -33,7 +33,6 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
   const [showAddPlanModal, setShowAddPlanModal] = useState(false);
   const [localPlan, setLocalPlan] = useState(plan);
   const [gpa, setGpa] = useState("");
-  const [score, setScore] = useState("");
 
   const detailHref = `/courses/${course.id}`;
 
@@ -80,7 +79,6 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           action: "update_progress",
           progress: 100,
           gpa: gpa ? parseFloat(gpa) : 0,
-          score: score ? parseFloat(score) : 0
         })
       });
       if (res.ok) {
@@ -124,33 +122,18 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
             </div>
 
             <div className="space-y-4 mb-8">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">GPA</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="5"
-                    placeholder="0.00"
-                    className="bg-gray-50 border border-gray-100 focus:border-brand-blue rounded-xl px-4 py-2.5 outline-none font-black text-lg transition-all"
-                    value={gpa}
-                    onChange={(e) => setGpa(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Score %</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    placeholder="0.0"
-                    className="bg-gray-50 border border-gray-100 focus:border-brand-blue rounded-xl px-4 py-2.5 outline-none font-black text-lg transition-all"
-                    value={score}
-                    onChange={(e) => setScore(e.target.value)}
-                  />
-                </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">GPA</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="5"
+                  placeholder="0.00"
+                  className="bg-gray-50 border border-gray-100 focus:border-brand-blue rounded-xl px-4 py-2.5 outline-none font-black text-lg transition-all"
+                  value={gpa}
+                  onChange={(e) => setGpa(e.target.value)}
+                />
               </div>
             </div>
 
@@ -268,10 +251,10 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
         <div className="flex items-center gap-1.5 flex-1 justify-end">
           <button
             onClick={() => setShowAddPlanModal(true)}
-            className={`w-7 h-7 rounded-md flex items-center justify-center transition-all ${
-              localPlan 
-                ? "bg-teal-50 text-teal-600 border border-teal-100" 
-                : "bg-violet-50 text-violet-500 border border-violet-100 hover:bg-violet-100"
+            className={`w-7 h-7 rounded-md flex items-center justify-center transition-all border ${
+              localPlan
+                ? "bg-[#e7e7e7] text-[#1f1f1f] border-[#d3d3d3]"
+                : "bg-white text-[#666] border-[#d3d3d3] hover:bg-[#f0f0f0] hover:text-[#1f1f1f]"
             }`}
           >
             {localPlan ? <CalendarCheck className="w-3 h-3" /> : <CalendarPlus className="w-3 h-3" />}
@@ -280,7 +263,7 @@ export default function ActiveCourseTrack({ course, initialProgress, plan, onUpd
           <button
             onClick={() => handleProgressChange(100)}
             disabled={isUpdating || progress === 100}
-            className="w-7 h-7 rounded-md flex items-center justify-center transition-all bg-brand-green/10 text-brand-green hover:bg-brand-green/20 disabled:opacity-30"
+            className="w-7 h-7 rounded-md flex items-center justify-center transition-all border bg-[#1f1f1f] text-white border-[#1f1f1f] hover:bg-[#333] disabled:opacity-30"
             title="Finalize"
             aria-label="Finalize course"
           >

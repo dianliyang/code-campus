@@ -13,6 +13,12 @@
   --color-brand-green: #10b981;
 }
 
+@layer base {
+  input[type="checkbox"] {
+    accent-color: #1f1f1f;
+  }
+}
+
 @layer utilities {
   .animate-spin-slow {
     animation: spin 20s linear infinite;

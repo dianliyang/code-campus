@@ -81,59 +81,56 @@ export default function AchievementCard({ course }: AchievementCardProps) {
     <div className="bg-white border border-[#e5e5e5] p-2.5 flex flex-col gap-2 h-full relative rounded-md">
       {/* Update Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/10 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-300 shadow-2xl">
-            <div className="flex flex-col items-center text-center mb-6">
-              <h3 className="text-lg font-black text-gray-900 tracking-tighter mb-1 uppercase italic">Update_Record</h3>
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                Sync academic parameters: <br /> <span className="text-gray-900">{course.title}</span>
-              </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#fcfcfc] border border-[#e5e5e5] rounded-xl p-4 w-full max-w-sm animate-in zoom-in-95 duration-200 shadow-xl">
+            <div className="mb-4">
+              <h3 className="text-base font-semibold text-[#1f1f1f]">Update performance</h3>
+              <p className="text-xs text-[#7a7a7a] mt-1 line-clamp-2">{course.title}</p>
             </div>
 
-            <div className="space-y-4 mb-8 text-left">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">GPA</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="5"
-                    placeholder="0.00"
-                    className="bg-gray-50 border border-gray-100 focus:border-brand-blue rounded-xl px-4 py-2.5 outline-none font-black text-lg transition-all"
-                    value={gpa}
-                    onChange={(e) => setGpa(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Score %</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    placeholder="0.0"
-                    className="bg-gray-50 border border-gray-100 focus:border-brand-blue rounded-xl px-4 py-2.5 outline-none font-black text-lg transition-all"
-                    value={score}
-                    onChange={(e) => setScore(e.target.value)}
-                  />
-                </div>
-              </div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-medium text-[#666]">GPA</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="5"
+                  placeholder="0.00"
+                  className="h-10 rounded-md border border-[#d8d8d8] bg-white px-3 text-[14px] font-medium text-[#222] outline-none focus:border-[#bcbcbc]"
+                  value={gpa}
+                  onChange={(e) => setGpa(e.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-medium text-[#666]">Score %</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  placeholder="0.0"
+                  className="h-10 rounded-md border border-[#d8d8d8] bg-white px-3 text-[14px] font-medium text-[#222] outline-none focus:border-[#bcbcbc]"
+                  value={score}
+                  onChange={(e) => setScore(e.target.value)}
+                />
+              </label>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 h-9 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8]"
+              >
+                Cancel
+              </button>
               <button
                 onClick={handleUpdate}
                 disabled={isUpdating}
-                className="w-full bg-gray-900 text-white py-3.5 rounded-xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                className="flex-1 h-9 rounded-md border border-[#1f1f1f] bg-[#1f1f1f] text-[13px] font-medium text-white hover:bg-[#2a2a2a] disabled:opacity-50 inline-flex items-center justify-center gap-2"
               >
-                {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : "Sync Changes"} <Save className="w-3 h-3" />
-              </button>
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="w-full text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors py-2"
-              >
-                Abort
+                {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                Save
               </button>
             </div>
           </div>
@@ -197,16 +194,18 @@ export default function AchievementCard({ course }: AchievementCardProps) {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setShowEditModal(true)}
-            className="w-5.5 h-5.5 rounded-md border border-gray-50 text-gray-300 hover:text-brand-blue hover:bg-blue-50 transition-all flex items-center justify-center"
+            className="w-8 h-8 rounded-md border border-[#d3d3d3] text-[#666] hover:text-brand-blue hover:bg-blue-50 transition-all flex items-center justify-center"
+            aria-label="Edit GPA and score"
           >
-            <PenSquare className="w-3 h-3" />
+            <PenSquare className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleMarkIncomplete}
             disabled={isMarkingIncomplete}
-            className="w-5.5 h-5.5 rounded-md border border-gray-50 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center disabled:opacity-50"
+            className="w-8 h-8 rounded-md border border-[#d3d3d3] text-[#666] hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center disabled:opacity-50"
+            aria-label="Mark incomplete"
           >
-            <RotateCcw className="w-3 h-3" />
+            <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

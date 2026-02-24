@@ -14,7 +14,7 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <main className="h-screen bg-[#f5f5f5] overflow-hidden">
+      <main className="h-[100dvh] bg-[#f5f5f5] pt-[env(safe-area-inset-top,0px)] overflow-hidden">
         <div className="h-full flex overflow-hidden">
           <LeftRail
             labels={{

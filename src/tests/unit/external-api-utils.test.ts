@@ -6,6 +6,7 @@ import {
   transformExternalCourse,
   buildCachingHeaders,
   checkNotModified,
+  notModifiedResponse,
 } from '@/lib/external-api';
 
 describe('external-api utils', () => {
@@ -85,5 +86,13 @@ describe('external-api utils', () => {
     expect(result.topics).toEqual(['CS']);
     expect(result.schedule).toEqual([{ id: 11 }]);
     expect(result.enrollment).toEqual({ status: 'active' });
+  });
+
+  it('notModifiedResponse returns a 304 NextResponse with the given headers', () => {
+    const headers = { 'Cache-Control': 'private, max-age=3600', 'Last-Modified': 'Sat, 14 Feb 2026 12:00:00 GMT' };
+    const res = notModifiedResponse(headers);
+    expect(res.status).toBe(304);
+    expect(res.headers.get('Cache-Control')).toBe(headers['Cache-Control']);
+    expect(res.headers.get('Last-Modified')).toBe(headers['Last-Modified']);
   });
 });

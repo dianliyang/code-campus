@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
     try {
       parsed = parseLenientJson(text);
     } catch {
-      logAiUsage({
+      await logAiUsage({
         userId: user.id,
         provider: providerName,
         model: modelName,
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      logAiUsage({
+      await logAiUsage({
         userId: user.id,
         provider: providerName,
         model: modelName,
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "AI returned invalid planner format" }, { status: 422 });
     }
 
-    logAiUsage({
+    await logAiUsage({
       userId: user.id,
       provider: providerName,
       model: modelName,

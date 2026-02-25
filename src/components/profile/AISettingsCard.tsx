@@ -84,6 +84,7 @@ function UsageBarChart({ daily }: { daily: Record<string, { requests: number; co
 
 const FEATURE_LABELS: Record<string, string> = {
   planner: "AI Planner",
+  topics: "Topics",
   "course-update": "Course Update",
   "learning-path": "Learning Path",
   "schedule-parse": "Schedule Parse",
@@ -578,7 +579,12 @@ export default function AISettingsCard({
                       <div key={item.id} className="px-3 py-2 flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-[13px] text-[#444] truncate">
-                            {(FEATURE_LABELS[item.feature] ?? item.feature) + (item.preset ? ` · ${item.preset}` : "")}
+                            {(() => {
+                              const featureLabel = FEATURE_LABELS[item.feature] ?? item.feature;
+                              const preset = (item.preset || "").trim();
+                              const isDuplicatePreset = preset.length > 0 && preset.toLowerCase() === featureLabel.toLowerCase();
+                              return isDuplicatePreset ? featureLabel : `${featureLabel}${preset ? ` · ${preset}` : ""}`;
+                            })()}
                           </p>
                           <p className="text-[11px] text-[#999] truncate">
                             {item.provider || "-"} / {item.model || "-"} · in {item.tokens_input} · out {item.tokens_output}

@@ -235,7 +235,7 @@ Output format requirements:
         ),
       };
 
-  logAiUsage({
+  await logAiUsage({
     userId: user.id,
     provider,
     model,

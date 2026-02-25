@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  logAiUsage({
+  await logAiUsage({
     userId: user.id,
     provider: "perplexity",
     model: "planner-enroll",

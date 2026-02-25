@@ -1100,7 +1100,7 @@ export async function regenerateCourseDescription(courseId: number) {
               ],
               generationConfig: {
                 temperature: 0.5,
-                maxOutputTokens: 700,
+                maxOutputTokens: 1400,
               },
               tools: webSearchEnabled
                 ? [{ google_search: {} }]
@@ -1127,7 +1127,7 @@ export async function regenerateCourseDescription(courseId: number) {
               { role: "user", content: prompt },
             ],
             temperature: 0.5,
-            max_tokens: 700,
+            max_tokens: 1400,
             return_images: false,
             return_related_questions: false,
             disable_search: !webSearchEnabled,
@@ -1161,8 +1161,8 @@ export async function regenerateCourseDescription(courseId: number) {
   }
 
   const parsedJson = (await response.json()) as
-    | { choices?: Array<{ message?: { content?: string } }> }
-    | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>; usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } }
+    | { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> }
+    | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>; usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } }
     | { usage?: { prompt_tokens?: number; completion_tokens?: number } };
 
   const rawText = provider === "gemini"
@@ -1178,6 +1178,22 @@ export async function regenerateCourseDescription(courseId: number) {
   const text = rawText.trim();
   if (!text) {
     throw new Error("AI returned an empty description");
+  }
+
+  const isTruncated = provider === "gemini"
+    ? (
+        ((parsedJson as { candidates?: Array<{ finishReason?: string }> })
+          .candidates?.[0]?.finishReason || "")
+          .toUpperCase()
+          .includes("MAX_TOKENS")
+      )
+    : (
+        ((parsedJson as { choices?: Array<{ finish_reason?: string }> })
+          .choices?.[0]?.finish_reason || "")
+          .toLowerCase() === "length"
+      );
+  if (isTruncated) {
+    throw new Error("AI description response was truncated. Please retry (or simplify the prompt template).");
   }
 
   const usage = provider === "gemini"
@@ -1202,7 +1218,7 @@ export async function regenerateCourseDescription(courseId: number) {
         ),
       };
 
-  logAiUsage({
+  await logAiUsage({
     userId: user.id,
     provider,
     model,
@@ -1459,7 +1475,7 @@ ${JSON.stringify(coursesForPrompt)}`;
   const parsed = parseLenientJson(aiResult.text);
   const topicsByCourseId = extractTopicsByCourseId(parsed);
 
-  logAiUsage({
+  await logAiUsage({
     userId: user.id,
     provider,
     model,

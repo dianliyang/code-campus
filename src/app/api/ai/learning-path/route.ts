@@ -121,8 +121,8 @@ export async function POST(req: Request) {
     });
 
     // Log usage after stream completes (fire-and-forget)
-    Promise.resolve(result.usage).then((usage) => {
-      logAiUsage({
+    Promise.resolve(result.usage).then(async (usage) => {
+      await logAiUsage({
         userId: user.id,
         provider,
         model: modelName,

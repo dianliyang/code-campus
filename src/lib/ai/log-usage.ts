@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { getAiRuntimeConfig } from "@/lib/ai/runtime-config";
 
-export function logAiUsage({
+export async function logAiUsage({
   userId,
   provider,
   model,
@@ -25,7 +25,7 @@ export function logAiUsage({
   requestPayload?: Record<string, unknown>;
   responsePayload?: Record<string, unknown>;
 }) {
-  void (async () => {
+  try {
     void _responseText;
     const runtimeConfig = await getAiRuntimeConfig();
     const supabase = createAdminClient();
@@ -56,7 +56,7 @@ export function logAiUsage({
     const presetFromPayload = typeof requestPayload?.preset === "string" ? requestPayload.preset.trim() : "";
     const preset = presetFromPayload || feature;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any)
+    const usageInsert = (supabase as any)
       .from("ai_usage_logs")
       .insert({ user_id: userId, provider, model, feature, tokens_input: inTokens, tokens_output: outTokens, cost_usd: costUsd })
       .then(({ error }: { error: { message: string } | null }) => {
@@ -64,7 +64,7 @@ export function logAiUsage({
       });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any)
+    const responsesInsert = (supabase as any)
       .from("ai_responses")
       .insert({
         user_id: userId,
@@ -83,7 +83,9 @@ export function logAiUsage({
       .then(({ error }: { error: { message: string } | null }) => {
         if (error) console.error("[logAiUsage:ai_responses]", error.message);
       });
-  })().catch((error) => {
+
+    await Promise.all([usageInsert, responsesInsert]);
+  } catch (error) {
     console.error("[logAiUsage] runtime config error:", error);
-  });
+  }
 }

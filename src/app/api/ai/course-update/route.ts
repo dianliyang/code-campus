@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       maxOutputTokens: 1024,
     });
 
-    logAiUsage({
+    await logAiUsage({
       userId: user.id,
       provider: 'perplexity',
       model: modelName,

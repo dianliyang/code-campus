@@ -6,6 +6,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { resolveModelForProvider } from "@/lib/ai/models";
 import { getDefaultPromptTemplates } from "@/lib/ai/prompts";
 import { logAiUsage } from "@/lib/ai/log-usage";
+import { parseLenientJson } from "@/lib/ai/parse-json";
 import { Course } from "@/types";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
@@ -1253,6 +1254,41 @@ function normalizeAiTopics(rawText: string): string[] {
   return normalized.slice(0, 6);
 }
 
+function normalizeAiTopicsFromUnknown(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return normalizeAiTopics(value.map((item) => String(item ?? "")).join(", "));
+  }
+  if (typeof value === "string") {
+    return normalizeAiTopics(value);
+  }
+  return [];
+}
+
+function extractTopicsByCourseId(raw: unknown): Map<number, string[]> {
+  const result = new Map<number, string[]>();
+
+  if (!raw || typeof raw !== "object") return result;
+
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (!item || typeof item !== "object") continue;
+      const id = Number((item as Record<string, unknown>).id ?? (item as Record<string, unknown>).course_id);
+      if (!Number.isFinite(id) || id <= 0) continue;
+      const topics = normalizeAiTopicsFromUnknown((item as Record<string, unknown>).topics);
+      result.set(id, topics);
+    }
+    return result;
+  }
+
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    const id = Number(key);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    result.set(id, normalizeAiTopicsFromUnknown(value));
+  }
+
+  return result;
+}
+
 export async function generateTopicsForCoursesAction(courseIds: number[]) {
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
@@ -1332,7 +1368,7 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
                 { role: "user", content: prompt },
               ],
               temperature: 0.2,
-              max_tokens: 220,
+              max_tokens: 1800,
               return_images: false,
               return_related_questions: false,
               disable_search: !webSearchEnabled,
@@ -1393,37 +1429,55 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
     };
   };
 
+  const coursesForPrompt = (rows || []).map((row) => ({
+    id: row.id,
+    title: row.title || "",
+    existing_topics: (
+      (row.fields as Array<{ fields: { name: string } | null }>)
+        ?.map((entry) => entry.fields?.name || "")
+        .filter((name) => name.length > 0) || []
+    ),
+  }));
+
+  const prompt = topicsTemplate.includes("{{course_batch_json}}")
+    ? applyPromptTemplate(topicsTemplate, {
+        course_batch_json: JSON.stringify(coursesForPrompt),
+        course_count: String(coursesForPrompt.length),
+      })
+    : `${topicsTemplate}
+
+Task:
+- Classify topics for ALL courses below in one pass.
+- Return ONLY valid JSON object where keys are course id strings and values are arrays of topic strings.
+- Keep 3-6 concise topics per course.
+- No markdown, no prose.
+
+Courses JSON:
+${JSON.stringify(coursesForPrompt)}`;
+
+  const aiResult = await aiGenerate(prompt);
+  const parsed = parseLenientJson(aiResult.text);
+  const topicsByCourseId = extractTopicsByCourseId(parsed);
+
+  logAiUsage({
+    userId: user.id,
+    provider,
+    model,
+    feature: "topics",
+    tokensInput: aiResult.usage.input,
+    tokensOutput: aiResult.usage.output,
+    prompt,
+    responseText: aiResult.text,
+    requestPayload: { course_ids: uniqueCourseIds, course_count: uniqueCourseIds.length },
+    responsePayload: Object.fromEntries(topicsByCourseId),
+  });
+
   let updated = 0;
   let failed = 0;
 
   for (const row of rows || []) {
     try {
-      const prompt = applyPromptTemplate(topicsTemplate, {
-        title: row.title || "",
-        course_name: row.title || "",
-        existing_topics: (
-          (row.fields as Array<{ fields: { name: string } | null }>)
-            ?.map((entry) => entry.fields?.name || "")
-            .filter((name) => name.length > 0)
-            .join(", ") || "none"
-        ),
-      });
-
-      const aiResult = await aiGenerate(prompt);
-      const topics = normalizeAiTopics(aiResult.text);
-
-      logAiUsage({
-        userId: user.id,
-        provider,
-        model,
-        feature: "topics",
-        tokensInput: aiResult.usage.input,
-        tokensOutput: aiResult.usage.output,
-        prompt,
-        responseText: aiResult.text,
-        requestPayload: { courseId: row.id, courseTitle: row.title || "" },
-        responsePayload: { topics },
-      });
+      const topics = topicsByCourseId.get(Number(row.id)) || [];
 
       if (!topics.length) {
         failed += 1;

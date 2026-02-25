@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS } from "@/lib/ai/models-client";
-import { Save, CheckCircle2, AlertCircle, Loader2, RefreshCcw, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles } from "lucide-react";
+import Toast from "@/components/common/Toast";
+import { Save, Loader2, RefreshCcw, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles } from "lucide-react";
 
 type AISectionId = "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "usage";
 
@@ -25,12 +26,6 @@ interface AISettingsCardProps {
     topics: string;
     courseUpdate: string;
   };
-}
-
-interface Status {
-  type: "idle" | "success" | "error";
-  message?: string;
-  panel?: string;
 }
 
 type UsageStats = {
@@ -94,20 +89,6 @@ const FEATURE_LABELS: Record<string, string> = {
   "schedule-parse": "Schedule Parse",
 };
 
-const StatusDisplay = ({ panel, status }: { panel: string; status: Status }) => {
-  if (status.panel !== panel || status.type === "idle") return null;
-  return (
-    <div className={`rounded-md border px-3 py-2 text-xs font-medium flex items-center gap-2 ${
-      status.type === "success"
-        ? "bg-emerald-50 border-emerald-100 text-emerald-700"
-        : "bg-red-50 border-red-100 text-red-700"
-    } animate-in fade-in duration-300`}>
-      {status.type === "success" ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-      {status.message}
-    </div>
-  );
-};
-
 export default function AISettingsCard({
   section,
   initialProvider,
@@ -138,7 +119,7 @@ export default function AISettingsCard({
   const [isSavingPlanner, setIsSavingPlanner] = useState(false);
   const [isSavingTopics, setIsSavingTopics] = useState(false);
   const [isSavingCourseUpdate, setIsSavingCourseUpdate] = useState(false);
-  const [status, setStatus] = useState<Status>({ type: "idle" });
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [usageLoading, setUsageLoading] = useState(true);
@@ -168,17 +149,14 @@ export default function AISettingsCard({
       .finally(() => setUsageLoading(false));
   }, [section]);
 
-  const clearStatus = () => setStatus({ type: "idle" });
-
   const saveProviderSettings = () => {
-    clearStatus();
     setIsSavingProvider(true);
     void (async () => {
       try {
         await updateAiPreferences({ provider, defaultModel, webSearchEnabled });
-        setStatus({ type: "success", message: "Intelligence preferences updated.", panel: "provider" });
+        setToast({ type: "success", message: "Intelligence preferences updated." });
       } catch (error) {
-        setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "provider" });
+        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingProvider(false);
       }
@@ -186,14 +164,13 @@ export default function AISettingsCard({
   };
 
   const saveDescriptionPrompt = () => {
-    clearStatus();
     setIsSavingDescription(true);
     void (async () => {
       try {
         await updateAiPromptTemplates({ descriptionPromptTemplate: promptTemplate });
-        setStatus({ type: "success", message: "Metadata instructions updated.", panel: "description" });
+        setToast({ type: "success", message: "Metadata instructions updated." });
       } catch (error) {
-        setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "description" });
+        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingDescription(false);
       }
@@ -201,14 +178,13 @@ export default function AISettingsCard({
   };
 
   const saveStudyPlanPrompt = () => {
-    clearStatus();
     setIsSavingStudyPlan(true);
     void (async () => {
       try {
         await updateAiPromptTemplates({ studyPlanPromptTemplate });
-        setStatus({ type: "success", message: "Scheduling logic updated.", panel: "studyplan" });
+        setToast({ type: "success", message: "Scheduling logic updated." });
       } catch (error) {
-        setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "studyplan" });
+        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingStudyPlan(false);
       }
@@ -216,14 +192,13 @@ export default function AISettingsCard({
   };
 
   const saveTopicsPrompt = () => {
-    clearStatus();
     setIsSavingTopics(true);
     void (async () => {
       try {
         await updateAiPromptTemplates({ topicsPromptTemplate });
-        setStatus({ type: "success", message: "Topic classification logic updated.", panel: "topics" });
+        setToast({ type: "success", message: "Topic classification logic updated." });
       } catch (error) {
-        setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "topics" });
+        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingTopics(false);
       }
@@ -231,14 +206,13 @@ export default function AISettingsCard({
   };
 
   const savePlannerPrompt = () => {
-    clearStatus();
     setIsSavingPlanner(true);
     void (async () => {
       try {
         await updateAiPromptTemplates({ plannerPromptTemplate });
-        setStatus({ type: "success", message: "Study planner logic updated.", panel: "planner" });
+        setToast({ type: "success", message: "Study planner logic updated." });
       } catch (error) {
-        setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "planner" });
+        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingPlanner(false);
       }
@@ -246,14 +220,13 @@ export default function AISettingsCard({
   };
 
   const saveCourseUpdatePrompt = () => {
-    clearStatus();
     setIsSavingCourseUpdate(true);
     void (async () => {
       try {
         await updateAiPromptTemplates({ courseUpdatePromptTemplate });
-        setStatus({ type: "success", message: "Course update search logic updated.", panel: "course-update" });
+        setToast({ type: "success", message: "Course update search logic updated." });
       } catch (error) {
-        setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "course-update" });
+        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingCourseUpdate(false);
       }
@@ -262,6 +235,14 @@ export default function AISettingsCard({
 
   return (
     <div className="h-full flex flex-col">
+      {toast ? (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          position="top-right"
+          onClose={() => setToast(null)}
+        />
+      ) : null}
       {/* 1. Provider Configuration */}
       <div className={section === "engine" ? "h-full flex flex-col" : "hidden"}>
         <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
@@ -350,7 +331,6 @@ export default function AISettingsCard({
               </p>
             </div>
           </div>
-          <StatusDisplay panel="provider" status={status} />
         </div>
       </div>
 
@@ -389,7 +369,6 @@ export default function AISettingsCard({
               placeholder="ENTER_INSTRUCTION_SET..."
               disabled={isSavingDescription}
             />
-            <StatusDisplay panel="description" status={status} />
           </div>
         </div>
       </div>
@@ -429,7 +408,6 @@ export default function AISettingsCard({
               placeholder="ENTER_INSTRUCTION_SET..."
               disabled={isSavingStudyPlan}
             />
-            <StatusDisplay panel="studyplan" status={status} />
           </div>
         </div>
       </div>
@@ -469,7 +447,6 @@ export default function AISettingsCard({
               placeholder="ENTER_INSTRUCTION_SET..."
               disabled={isSavingPlanner}
             />
-            <StatusDisplay panel="planner" status={status} />
           </div>
         </div>
       </div>
@@ -509,7 +486,6 @@ export default function AISettingsCard({
               placeholder="ENTER_INSTRUCTION_SET..."
               disabled={isSavingTopics}
             />
-            <StatusDisplay panel="topics" status={status} />
           </div>
         </div>
       </div>
@@ -549,7 +525,6 @@ export default function AISettingsCard({
               placeholder="ENTER_INSTRUCTION_SET..."
               disabled={isSavingCourseUpdate}
             />
-            <StatusDisplay panel="course-update" status={status} />
           </div>
         </div>
       </div>

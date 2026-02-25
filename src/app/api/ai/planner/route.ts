@@ -4,6 +4,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { logAiUsage } from "@/lib/ai/log-usage";
 import { applyPromptTemplate, getAiRuntimeConfig } from "@/lib/ai/runtime-config";
+import { parseLenientJson } from "@/lib/ai/parse-json";
 
 export const runtime = "nodejs";
 
@@ -127,8 +128,10 @@ export async function POST(request: NextRequest) {
       temperature: 0.3,
     });
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
+    let parsed: unknown;
+    try {
+      parsed = parseLenientJson(text);
+    } catch {
       logAiUsage({
         userId: user.id,
         provider: "perplexity",
@@ -143,7 +146,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "AI returned invalid JSON" }, { status: 422 });
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      logAiUsage({
+        userId: user.id,
+        provider: "perplexity",
+        model: modelName,
+        feature: "planner",
+        tokensInput: usage.inputTokens,
+        tokensOutput: usage.outputTokens,
+        prompt,
+        responseText: text,
+        requestPayload: { preset, candidateCount: catalog.length },
+      });
+      return NextResponse.json({ error: "AI returned invalid planner format" }, { status: 422 });
+    }
+
     logAiUsage({
       userId: user.id,
       provider: "perplexity",
@@ -154,9 +171,9 @@ export async function POST(request: NextRequest) {
       prompt,
       responseText: text,
       requestPayload: { preset, candidateCount: catalog.length },
-      responsePayload: parsed,
+      responsePayload: parsed as Record<string, unknown>,
     });
-    return NextResponse.json({ success: true, result: parsed, candidateCount: catalog.length });
+    return NextResponse.json({ success: true, result: parsed as Record<string, unknown>, candidateCount: catalog.length });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Planner generation failed" },

@@ -100,16 +100,27 @@ export async function POST(request: NextRequest) {
   }));
 
   const runtimeConfig = await getAiRuntimeConfig();
-  const modelName = runtimeConfig.models.planner;
+  let modelName = runtimeConfig.models.planner;
+  let providerName = "perplexity";
   let plannerPromptTemplate = runtimeConfig.prompts.planner;
 
   // Support per-user planner prompt overrides while remaining backward-compatible
   // with databases that don't yet have this column.
   const { data: profilePrompt } = await supabase
     .from("profiles")
-    .select("ai_planner_prompt_template")
+    .select("ai_provider, ai_default_model, ai_planner_prompt_template")
     .eq("id", user.id)
     .maybeSingle();
+
+  const userProvider = String(profilePrompt?.ai_provider || "").trim();
+  const userModel = String(profilePrompt?.ai_default_model || "").trim();
+  if (userProvider === "perplexity") {
+    providerName = "perplexity";
+    if (userModel && runtimeConfig.modelCatalog.perplexity.includes(userModel)) {
+      modelName = userModel;
+    }
+  }
+
   const customPlannerPrompt = String(profilePrompt?.ai_planner_prompt_template || "").trim();
   if (customPlannerPrompt) {
     plannerPromptTemplate = customPlannerPrompt;
@@ -134,7 +145,7 @@ export async function POST(request: NextRequest) {
     } catch {
       logAiUsage({
         userId: user.id,
-        provider: "perplexity",
+        provider: providerName,
         model: modelName,
         feature: "planner",
         tokensInput: usage.inputTokens,
@@ -149,7 +160,7 @@ export async function POST(request: NextRequest) {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       logAiUsage({
         userId: user.id,
-        provider: "perplexity",
+        provider: providerName,
         model: modelName,
         feature: "planner",
         tokensInput: usage.inputTokens,
@@ -163,7 +174,7 @@ export async function POST(request: NextRequest) {
 
     logAiUsage({
       userId: user.id,
-      provider: "perplexity",
+      provider: providerName,
       model: modelName,
       feature: "planner",
       tokensInput: usage.inputTokens,

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
-    .from("ai_planner_responses")
+    .from("ai_responses")
     .insert({
       user_id: user.id,
       feature: "planner",
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       tokens_output: Number.isFinite(tokensOutput) ? tokensOutput : 0,
       cost_usd: Number.isFinite(costUsd) ? costUsd : 0,
       request_payload: typeof body?.requestPayload === "object" && body?.requestPayload ? body.requestPayload : {},
-      response_payload: typeof body?.responsePayload === "object" && body?.responsePayload ? body.responsePayload : {},
+      response_payload: typeof body?.responsePayload === "object" && body?.responsePayload ? body.responsePayload : response,
     });
 
   if (error) {

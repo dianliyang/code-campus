@@ -44,13 +44,14 @@ export function logAiUsage({
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
-      .from("ai_planner_responses")
+      .from("ai_responses")
       .insert({
         user_id: userId,
         preset,
         feature,
         provider,
         model,
+        response: responsePayload || null,
         prompt: prompt || null,
         response_text: responseText || null,
         request_payload: requestPayload || {},
@@ -60,7 +61,7 @@ export function logAiUsage({
         cost_usd: costUsd,
       })
       .then(({ error }: { error: { message: string } | null }) => {
-        if (error) console.error("[logAiUsage:ai_planner_responses]", error.message);
+        if (error) console.error("[logAiUsage:ai_responses]", error.message);
       });
   })().catch((error) => {
     console.error("[logAiUsage] runtime config error:", error);

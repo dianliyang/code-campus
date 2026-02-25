@@ -38,7 +38,7 @@ describe("logAiUsage preset handling", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(fromMock).toHaveBeenCalledWith("ai_planner_responses");
+    expect(fromMock).toHaveBeenCalledWith("ai_responses");
     expect(insertMock).toHaveBeenCalledWith(
       expect.objectContaining({
         preset: "course-update",

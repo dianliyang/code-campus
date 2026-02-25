@@ -9,7 +9,7 @@ export async function GET() {
 
   const supabase = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   const { data, error } = await supabase
-    .from("ai_planner_responses")
+    .from("ai_responses")
     .select("id, feature, provider, model, prompt, response_text, tokens_input, tokens_output, cost_usd, created_at")
     .eq("user_id", user.id)
     .eq("feature", "planner")
@@ -20,4 +20,3 @@ export async function GET() {
 
   return NextResponse.json({ items: data || [] });
 }
-

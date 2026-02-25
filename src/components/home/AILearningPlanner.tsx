@@ -92,13 +92,6 @@ export default function AILearningPlanner() {
       );
       setSelectedCourseIds(ids);
       trackAiUsage({ calls: 1, tokens: 1800 });
-
-      // Fire-and-forget: persist AI response to DB
-      fetch("/api/ai/planner/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preset, response: next }),
-      }).catch(() => {});
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to generate roadmap");
     } finally {

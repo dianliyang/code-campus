@@ -127,6 +127,23 @@ export async function POST(request: NextRequest) {
       temperature: 0.3,
     });
 
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      logAiUsage({
+        userId: user.id,
+        provider: "perplexity",
+        model: modelName,
+        feature: "planner",
+        tokensInput: usage.inputTokens,
+        tokensOutput: usage.outputTokens,
+        prompt,
+        responseText: text,
+        requestPayload: { preset, candidateCount: catalog.length },
+      });
+      return NextResponse.json({ error: "AI returned invalid JSON" }, { status: 422 });
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
     logAiUsage({
       userId: user.id,
       provider: "perplexity",
@@ -137,14 +154,8 @@ export async function POST(request: NextRequest) {
       prompt,
       responseText: text,
       requestPayload: { preset, candidateCount: catalog.length },
+      responsePayload: parsed,
     });
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      return NextResponse.json({ error: "AI returned invalid JSON" }, { status: 422 });
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
     return NextResponse.json({ success: true, result: parsed, candidateCount: catalog.length });
   } catch (e) {
     return NextResponse.json(

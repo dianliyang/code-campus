@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS } from "@/lib/ai/models-client";
-import { Save, CheckCircle2, AlertCircle, Loader2, RefreshCcw, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search } from "lucide-react";
+import { Save, CheckCircle2, AlertCircle, Loader2, RefreshCcw, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles } from "lucide-react";
 
-type AISectionId = "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage";
+type AISectionId = "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "usage";
 
 interface AISettingsCardProps {
   section: AISectionId;
@@ -14,12 +14,14 @@ interface AISettingsCardProps {
   initialWebSearchEnabled: boolean;
   initialPromptTemplate: string;
   initialStudyPlanPromptTemplate: string;
+  initialPlannerPromptTemplate: string;
   initialTopicsPromptTemplate: string;
   initialCourseUpdatePromptTemplate: string;
   modelCatalog: { perplexity: string[]; gemini: string[] };
   defaultPrompts: {
     description: string;
     studyPlan: string;
+    planner: string;
     topics: string;
     courseUpdate: string;
   };
@@ -36,6 +38,7 @@ type UsageStats = {
   byFeature: Record<string, { requests: number; cost_usd: number }>;
   byModel: Record<string, { requests: number; cost_usd: number }>;
   recentTotals: { requests: number; cost_usd: number };
+  plannerResponses: { total: number; recent: number };
   daily: Record<string, { requests: number; cost_usd: number }>;
 };
 
@@ -102,24 +105,27 @@ export default function AISettingsCard({
   initialWebSearchEnabled,
   initialPromptTemplate,
   initialStudyPlanPromptTemplate,
+  initialPlannerPromptTemplate,
   initialTopicsPromptTemplate,
   initialCourseUpdatePromptTemplate,
   modelCatalog,
   defaultPrompts,
 }: AISettingsCardProps) {
-  const perplexityModels = modelCatalog.perplexity || [];
-  const geminiModels = modelCatalog.gemini || [];
+  const perplexityModels = modelCatalog.perplexity;
+  const geminiModels = modelCatalog.gemini;
   const [provider, setProvider] = useState(initialProvider === "gemini" ? "gemini" : "perplexity");
   const [defaultModel, setDefaultModel] = useState(initialModel);
   const [webSearchEnabled, setWebSearchEnabled] = useState(initialWebSearchEnabled);
   const [promptTemplate, setPromptTemplate] = useState(initialPromptTemplate || defaultPrompts.description);
   const [studyPlanPromptTemplate, setStudyPlanPromptTemplate] = useState(initialStudyPlanPromptTemplate || defaultPrompts.studyPlan);
+  const [plannerPromptTemplate, setPlannerPromptTemplate] = useState(initialPlannerPromptTemplate || defaultPrompts.planner);
   const [topicsPromptTemplate, setTopicsPromptTemplate] = useState(initialTopicsPromptTemplate || defaultPrompts.topics);
   const [courseUpdatePromptTemplate, setCourseUpdatePromptTemplate] = useState(initialCourseUpdatePromptTemplate || defaultPrompts.courseUpdate);
 
   const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [isSavingDescription, setIsSavingDescription] = useState(false);
   const [isSavingStudyPlan, setIsSavingStudyPlan] = useState(false);
+  const [isSavingPlanner, setIsSavingPlanner] = useState(false);
   const [isSavingTopics, setIsSavingTopics] = useState(false);
   const [isSavingCourseUpdate, setIsSavingCourseUpdate] = useState(false);
   const [status, setStatus] = useState<Status>({ type: "idle" });
@@ -128,12 +134,25 @@ export default function AISettingsCard({
   const [usageLoading, setUsageLoading] = useState(true);
 
   useEffect(() => {
+    const available = provider === "gemini" ? geminiModels : perplexityModels;
+    if (available.length === 0) return;
+    if (!available.includes(defaultModel)) {
+      setDefaultModel(available[0]);
+    }
+  }, [provider, defaultModel, geminiModels, perplexityModels]);
+
+  useEffect(() => {
     if (section !== "usage") return;
     setUsageLoading(true);
     fetch("/api/ai/usage/stats")
       .then((r) => r.json())
       .then((d) => {
-        if (!d.error) setUsageStats(d);
+        if (!d.error) {
+          setUsageStats({
+            ...d,
+            plannerResponses: d.plannerResponses || { total: 0, recent: 0 },
+          });
+        }
       })
       .catch(() => {})
       .finally(() => setUsageLoading(false));
@@ -201,6 +220,21 @@ export default function AISettingsCard({
     })();
   };
 
+  const savePlannerPrompt = () => {
+    clearStatus();
+    setIsSavingPlanner(true);
+    void (async () => {
+      try {
+        await updateAiPromptTemplates({ plannerPromptTemplate });
+        setStatus({ type: "success", message: "Study planner logic updated.", panel: "planner" });
+      } catch (error) {
+        setStatus({ type: "error", message: error instanceof Error ? error.message : "Update failed.", panel: "planner" });
+      } finally {
+        setIsSavingPlanner(false);
+      }
+    })();
+  };
+
   const saveCourseUpdatePrompt = () => {
     clearStatus();
     setIsSavingCourseUpdate(true);
@@ -245,8 +279,12 @@ export default function AISettingsCard({
                     <button
                       key={p}
                       onClick={() => {
-                        setProvider(p as "gemini" | "perplexity");
-                        setDefaultModel(p === "gemini" ? (geminiModels[0] || "") : (perplexityModels[0] || ""));
+                        const nextProvider = p as "gemini" | "perplexity";
+                        const available = nextProvider === "gemini" ? geminiModels : perplexityModels;
+                        setProvider(nextProvider);
+                        if (available.length > 0 && !available.includes(defaultModel)) {
+                          setDefaultModel(available[0]);
+                        }
                       }}
                       className={`flex-1 h-8 rounded-md border transition-colors text-[13px] font-medium ${
                         provider === p
@@ -269,7 +307,7 @@ export default function AISettingsCard({
                       onClick={() => setDefaultModel(m)}
                       className={`h-8 px-2.5 rounded-md border transition-colors text-[12px] font-medium ${
                         defaultModel === m
-                          ? "bg-[#efefef] border-[#cfcfcf] text-[#222]"
+                          ? "bg-[#1f1f1f] border-[#1f1f1f] text-white"
                           : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
                       }`}
                     >
@@ -386,7 +424,47 @@ export default function AISettingsCard({
         </div>
       </div>
 
-      {/* 4. Topic Classification Logic */}
+      {/* 4. Study Planner Logic */}
+      <div className={section === "study-planner" ? "h-full flex flex-col" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
+            <div className="flex items-center gap-2 text-[#222]">
+              <Sparkles className="w-4 h-4 text-[#777]" />
+              <span className="text-sm font-semibold">Study Planner Logic</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={savePlannerPrompt}
+                disabled={isSavingPlanner}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
+              >
+                {isSavingPlanner ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                Push Study Planner Logic
+              </button>
+              <button
+                onClick={() => setPlannerPromptTemplate(defaultPrompts.planner)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+              >
+                <RefreshCcw className="w-3 h-3" />
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0 gap-3">
+            <textarea
+              value={plannerPromptTemplate}
+              onChange={(e) => setPlannerPromptTemplate(e.target.value)}
+              className="w-full flex-1 min-h-0 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingPlanner}
+            />
+            <StatusDisplay panel="planner" status={status} />
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Topic Classification Logic */}
       <div className={section === "topics" ? "h-full flex flex-col" : "hidden"}>
         <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
@@ -426,7 +504,7 @@ export default function AISettingsCard({
         </div>
       </div>
 
-      {/* 5. Course Update Search Logic */}
+      {/* 6. Course Update Search Logic */}
       <div className={section === "course-update" ? "h-full flex flex-col" : "hidden"}>
         <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
@@ -466,7 +544,7 @@ export default function AISettingsCard({
         </div>
       </div>
 
-      {/* 6. Usage Statistics */}
+      {/* 7. Usage Statistics */}
       <div className={section === "usage" ? "h-full flex flex-col overflow-y-auto" : "hidden"}>
         <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
           <div className="flex items-center gap-2 text-[#222] mb-4 pb-3 border-b border-[#efefef]">
@@ -482,7 +560,7 @@ export default function AISettingsCard({
             <p className="text-[11px] text-[#aaa] text-center py-4">No AI calls tracked yet.</p>
           ) : (
             <div className="space-y-2">
-              <div className="rounded-md bg-[#fafafa] border border-[#f0f0f0] p-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-md bg-[#fafafa] border border-[#f0f0f0] p-3 grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <div>
                   <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Requests</p>
                   <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.requests.toLocaleString()}</p>
@@ -500,6 +578,11 @@ export default function AISettingsCard({
                   <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Total Cost</p>
                   <p className="text-lg font-bold text-[#1f1f1f]">${usageStats.totals.cost_usd.toFixed(4)}</p>
                   <p className="text-[10px] text-[#aaa]">${usageStats.recentTotals.cost_usd.toFixed(4)} this week</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Planner Responses</p>
+                  <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.plannerResponses.total.toLocaleString()}</p>
+                  <p className="text-[10px] text-[#aaa]">{usageStats.plannerResponses.recent} this week</p>
                 </div>
               </div>
 

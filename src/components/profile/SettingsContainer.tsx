@@ -3,14 +3,14 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { User } from "@supabase/supabase-js";
-import { LucideIcon, Cpu, FileCode, CalendarDays, Tag, Search, BarChart2, Shield, UserX, Database } from "lucide-react";
+import { LucideIcon, Cpu, FileCode, CalendarDays, Tag, Search, BarChart2, Shield, UserX, Database, Sparkles } from "lucide-react";
 
 const AISettingsCard = dynamic(() => import("./AISettingsCard"), { ssr: false });
 const SecurityIdentitySection = dynamic(() => import("./SecurityIdentitySection"), { ssr: false });
 const SystemMaintenanceCard = dynamic(() => import("./SystemMaintenanceCard"), { ssr: false });
 
 export type SectionId =
-  | "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage"
+  | "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "usage"
   | "identity" | "account"
   | "sync";
 
@@ -23,6 +23,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
       { id: "engine",        label: "Engine Configuration", icon: Cpu },
       { id: "metadata",      label: "Metadata Logic",       icon: FileCode },
       { id: "scheduling",    label: "Scheduling Logic",     icon: CalendarDays },
+      { id: "study-planner", label: "Study Planner Logic",  icon: Sparkles },
       { id: "topics",        label: "Topic Classification", icon: Tag },
       { id: "course-update", label: "Course Update Search", icon: Search },
       { id: "usage",         label: "Usage Statistics",     icon: BarChart2 },
@@ -49,6 +50,7 @@ const SECTION_META: Record<SectionId, { title: string; desc: string }> = {
   "engine":        { title: "Engine Configuration",   desc: "Configure AI providers, models and web grounding." },
   "metadata":      { title: "Metadata Logic",         desc: "Prompt template for course description generation." },
   "scheduling":    { title: "Scheduling Logic",       desc: "Prompt template for study plan generation." },
+  "study-planner": { title: "Study Planner Logic",    desc: "Prompt template for AI planner course recommendations." },
   "topics":        { title: "Topic Classification",   desc: "Prompt template for topic tagging." },
   "course-update": { title: "Course Update Search",   desc: "Prompt template for web search queries." },
   "usage":         { title: "Usage Statistics",       desc: "AI call history, token usage, and cost breakdown." },
@@ -57,7 +59,7 @@ const SECTION_META: Record<SectionId, { title: string; desc: string }> = {
   "sync":          { title: "Data Synchronization",   desc: "Synchronize course catalogs from institution scrapers." },
 };
 
-const AI_SECTIONS: SectionId[] = ["engine", "metadata", "scheduling", "topics", "course-update", "usage"];
+const AI_SECTIONS: SectionId[] = ["engine", "metadata", "scheduling", "study-planner", "topics", "course-update", "usage"];
 
 interface SettingsContainerProps {
   user: User;
@@ -67,6 +69,7 @@ interface SettingsContainerProps {
     prompts: {
       description: string;
       studyPlan: string;
+      planner: string;
       topics: string;
       courseUpdate: string;
     };
@@ -136,12 +139,13 @@ export default function SettingsContainer({ user, profile, aiDefaults }: Setting
           <div className="flex-1 min-h-0 flex flex-col">
             <AISettingsCard
               key={`${active}-${profile ? JSON.stringify(profile) : "default-ai"}`}
-              section={active as "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage"}
+              section={active as "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "usage"}
               initialProvider={(profile?.ai_provider as string) || "perplexity"}
               initialModel={(profile?.ai_default_model as string) || aiDefaults.modelCatalog.perplexity[0] || ""}
               initialWebSearchEnabled={(profile?.ai_web_search_enabled as boolean | undefined) ?? false}
               initialPromptTemplate={(profile?.ai_prompt_template as string) || ""}
               initialStudyPlanPromptTemplate={(profile?.ai_study_plan_prompt_template as string) || ""}
+              initialPlannerPromptTemplate={(profile?.ai_planner_prompt_template as string) || ""}
               initialTopicsPromptTemplate={(profile?.ai_topics_prompt_template as string) || ""}
               initialCourseUpdatePromptTemplate={(profile?.ai_course_update_prompt_template as string) || ""}
               modelCatalog={aiDefaults.modelCatalog}

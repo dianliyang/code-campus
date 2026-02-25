@@ -78,5 +78,26 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json({ totals, byFeature, byModel, recentTotals, daily });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const plannerResponsesBase = (supabase as any).from("ai_planner_responses").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feature", "planner");
+  const [{ count: plannerResponsesTotal, error: plannerTotalError }, { count: plannerResponsesRecent, error: plannerRecentError }] = await Promise.all([
+    plannerResponsesBase,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from("ai_planner_responses").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feature", "planner").gte("created_at", sevenDaysAgo),
+  ]);
+
+  if (plannerTotalError) return NextResponse.json({ error: plannerTotalError.message }, { status: 500 });
+  if (plannerRecentError) return NextResponse.json({ error: plannerRecentError.message }, { status: 500 });
+
+  return NextResponse.json({
+    totals,
+    byFeature,
+    byModel,
+    recentTotals,
+    plannerResponses: {
+      total: plannerResponsesTotal || 0,
+      recent: plannerResponsesRecent || 0,
+    },
+    daily,
+  });
 }

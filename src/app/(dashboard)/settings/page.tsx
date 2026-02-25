@@ -35,6 +35,7 @@ export default async function SettingsPage() {
           prompts: {
             description: aiRuntime.prompts.description,
             studyPlan: aiRuntime.prompts.studyPlan,
+            planner: aiRuntime.prompts.planner,
             topics: aiRuntime.prompts.topics,
             courseUpdate: aiRuntime.prompts.courseUpdate,
           },

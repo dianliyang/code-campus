@@ -100,7 +100,21 @@ export async function POST(request: NextRequest) {
 
   const runtimeConfig = await getAiRuntimeConfig();
   const modelName = runtimeConfig.models.planner;
-  const prompt = applyPromptTemplate(runtimeConfig.prompts.planner, {
+  let plannerPromptTemplate = runtimeConfig.prompts.planner;
+
+  // Support per-user planner prompt overrides while remaining backward-compatible
+  // with databases that don't yet have this column.
+  const { data: profilePrompt } = await supabase
+    .from("profiles")
+    .select("ai_planner_prompt_template")
+    .eq("id", user.id)
+    .maybeSingle();
+  const customPlannerPrompt = String(profilePrompt?.ai_planner_prompt_template || "").trim();
+  if (customPlannerPrompt) {
+    plannerPromptTemplate = customPlannerPrompt;
+  }
+
+  const prompt = applyPromptTemplate(plannerPromptTemplate, {
     preset,
     catalog_json: JSON.stringify(catalog),
   });

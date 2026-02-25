@@ -78,6 +78,7 @@ export async function updateAiPreferences(input: {
 export async function updateAiPromptTemplates(input: {
   descriptionPromptTemplate?: string;
   studyPlanPromptTemplate?: string;
+  plannerPromptTemplate?: string;
   topicsPromptTemplate?: string;
   courseUpdatePromptTemplate?: string;
 }) {
@@ -102,6 +103,14 @@ export async function updateAiPromptTemplates(input: {
       throw new Error("Study plan prompt template is too long");
     }
     updatePayload.ai_study_plan_prompt_template = value || null;
+  }
+
+  if (typeof input.plannerPromptTemplate === "string") {
+    const value = input.plannerPromptTemplate.trim();
+    if (value.length > 10000) {
+      throw new Error("Planner prompt template is too long");
+    }
+    updatePayload.ai_planner_prompt_template = value || null;
   }
 
   if (typeof input.topicsPromptTemplate === "string") {
@@ -150,6 +159,9 @@ export async function updateAiPromptTemplates(input: {
     }
     if (error.code === "PGRST204" && error.message?.includes("'ai_topics_prompt_template'")) {
       throw new Error("Database column `profiles.ai_topics_prompt_template` is missing. Please run the topics prompt migration.");
+    }
+    if (error.code === "PGRST204" && error.message?.includes("'ai_planner_prompt_template'")) {
+      throw new Error("Database column `profiles.ai_planner_prompt_template` is missing. Please run the planner prompt migration.");
     }
     if (error.code === "PGRST204" && error.message?.includes("'ai_course_update_prompt_template'")) {
       throw new Error("Database column `profiles.ai_course_update_prompt_template` is missing. Please run the course update prompt migration.");

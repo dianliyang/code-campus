@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { resolveModelForProvider } from "@/lib/ai/models";
 import { getDefaultPromptTemplates } from "@/lib/ai/prompts";
+import { logAiUsage } from "@/lib/ai/log-usage";
 import { Course } from "@/types";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
@@ -1160,7 +1161,8 @@ export async function regenerateCourseDescription(courseId: number) {
 
   const parsedJson = (await response.json()) as
     | { choices?: Array<{ message?: { content?: string } }> }
-    | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+    | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>; usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } }
+    | { usage?: { prompt_tokens?: number; completion_tokens?: number } };
 
   const rawText = provider === "gemini"
     ? (
@@ -1176,6 +1178,42 @@ export async function regenerateCourseDescription(courseId: number) {
   if (!text) {
     throw new Error("AI returned an empty description");
   }
+
+  const usage = provider === "gemini"
+    ? {
+        input: Number(
+          (parsedJson as { usageMetadata?: { promptTokenCount?: number } })
+            .usageMetadata?.promptTokenCount ?? 0
+        ),
+        output: Number(
+          (parsedJson as { usageMetadata?: { candidatesTokenCount?: number } })
+            .usageMetadata?.candidatesTokenCount ?? 0
+        ),
+      }
+    : {
+        input: Number(
+          (parsedJson as { usage?: { prompt_tokens?: number } })
+            .usage?.prompt_tokens ?? 0
+        ),
+        output: Number(
+          (parsedJson as { usage?: { completion_tokens?: number } })
+            .usage?.completion_tokens ?? 0
+        ),
+      };
+
+  logAiUsage({
+    userId: user.id,
+    provider,
+    model,
+    feature: "description",
+    tokensInput: Number.isFinite(usage.input) ? usage.input : 0,
+    tokensOutput: Number.isFinite(usage.output) ? usage.output : 0,
+    prompt,
+    responseText: text,
+    requestPayload: { courseId, courseCode: row.course_code || "", university: row.university || "" },
+    responsePayload: { description: text },
+  });
+
   return text;
 }
 
@@ -1310,7 +1348,8 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
 
     const parsedJson = (await response.json()) as
       | { choices?: Array<{ message?: { content?: string } }> }
-      | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+      | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>; usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } }
+      | { usage?: { prompt_tokens?: number; completion_tokens?: number } };
 
     const rawText = provider === "gemini"
       ? (
@@ -1323,7 +1362,35 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
             .choices?.[0]?.message?.content?.trim() || ""
         );
 
-    return rawText.trim();
+    const usage = provider === "gemini"
+      ? {
+          input: Number(
+            (parsedJson as { usageMetadata?: { promptTokenCount?: number } })
+              .usageMetadata?.promptTokenCount ?? 0
+          ),
+          output: Number(
+            (parsedJson as { usageMetadata?: { candidatesTokenCount?: number } })
+              .usageMetadata?.candidatesTokenCount ?? 0
+          ),
+        }
+      : {
+          input: Number(
+            (parsedJson as { usage?: { prompt_tokens?: number } })
+              .usage?.prompt_tokens ?? 0
+          ),
+          output: Number(
+            (parsedJson as { usage?: { completion_tokens?: number } })
+              .usage?.completion_tokens ?? 0
+          ),
+        };
+
+    return {
+      text: rawText.trim(),
+      usage: {
+        input: Number.isFinite(usage.input) ? usage.input : 0,
+        output: Number.isFinite(usage.output) ? usage.output : 0,
+      },
+    };
   };
 
   let updated = 0;
@@ -1342,8 +1409,22 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
         ),
       });
 
-      const output = await aiGenerate(prompt);
-      const topics = normalizeAiTopics(output);
+      const aiResult = await aiGenerate(prompt);
+      const topics = normalizeAiTopics(aiResult.text);
+
+      logAiUsage({
+        userId: user.id,
+        provider,
+        model,
+        feature: "topics",
+        tokensInput: aiResult.usage.input,
+        tokensOutput: aiResult.usage.output,
+        prompt,
+        responseText: aiResult.text,
+        requestPayload: { courseId: row.id, courseTitle: row.title || "" },
+        responsePayload: { topics },
+      });
+
       if (!topics.length) {
         failed += 1;
         continue;

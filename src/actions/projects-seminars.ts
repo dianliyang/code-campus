@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { resolveModelForProvider } from "@/lib/ai/models";
+import { logAiUsage } from "@/lib/ai/log-usage";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? "");
@@ -191,7 +192,8 @@ Output format requirements:
 
   const parsedJson = (await response.json()) as
     | { choices?: Array<{ message?: { content?: string } }> }
-    | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+    | { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>; usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } }
+    | { usage?: { prompt_tokens?: number; completion_tokens?: number } };
 
   const rawText = provider === "gemini"
     ? (
@@ -210,6 +212,42 @@ Output format requirements:
   if (!text) {
     throw new Error("AI returned an empty description");
   }
+
+  const usage = provider === "gemini"
+    ? {
+        input: Number(
+          (parsedJson as { usageMetadata?: { promptTokenCount?: number } })
+            .usageMetadata?.promptTokenCount ?? 0
+        ),
+        output: Number(
+          (parsedJson as { usageMetadata?: { candidatesTokenCount?: number } })
+            .usageMetadata?.candidatesTokenCount ?? 0
+        ),
+      }
+    : {
+        input: Number(
+          (parsedJson as { usage?: { prompt_tokens?: number } })
+            .usage?.prompt_tokens ?? 0
+        ),
+        output: Number(
+          (parsedJson as { usage?: { completion_tokens?: number } })
+            .usage?.completion_tokens ?? 0
+        ),
+      };
+
+  logAiUsage({
+    userId: user.id,
+    provider,
+    model,
+    feature: "description",
+    tokensInput: Number.isFinite(usage.input) ? usage.input : 0,
+    tokensOutput: Number.isFinite(usage.output) ? usage.output : 0,
+    prompt,
+    responseText: text,
+    requestPayload: { projectSeminarId, courseCode: row.course_code || "", university: row.university || "" },
+    responsePayload: { description: text },
+  });
+
   return text;
 }
 

@@ -38,7 +38,17 @@ type UsageStats = {
   byFeature: Record<string, { requests: number; cost_usd: number }>;
   byModel: Record<string, { requests: number; cost_usd: number }>;
   recentTotals: { requests: number; cost_usd: number };
-  plannerResponses: { total: number; recent: number };
+  recentResponses: Array<{
+    id: number;
+    feature: string;
+    preset: string | null;
+    provider: string | null;
+    model: string | null;
+    tokens_input: number;
+    tokens_output: number;
+    cost_usd: number;
+    created_at: string;
+  }>;
   daily: Record<string, { requests: number; cost_usd: number }>;
 };
 
@@ -150,7 +160,7 @@ export default function AISettingsCard({
         if (!d.error) {
           setUsageStats({
             ...d,
-            plannerResponses: d.plannerResponses || { total: 0, recent: 0 },
+            recentResponses: Array.isArray(d.recentResponses) ? d.recentResponses : [],
           });
         }
       })
@@ -560,7 +570,7 @@ export default function AISettingsCard({
             <p className="text-[11px] text-[#aaa] text-center py-4">No AI calls tracked yet.</p>
           ) : (
             <div className="space-y-2">
-              <div className="rounded-md bg-[#fafafa] border border-[#f0f0f0] p-3 grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div className="rounded-md bg-[#fafafa] border border-[#f0f0f0] p-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
                   <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Requests</p>
                   <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.requests.toLocaleString()}</p>
@@ -579,14 +589,35 @@ export default function AISettingsCard({
                   <p className="text-lg font-bold text-[#1f1f1f]">${usageStats.totals.cost_usd.toFixed(4)}</p>
                   <p className="text-[10px] text-[#aaa]">${usageStats.recentTotals.cost_usd.toFixed(4)} this week</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Planner Responses</p>
-                  <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.plannerResponses.total.toLocaleString()}</p>
-                  <p className="text-[10px] text-[#aaa]">{usageStats.plannerResponses.recent} this week</p>
-                </div>
               </div>
 
               {usageStats.daily && <UsageBarChart daily={usageStats.daily} />}
+
+              {usageStats.recentResponses.length > 0 && (
+                <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
+                  <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
+                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">Recent AI Responses (10)</p>
+                  </div>
+                  <div className="divide-y divide-[#f5f5f5]">
+                    {usageStats.recentResponses.map((item) => (
+                      <div key={item.id} className="px-3 py-2 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[13px] text-[#444] truncate">
+                            {(FEATURE_LABELS[item.feature] ?? item.feature) + (item.preset ? ` · ${item.preset}` : "")}
+                          </p>
+                          <p className="text-[11px] text-[#999] truncate">
+                            {item.provider || "-"} / {item.model || "-"} · in {item.tokens_input} · out {item.tokens_output}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-[11px] font-medium text-[#555]">${Number(item.cost_usd || 0).toFixed(4)}</p>
+                          <p className="text-[10px] text-[#999]">{new Date(item.created_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {Object.keys(usageStats.byFeature).length > 0 && (
                 <div className="rounded-md border border-[#f0f0f0] overflow-hidden">

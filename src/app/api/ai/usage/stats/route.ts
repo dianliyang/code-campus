@@ -13,6 +13,18 @@ type UsageLog = {
   created_at: string;
 };
 
+type RecentResponse = {
+  id: number;
+  feature: string;
+  preset: string | null;
+  provider: string | null;
+  model: string | null;
+  tokens_input: number;
+  tokens_output: number;
+  cost_usd: number;
+  created_at: string;
+};
+
 export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -79,25 +91,23 @@ export async function GET() {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const plannerResponsesBase = (supabase as any).from("ai_responses").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feature", "planner");
-  const [{ count: plannerResponsesTotal, error: plannerTotalError }, { count: plannerResponsesRecent, error: plannerRecentError }] = await Promise.all([
-    plannerResponsesBase,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any).from("ai_responses").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feature", "planner").gte("created_at", sevenDaysAgo),
-  ]);
+  const { data: recentResponsesData, error: recentResponsesError } = await (supabase as any)
+    .from("ai_responses")
+    .select("id, feature, preset, provider, model, tokens_input, tokens_output, cost_usd, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
 
-  if (plannerTotalError) return NextResponse.json({ error: plannerTotalError.message }, { status: 500 });
-  if (plannerRecentError) return NextResponse.json({ error: plannerRecentError.message }, { status: 500 });
+  if (recentResponsesError) return NextResponse.json({ error: recentResponsesError.message }, { status: 500 });
+
+  const recentResponses = (recentResponsesData || []) as RecentResponse[];
 
   return NextResponse.json({
     totals,
     byFeature,
     byModel,
     recentTotals,
-    plannerResponses: {
-      total: plannerResponsesTotal || 0,
-      recent: plannerResponsesRecent || 0,
-    },
+    recentResponses,
     daily,
   });
 }

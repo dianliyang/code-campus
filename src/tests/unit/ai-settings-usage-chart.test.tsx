@@ -22,7 +22,19 @@ describe("AI settings usage chart", () => {
       byFeature: { planner: { requests: 8, cost_usd: 0.03 } },
       byModel: { "perplexity/sonar": { requests: 8, cost_usd: 0.03 } },
       recentTotals: { requests: 5, cost_usd: 0.0123 },
-      plannerResponses: { total: 9, recent: 4 },
+      recentResponses: [
+        {
+          id: 101,
+          feature: "planner",
+          preset: "AI Infra",
+          provider: "perplexity",
+          model: "sonar",
+          tokens_input: 1000,
+          tokens_output: 600,
+          cost_usd: 0.01,
+          created_at: "2026-02-25T09:00:00.000Z",
+        },
+      ],
       daily: {
         "2026-02-19": { requests: 0, cost_usd: 0 },
         "2026-02-20": { requests: 1, cost_usd: 0.002 },
@@ -71,8 +83,8 @@ describe("AI settings usage chart", () => {
 
     expect(screen.getByText("12")).toBeDefined();
     expect(screen.getByText("$0.0456")).toBeDefined();
-    expect(screen.getByText("Planner Responses")).toBeDefined();
-    expect(screen.getByText("4 this week")).toBeDefined();
+    expect(screen.getByText("Recent AI Responses (10)")).toBeDefined();
+    expect(screen.getByText("AI Planner · AI Infra")).toBeDefined();
     expect(screen.getByText("By Feature")).toBeDefined();
     expect(screen.getByText("By Model")).toBeDefined();
   });

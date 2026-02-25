@@ -100,6 +100,20 @@ export async function POST(request: NextRequest) {
     description: c.description,
   }));
 
+  const { data: enrolledRows } = await supabase
+    .from("user_courses")
+    .select("course_id")
+    .eq("user_id", user.id)
+    .neq("status", "hidden");
+  const enrolledCourseIds = Array.from(
+    new Set((enrolledRows || []).map((row) => Number(row.course_id)).filter((id) => Number.isFinite(id) && id > 0))
+  );
+  const plannerRequestPayload = {
+    preset,
+    candidateCount: catalog.length,
+    enrolled_course_ids: enrolledCourseIds,
+  };
+
   const runtimeConfig = await getAiRuntimeConfig();
   let modelName = await resolveModelForProvider("perplexity", "");
   let providerName = "perplexity";
@@ -151,7 +165,7 @@ export async function POST(request: NextRequest) {
         tokensOutput: usage.outputTokens,
         prompt,
         responseText: text,
-        requestPayload: { preset, candidateCount: catalog.length },
+        requestPayload: plannerRequestPayload,
       });
       return NextResponse.json({ error: "AI returned invalid JSON" }, { status: 422 });
     }
@@ -166,7 +180,7 @@ export async function POST(request: NextRequest) {
         tokensOutput: usage.outputTokens,
         prompt,
         responseText: text,
-        requestPayload: { preset, candidateCount: catalog.length },
+        requestPayload: plannerRequestPayload,
       });
       return NextResponse.json({ error: "AI returned invalid planner format" }, { status: 422 });
     }
@@ -180,7 +194,7 @@ export async function POST(request: NextRequest) {
       tokensOutput: usage.outputTokens,
       prompt,
       responseText: text,
-      requestPayload: { preset, candidateCount: catalog.length },
+      requestPayload: plannerRequestPayload,
       responsePayload: parsed as Record<string, unknown>,
     });
     return NextResponse.json({ success: true, result: parsed as Record<string, unknown>, candidateCount: catalog.length });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { User } from "@supabase/supabase-js";
 import { LucideIcon, Cpu, FileCode, CalendarDays, Tag, Search, BarChart2, Shield, UserX, Database, Sparkles } from "lucide-react";
@@ -45,6 +45,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
 ];
 
 const ALL_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
+const ACTIVE_SECTION_STORAGE_KEY = "settings_active_section";
 
 const SECTION_META: Record<SectionId, { title: string; desc: string }> = {
   "engine":        { title: "Engine Configuration",   desc: "Configure AI providers, models and web grounding." },
@@ -77,7 +78,27 @@ interface SettingsContainerProps {
 }
 
 export default function SettingsContainer({ user, profile, aiDefaults }: SettingsContainerProps) {
-  const [active, setActive] = useState<SectionId>("engine");
+  const [active, setActive] = useState<SectionId>(() => {
+    if (typeof window === "undefined") return "engine";
+    try {
+      const saved = window.localStorage.getItem(ACTIVE_SECTION_STORAGE_KEY);
+      if (saved && ALL_ITEMS.some((item) => item.id === saved)) {
+        return saved as SectionId;
+      }
+    } catch {
+      // Ignore storage access errors.
+    }
+    return "engine";
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(ACTIVE_SECTION_STORAGE_KEY, active);
+    } catch {
+      // Ignore storage access errors.
+    }
+  }, [active]);
+
   const meta = SECTION_META[active];
 
   return (

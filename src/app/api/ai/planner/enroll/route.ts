@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, getUser } from "@/lib/supabase/server";
+import { logAiUsage } from "@/lib/ai/log-usage";
 
 export const runtime = "nodejs";
 
@@ -85,6 +86,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: planError.message }, { status: 500 });
     }
   }
+
+  logAiUsage({
+    userId: user.id,
+    provider: "perplexity",
+    model: "planner-enroll",
+    feature: "planner-enroll",
+    tokensInput: 0,
+    tokensOutput: 0,
+    requestPayload: {
+      enrolled_course_ids: selectedCourseIds,
+      study_plan_weeks: studyPlan.length,
+    },
+    responsePayload: {
+      enrolled: selectedCourseIds.length,
+      plans: studyPlan.length,
+    },
+  });
 
   return NextResponse.json({ success: true, enrolled: selectedCourseIds.length, plans: studyPlan.length });
 }

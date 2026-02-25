@@ -6,7 +6,7 @@ import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
 import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, toggleCourseEnrollmentAction, updateCourseRelatedUrls, type SchedulePlanPreview } from "@/actions/courses";
-import { Check, Clock, ExternalLink, Globe, Info, Loader2, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
+import { Check, Clock, ExternalLink, Globe, Info, Loader2, Minus, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
@@ -48,6 +48,7 @@ export default function CourseDetailContent({
   const [showAddUrl, setShowAddUrl] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [isAddingUrl, setIsAddingUrl] = useState(false);
+  const [removingUrlIndex, setRemovingUrlIndex] = useState<number | null>(null);
   const router = useRouter();
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const hasStudyPlans = editablePlans.length > 0;
@@ -180,6 +181,22 @@ export default function CourseDetailContent({
       setShowAddUrl(true);
     } finally {
       setIsAddingUrl(false);
+    }
+  };
+
+  const handleRemoveUrl = async (index: number) => {
+    if (index < 0 || index >= localRelatedUrls.length) return;
+    const previous = localRelatedUrls;
+    const updated = previous.filter((_, i) => i !== index);
+    setLocalRelatedUrls(updated);
+    setRemovingUrlIndex(index);
+    try {
+      await updateCourseRelatedUrls(course.id, updated);
+    } catch (error) {
+      console.error(error);
+      setLocalRelatedUrls(previous);
+    } finally {
+      setRemovingUrlIndex(null);
     }
   };
 
@@ -629,11 +646,25 @@ export default function CourseDetailContent({
                   {localRelatedUrls.length > 0 && (
                     <ul className="space-y-3">
                       {localRelatedUrls.map((url: string, i: number) => (
-                        <li key={i}>
-                          <a href={url} target="_blank" rel="noreferrer" className="text-sm font-medium text-[#335b9a] hover:underline flex items-start gap-2 break-all">
+                        <li key={`${url}-${i}`} className="flex items-start gap-2">
+                          <a href={url} target="_blank" rel="noreferrer" className="text-sm font-medium text-[#335b9a] hover:underline flex items-start gap-2 break-all flex-1 min-w-0">
                             <Globe className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#778fb8]" />
                             {url}
                           </a>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveUrl(i)}
+                            disabled={removingUrlIndex === i || isAddingUrl}
+                            className="w-6 h-6 rounded flex items-center justify-center text-[#999] hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                            title="Remove resource URL"
+                            aria-label="Remove resource URL"
+                          >
+                            {removingUrlIndex === i ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Minus className="w-3.5 h-3.5" />
+                            )}
+                          </button>
                         </li>
                       ))}
                     </ul>

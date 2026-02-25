@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Course } from '@/types';
+import { applyPromptTemplate } from '@/lib/ai/runtime-config';
 
 export interface EnrolledCourse extends Course {
   progress: number;
@@ -21,7 +22,6 @@ export async function fetchUserContext(
   supabase: SupabaseClient,
   userId: string
 ): Promise<UserLearningContext> {
-  // Fetch user's enrolled courses
   const { data: enrollments, error: enrollError } = await supabase
     .from('user_courses')
     .select(`
@@ -40,7 +40,6 @@ export async function fetchUserContext(
 
   const enrolledCourseIds = enrollments?.map(e => e.course_id) || [];
 
-  // Fetch enrolled course details
   let enrolledCourses: EnrolledCourse[] = [];
   if (enrolledCourseIds.length > 0) {
     const { data: coursesData, error: coursesError } = await supabase
@@ -70,7 +69,6 @@ export async function fetchUserContext(
     if (coursesError) {
       console.error('Error fetching course details:', coursesError);
     } else {
-      // Map course data to EnrolledCourse with enrollment info
       enrolledCourses = (coursesData || []).map(course => {
         const enrollment = enrollments?.find(e => e.course_id === course.id);
         return {
@@ -103,7 +101,6 @@ export async function fetchUserContext(
     }
   }
 
-  // Fetch fields from course_fields table
   const { data: fieldsData } = await supabase
     .from('course_fields')
     .select('field, course_id')
@@ -111,7 +108,6 @@ export async function fetchUserContext(
 
   const fields = Array.from(new Set(fieldsData?.map(f => f.field) || []));
 
-  // Add fields to enrolled courses
   if (fieldsData) {
     enrolledCourses.forEach(course => {
       const courseFields = fieldsData
@@ -121,11 +117,9 @@ export async function fetchUserContext(
     });
   }
 
-  // Split enrolled courses into completed and in-progress
   const completedCourses = enrolledCourses.filter(c => c.status === 'completed');
   const inProgressCourses = enrolledCourses.filter(c => c.status !== 'completed');
 
-  // Fetch available courses (excluding enrolled ones) — capped for token budget
   const { data: availableData, error: availableError } = await supabase
     .from('courses')
     .select(`
@@ -190,84 +184,48 @@ export async function fetchUserContext(
   };
 }
 
-export function buildSystemPrompt(context: UserLearningContext): string {
-  // Cap courses to reduce token usage
+export function buildSystemPrompt(context: UserLearningContext, template: string): string {
   const completedCourses = context.completedCourses.slice(0, 20);
   const inProgressCourses = context.inProgressCourses.slice(0, 20);
   const availableCourses = context.availableCourses.slice(0, 30);
-  const fields = context.fields;
 
-  let prompt = `You are an expert academic advisor helping students plan their learning path in computer science and related fields.
+  const completedCoursesBlock = completedCourses.length > 0
+    ? completedCourses.map((c) => {
+        const extras = [c.gpa ? `GPA: ${c.gpa}` : "", c.score ? `Score: ${c.score}%` : ""]
+          .filter(Boolean)
+          .join(" | ");
+        return `- ${c.courseCode}: ${c.title} (${c.university})${extras ? ` | ${extras}` : ""}`;
+      }).join("\n")
+    : "No courses completed yet.";
 
-## User's Current Learning Profile
+  const inProgressCoursesBlock = inProgressCourses.length > 0
+    ? inProgressCourses.map((c) => `- ${c.courseCode}: ${c.title} (${c.university}) | Progress: ${c.progress}%`).join("\n")
+    : "No courses in progress.";
 
-### Completed Courses (${completedCourses.length})
-`;
+  const fieldsBlock = context.fields.length > 0
+    ? context.fields.map((f) => `- ${f}`).join("\n")
+    : "Not yet determined.";
 
-  if (completedCourses.length > 0) {
-    completedCourses.forEach(c => {
-      prompt += `- **${c.courseCode}**: ${c.title} (${c.university})`;
-      if (c.gpa) prompt += ` - GPA: ${c.gpa}`;
-      if (c.score) prompt += ` - Score: ${c.score}%`;
-      prompt += `\n`;
-    });
-  } else {
-    prompt += `No courses completed yet.\n`;
-  }
+  const availableCatalogBlock = availableCourses.map((c) => {
+    const lines = [
+      `### ${c.courseCode} - ${c.title}`,
+      `- University: ${c.university}`,
+      c.level ? `- Level: ${c.level}` : "",
+      c.difficulty ? `- Difficulty: ${c.difficulty}/10` : "",
+      c.workload ? `- Workload: ${c.workload}` : "",
+      c.description ? `- Description: ${c.description.slice(0, 100)}...` : "",
+      c.prerequisites ? `- Prerequisites: ${c.prerequisites}` : "",
+    ].filter(Boolean);
+    return lines.join("\n");
+  }).join("\n\n");
 
-  prompt += `\n### Currently Enrolled Courses (${inProgressCourses.length})\n`;
-
-  if (inProgressCourses.length > 0) {
-    inProgressCourses.forEach(c => {
-      prompt += `- **${c.courseCode}**: ${c.title} (${c.university}) - Progress: ${c.progress}%\n`;
-    });
-  } else {
-    prompt += `No courses in progress.\n`;
-  }
-
-  prompt += `\n### Fields of Interest\n`;
-  if (fields.length > 0) {
-    prompt += fields.map(f => `- ${f}`).join('\n') + '\n';
-  } else {
-    prompt += `Not yet determined.\n`;
-  }
-
-  prompt += `\n## Available Course Catalog (Top ${availableCourses.length} by popularity)
-
-`;
-
-  availableCourses.forEach(c => {
-    prompt += `### ${c.courseCode} - ${c.title}\n`;
-    prompt += `- **University**: ${c.university}\n`;
-    if (c.level) prompt += `- **Level**: ${c.level}\n`;
-    if (c.difficulty) prompt += `- **Difficulty**: ${c.difficulty}/10\n`;
-    if (c.workload) prompt += `- **Workload**: ${c.workload}\n`;
-    if (c.description) prompt += `- **Description**: ${c.description.slice(0, 100)}...\n`;
-    if (c.prerequisites) prompt += `- **Prerequisites**: ${c.prerequisites}\n`;
-    prompt += `\n`;
+  return applyPromptTemplate(template, {
+    completed_count: String(completedCourses.length),
+    in_progress_count: String(inProgressCourses.length),
+    available_count: String(availableCourses.length),
+    completed_courses: completedCoursesBlock,
+    in_progress_courses: inProgressCoursesBlock,
+    fields: fieldsBlock,
+    available_catalog: availableCatalogBlock,
   });
-
-  prompt += `\n## Your Role
-
-Provide personalized course recommendations based on:
-1. The user's completed courses and current knowledge
-2. Logical prerequisite progression
-3. Course difficulty and workload balance
-4. The user's fields of interest
-5. Industry relevance and skill development
-
-## Guidelines
-
-- Suggest specific courses from the catalog above
-- Explain why each course is recommended
-- Consider prerequisite requirements
-- Balance workload and difficulty
-- Create realistic semester-by-semester plans when asked
-- Identify knowledge gaps and suggest foundational courses
-- Be conversational and encouraging
-- Reference specific course codes and universities
-
-If the user has no courses yet, suggest excellent starting points based on common CS fundamentals.`;
-
-  return prompt;
 }

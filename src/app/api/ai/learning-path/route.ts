@@ -4,6 +4,7 @@ import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { rateLimit } from '@/lib/rate-limit';
 import { logAiUsage } from '@/lib/ai/log-usage';
+import { getAiRuntimeConfig } from '@/lib/ai/runtime-config';
 
 export const runtime = 'nodejs';
 
@@ -94,12 +95,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // Build system prompt with user context
-    const systemPrompt = buildSystemPrompt(userContext);
+    const runtimeConfig = await getAiRuntimeConfig();
+    const modelName = runtimeConfig.models.learningPath;
+    const systemPrompt = buildSystemPrompt(userContext, runtimeConfig.prompts.learningPath);
 
     // Create streaming response
     const result = await streamText({
-      model: perplexity.chat('sonar'),
+      model: perplexity.chat(modelName),
       system: systemPrompt,
       messages: messages.map((msg: { role: string; content: string }) => ({
         role: msg.role as 'user' | 'assistant' | 'system',
@@ -114,10 +116,11 @@ export async function POST(req: Request) {
       logAiUsage({
         userId: user.id,
         provider: 'perplexity',
-        model: 'sonar',
+        model: modelName,
         feature: 'learning-path',
         tokensInput: usage.inputTokens,
         tokensOutput: usage.outputTokens,
+        requestPayload: { messageCount: messages.length },
       });
     }).catch(() => {});
 

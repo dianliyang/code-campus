@@ -1,8 +1,8 @@
 "use server";
 
-import { createClient, getUser } from "@/lib/supabase/server";
+import { createClient, getUser, invalidateCachedProfileSettings } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { AI_PROVIDERS, GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
+import { AI_PROVIDERS, getModelSetForProvider } from "@/lib/ai/models";
 
 export async function updateAiPreferences(input: {
   provider: string;
@@ -18,7 +18,7 @@ export async function updateAiPreferences(input: {
     throw new Error("Invalid provider");
   }
 
-  const validModelSet = input.provider === "gemini" ? GEMINI_MODEL_SET : PERPLEXITY_MODEL_SET;
+  const validModelSet = await getModelSetForProvider(input.provider as "gemini" | "perplexity");
   
   if (!validModelSet.has(input.defaultModel)) {
     throw new Error(`Invalid model for ${input.provider}: ${input.defaultModel}`);
@@ -72,6 +72,7 @@ export async function updateAiPreferences(input: {
 
   revalidatePath("/profile");
   revalidatePath("/settings");
+  invalidateCachedProfileSettings(user.id);
 }
 
 export async function updateAiPromptTemplates(input: {
@@ -157,4 +158,5 @@ export async function updateAiPromptTemplates(input: {
   }
 
   revalidatePath("/settings");
+  invalidateCachedProfileSettings(user.id);
 }

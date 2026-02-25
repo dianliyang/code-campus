@@ -11,6 +11,7 @@ import { SupabaseDatabase, createAdminClient, createClient, mapWorkoutFromRow } 
 import { getUser } from "@/lib/supabase/server";
 import { aggregateWorkoutsByName } from "@/lib/workouts";
 import { revalidatePath } from "next/cache";
+import { completeScraperJob, failScraperJob, startScraperJob } from "@/lib/scrapers/scraper-jobs";
 
 function isCauProjectSeminarWorkshop(
   item: { title?: string; details?: Record<string, unknown> },
@@ -48,28 +49,48 @@ export async function runManualScraperAction({
 
   try {
     const db = new SupabaseDatabase();
+    const startedAtMs = Date.now();
 
     if (university === "cau-sport") {
+      const jobId = await startScraperJob({
+        university: "cau-sport",
+        semester,
+        trigger: "manual",
+        triggeredByUserId: user.id,
+        forceUpdate: true,
+        jobType: "workouts",
+      });
       const scraper = new CAUSport();
       scraper.semester = semester;
-      const workouts = await scraper.retrieveWorkouts();
+      try {
+        const workouts = await scraper.retrieveWorkouts();
 
-      const supabase = createAdminClient();
-      const source = "CAU Kiel Sportzentrum";
-      const { error: deleteError } = await supabase
-        .from("workouts")
-        .delete()
-        .eq("source", source);
+        const supabase = createAdminClient();
+        const source = "CAU Kiel Sportzentrum";
+        const { error: deleteError } = await supabase
+          .from("workouts")
+          .delete()
+          .eq("source", source);
 
-      if (deleteError) {
-        throw new Error(deleteError.message);
+        if (deleteError) {
+          throw new Error(deleteError.message);
+        }
+
+        if (workouts.length > 0) {
+          await db.saveWorkouts(workouts);
+        }
+
+        await completeScraperJob(jobId, {
+          courseCount: workouts.length,
+          durationMs: Date.now() - startedAtMs,
+          meta: { saved_workouts: workouts.length, semester },
+        });
+        revalidatePath("/workouts");
+        return { success: true, count: workouts.length };
+      } catch (error) {
+        await failScraperJob(jobId, error, Date.now() - startedAtMs);
+        throw error;
       }
-
-      if (workouts.length > 0) {
-        await db.saveWorkouts(workouts);
-      }
-      revalidatePath("/workouts");
-      return { success: true, count: workouts.length };
     }
 
     let scraper: BaseScraper | null = null;
@@ -81,44 +102,78 @@ export async function runManualScraperAction({
     else if (university === "cau") scraper = new CAU();
 
     if (!scraper) throw new Error(`University "${university}" not found.`);
+    const jobId = await startScraperJob({
+      university: scraper.name,
+      semester,
+      trigger: "manual",
+      triggeredByUserId: user.id,
+      forceUpdate,
+      jobType: "courses",
+      meta: { requested_university: university },
+    });
 
     scraper.semester = semester;
     scraper.db = db;
 
     console.log(`[Manual Scrape] Running ${scraper.name} for ${semester}...`);
-    const items = await scraper.retrieve();
+    try {
+      const items = await scraper.retrieve();
 
-    if (items.length > 0) {
-      if (university === "cau") {
-        const projectsSeminars = items.filter((item) =>
-          isCauProjectSeminarWorkshop({
-            title: item.title,
-            details: (item.details as Record<string, unknown> | undefined) || {},
-          }),
-        );
-        const standardCourses = items.filter(
-          (item) =>
-            !isCauProjectSeminarWorkshop({
+      if (items.length > 0) {
+        if (university === "cau") {
+          const projectsSeminars = items.filter((item) =>
+            isCauProjectSeminarWorkshop({
               title: item.title,
               details: (item.details as Record<string, unknown> | undefined) || {},
             }),
-        );
+          );
+          const standardCourses = items.filter(
+            (item) =>
+              !isCauProjectSeminarWorkshop({
+                title: item.title,
+                details: (item.details as Record<string, unknown> | undefined) || {},
+              }),
+          );
 
-        if (standardCourses.length > 0) {
-          await db.saveCourses(standardCourses, { forceUpdate });
+          if (standardCourses.length > 0) {
+            await db.saveCourses(standardCourses, { forceUpdate });
+          }
+          if (projectsSeminars.length > 0) {
+            await db.saveProjectsSeminars(projectsSeminars);
+          }
+          revalidatePath("/projects-seminars");
+          await completeScraperJob(jobId, {
+            courseCount: items.length,
+            durationMs: Date.now() - startedAtMs,
+            meta: {
+              saved_courses: standardCourses.length,
+              saved_projects_seminars: projectsSeminars.length,
+              semester,
+              force_update: forceUpdate,
+            },
+          });
+        } else {
+          await db.saveCourses(items, { forceUpdate });
+          await completeScraperJob(jobId, {
+            courseCount: items.length,
+            durationMs: Date.now() - startedAtMs,
+            meta: { saved_courses: items.length, semester, force_update: forceUpdate },
+          });
         }
-        if (projectsSeminars.length > 0) {
-          await db.saveProjectsSeminars(projectsSeminars);
-        }
-        revalidatePath("/projects-seminars");
-      } else {
-        await db.saveCourses(items, { forceUpdate });
+        revalidatePath("/courses");
+        return { success: true, count: items.length };
       }
-      revalidatePath("/courses");
-      return { success: true, count: items.length };
-    }
 
-    return { success: true, count: 0 };
+      await completeScraperJob(jobId, {
+        courseCount: 0,
+        durationMs: Date.now() - startedAtMs,
+        meta: { semester, force_update: forceUpdate },
+      });
+      return { success: true, count: 0 };
+    } catch (error) {
+      await failScraperJob(jobId, error, Date.now() - startedAtMs);
+      throw error;
+    }
   } catch (error) {
     console.error(`[Manual Scrape] Failed for ${university}:`, error);
     return { 

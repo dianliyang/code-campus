@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
-import { GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
+import { resolveModelForProvider } from "@/lib/ai/models";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? "");
@@ -100,10 +100,8 @@ export async function regenerateProjectSeminarDescription(projectSeminarId: numb
   }
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
-  const selectedModel = (String(profile?.ai_default_model || "sonar")).trim();
-  const model = provider === "gemini"
-    ? (GEMINI_MODEL_SET.has(selectedModel) ? selectedModel : "gemini-2.0-flash")
-    : (PERPLEXITY_MODEL_SET.has(selectedModel) ? selectedModel : "sonar");
+  const selectedModel = (String(profile?.ai_default_model || "")).trim();
+  const model = await resolveModelForProvider(provider, selectedModel);
   const webSearchEnabled = Boolean(profile?.ai_web_search_enabled ?? false);
   const template = String(profile?.ai_prompt_template || "").trim();
   if (!template) {

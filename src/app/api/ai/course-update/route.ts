@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, getUser } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { DEFAULT_COURSE_UPDATE_PROMPT } from '@/lib/ai/prompts';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { logAiUsage } from '@/lib/ai/log-usage';
+import { getAiRuntimeConfig } from '@/lib/ai/runtime-config';
 
 export const runtime = 'nodejs';
 
@@ -38,7 +38,9 @@ export async function POST(request: NextRequest) {
     .eq('id', user.id)
     .maybeSingle();
 
-  const template = (profile?.ai_course_update_prompt_template || '').trim() || DEFAULT_COURSE_UPDATE_PROMPT;
+  const runtimeConfig = await getAiRuntimeConfig();
+  const modelName = runtimeConfig.models.courseUpdate;
+  const template = (profile?.ai_course_update_prompt_template || '').trim() || runtimeConfig.prompts.courseUpdate;
 
   const prompt = template
     .replace('{course_code}', course.course_code)
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { text, usage } = await generateText({
-      model: perplexity.chat('sonar'),
+      model: perplexity.chat(modelName),
       prompt,
       maxOutputTokens: 1024,
     });
@@ -54,10 +56,13 @@ export async function POST(request: NextRequest) {
     logAiUsage({
       userId: user.id,
       provider: 'perplexity',
-      model: 'sonar',
+      model: modelName,
       feature: 'course-update',
       tokensInput: usage.inputTokens,
       tokensOutput: usage.outputTokens,
+      prompt,
+      responseText: text,
+      requestPayload: { courseId, courseCode: course.course_code, university: course.university },
     });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);

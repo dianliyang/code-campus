@@ -1,14 +1,15 @@
 import SettingsContainer from "@/components/profile/SettingsContainer";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { getCachedProfileSettings, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getAiRuntimeConfig } from "@/lib/ai/runtime-config";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const [user, lang, supabase] = await Promise.all([getUser(), getLanguage(), createClient()]);
+  const [user, lang, aiRuntime] = await Promise.all([getUser(), getLanguage(), getAiRuntimeConfig()]);
   const dict = await getDictionary(lang);
 
   if (!user) {
@@ -22,38 +23,23 @@ export default async function SettingsPage() {
     );
   }
 
-  const selectVariants = [
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_topics_prompt_template, ai_course_update_prompt_template, ai_usage_calls, ai_usage_tokens",
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_topics_prompt_template, ai_usage_calls, ai_usage_tokens",
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template, ai_course_update_prompt_template, ai_usage_calls, ai_usage_tokens",
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template, ai_usage_calls, ai_usage_tokens",
-    "ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template",
-    "ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template",
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template",
-    "ai_default_model, ai_web_search_enabled, ai_prompt_template",
-    "ai_web_search_enabled, ai_prompt_template",
-    "id",
-  ];
-
-  let profile: Record<string, unknown> | null = null;
-  for (const selectColumns of selectVariants) {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(selectColumns)
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (!error) {
-      profile = data ? JSON.parse(JSON.stringify(data)) : null;
-      break;
-    }
-
-    console.error("[settings] profile select failed:", error.message);
-  }
+  const profile = await getCachedProfileSettings(user.id);
 
   return (
     <div className="h-full">
-      <SettingsContainer user={user} profile={profile} />
+      <SettingsContainer
+        user={user}
+        profile={profile}
+        aiDefaults={{
+          modelCatalog: aiRuntime.modelCatalog,
+          prompts: {
+            description: aiRuntime.prompts.description,
+            studyPlan: aiRuntime.prompts.studyPlan,
+            topics: aiRuntime.prompts.topics,
+            courseUpdate: aiRuntime.prompts.courseUpdate,
+          },
+        }}
+      />
     </div>
   );
 }

@@ -259,6 +259,25 @@ export default function CourseDetailContent({
             showHeader={false}
           />
 
+          {codeBreakdown.length > 0 && (
+            <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+              <h2 className="text-base font-semibold text-[#1f1f1f] mb-4">Code Breakdown</h2>
+              <dl className="space-y-4 text-sm">
+                {codeBreakdown.map((item, idx) => (
+                  <div key={`${item.label}-${idx}`} className="flex justify-between py-1">
+                    <dt className="text-[#666] flex-shrink-0">{item.label}</dt>
+                    <dd className="text-right pl-4">
+                      <p className="font-medium text-[#222] break-words">{item.value}</p>
+                      {item.detail && (
+                        <p className="text-[11px] text-[#666] break-words">{item.detail}</p>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
+
           {(hasStudyPlans || course.details?.schedule || (course.instructors && course.instructors.length > 0)) && (
             <section>
               <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
@@ -737,25 +756,6 @@ export default function CourseDetailContent({
                   )}
                 </dl>
               </div>
-
-              {codeBreakdown.length > 0 && (
-                <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-                  <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">Code Breakdown</h3>
-                  <dl className="space-y-4 text-sm">
-                    {codeBreakdown.map((item, idx) => (
-                      <div key={`${item.label}-${idx}`} className="flex justify-between py-1">
-                        <dt className="text-[#666] flex-shrink-0">{item.label}</dt>
-                        <dd className="text-right pl-4">
-                          <p className="font-medium text-[#222] break-words">{item.value}</p>
-                          {item.detail && (
-                            <p className="text-[11px] text-[#666] break-words">{item.detail}</p>
-                          )}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-              )}
 
           </div>
         </aside>

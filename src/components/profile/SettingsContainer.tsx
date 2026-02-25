@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import AISettingsCard from "./AISettingsCard";
-import SecurityIdentitySection from "./SecurityIdentitySection";
-import SystemMaintenanceCard from "./SystemMaintenanceCard";
+import dynamic from "next/dynamic";
 import { User } from "@supabase/supabase-js";
 import { LucideIcon, Cpu, FileCode, CalendarDays, Tag, Search, BarChart2, Shield, UserX, Database } from "lucide-react";
+
+const AISettingsCard = dynamic(() => import("./AISettingsCard"), { ssr: false });
+const SecurityIdentitySection = dynamic(() => import("./SecurityIdentitySection"), { ssr: false });
+const SystemMaintenanceCard = dynamic(() => import("./SystemMaintenanceCard"), { ssr: false });
 
 export type SectionId =
   | "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage"
@@ -60,9 +62,18 @@ const AI_SECTIONS: SectionId[] = ["engine", "metadata", "scheduling", "topics", 
 interface SettingsContainerProps {
   user: User;
   profile: Record<string, unknown> | null;
+  aiDefaults: {
+    modelCatalog: { perplexity: string[]; gemini: string[] };
+    prompts: {
+      description: string;
+      studyPlan: string;
+      topics: string;
+      courseUpdate: string;
+    };
+  };
 }
 
-export default function SettingsContainer({ user, profile }: SettingsContainerProps) {
+export default function SettingsContainer({ user, profile, aiDefaults }: SettingsContainerProps) {
   const [active, setActive] = useState<SectionId>("engine");
   const meta = SECTION_META[active];
 
@@ -121,20 +132,23 @@ export default function SettingsContainer({ user, profile }: SettingsContainerPr
           <p className="text-xs text-[#7a7a7a] mt-0.5">{meta.desc}</p>
         </div>
 
-        {/* AI sections — always mounted, shown/hidden via CSS to preserve state */}
-        <div className={AI_SECTIONS.includes(active) ? "flex-1 min-h-0 flex flex-col" : "hidden"}>
-          <AISettingsCard
-            key={profile ? JSON.stringify(profile) : "default-ai"}
-            section={active as "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage"}
-            initialProvider={(profile?.ai_provider as string) || "perplexity"}
-            initialModel={(profile?.ai_default_model as string) || "sonar"}
-            initialWebSearchEnabled={(profile?.ai_web_search_enabled as boolean | undefined) ?? false}
-            initialPromptTemplate={(profile?.ai_prompt_template as string) || ""}
-            initialStudyPlanPromptTemplate={(profile?.ai_study_plan_prompt_template as string) || ""}
-            initialTopicsPromptTemplate={(profile?.ai_topics_prompt_template as string) || ""}
-            initialCourseUpdatePromptTemplate={(profile?.ai_course_update_prompt_template as string) || ""}
-          />
-        </div>
+        {AI_SECTIONS.includes(active) ? (
+          <div className="flex-1 min-h-0 flex flex-col">
+            <AISettingsCard
+              key={`${active}-${profile ? JSON.stringify(profile) : "default-ai"}`}
+              section={active as "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage"}
+              initialProvider={(profile?.ai_provider as string) || "perplexity"}
+              initialModel={(profile?.ai_default_model as string) || aiDefaults.modelCatalog.perplexity[0] || ""}
+              initialWebSearchEnabled={(profile?.ai_web_search_enabled as boolean | undefined) ?? false}
+              initialPromptTemplate={(profile?.ai_prompt_template as string) || ""}
+              initialStudyPlanPromptTemplate={(profile?.ai_study_plan_prompt_template as string) || ""}
+              initialTopicsPromptTemplate={(profile?.ai_topics_prompt_template as string) || ""}
+              initialCourseUpdatePromptTemplate={(profile?.ai_course_update_prompt_template as string) || ""}
+              modelCatalog={aiDefaults.modelCatalog}
+              defaultPrompts={aiDefaults.prompts}
+            />
+          </div>
+        ) : null}
 
         {/* Identity & Security */}
         <div className={active === "identity" ? "flex-1 min-h-0" : "hidden"}>

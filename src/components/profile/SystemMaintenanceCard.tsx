@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { runManualScraperAction } from "@/actions/scrapers";
 import { Loader2, Play, CheckCircle2, AlertCircle, Check, RefreshCw } from "lucide-react";
 
@@ -47,6 +47,40 @@ export default function SystemMaintenanceCard() {
     message?: string;
     runs?: Array<{ label: string; count: number; ok: boolean; error?: string }>;
   }>({ type: "idle" });
+  const [recentJobs, setRecentJobs] = useState<Array<{
+    id: number;
+    university: string;
+    semester?: string | null;
+    status: string;
+    job_type?: string | null;
+    triggered_by?: string | null;
+    force_update?: boolean | null;
+    course_count?: number | null;
+    duration_ms?: number | null;
+    created_at?: string | null;
+    completed_at?: string | null;
+    error?: string | null;
+  }>>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+
+  const loadRecentJobs = async () => {
+    setJobsLoading(true);
+    try {
+      const response = await fetch("/api/scraper-jobs/recent");
+      const payload = await response.json();
+      if (!payload?.error && Array.isArray(payload?.items)) {
+        setRecentJobs(payload.items);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setJobsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadRecentJobs();
+  }, []);
 
   const toggleUni = (id: string) => {
     if (selectedUnis.includes(id)) {
@@ -120,12 +154,14 @@ export default function SystemMaintenanceCard() {
             runs,
           });
         }
+        await loadRecentJobs();
       } catch (error) {
         setStatus({ 
           type: "error", 
           message: error instanceof Error ? error.message : "An unexpected error occurred.",
           runs: [],
         });
+        await loadRecentJobs();
       }
     });
   };
@@ -246,6 +282,45 @@ export default function SystemMaintenanceCard() {
             ) : null}
           </div>
         )}
+      </div>
+
+      <div className="pt-3 border-t border-[#efefef]">
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-xs font-medium text-[#666] block">Recent Scraper Tasks (10)</label>
+          <button
+            onClick={() => void loadRecentJobs()}
+            disabled={jobsLoading}
+            className="text-[11px] text-[#555] hover:text-[#111] inline-flex items-center gap-1"
+          >
+            <RefreshCw className={`w-3 h-3 ${jobsLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
+        <div className="rounded-md border border-[#e6e6e6] overflow-hidden">
+          {recentJobs.length === 0 ? (
+            <div className="px-3 py-3 text-[12px] text-[#888]">No scraper tasks yet.</div>
+          ) : (
+            <div className="divide-y divide-[#f1f1f1]">
+              {recentJobs.map((job) => (
+                <div key={job.id} className="px-3 py-2 text-[12px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-[#222]">
+                      {job.university.toUpperCase()} {job.semester ? `· ${job.semester.toUpperCase()}` : ""}
+                    </span>
+                    <span className="text-[#666]">{job.status}</span>
+                  </div>
+                  <div className="mt-1 text-[#777] flex items-center justify-between gap-2">
+                    <span>
+                      {job.job_type || "courses"} · {job.triggered_by || "manual"} · {job.course_count ?? 0} items
+                    </span>
+                    <span>{job.duration_ms ? `${Math.round(job.duration_ms / 1000)}s` : "-"}</span>
+                  </div>
+                  {job.error ? <div className="mt-1 text-[#b84a4a] truncate">{job.error}</div> : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

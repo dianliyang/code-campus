@@ -38,7 +38,7 @@ export default function CourseDetailHeader({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAiUpdating, setIsAiUpdating] = useState(false);
   const [aiStatus, setAiStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const searchQuery = `${course.university || ""} ${course.courseCode || ""}`.trim();
+  const searchQuery = `${course.university || ""} ${course.courseCode || ""} ${course.title || ""}`.trim();
   const searchHref = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
 
   const handleAiUpdate = async () => {

@@ -73,6 +73,58 @@ export const getUser = cache(async () => {
   return user;
 });
 
+type ProfileSettingsCacheEntry = {
+  value: Record<string, unknown> | null;
+  expiresAt: number;
+};
+
+const profileSettingsCache = new Map<string, ProfileSettingsCacheEntry>();
+const PROFILE_SETTINGS_TTL_MS = 3 * 60 * 1000;
+
+async function fetchProfileSettings(userId: string): Promise<Record<string, unknown> | null> {
+  const supabase = createAdminClient();
+  const selectVariants = [
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_topics_prompt_template, ai_course_update_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_topics_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template, ai_course_update_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template",
+    "ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template",
+    "ai_default_model, ai_web_search_enabled, ai_prompt_template",
+    "ai_web_search_enabled, ai_prompt_template",
+    "id",
+  ];
+
+  for (const selectColumns of selectVariants) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(selectColumns)
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!error) {
+      return data ? JSON.parse(JSON.stringify(data)) : null;
+    }
+  }
+
+  return null;
+}
+
+export async function getCachedProfileSettings(userId: string): Promise<Record<string, unknown> | null> {
+  const now = Date.now();
+  const cached = profileSettingsCache.get(userId);
+  if (cached && cached.expiresAt > now) return cached.value;
+
+  const value = await fetchProfileSettings(userId);
+  profileSettingsCache.set(userId, { value, expiresAt: now + PROFILE_SETTINGS_TTL_MS });
+  return value;
+}
+
+export function invalidateCachedProfileSettings(userId: string) {
+  profileSettingsCache.delete(userId);
+}
+
 function normalizeExternalUrl(url: string): string {
   const trimmed = url.trim();
   if (!trimmed) return "";

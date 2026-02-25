@@ -205,6 +205,8 @@ export class CAU extends BaseScraper {
 
           let title = titleA.text().trim();
           title = title.replace(/^[a-zA-Z0-9._-]+[:\s]+/, "").replace(/^[-–—]\s*/, "").trim();
+          const isLayoutOnlyEntry = /\(\s*layout\s*\)/i.test(title);
+          if (isLayoutOnlyEntry) return;
 
           if (existingCodes.has(courseCode)) {
             courses.push({

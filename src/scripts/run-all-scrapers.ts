@@ -6,6 +6,7 @@ import { CAU } from '../lib/scrapers/cau';
 import { CAUSport } from '../lib/scrapers/cau-sport';
 import { SupabaseDatabase } from '../lib/supabase/server';
 import { BaseScraper } from '../lib/scrapers/BaseScraper';
+import { completeScraperJob, failScraperJob, startScraperJob } from '../lib/scrapers/scraper-jobs';
 
 function isCauProjectSeminarWorkshop(
   item: { title?: string; details?: Record<string, unknown> },
@@ -29,6 +30,15 @@ function isCauProjectSeminarWorkshop(
 }
 
 async function runScraper(scraper: BaseScraper, db: SupabaseDatabase) {
+  const startedAtMs = Date.now();
+  const jobId = await startScraperJob({
+    university: scraper.name,
+    semester: scraper.semester,
+    trigger: "script",
+    forceUpdate: false,
+    jobType: "courses",
+  });
+
   try {
     console.log(`\n=== Running Scraper: ${scraper.name.toUpperCase()} ===`);
     
@@ -58,14 +68,34 @@ async function runScraper(scraper: BaseScraper, db: SupabaseDatabase) {
       } else {
         await db.saveCourses(items);
       }
+      await completeScraperJob(jobId, {
+        courseCount: items.length,
+        durationMs: Date.now() - startedAtMs,
+        meta: { semester: scraper.semester || null },
+      });
       console.log(`Completed ${scraper.name}.`);
+    } else {
+      await completeScraperJob(jobId, {
+        courseCount: 0,
+        durationMs: Date.now() - startedAtMs,
+        meta: { semester: scraper.semester || null },
+      });
     }
   } catch (error) {
+    await failScraperJob(jobId, error, Date.now() - startedAtMs);
     console.error(`Failed to run scraper for ${scraper.name}:`, error);
   }
 }
 
 async function runWorkoutScraper(db: SupabaseDatabase, semester: string) {
+  const startedAtMs = Date.now();
+  const jobId = await startScraperJob({
+    university: "cau-sport",
+    semester,
+    trigger: "script",
+    forceUpdate: true,
+    jobType: "workouts",
+  });
   try {
     const scraper = new CAUSport();
     scraper.semester = semester;
@@ -84,7 +114,14 @@ async function runWorkoutScraper(db: SupabaseDatabase, semester: string) {
       await db.saveWorkouts(workouts);
       console.log(`Completed ${scraper.name}.`);
     }
+
+    await completeScraperJob(jobId, {
+      courseCount: workouts.length,
+      durationMs: Date.now() - startedAtMs,
+      meta: { semester, saved_workouts: workouts.length },
+    });
   } catch (error) {
+    await failScraperJob(jobId, error, Date.now() - startedAtMs);
     console.error(`Failed to run workout scraper:`, error);
   }
 }

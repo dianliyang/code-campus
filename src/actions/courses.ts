@@ -3,8 +3,8 @@
 import { createAdminClient, getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
-import { GEMINI_MODEL_SET, PERPLEXITY_MODEL_SET } from "@/lib/ai/models";
-import { DEFAULT_COURSE_DESCRIPTION_PROMPT } from "@/lib/ai/prompts";
+import { resolveModelForProvider } from "@/lib/ai/models";
+import { getDefaultPromptTemplates } from "@/lib/ai/prompts";
 import { Course } from "@/types";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
@@ -390,10 +390,8 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
   }
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
-  const selectedModel = (profile?.ai_default_model || "sonar").trim();
-  const model = provider === "gemini"
-    ? (GEMINI_MODEL_SET.has(selectedModel) ? selectedModel : "gemini-2.0-flash")
-    : (PERPLEXITY_MODEL_SET.has(selectedModel) ? selectedModel : "sonar");
+  const selectedModel = (profile?.ai_default_model || "").trim();
+  const model = await resolveModelForProvider(provider, selectedModel);
   const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
   const promptTemplate = (profile?.ai_study_plan_prompt_template || "").trim();
   if (!promptTemplate) {
@@ -1061,13 +1059,12 @@ export async function regenerateCourseDescription(courseId: number) {
     .maybeSingle();
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
-  const selectedModel = (profile?.ai_default_model || "sonar").trim();
-  const model = provider === "gemini"
-    ? (GEMINI_MODEL_SET.has(selectedModel) ? selectedModel : "gemini-2.0-flash")
-    : (PERPLEXITY_MODEL_SET.has(selectedModel) ? selectedModel : "sonar");
+  const selectedModel = (profile?.ai_default_model || "").trim();
+  const model = await resolveModelForProvider(provider, selectedModel);
   const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
   const customTemplate = (profile?.ai_prompt_template || "").trim();
-  const template = customTemplate || DEFAULT_COURSE_DESCRIPTION_PROMPT;
+  const defaults = await getDefaultPromptTemplates();
+  const template = customTemplate || defaults.description;
   const prompt = applyPromptTemplate(template, {
     title: row.title || "",
     course_code: row.course_code || "",
@@ -1240,10 +1237,8 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
     .maybeSingle();
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
-  const selectedModel = (profile?.ai_default_model || "sonar").trim();
-  const model = provider === "gemini"
-    ? (GEMINI_MODEL_SET.has(selectedModel) ? selectedModel : "gemini-2.0-flash")
-    : (PERPLEXITY_MODEL_SET.has(selectedModel) ? selectedModel : "sonar");
+  const selectedModel = (profile?.ai_default_model || "").trim();
+  const model = await resolveModelForProvider(provider, selectedModel);
   const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
   const topicsTemplate = (profile?.ai_topics_prompt_template || "").trim();
   if (!topicsTemplate) {

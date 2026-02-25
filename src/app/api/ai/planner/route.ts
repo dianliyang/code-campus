@@ -3,6 +3,7 @@ import { createAdminClient, getUser } from "@/lib/supabase/server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { logAiUsage } from "@/lib/ai/log-usage";
+import { applyPromptTemplate, getAiRuntimeConfig } from "@/lib/ai/runtime-config";
 
 export const runtime = "nodejs";
 
@@ -97,51 +98,16 @@ export async function POST(request: NextRequest) {
     description: c.description,
   }));
 
-  const prompt = `You are an expert CS learning architect.
-
-Target track: ${preset}
-
-Candidate courses (JSON):
-${JSON.stringify(catalog)}
-
-Return ONLY valid JSON with this exact schema:
-{
-  "track": "string",
-  "overview": "string",
-  "roadmap": [
-    {
-      "phase": "string",
-      "goal": "string",
-      "courses": [
-        {
-          "id": number,
-          "title": "string",
-          "course_code": "string",
-          "university": "string",
-          "why": "string"
-        }
-      ]
-    }
-  ],
-  "study_plan": [
-    {
-      "week": number,
-      "focus": "string",
-      "tasks": ["string"]
-    }
-  ]
-}
-
-Rules:
-- Build a practical roadmap from foundations to advanced.
-- Use only course ids present in candidate list.
-- Keep roadmap 3-5 phases.
-- Keep study_plan 8-12 weeks.
-- No markdown, no extra text.`;
+  const runtimeConfig = await getAiRuntimeConfig();
+  const modelName = runtimeConfig.models.planner;
+  const prompt = applyPromptTemplate(runtimeConfig.prompts.planner, {
+    preset,
+    catalog_json: JSON.stringify(catalog),
+  });
 
   try {
     const { text, usage } = await generateText({
-      model: perplexity.chat("sonar"),
+      model: perplexity.chat(modelName),
       prompt,
       maxOutputTokens: 1800,
       temperature: 0.3,
@@ -150,10 +116,13 @@ Rules:
     logAiUsage({
       userId: user.id,
       provider: "perplexity",
-      model: "sonar",
+      model: modelName,
       feature: "planner",
       tokensInput: usage.inputTokens,
       tokensOutput: usage.outputTokens,
+      prompt,
+      responseText: text,
+      requestPayload: { preset, candidateCount: catalog.length },
     });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);

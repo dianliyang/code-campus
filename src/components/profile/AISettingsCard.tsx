@@ -2,21 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
-import { AI_PROVIDERS, GEMINI_MODELS, PERPLEXITY_MODELS } from "@/lib/ai/models";
-import { DEFAULT_COURSE_DESCRIPTION_PROMPT, DEFAULT_COURSE_UPDATE_PROMPT, DEFAULT_STUDY_PLAN_PROMPT, DEFAULT_TOPICS_PROMPT } from "@/lib/ai/prompts";
-import {
-  Save,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  RefreshCcw,
-  Cpu,
-  FileCode,
-  CalendarDays,
-  Tag,
-  BarChart2,
-  Search
-} from "lucide-react";
+import { AI_PROVIDERS } from "@/lib/ai/models-client";
+import { Save, CheckCircle2, AlertCircle, Loader2, RefreshCcw, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search } from "lucide-react";
 
 type AISectionId = "engine" | "metadata" | "scheduling" | "topics" | "course-update" | "usage";
 
@@ -29,6 +16,13 @@ interface AISettingsCardProps {
   initialStudyPlanPromptTemplate: string;
   initialTopicsPromptTemplate: string;
   initialCourseUpdatePromptTemplate: string;
+  modelCatalog: { perplexity: string[]; gemini: string[] };
+  defaultPrompts: {
+    description: string;
+    studyPlan: string;
+    topics: string;
+    courseUpdate: string;
+  };
 }
 
 interface Status {
@@ -37,55 +31,17 @@ interface Status {
   panel?: string;
 }
 
-type UsageStats = {
-  totals: { requests: number; tokens_input: number; tokens_output: number; cost_usd: number };
-  byFeature: Record<string, { requests: number; cost_usd: number }>;
-  byModel: Record<string, { requests: number; cost_usd: number }>;
-  recentTotals: { requests: number; cost_usd: number };
-  daily: Record<string, { requests: number; cost_usd: number }>;
-};
-
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function UsageBarChart({ daily }: { daily: Record<string, { requests: number; cost_usd: number }> }) {
-  const entries = Object.entries(daily); // sorted by date asc
-  const max = Math.max(...entries.map(([, v]) => v.requests), 1);
-  return (
-    <div className="rounded-md border border-[#f0f0f0] p-3">
-      <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest mb-3">Last 7 Days</p>
-      <div className="flex items-end gap-1.5 h-16">
-        {entries.map(([date, val]) => {
-          const pct = (val.requests / max) * 100;
-          const dayName = DAY_LABELS[new Date(date + "T12:00:00").getDay()];
-          return (
-            <div key={date} className="flex-1 flex flex-col items-center gap-1 group relative">
-              {/* tooltip */}
-              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-[#1f1f1f] text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                {val.requests} req · ${val.cost_usd.toFixed(3)}
-              </div>
-              <div className="w-full flex items-end" style={{ height: "52px" }}>
-                <div
-                  className="w-full rounded-t-sm transition-all"
-                  style={{
-                    height: `${Math.max(pct, val.requests > 0 ? 6 : 2)}%`,
-                    backgroundColor: val.requests > 0 ? "#1f1f1f" : "#e5e5e5",
-                  }}
-                />
-              </div>
-              <span className="text-[9px] text-[#aaa]">{dayName}</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-const FEATURE_LABELS: Record<string, string> = {
-  "planner": "AI Planner",
-  "course-update": "Course Update",
-  "learning-path": "Learning Path",
-  "schedule-parse": "Schedule Parse",
+type PlannerResponseRow = {
+  id: number;
+  feature: string;
+  provider: string | null;
+  model: string | null;
+  prompt: string | null;
+  response_text: string | null;
+  tokens_input: number | null;
+  tokens_output: number | null;
+  cost_usd: number | null;
+  created_at: string;
 };
 
 const StatusDisplay = ({ panel, status }: { panel: string; status: Status }) => {
@@ -111,14 +67,18 @@ export default function AISettingsCard({
   initialStudyPlanPromptTemplate,
   initialTopicsPromptTemplate,
   initialCourseUpdatePromptTemplate,
+  modelCatalog,
+  defaultPrompts,
 }: AISettingsCardProps) {
+  const perplexityModels = modelCatalog.perplexity || [];
+  const geminiModels = modelCatalog.gemini || [];
   const [provider, setProvider] = useState(initialProvider === "gemini" ? "gemini" : "perplexity");
   const [defaultModel, setDefaultModel] = useState(initialModel);
   const [webSearchEnabled, setWebSearchEnabled] = useState(initialWebSearchEnabled);
-  const [promptTemplate, setPromptTemplate] = useState(initialPromptTemplate || DEFAULT_COURSE_DESCRIPTION_PROMPT);
-  const [studyPlanPromptTemplate, setStudyPlanPromptTemplate] = useState(initialStudyPlanPromptTemplate || DEFAULT_STUDY_PLAN_PROMPT);
-  const [topicsPromptTemplate, setTopicsPromptTemplate] = useState(initialTopicsPromptTemplate || DEFAULT_TOPICS_PROMPT);
-  const [courseUpdatePromptTemplate, setCourseUpdatePromptTemplate] = useState(initialCourseUpdatePromptTemplate || DEFAULT_COURSE_UPDATE_PROMPT);
+  const [promptTemplate, setPromptTemplate] = useState(initialPromptTemplate || defaultPrompts.description);
+  const [studyPlanPromptTemplate, setStudyPlanPromptTemplate] = useState(initialStudyPlanPromptTemplate || defaultPrompts.studyPlan);
+  const [topicsPromptTemplate, setTopicsPromptTemplate] = useState(initialTopicsPromptTemplate || defaultPrompts.topics);
+  const [courseUpdatePromptTemplate, setCourseUpdatePromptTemplate] = useState(initialCourseUpdatePromptTemplate || defaultPrompts.courseUpdate);
 
   const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [isSavingDescription, setIsSavingDescription] = useState(false);
@@ -127,16 +87,20 @@ export default function AISettingsCard({
   const [isSavingCourseUpdate, setIsSavingCourseUpdate] = useState(false);
   const [status, setStatus] = useState<Status>({ type: "idle" });
 
-  const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
+  const [plannerResponses, setPlannerResponses] = useState<PlannerResponseRow[]>([]);
   const [usageLoading, setUsageLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/ai/usage/stats")
+    if (section !== "usage") return;
+    setUsageLoading(true);
+    fetch("/api/ai/planner/responses/recent")
       .then((r) => r.json())
-      .then((d) => { if (!d.error) setUsageStats(d); })
+      .then((d) => {
+        if (!d.error && Array.isArray(d.items)) setPlannerResponses(d.items);
+      })
       .catch(() => {})
       .finally(() => setUsageLoading(false));
-  }, []);
+  }, [section]);
 
   const clearStatus = () => setStatus({ type: "idle" });
 
@@ -245,7 +209,7 @@ export default function AISettingsCard({
                       key={p}
                       onClick={() => {
                         setProvider(p as "gemini" | "perplexity");
-                        setDefaultModel(p === "gemini" ? GEMINI_MODELS[0] : PERPLEXITY_MODELS[0]);
+                        setDefaultModel(p === "gemini" ? (geminiModels[0] || "") : (perplexityModels[0] || ""));
                       }}
                       className={`flex-1 h-8 rounded-md border transition-colors text-[13px] font-medium ${
                         provider === p
@@ -262,7 +226,7 @@ export default function AISettingsCard({
               <div className="space-y-2">
                 <label className="text-xs font-medium text-[#666] block">Active Language Model</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {(provider === "gemini" ? GEMINI_MODELS : PERPLEXITY_MODELS).map((m) => (
+                  {(provider === "gemini" ? geminiModels : perplexityModels).map((m) => (
                     <button
                       key={m}
                       onClick={() => setDefaultModel(m)}
@@ -323,7 +287,7 @@ export default function AISettingsCard({
                 Push Metadata Logic
               </button>
               <button
-                onClick={() => setPromptTemplate(DEFAULT_COURSE_DESCRIPTION_PROMPT)}
+                onClick={() => setPromptTemplate(defaultPrompts.description)}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
                 <RefreshCcw className="w-3 h-3" />
@@ -363,7 +327,7 @@ export default function AISettingsCard({
                 Push Schedule Logic
               </button>
               <button
-                onClick={() => setStudyPlanPromptTemplate(DEFAULT_STUDY_PLAN_PROMPT)}
+                onClick={() => setStudyPlanPromptTemplate(defaultPrompts.studyPlan)}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
                 <RefreshCcw className="w-3 h-3" />
@@ -403,7 +367,7 @@ export default function AISettingsCard({
                 Push Topic Logic
               </button>
               <button
-                onClick={() => setTopicsPromptTemplate(DEFAULT_TOPICS_PROMPT)}
+                onClick={() => setTopicsPromptTemplate(defaultPrompts.topics)}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
                 <RefreshCcw className="w-3 h-3" />
@@ -443,7 +407,7 @@ export default function AISettingsCard({
                 Push Update Search Logic
               </button>
               <button
-                onClick={() => setCourseUpdatePromptTemplate(DEFAULT_COURSE_UPDATE_PROMPT)}
+                onClick={() => setCourseUpdatePromptTemplate(defaultPrompts.courseUpdate)}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
                 <RefreshCcw className="w-3 h-3" />
@@ -477,78 +441,31 @@ export default function AISettingsCard({
             <div className="flex items-center justify-center py-6">
               <Loader2 className="w-4 h-4 animate-spin text-[#aaa]" />
             </div>
-          ) : !usageStats || usageStats.totals.requests === 0 ? (
-            <p className="text-[11px] text-[#aaa] text-center py-4">No AI calls tracked yet.</p>
+          ) : plannerResponses.length === 0 ? (
+            <p className="text-[11px] text-[#aaa] text-center py-4">No AI planner responses tracked yet.</p>
           ) : (
-            <div className="space-y-3">
-              {/* Totals row */}
-              <div className="rounded-md bg-[#fafafa] border border-[#f0f0f0] p-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div>
-                  <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Requests</p>
-                  <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.requests.toLocaleString()}</p>
-                  <p className="text-[10px] text-[#aaa]">{usageStats.recentTotals.requests} this week</p>
-                </div>
-                <div>
-                  <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Input Tokens</p>
-                  <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.tokens_input.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Output Tokens</p>
-                  <p className="text-lg font-bold text-[#1f1f1f]">{usageStats.totals.tokens_output.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-[9px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Total Cost</p>
-                  <p className="text-lg font-bold text-[#1f1f1f]">${usageStats.totals.cost_usd.toFixed(4)}</p>
-                  <p className="text-[10px] text-[#aaa]">${usageStats.recentTotals.cost_usd.toFixed(4)} this week</p>
-                </div>
-              </div>
-
-              {/* 7-day bar chart */}
-              {usageStats.daily && <UsageBarChart daily={usageStats.daily} />}
-
-              {/* By feature */}
-              {Object.keys(usageStats.byFeature).length > 0 && (
-                <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
-                  <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
-                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Feature</p>
+            <div className="space-y-2">
+              {plannerResponses.map((row) => (
+                <div key={row.id} className="rounded-md border border-[#ececec] p-3">
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-[#777]">
+                    <span>{new Date(row.created_at).toLocaleString()}</span>
+                    <span>{row.provider || "unknown"}/{row.model || "unknown"}</span>
                   </div>
-                  <div className="divide-y divide-[#f5f5f5]">
-                    {Object.entries(usageStats.byFeature)
-                      .sort((a, b) => b[1].requests - a[1].requests)
-                      .map(([feature, stat]) => (
-                        <div key={feature} className="px-3 py-2 flex items-center justify-between">
-                          <span className="text-[13px] text-[#444]">{FEATURE_LABELS[feature] ?? feature}</span>
-                          <div className="flex items-center gap-4 text-right">
-                            <span className="text-[11px] text-[#888]">{stat.requests} req</span>
-                            <span className="text-[11px] font-medium text-[#555] w-16">${stat.cost_usd.toFixed(4)}</span>
-                          </div>
-                        </div>
-                      ))}
+                  <div className="mt-2 text-[12px] text-[#333]">
+                    <p className="font-medium text-[#1f1f1f] mb-1">Prompt</p>
+                    <p className="line-clamp-3 whitespace-pre-wrap">{row.prompt || "-"}</p>
+                  </div>
+                  <div className="mt-2 text-[12px] text-[#333]">
+                    <p className="font-medium text-[#1f1f1f] mb-1">Response</p>
+                    <p className="line-clamp-4 whitespace-pre-wrap">{row.response_text || "-"}</p>
+                  </div>
+                  <div className="mt-2 text-[11px] text-[#777] flex items-center gap-3">
+                    <span>in: {row.tokens_input ?? 0}</span>
+                    <span>out: {row.tokens_output ?? 0}</span>
+                    <span>cost: ${(Number(row.cost_usd || 0)).toFixed(6)}</span>
                   </div>
                 </div>
-              )}
-
-              {/* By model */}
-              {Object.keys(usageStats.byModel).length > 0 && (
-                <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
-                  <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
-                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Model</p>
-                  </div>
-                  <div className="divide-y divide-[#f5f5f5]">
-                    {Object.entries(usageStats.byModel)
-                      .sort((a, b) => b[1].requests - a[1].requests)
-                      .map(([model, stat]) => (
-                        <div key={model} className="px-3 py-2 flex items-center justify-between">
-                          <span className="text-[13px] font-mono text-[#444]">{model}</span>
-                          <div className="flex items-center gap-4 text-right">
-                            <span className="text-[11px] text-[#888]">{stat.requests} req</span>
-                            <span className="text-[11px] font-medium text-[#555] w-16">${stat.cost_usd.toFixed(4)}</span>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
+              ))}
             </div>
           )}
         </div>

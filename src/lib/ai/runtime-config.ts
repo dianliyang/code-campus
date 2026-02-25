@@ -2,12 +2,6 @@ import { createAdminClient } from "@/lib/supabase/server";
 
 export type AIProvider = "perplexity" | "gemini";
 type PricingEntry = { input: number; output: number };
-type RuntimeConfigInput = {
-  modelCatalog?: Partial<Record<AIProvider, string[]>>;
-  models?: Partial<Record<"planner" | "learningPath" | "courseUpdate", string>>;
-  prompts?: Partial<Record<"planner" | "learningPath" | "description" | "studyPlan" | "topics" | "courseUpdate", string>>;
-  pricing?: Record<string, Partial<PricingEntry>>;
-};
 
 type RuntimeConfigCacheEntry = {
   value: AiRuntimeConfig;
@@ -23,6 +17,36 @@ function getRuntimeCacheTtlMs(): number {
   if (!Number.isFinite(raw) || raw < 0) return DEFAULT_RUNTIME_CACHE_TTL_MS;
   return Math.floor(raw);
 }
+
+const DEFAULT_PROMPTS = {
+  planner: [
+    "You are an expert CS learning architect.",
+    "Target track: {{preset}}",
+    "Candidate courses (JSON):",
+    "{{catalog_json}}",
+    "Return only valid JSON with keys: track, overview, roadmap, study_plan.",
+  ].join("\n"),
+  learningPath: [
+    "Generate a personalized learning path using this context:",
+    "{{completed_courses}}",
+    "{{in_progress_courses}}",
+    "{{available_catalog}}",
+    "Return practical, high-impact recommendations.",
+  ].join("\n"),
+  description: "Write a concise, factual course description.",
+  studyPlan: [
+    "Convert schedule lines into a structured weekly plan.",
+    "Input schedule lines:",
+    "{{schedule_lines}}",
+    "Return only valid JSON array entries with day/time/location/type.",
+  ].join("\n"),
+  topics: "Extract the most important course topics.",
+  courseUpdate: [
+    "Search official sources and return ONLY JSON:",
+    "{\"related_urls\":[\"string\"]}",
+    "Course: {{course_code}} at {{university}}.",
+  ].join("\n"),
+} as const;
 
 export type AiRuntimeConfig = {
   modelCatalog: Record<AIProvider, string[]>;
@@ -42,133 +66,81 @@ export type AiRuntimeConfig = {
   pricing: Record<string, PricingEntry>;
 };
 
-function isObjectLike(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+async function loadPricingRows() {
+  const supabase = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const { data, error } = await supabase
+    .from("ai_model_pricing")
+    .select("provider, model, input_per_token, output_per_token, is_active")
+    .eq("is_active", true);
+
+  if (error || !Array.isArray(data)) return [];
+  return data;
 }
 
-function normalizeInput(raw: unknown): RuntimeConfigInput | null {
-  if (!isObjectLike(raw)) return null;
-  return raw as RuntimeConfigInput;
-}
-
-function mergeConfig(base: RuntimeConfigInput | null, override: RuntimeConfigInput | null): RuntimeConfigInput | null {
-  if (!base && !override) return null;
-  if (!base) return override;
-  if (!override) return base;
-
-  return {
-    modelCatalog: {
-      ...(base.modelCatalog || {}),
-      ...(override.modelCatalog || {}),
-    },
-    models: {
-      ...(base.models || {}),
-      ...(override.models || {}),
-    },
-    prompts: {
-      ...(base.prompts || {}),
-      ...(override.prompts || {}),
-    },
-    pricing: {
-      ...(base.pricing || {}),
-      ...(override.pricing || {}),
-    },
+function normalizeModelCatalog(rows: Array<Record<string, unknown>>): Record<AIProvider, string[]> {
+  const catalog: Record<AIProvider, string[]> = {
+    perplexity: [],
+    gemini: [],
   };
+
+  for (const row of rows) {
+    const provider = String(row.provider || "").trim().toLowerCase();
+    const model = String(row.model || "").trim();
+    if ((provider !== "perplexity" && provider !== "gemini") || !model) continue;
+    const key = provider as AIProvider;
+    if (!catalog[key].includes(model)) catalog[key].push(model);
+  }
+
+  return catalog;
 }
 
-function validateModelArray(raw: unknown, name: string): string[] {
-  if (!Array.isArray(raw)) {
-    throw new Error(`AI runtime config invalid: modelCatalog.${name} must be an array.`);
-  }
-  const list = raw.map((v) => String(v || "").trim()).filter(Boolean);
-  if (list.length === 0) {
-    throw new Error(`AI runtime config invalid: modelCatalog.${name} must not be empty.`);
-  }
-  return Array.from(new Set(list));
-}
-
-function validateConfig(input: RuntimeConfigInput | null): AiRuntimeConfig {
-  if (!input) {
-    throw new Error("AI runtime config missing. Set app_runtime_config(key='ai_runtime') in Supabase.");
-  }
-
-  const perplexityCatalog = validateModelArray(input.modelCatalog?.perplexity, "perplexity");
-  const geminiCatalog = validateModelArray(input.modelCatalog?.gemini, "gemini");
-
-  const plannerModel = String(input.models?.planner || "").trim();
-  const learningPathModel = String(input.models?.learningPath || "").trim();
-  const courseUpdateModel = String(input.models?.courseUpdate || "").trim();
-
-  const plannerPrompt = String(input.prompts?.planner || "").trim();
-  const learningPathPrompt = String(input.prompts?.learningPath || "").trim();
-  const descriptionPrompt = String(input.prompts?.description || "").trim();
-  const studyPlanPrompt = String(input.prompts?.studyPlan || "").trim();
-  const topicsPrompt = String(input.prompts?.topics || "").trim();
-  const courseUpdatePrompt = String(input.prompts?.courseUpdate || "").trim();
-
-  if (!plannerPrompt || !learningPathPrompt || !descriptionPrompt || !studyPlanPrompt || !topicsPrompt || !courseUpdatePrompt) {
-    throw new Error("AI runtime config invalid: prompts.planner, prompts.learningPath, prompts.description, prompts.studyPlan, prompts.topics, prompts.courseUpdate are required.");
-  }
-
-  const pricingInput = input.pricing || {};
+function normalizePricing(rows: Array<Record<string, unknown>>): Record<string, PricingEntry> {
   const pricing: Record<string, PricingEntry> = {};
-  for (const [model, entry] of Object.entries(pricingInput)) {
-    const inPrice = Number(entry?.input);
-    const outPrice = Number(entry?.output);
-    if (!Number.isFinite(inPrice) || inPrice < 0 || !Number.isFinite(outPrice) || outPrice < 0) {
-      throw new Error(`AI runtime config invalid: pricing.${model} must include non-negative input and output.`);
-    }
-    pricing[model] = { input: inPrice, output: outPrice };
+
+  for (const row of rows) {
+    const provider = String(row.provider || "").trim().toLowerCase();
+    const model = String(row.model || "").trim();
+    if ((provider !== "perplexity" && provider !== "gemini") || !model) continue;
+
+    const input = Number(row.input_per_token ?? 0);
+    const output = Number(row.output_per_token ?? 0);
+    const normalized: PricingEntry = {
+      input: Number.isFinite(input) && input >= 0 ? input : 0,
+      output: Number.isFinite(output) && output >= 0 ? output : 0,
+    };
+
+    pricing[model] = normalized;
+    pricing[`${provider}/${model}`] = normalized;
   }
 
-  return {
-    modelCatalog: {
-      perplexity: perplexityCatalog,
-      gemini: geminiCatalog,
-    },
-    models: {
-      planner: plannerModel || perplexityCatalog[0],
-      learningPath: learningPathModel || perplexityCatalog[0],
-      courseUpdate: courseUpdateModel || perplexityCatalog[0],
-    },
-    prompts: {
-      planner: plannerPrompt,
-      learningPath: learningPathPrompt,
-      description: descriptionPrompt,
-      studyPlan: studyPlanPrompt,
-      topics: topicsPrompt,
-      courseUpdate: courseUpdatePrompt,
-    },
-    pricing,
-  };
+  return pricing;
 }
 
-async function loadFromSupabase(): Promise<RuntimeConfigInput | null> {
-  try {
-    const supabase = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    const attempts = [
-      async () => supabase.from("ai_runtime_config").select("value").eq("key", "ai_runtime").maybeSingle(),
-      async () => supabase.from("ai_runtime_config").select("value").limit(1).maybeSingle(),
-      async () => supabase.from("app_runtime_config").select("value").eq("key", "ai_runtime").maybeSingle(),
-      async () => supabase.from("app_runtime_config").select("value").limit(1).maybeSingle(),
-    ];
-
-    for (const attempt of attempts) {
-      try {
-        const { data, error } = await attempt();
-        if (!error && data?.value) {
-          return normalizeInput(data.value);
-        }
-      } catch {
-        // continue to next table/shape attempt
-      }
-    }
-  } catch {
-    return null;
+function buildRuntimeConfigFromRows(rows: Array<Record<string, unknown>>): AiRuntimeConfig {
+  const modelCatalog = normalizeModelCatalog(rows);
+  if (modelCatalog.perplexity.length === 0 || modelCatalog.gemini.length === 0) {
+    throw new Error("AI runtime config missing: ai_model_pricing must contain active models for both perplexity and gemini.");
   }
 
-  return null;
+  const defaultModel = modelCatalog.perplexity[0] || modelCatalog.gemini[0];
+
+  return {
+    modelCatalog,
+    models: {
+      planner: defaultModel,
+      learningPath: defaultModel,
+      courseUpdate: defaultModel,
+    },
+    prompts: {
+      planner: DEFAULT_PROMPTS.planner,
+      learningPath: DEFAULT_PROMPTS.learningPath,
+      description: DEFAULT_PROMPTS.description,
+      studyPlan: DEFAULT_PROMPTS.studyPlan,
+      topics: DEFAULT_PROMPTS.topics,
+      courseUpdate: DEFAULT_PROMPTS.courseUpdate,
+    },
+    pricing: normalizePricing(rows),
+  };
 }
 
 export async function getAiRuntimeConfig(): Promise<AiRuntimeConfig> {
@@ -182,8 +154,8 @@ export async function getAiRuntimeConfig(): Promise<AiRuntimeConfig> {
   }
 
   runtimeConfigInFlight = (async () => {
-    const supabaseConfig = await loadFromSupabase();
-    const value = validateConfig(mergeConfig(supabaseConfig, null));
+    const rows = await loadPricingRows();
+    const value = buildRuntimeConfigFromRows(rows as Array<Record<string, unknown>>);
     runtimeConfigCache = {
       value,
       expiresAt: Date.now() + getRuntimeCacheTtlMs(),
@@ -201,3 +173,4 @@ export async function getAiRuntimeConfig(): Promise<AiRuntimeConfig> {
 export function applyPromptTemplate(template: string, values: Record<string, string>) {
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? "");
 }
+

@@ -5,6 +5,7 @@ import { generateText } from "ai";
 import { logAiUsage } from "@/lib/ai/log-usage";
 import { applyPromptTemplate, getAiRuntimeConfig } from "@/lib/ai/runtime-config";
 import { parseLenientJson } from "@/lib/ai/parse-json";
+import { resolveModelForProvider } from "@/lib/ai/models";
 
 export const runtime = "nodejs";
 
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
   }));
 
   const runtimeConfig = await getAiRuntimeConfig();
-  let modelName = runtimeConfig.models.planner;
+  let modelName = await resolveModelForProvider("perplexity", "");
   let providerName = "perplexity";
   let plannerPromptTemplate = runtimeConfig.prompts.planner;
 
@@ -116,9 +117,7 @@ export async function POST(request: NextRequest) {
   const userModel = String(profilePrompt?.ai_default_model || "").trim();
   if (userProvider === "perplexity") {
     providerName = "perplexity";
-    if (userModel && runtimeConfig.modelCatalog.perplexity.includes(userModel)) {
-      modelName = userModel;
-    }
+    modelName = await resolveModelForProvider("perplexity", userModel);
   }
 
   const customPlannerPrompt = String(profilePrompt?.ai_planner_prompt_template || "").trim();

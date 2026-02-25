@@ -5,6 +5,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { rateLimit } from '@/lib/rate-limit';
 import { logAiUsage } from '@/lib/ai/log-usage';
 import { getAiRuntimeConfig } from '@/lib/ai/runtime-config';
+import { resolveModelForProvider } from '@/lib/ai/models';
 
 export const runtime = 'nodejs';
 
@@ -96,7 +97,15 @@ export async function POST(req: Request) {
     }
 
     const runtimeConfig = await getAiRuntimeConfig();
-    const modelName = runtimeConfig.models.learningPath;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("ai_provider, ai_default_model")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const provider = "perplexity";
+    const selectedModel = String(profile?.ai_default_model || "").trim();
+    const modelName = await resolveModelForProvider(provider, selectedModel);
     const systemPrompt = buildSystemPrompt(userContext, runtimeConfig.prompts.learningPath);
 
     // Create streaming response
@@ -115,7 +124,7 @@ export async function POST(req: Request) {
     Promise.resolve(result.usage).then((usage) => {
       logAiUsage({
         userId: user.id,
-        provider: 'perplexity',
+        provider,
         model: modelName,
         feature: 'learning-path',
         tokensInput: usage.inputTokens,

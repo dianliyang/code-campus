@@ -9,7 +9,7 @@ export function logAiUsage({
   tokensInput,
   tokensOutput,
   prompt,
-  responseText,
+  responseText: _responseText,
   requestPayload,
   responsePayload,
 }: {
@@ -20,20 +20,41 @@ export function logAiUsage({
   tokensInput: number | undefined;
   tokensOutput: number | undefined;
   prompt?: string;
+  // Kept for backward compatibility with callers; canonical payload is response_payload.
   responseText?: string;
   requestPayload?: Record<string, unknown>;
   responsePayload?: Record<string, unknown>;
 }) {
   void (async () => {
+    void _responseText;
     const runtimeConfig = await getAiRuntimeConfig();
-    const pricing = runtimeConfig.pricing[model] ?? { input: 0, output: 0 };
+    const supabase = createAdminClient();
+
+    // Prefer DB pricing source (ai_model_pricing), then fallback to edge runtime pricing.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: pricingRow } = await (supabase as any)
+      .from("ai_model_pricing")
+      .select("input_per_token, output_per_token")
+      .eq("provider", provider)
+      .eq("model", model)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    const pricing = (pricingRow && typeof pricingRow === "object")
+      ? {
+          input: Number(pricingRow.input_per_token) || 0,
+          output: Number(pricingRow.output_per_token) || 0,
+        }
+      : (
+          runtimeConfig.pricing[`${provider}/${model}`]
+          ?? runtimeConfig.pricing[model]
+          ?? { input: 0, output: 0 }
+        );
     const inTokens = tokensInput ?? 0;
     const outTokens = tokensOutput ?? 0;
     const costUsd = +(inTokens * pricing.input + outTokens * pricing.output).toFixed(6);
     const presetFromPayload = typeof requestPayload?.preset === "string" ? requestPayload.preset.trim() : "";
     const preset = presetFromPayload || feature;
-
-    const supabase = createAdminClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from("ai_usage_logs")
@@ -51,9 +72,8 @@ export function logAiUsage({
         feature,
         provider,
         model,
-        response: responsePayload || null,
         prompt: prompt || null,
-        response_text: responseText || null,
+        // Canonical response storage lives in response_payload.
         request_payload: requestPayload || {},
         response_payload: responsePayload || {},
         tokens_input: inTokens,

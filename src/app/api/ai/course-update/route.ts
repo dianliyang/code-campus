@@ -5,6 +5,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { logAiUsage } from '@/lib/ai/log-usage';
 import { getAiRuntimeConfig } from '@/lib/ai/runtime-config';
+import { resolveModelForProvider } from '@/lib/ai/models';
 
 export const runtime = 'nodejs';
 
@@ -34,12 +35,12 @@ export async function POST(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('ai_course_update_prompt_template')
+    .select('ai_provider, ai_default_model, ai_course_update_prompt_template')
     .eq('id', user.id)
     .maybeSingle();
 
   const runtimeConfig = await getAiRuntimeConfig();
-  const modelName = runtimeConfig.models.courseUpdate;
+  const modelName = await resolveModelForProvider('perplexity', String(profile?.ai_default_model || '').trim());
   const template = (profile?.ai_course_update_prompt_template || '').trim() || runtimeConfig.prompts.courseUpdate;
 
   const prompt = template

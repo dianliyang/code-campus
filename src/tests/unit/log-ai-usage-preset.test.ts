@@ -1,7 +1,23 @@
 import { describe, expect, test, vi, beforeEach } from "vitest";
 
 const insertMock = vi.fn(() => Promise.resolve({ error: null }));
-const fromMock = vi.fn(() => ({ insert: insertMock }));
+const fromMock = vi.fn((table: string) => {
+  if (table === "ai_model_pricing") {
+    return {
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn(async () => ({ data: null, error: null })),
+            })),
+          })),
+        })),
+      })),
+    };
+  }
+
+  return { insert: insertMock };
+});
 
 vi.mock("@/lib/supabase/server", () => ({
   createAdminClient: vi.fn(() => ({ from: fromMock })),
@@ -38,7 +54,7 @@ describe("logAiUsage preset handling", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(fromMock).toHaveBeenCalledWith("ai_responses");
+    expect(fromMock.mock.calls.some((call) => call[0] === "ai_responses")).toBe(true);
     expect(insertMock).toHaveBeenCalledWith(
       expect.objectContaining({
         preset: "course-update",

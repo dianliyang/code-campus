@@ -5,11 +5,17 @@ import { getDictionary } from "@/lib/dictionary";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getAiRuntimeConfig } from "@/lib/ai/runtime-config";
+import { getModelCatalogByProvider } from "@/lib/ai/models";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const [user, lang, aiRuntime] = await Promise.all([getUser(), getLanguage(), getAiRuntimeConfig()]);
+  const [user, lang, aiRuntime, modelCatalog] = await Promise.all([
+    getUser(),
+    getLanguage(),
+    getAiRuntimeConfig(),
+    getModelCatalogByProvider(),
+  ]);
   const dict = await getDictionary(lang);
 
   if (!user) {
@@ -28,7 +34,7 @@ export default async function SettingsPage() {
   // Auto-heal profile model/provider when runtime catalog changed and values drift.
   const rawProvider = String(profile?.ai_provider || "").trim();
   const normalizedProvider: "perplexity" | "gemini" = rawProvider === "gemini" ? "gemini" : "perplexity";
-  const catalogForProvider = aiRuntime.modelCatalog[normalizedProvider] || [];
+  const catalogForProvider = modelCatalog[normalizedProvider] || [];
   const rawModel = String(profile?.ai_default_model || "").trim();
   const normalizedModel = catalogForProvider.includes(rawModel) ? rawModel : (catalogForProvider[0] || "");
 
@@ -65,7 +71,7 @@ export default async function SettingsPage() {
         user={user}
         profile={profile}
         aiDefaults={{
-          modelCatalog: aiRuntime.modelCatalog,
+          modelCatalog,
           prompts: {
             description: aiRuntime.prompts.description,
             studyPlan: aiRuntime.prompts.studyPlan,

@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
   const preset = String(body?.preset || "").trim();
   const response = body?.response;
   const prompt = typeof body?.prompt === "string" ? body.prompt : null;
-  const responseText = typeof body?.responseText === "string" ? body.responseText : null;
   const provider = typeof body?.provider === "string" ? body.provider : null;
   const model = typeof body?.model === "string" ? body.model : null;
   const tokensInput = Number(body?.tokensInput || 0);
@@ -30,9 +29,7 @@ export async function POST(request: NextRequest) {
       user_id: user.id,
       feature: "planner",
       preset,
-      response,
       prompt,
-      response_text: responseText,
       provider,
       model,
       tokens_input: Number.isFinite(tokensInput) ? tokensInput : 0,

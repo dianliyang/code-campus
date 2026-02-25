@@ -85,10 +85,6 @@ function validateConfig(input: RuntimeConfigInput | null): AiRuntimeConfig {
   const learningPathModel = String(input.models?.learningPath || "").trim();
   const courseUpdateModel = String(input.models?.courseUpdate || "").trim();
 
-  if (!plannerModel || !learningPathModel || !courseUpdateModel) {
-    throw new Error("AI runtime config invalid: models.planner, models.learningPath, models.courseUpdate are required.");
-  }
-
   const plannerPrompt = String(input.prompts?.planner || "").trim();
   const learningPathPrompt = String(input.prompts?.learningPath || "").trim();
   const descriptionPrompt = String(input.prompts?.description || "").trim();
@@ -117,9 +113,9 @@ function validateConfig(input: RuntimeConfigInput | null): AiRuntimeConfig {
       gemini: geminiCatalog,
     },
     models: {
-      planner: plannerModel,
-      learningPath: learningPathModel,
-      courseUpdate: courseUpdateModel,
+      planner: plannerModel || perplexityCatalog[0],
+      learningPath: learningPathModel || perplexityCatalog[0],
+      courseUpdate: courseUpdateModel || perplexityCatalog[0],
     },
     prompts: {
       planner: plannerPrompt,

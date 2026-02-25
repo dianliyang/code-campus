@@ -3,6 +3,7 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import LeftRail from "@/components/dashboard/LeftRail";
 import OfflineIndicator from "@/components/common/OfflineIndicator";
+import { AppToastProvider } from "@/components/common/AppToastProvider";
 
 export default async function DashboardLayout({
   children,
@@ -13,7 +14,7 @@ export default async function DashboardLayout({
   const dict = await getDictionary(lang);
 
   return (
-    <>
+    <AppToastProvider>
       <main className="h-[100svh] bg-[#f5f5f5] overflow-hidden">
         <div className="h-full flex overflow-hidden">
           <LeftRail
@@ -43,6 +44,6 @@ export default async function DashboardLayout({
         }}
       />
       <OfflineIndicator />
-    </>
+    </AppToastProvider>
   );
 }

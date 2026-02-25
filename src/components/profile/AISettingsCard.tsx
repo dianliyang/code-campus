@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS } from "@/lib/ai/models-client";
-import Toast from "@/components/common/Toast";
+import { useAppToast } from "@/components/common/AppToastProvider";
 import { Save, Loader2, RefreshCcw, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles } from "lucide-react";
 
 type AISectionId = "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "usage";
@@ -120,7 +120,7 @@ export default function AISettingsCard({
   const [isSavingPlanner, setIsSavingPlanner] = useState(false);
   const [isSavingTopics, setIsSavingTopics] = useState(false);
   const [isSavingCourseUpdate, setIsSavingCourseUpdate] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const { showToast } = useAppToast();
 
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [usageLoading, setUsageLoading] = useState(true);
@@ -155,9 +155,9 @@ export default function AISettingsCard({
     void (async () => {
       try {
         await updateAiPreferences({ provider, defaultModel, webSearchEnabled });
-        setToast({ type: "success", message: "Intelligence preferences updated." });
+        showToast({ type: "success", message: "Intelligence preferences updated." });
       } catch (error) {
-        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
+        showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingProvider(false);
       }
@@ -169,9 +169,9 @@ export default function AISettingsCard({
     void (async () => {
       try {
         await updateAiPromptTemplates({ descriptionPromptTemplate: promptTemplate });
-        setToast({ type: "success", message: "Metadata instructions updated." });
+        showToast({ type: "success", message: "Metadata instructions updated." });
       } catch (error) {
-        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
+        showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingDescription(false);
       }
@@ -183,9 +183,9 @@ export default function AISettingsCard({
     void (async () => {
       try {
         await updateAiPromptTemplates({ studyPlanPromptTemplate });
-        setToast({ type: "success", message: "Scheduling logic updated." });
+        showToast({ type: "success", message: "Scheduling logic updated." });
       } catch (error) {
-        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
+        showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingStudyPlan(false);
       }
@@ -197,9 +197,9 @@ export default function AISettingsCard({
     void (async () => {
       try {
         await updateAiPromptTemplates({ topicsPromptTemplate });
-        setToast({ type: "success", message: "Topic classification logic updated." });
+        showToast({ type: "success", message: "Topic classification logic updated." });
       } catch (error) {
-        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
+        showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingTopics(false);
       }
@@ -211,9 +211,9 @@ export default function AISettingsCard({
     void (async () => {
       try {
         await updateAiPromptTemplates({ plannerPromptTemplate });
-        setToast({ type: "success", message: "Study planner logic updated." });
+        showToast({ type: "success", message: "Study planner logic updated." });
       } catch (error) {
-        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
+        showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingPlanner(false);
       }
@@ -225,9 +225,9 @@ export default function AISettingsCard({
     void (async () => {
       try {
         await updateAiPromptTemplates({ courseUpdatePromptTemplate });
-        setToast({ type: "success", message: "Course update search logic updated." });
+        showToast({ type: "success", message: "Course update search logic updated." });
       } catch (error) {
-        setToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
+        showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingCourseUpdate(false);
       }
@@ -236,14 +236,6 @@ export default function AISettingsCard({
 
   return (
     <div className="h-full flex flex-col">
-      {toast ? (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          position="top-right"
-          onClose={() => setToast(null)}
-        />
-      ) : null}
       {/* 1. Provider Configuration */}
       <div className={section === "engine" ? "h-full flex flex-col" : "hidden"}>
         <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
 import { LayoutGrid, List, RefreshCw, Search, SlidersHorizontal, X } from "lucide-react";
-import Toast from "@/components/common/Toast";
+import { useAppToast } from "@/components/common/AppToastProvider";
 
 interface WorkoutListHeaderProps {
   totalItems: number;
@@ -20,7 +20,7 @@ export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, d
   const sortBy = searchParams.get("sort") || "title";
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const { showToast } = useAppToast();
   const lastPushedQuery = useRef(searchParams.get("q") || "");
 
   const formattedUpdate = lastUpdated
@@ -55,14 +55,14 @@ export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, d
         throw new Error(body?.error || "Failed to refresh workouts");
       }
       const count = typeof body?.count === "number" ? body.count : null;
-      setToast({
+      showToast({
         message: count !== null ? `Refresh complete: ${count} records synced` : "Refresh complete",
         type: "success",
       });
       router.refresh();
     } catch (error) {
       console.error("[WorkoutListHeader] Refresh failed:", error);
-      setToast({
+      showToast({
         message: error instanceof Error ? error.message : "Refresh failed",
         type: "error",
       });
@@ -97,14 +97,6 @@ export default function WorkoutListHeader({ totalItems, viewMode, setViewMode, d
 
   return (
     <div className="flex flex-col gap-3">
-      {toast ? (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          position="top-right"
-          onClose={() => setToast(null)}
-        />
-      ) : null}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
         <div className="inline-flex h-9 md:h-8 w-full md:w-auto items-center rounded-md border border-[#dddddd] overflow-hidden bg-white">
           <button

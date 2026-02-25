@@ -11,7 +11,7 @@ interface ToastProps {
   position?: "bottom-right" | "top-right";
 }
 
-export default function Toast({ message, type = "success", duration = 3000, onClose, position = "bottom-right" }: ToastProps) {
+export default function Toast({ message, type = "success", duration = 5500, onClose, position = "bottom-right" }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {

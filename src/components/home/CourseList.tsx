@@ -6,7 +6,7 @@ import { Dictionary } from "@/lib/dictionary";
 import CourseCard from "./CourseCard";
 import CourseListHeader from "./CourseListHeader";
 import Pagination from "./Pagination";
-import Toast from "../common/Toast";
+import { useAppToast } from "@/components/common/AppToastProvider";
 import { Check, EyeOff, Loader2, Trash2, WandSparkles } from "lucide-react";
 import { clearTopicsForCoursesAction, fetchCoursesAction, generateTopicsForCoursesAction, hideCoursesAction } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,6 +20,8 @@ interface CourseListProps {
   perPage: number;
   initialEnrolledIds: number[];
   dict: Dictionary["dashboard"]["courses"];
+  filterUniversities: string[];
+  filterSemesters: string[];
 }
 
 export default function CourseList({
@@ -30,6 +32,8 @@ export default function CourseList({
   perPage,
   initialEnrolledIds,
   dict,
+  filterUniversities,
+  filterSemesters,
 }: CourseListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,7 +45,7 @@ export default function CourseList({
   const [isGeneratingTopics, setIsGeneratingTopics] = useState(false);
   const [isClearingTopics, setIsClearingTopics] = useState(false);
   const [isHidingSelected, setIsHidingSelected] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const { showToast } = useAppToast();
   const observerTarget = useRef<HTMLDivElement>(null);
   const selectAllRef = useRef<HTMLInputElement>(null);
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
@@ -83,7 +87,7 @@ export default function CourseList({
   const handleHide = (courseId: number) => {
     setCourses((prev) => prev.filter((c) => c.id !== courseId));
     setSelectedCourseIds((prev) => prev.filter((id) => id !== courseId));
-    setToast({ message: "Course hidden successfully", type: "success" });
+    showToast({ message: "Course hidden successfully", type: "success" });
   };
 
   const handleHideSelected = async () => {
@@ -94,13 +98,13 @@ export default function CourseList({
       const hiddenSet = new Set(selectedCourseIds);
       setCourses((prev) => prev.filter((c) => !hiddenSet.has(c.id)));
       setSelectedCourseIds([]);
-      setToast({
+      showToast({
         type: "success",
         message: `Hidden ${result.hidden} course(s).`,
       });
       router.refresh();
     } catch (error) {
-      setToast({
+      showToast({
         type: "error",
         message: error instanceof Error ? error.message : "Failed to hide selected courses.",
       });
@@ -131,7 +135,7 @@ export default function CourseList({
     setIsGeneratingTopics(true);
     try {
       const result = await generateTopicsForCoursesAction(selectedCourseIds);
-      setToast({
+      showToast({
         type: result.failed > 0 ? "error" : "success",
         message:
           result.failed > 0
@@ -143,7 +147,7 @@ export default function CourseList({
       }
       router.refresh();
     } catch (error) {
-      setToast({
+      showToast({
         type: "error",
         message: error instanceof Error ? error.message : "Failed to generate topics.",
       });
@@ -157,13 +161,13 @@ export default function CourseList({
     setIsClearingTopics(true);
     try {
       const result = await clearTopicsForCoursesAction(selectedCourseIds);
-      setToast({
+      showToast({
         type: "success",
         message: `Cleared topics for ${result.cleared} course(s).`,
       });
       router.refresh();
     } catch (error) {
-      setToast({
+      showToast({
         type: "error",
         message: error instanceof Error ? error.message : "Failed to clear topics.",
       });
@@ -181,7 +185,6 @@ export default function CourseList({
       const sort = searchParams.get("sort") || "title";
       const enrolledOnly = searchParams.get("enrolled") === "true";
       const universities = searchParams.get("universities")?.split(",").filter(Boolean) || [];
-      const fields = searchParams.get("fields")?.split(",").filter(Boolean) || [];
       const levels = searchParams.get("levels")?.split(",").filter(Boolean) || [];
 
       const nextData = await fetchCoursesAction({
@@ -191,7 +194,6 @@ export default function CourseList({
         sort,
         enrolledOnly,
         universities,
-        fields,
         levels,
       });
 
@@ -232,12 +234,12 @@ export default function CourseList({
 
   return (
     <main className="flex-grow space-y-3 min-w-0">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
       <CourseListHeader
         viewMode={effectiveViewMode}
         setViewMode={handleViewModeChange}
         dict={dict}
+        filterUniversities={filterUniversities}
+        filterSemesters={filterSemesters}
       />
 
       <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden border border-[#e5e5e5] ${effectiveViewMode === "grid" ? "p-3" : ""}`}>

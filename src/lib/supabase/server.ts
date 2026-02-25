@@ -73,14 +73,6 @@ export const getUser = cache(async () => {
   return user;
 });
 
-type ProfileSettingsCacheEntry = {
-  value: Record<string, unknown> | null;
-  expiresAt: number;
-};
-
-const profileSettingsCache = new Map<string, ProfileSettingsCacheEntry>();
-const PROFILE_SETTINGS_TTL_MS = 3 * 60 * 1000;
-
 async function fetchProfileSettings(userId: string): Promise<Record<string, unknown> | null> {
   const supabase = createAdminClient();
   const selectVariants = [
@@ -116,17 +108,11 @@ async function fetchProfileSettings(userId: string): Promise<Record<string, unkn
 }
 
 export async function getCachedProfileSettings(userId: string): Promise<Record<string, unknown> | null> {
-  const now = Date.now();
-  const cached = profileSettingsCache.get(userId);
-  if (cached && cached.expiresAt > now) return cached.value;
-
-  const value = await fetchProfileSettings(userId);
-  profileSettingsCache.set(userId, { value, expiresAt: now + PROFILE_SETTINGS_TTL_MS });
-  return value;
+  return fetchProfileSettings(userId);
 }
 
 export function invalidateCachedProfileSettings(userId: string) {
-  profileSettingsCache.delete(userId);
+  void userId;
 }
 
 function normalizeExternalUrl(url: string): string {

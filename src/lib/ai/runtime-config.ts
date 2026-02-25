@@ -1,5 +1,4 @@
 import { createAdminClient } from "@/lib/supabase/server";
-import { getEdgeConfigItem } from "@/lib/vercel/edge-config";
 
 export type AIProvider = "perplexity" | "gemini";
 type PricingEntry = { input: number; output: number };
@@ -9,6 +8,21 @@ type RuntimeConfigInput = {
   prompts?: Partial<Record<"planner" | "learningPath" | "description" | "studyPlan" | "topics" | "courseUpdate", string>>;
   pricing?: Record<string, Partial<PricingEntry>>;
 };
+
+type RuntimeConfigCacheEntry = {
+  value: AiRuntimeConfig;
+  expiresAt: number;
+};
+
+const DEFAULT_RUNTIME_CACHE_TTL_MS = 10_000;
+let runtimeConfigCache: RuntimeConfigCacheEntry | null = null;
+let runtimeConfigInFlight: Promise<AiRuntimeConfig> | null = null;
+
+function getRuntimeCacheTtlMs(): number {
+  const raw = Number(process.env.AI_RUNTIME_CACHE_TTL_MS ?? DEFAULT_RUNTIME_CACHE_TTL_MS);
+  if (!Number.isFinite(raw) || raw < 0) return DEFAULT_RUNTIME_CACHE_TTL_MS;
+  return Math.floor(raw);
+}
 
 export type AiRuntimeConfig = {
   modelCatalog: Record<AIProvider, string[]>;
@@ -132,32 +146,56 @@ function validateConfig(input: RuntimeConfigInput | null): AiRuntimeConfig {
 async function loadFromSupabase(): Promise<RuntimeConfigInput | null> {
   try {
     const supabase = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    const { data, error } = await supabase
-      .from("app_runtime_config")
-      .select("value")
-      .eq("key", "ai_runtime")
-      .maybeSingle();
 
-    if (error || !data) return null;
-    return normalizeInput(data.value);
+    const attempts = [
+      async () => supabase.from("ai_runtime_config").select("value").eq("key", "ai_runtime").maybeSingle(),
+      async () => supabase.from("ai_runtime_config").select("value").limit(1).maybeSingle(),
+      async () => supabase.from("app_runtime_config").select("value").eq("key", "ai_runtime").maybeSingle(),
+      async () => supabase.from("app_runtime_config").select("value").limit(1).maybeSingle(),
+    ];
+
+    for (const attempt of attempts) {
+      try {
+        const { data, error } = await attempt();
+        if (!error && data?.value) {
+          return normalizeInput(data.value);
+        }
+      } catch {
+        // continue to next table/shape attempt
+      }
+    }
   } catch {
     return null;
   }
-}
 
-async function loadFromEdgeConfig(): Promise<RuntimeConfigInput | null> {
-  const first = await getEdgeConfigItem<unknown>("ai_runtime");
-  if (first) return normalizeInput(first);
-  const second = await getEdgeConfigItem<unknown>("ai_runtime_config");
-  return normalizeInput(second);
+  return null;
 }
 
 export async function getAiRuntimeConfig(): Promise<AiRuntimeConfig> {
-  const [supabaseConfig, edgeConfig] = await Promise.all([
-    loadFromSupabase(),
-    loadFromEdgeConfig(),
-  ]);
-  return validateConfig(mergeConfig(supabaseConfig, edgeConfig));
+  const now = Date.now();
+  if (runtimeConfigCache && runtimeConfigCache.expiresAt > now) {
+    return runtimeConfigCache.value;
+  }
+
+  if (runtimeConfigInFlight) {
+    return runtimeConfigInFlight;
+  }
+
+  runtimeConfigInFlight = (async () => {
+    const supabaseConfig = await loadFromSupabase();
+    const value = validateConfig(mergeConfig(supabaseConfig, null));
+    runtimeConfigCache = {
+      value,
+      expiresAt: Date.now() + getRuntimeCacheTtlMs(),
+    };
+    return value;
+  })();
+
+  try {
+    return await runtimeConfigInFlight;
+  } finally {
+    runtimeConfigInFlight = null;
+  }
 }
 
 export function applyPromptTemplate(template: string, values: Record<string, string>) {

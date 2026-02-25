@@ -1,11 +1,3 @@
-type CacheEntry = {
-  value: unknown;
-  expiresAt: number;
-};
-
-const EDGE_CACHE_TTL_MS = 30_000;
-const itemCache = new Map<string, CacheEntry>();
-
 function buildItemUrl(key: string): URL | null {
   const connectionString = process.env.EDGE_CONFIG;
   if (!connectionString) return null;
@@ -33,13 +25,6 @@ function buildItemUrl(key: string): URL | null {
 }
 
 export async function getEdgeConfigItem<T>(key: string): Promise<T | undefined> {
-  const now = Date.now();
-  const cacheKey = `item:${key}`;
-  const cached = itemCache.get(cacheKey);
-  if (cached && cached.expiresAt > now) {
-    return cached.value as T;
-  }
-
   const itemUrl = buildItemUrl(key);
   if (!itemUrl) return undefined;
 
@@ -50,10 +35,8 @@ export async function getEdgeConfigItem<T>(key: string): Promise<T | undefined> 
     });
     if (!response.ok) return undefined;
     const value = (await response.json()) as T;
-    itemCache.set(cacheKey, { value, expiresAt: now + EDGE_CACHE_TTL_MS });
     return value;
   } catch {
     return undefined;
   }
 }
-

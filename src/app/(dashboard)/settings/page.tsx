@@ -1,5 +1,5 @@
 import SettingsContainer from "@/components/profile/SettingsContainer";
-import { getCachedProfileSettings, getUser } from "@/lib/supabase/server";
+import { createAdminClient, getCachedProfileSettings, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import Link from "next/link";
@@ -23,7 +23,41 @@ export default async function SettingsPage() {
     );
   }
 
-  const profile = await getCachedProfileSettings(user.id);
+  let profile = await getCachedProfileSettings(user.id);
+
+  // Auto-heal profile model/provider when runtime catalog changed and values drift.
+  const rawProvider = String(profile?.ai_provider || "").trim();
+  const normalizedProvider: "perplexity" | "gemini" = rawProvider === "gemini" ? "gemini" : "perplexity";
+  const catalogForProvider = aiRuntime.modelCatalog[normalizedProvider] || [];
+  const rawModel = String(profile?.ai_default_model || "").trim();
+  const normalizedModel = catalogForProvider.includes(rawModel) ? rawModel : (catalogForProvider[0] || "");
+
+  const providerNeedsFix = rawProvider !== normalizedProvider;
+  const modelNeedsFix = Boolean(normalizedModel) && rawModel !== normalizedModel;
+
+  if (providerNeedsFix || modelNeedsFix) {
+    try {
+      const admin = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      await admin.from("profiles").upsert(
+        {
+          id: user.id,
+          email: user.email ?? null,
+          ai_provider: normalizedProvider,
+          ai_default_model: normalizedModel,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+
+      profile = {
+        ...(profile || {}),
+        ai_provider: normalizedProvider,
+        ai_default_model: normalizedModel,
+      };
+    } catch (error) {
+      console.warn("Failed to auto-heal AI provider/model consistency:", error);
+    }
+  }
 
   return (
     <div className="h-full">

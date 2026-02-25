@@ -30,6 +30,8 @@ export function logAiUsage({
     const inTokens = tokensInput ?? 0;
     const outTokens = tokensOutput ?? 0;
     const costUsd = +(inTokens * pricing.input + outTokens * pricing.output).toFixed(6);
+    const presetFromPayload = typeof requestPayload?.preset === "string" ? requestPayload.preset.trim() : "";
+    const preset = presetFromPayload || feature;
 
     const supabase = createAdminClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,6 +47,7 @@ export function logAiUsage({
       .from("ai_planner_responses")
       .insert({
         user_id: userId,
+        preset,
         feature,
         provider,
         model,

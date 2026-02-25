@@ -94,7 +94,7 @@ export default function CourseCard({
             {isSelected ? <Check className="pointer-events-none absolute h-3 w-3 text-white" /> : null}
           </label>
           <UniversityIcon name={course.university} size={26} className="bg-white border border-[#dfdfdf] rounded-md" />
-          <Link href={detailHref} className="flex-1 min-w-0 block">
+          <Link href={detailHref} prefetch={false} className="flex-1 min-w-0 block">
             <h2 className="text-[14px] md:text-[15px] font-medium text-[#2e2e2e] line-clamp-2 md:truncate hover:text-black transition-colors">
               {course.title}
             </h2>
@@ -203,6 +203,7 @@ export default function CourseCard({
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Link
           href={detailHref}
+          prefetch={false}
           className="h-8 flex items-center justify-center rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
         >
           View

@@ -1076,6 +1076,12 @@ export async function regenerateCourseDescription(courseId: number) {
     corequisites: row.corequisites || "",
     description: row.description || "",
   });
+  const constrainedPrompt = `${prompt}
+
+Output requirements:
+- Return plain text only (no HTML/markdown).
+- Write one concise paragraph, maximum 120 words.
+- Keep it factual and complete.`;
 
   const response = provider === "gemini"
     ? await (async () => {
@@ -1095,7 +1101,7 @@ export async function regenerateCourseDescription(courseId: number) {
               contents: [
                 {
                   role: "user",
-                  parts: [{ text: prompt }],
+                  parts: [{ text: constrainedPrompt }],
                 },
               ],
               generationConfig: {
@@ -1124,7 +1130,7 @@ export async function regenerateCourseDescription(courseId: number) {
             model,
             messages: [
               { role: "system", content: "You are a precise university catalog editor." },
-              { role: "user", content: prompt },
+              { role: "user", content: constrainedPrompt },
             ],
             temperature: 0.5,
             max_tokens: 1400,
@@ -1175,7 +1181,7 @@ export async function regenerateCourseDescription(courseId: number) {
         (parsedJson as { choices?: Array<{ message?: { content?: string } }> })
           .choices?.[0]?.message?.content?.trim() || ""
       );
-  const text = rawText.trim();
+  let text = rawText.trim();
   if (!text) {
     throw new Error("AI returned an empty description");
   }
@@ -1193,7 +1199,10 @@ export async function regenerateCourseDescription(courseId: number) {
           .toLowerCase() === "length"
       );
   if (isTruncated) {
-    throw new Error("AI description response was truncated. Please retry (or simplify the prompt template).");
+    // Keep the response usable instead of failing the entire action.
+    if (!/[.!?]["')\]]?$/.test(text)) {
+      text = `${text}...`;
+    }
   }
 
   const usage = provider === "gemini"
@@ -1225,7 +1234,7 @@ export async function regenerateCourseDescription(courseId: number) {
     feature: "description",
     tokensInput: Number.isFinite(usage.input) ? usage.input : 0,
     tokensOutput: Number.isFinite(usage.output) ? usage.output : 0,
-    prompt,
+    prompt: constrainedPrompt,
     responseText: text,
     requestPayload: { courseId, courseCode: row.course_code || "", university: row.university || "" },
     responsePayload: { description: text },

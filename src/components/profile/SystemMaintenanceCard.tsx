@@ -4,6 +4,8 @@ import { useEffect, useState, useTransition } from "react";
 import { runManualScraperAction } from "@/actions/scrapers";
 import { Loader2, Play, CheckCircle2, AlertCircle, Check, RefreshCw } from "lucide-react";
 
+const ACTIVE_SECTION_STORAGE_KEY = "settings_active_section";
+
 const UNIVERSITIES = [
   { id: "mit", name: "MIT" },
   { id: "stanford", name: "Stanford" },
@@ -100,6 +102,13 @@ export default function SystemMaintenanceCard() {
 
   const handleRunScrapers = () => {
     setStatus({ type: "idle", runs: [] });
+    if (forceUpdate) {
+      try {
+        window.localStorage.removeItem(ACTIVE_SECTION_STORAGE_KEY);
+      } catch {
+        // Ignore storage access errors.
+      }
+    }
     startTransition(async () => {
       try {
         let totalCount = 0;

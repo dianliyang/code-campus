@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
@@ -10,6 +10,7 @@ import { Check, Clock, ExternalLink, Globe, Info, Loader2, Minus, PenSquare, Plu
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
+import { resolveInitialCourseDetailTab, type CourseDetailTab } from "@/lib/course-detail-tabs";
 
 interface CourseDetailContentProps {
   course: Course;
@@ -50,6 +51,12 @@ export default function CourseDetailContent({
   const [isAddingUrl, setIsAddingUrl] = useState(false);
   const [removingUrlIndex, setRemovingUrlIndex] = useState<number | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<CourseDetailTab>(() =>
+    resolveInitialCourseDetailTab({ isEnrolled, queryTab }),
+  );
+  const [scheduleView, setScheduleView] = useState<"list" | "calendar">("list");
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const hasStudyPlans = editablePlans.length > 0;
   const normalizeTime = (value: string) => (value.length === 5 ? `${value}:00` : value || "09:00:00");
@@ -98,6 +105,10 @@ export default function CourseDetailContent({
   useEffect(() => {
     setLocalRelatedUrls(course.relatedUrls || []);
   }, [course.relatedUrls]);
+
+  useEffect(() => {
+    setActiveTab(resolveInitialCourseDetailTab({ isEnrolled, queryTab }));
+  }, [isEnrolled, queryTab]);
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);
@@ -261,22 +272,26 @@ export default function CourseDetailContent({
         isEditing={isEditing}
         onToggleEdit={() => setIsEditing(!isEditing)}
         projectSeminarRef={projectSeminarRef}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 space-y-4">
-          <CourseDetailTopSection
-            course={course}
-            descriptionEmptyText={descriptionEmptyText}
-            availableTopics={availableTopics}
-            availableSemesters={availableSemesters}
-            studyPlans={studyPlans}
-            isEditing={isEditing}
-            onEditingChange={setIsEditing}
-            projectSeminarRef={projectSeminarRef}
-            showHeader={false}
-          />
+          {activeTab === "overview" && (
+            <CourseDetailTopSection
+              course={course}
+              descriptionEmptyText={descriptionEmptyText}
+              availableTopics={availableTopics}
+              availableSemesters={availableSemesters}
+              studyPlans={studyPlans}
+              isEditing={isEditing}
+              onEditingChange={setIsEditing}
+              projectSeminarRef={projectSeminarRef}
+              showHeader={false}
+            />
+          )}
 
-          {codeBreakdown.length > 0 && (
+          {activeTab === "overview" && codeBreakdown.length > 0 && (
             <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
               <h2 className="text-base font-semibold text-[#1f1f1f] mb-4">Code Breakdown</h2>
               <dl className="space-y-4 text-sm">
@@ -295,7 +310,59 @@ export default function CourseDetailContent({
             </section>
           )}
 
-          {(hasStudyPlans || course.details?.schedule || (course.instructors && course.instructors.length > 0)) && (
+          {activeTab === "schedule" && (
+            <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3">
+              <div className="inline-flex items-center rounded-[7px] border border-[#dedede] bg-[#f4f4f4] p-[2px]">
+                <button
+                  type="button"
+                  onClick={() => setScheduleView("list")}
+                  className={`h-7 rounded-[5px] px-3 text-[12px] font-medium transition-colors ${
+                    scheduleView === "list"
+                      ? "bg-white text-[#111] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                      : "text-[#666] hover:bg-[#ececec]"
+                  }`}
+                  aria-pressed={scheduleView === "list"}
+                >
+                  List
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScheduleView("calendar")}
+                  className={`h-7 rounded-[5px] px-3 text-[12px] font-medium transition-colors ${
+                    scheduleView === "calendar"
+                      ? "bg-white text-[#111] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                      : "text-[#666] hover:bg-[#ececec]"
+                  }`}
+                  aria-pressed={scheduleView === "calendar"}
+                >
+                  Calendar
+                </button>
+              </div>
+            </section>
+          )}
+
+          {activeTab === "schedule" && scheduleView === "calendar" && (
+            <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+              <h2 className="text-base font-semibold text-[#1f1f1f] mb-3">Weekly Calendar</h2>
+              {editablePlans.length > 0 ? (
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  {editablePlans.map((plan, idx) => (
+                    <div key={plan.id ?? idx} className="rounded-md border border-[#e1e1e1] bg-white px-3 py-2">
+                      <p className="text-xs font-medium text-[#666]">
+                        {(plan.daysOfWeek || []).map((d) => dayLabels[d] || String(d)).join(", ") || "No days"}
+                      </p>
+                      <p className="text-sm font-medium text-[#222]">{plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}</p>
+                      <p className="text-xs text-[#777]">{plan.location || "TBD"} • {plan.type || "Session"}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-[#888]">No calendar events available yet.</p>
+              )}
+            </section>
+          )}
+
+          {activeTab === "schedule" && scheduleView === "list" && (hasStudyPlans || course.details?.schedule || (course.instructors && course.instructors.length > 0)) && (
             <section>
               <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
               <h2 className="text-base font-semibold text-[#1f1f1f] mb-3">Logistics</h2>
@@ -565,7 +632,7 @@ export default function CourseDetailContent({
             </section>
           )}
 
-          {(course.prerequisites || course.corequisites) && (
+          {activeTab === "overview" && (course.prerequisites || course.corequisites) && (
             <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
               <h2 className="text-base font-semibold text-[#1f1f1f] mb-3">Prerequisites</h2>
               <div className="space-y-8">
@@ -582,6 +649,20 @@ export default function CourseDetailContent({
                   </div>
                 )}
               </div>
+            </section>
+          )}
+
+          {activeTab === "assignments" && (
+            <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+              <h2 className="text-base font-semibold text-[#1f1f1f] mb-2">Assignments</h2>
+              <p className="text-sm text-[#888]">No assignment data yet.</p>
+            </section>
+          )}
+
+          {activeTab === "grades" && (
+            <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+              <h2 className="text-base font-semibold text-[#1f1f1f] mb-2">Grades</h2>
+              <p className="text-sm text-[#888]">No grade data yet.</p>
             </section>
           )}
         </div>
@@ -629,7 +710,9 @@ export default function CourseDetailContent({
                 </div>
               </div>
 
-              <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+              {(activeTab === "overview" || activeTab === "schedule") && (
+                <>
+                <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-[#1f1f1f]">Resources</h3>
                   <button
@@ -787,6 +870,22 @@ export default function CourseDetailContent({
                   )}
                 </dl>
               </div>
+              </>
+              )}
+
+              {activeTab === "assignments" && (
+                <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+                  <h3 className="text-sm font-semibold text-[#1f1f1f] mb-2">Assignments Context</h3>
+                  <p className="text-sm text-[#888]">No immediate deadlines available.</p>
+                </div>
+              )}
+
+              {activeTab === "grades" && (
+                <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+                  <h3 className="text-sm font-semibold text-[#1f1f1f] mb-2">Grades Context</h3>
+                  <p className="text-sm text-[#888]">No grade summary available.</p>
+                </div>
+              )}
 
           </div>
         </aside>

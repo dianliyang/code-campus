@@ -8,12 +8,15 @@ import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
+import type { CourseDetailTab } from "@/lib/course-detail-tabs";
 
 interface CourseDetailHeaderProps {
   course: Course;
   isEditing?: boolean;
   onToggleEdit?: () => void;
   projectSeminarRef?: { id: number; category: string } | null;
+  activeTab?: CourseDetailTab;
+  onTabChange?: (tab: CourseDetailTab) => void;
 }
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -32,6 +35,8 @@ export default function CourseDetailHeader({
   isEditing = false,
   onToggleEdit,
   projectSeminarRef = null,
+  activeTab,
+  onTabChange,
 }: CourseDetailHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -175,6 +180,36 @@ export default function CourseDetailHeader({
           </button>
         </div>
       </div>
+
+      {activeTab && onTabChange && (
+        <div className="mt-3 flex justify-center sm:justify-start">
+          <div className="inline-flex items-center rounded-[7px] border border-[#dedede] bg-[#f4f4f4] p-[2px]">
+            {([
+              { id: "overview", label: "Overview" },
+              { id: "schedule", label: "Schedule" },
+              { id: "assignments", label: "Assignments" },
+              { id: "grades", label: "Grades" },
+            ] as const).map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => onTabChange(tab.id)}
+                  className={`h-7 rounded-[5px] px-3 text-[12px] font-medium transition-colors ${
+                    isActive
+                      ? "bg-white text-[#111] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                      : "text-[#666] hover:bg-[#ececec]"
+                  }`}
+                  aria-pressed={isActive}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Field tags */}
       {(course.fields.length > 0 || projectSeminarRef) && (

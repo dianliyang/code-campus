@@ -13,7 +13,7 @@ export default async function ProfilePage() {
     user
       ? supabase
           .from("user_courses")
-          .select("course_id, status, updated_at")
+          .select("course_id, status, updated_at, courses!inner(subdomain)")
           .eq("user_id", user.id)
           .neq("status", "hidden")
       : Promise.resolve({ data: null }),
@@ -56,6 +56,15 @@ export default async function ProfilePage() {
 
   const totalCourses = enrolledData?.length || 0;
   const completedCount = statusCounts.completed || 0;
+
+  const awards = Array.from(
+    new Set(
+      (enrolledData as Array<{ status: string; courses: { subdomain: string | null } }>)
+        ?.filter((r) => r.status === "completed" && r.courses?.subdomain)
+        .map((r) => String(r.courses.subdomain))
+    )
+  ).sort();
+
   const topField = allFieldStats[0]?.name || dict.dashboard.profile.none;
   const lastActiveData = enrolledData?.sort(
     (a, b) => new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime(),
@@ -99,6 +108,12 @@ export default async function ProfilePage() {
                 </span>
                 <span>Universities: {universityCount}</span>
               </div>
+              {awards.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Subdomain Awards</p>
+                  <p className="mt-1 text-sm font-medium text-slate-700">{awards.join(" • ")}</p>
+                </div>
+              )}
             </div>
           </div>
 

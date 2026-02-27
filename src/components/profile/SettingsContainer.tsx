@@ -10,7 +10,7 @@ const SecurityIdentitySection = dynamic(() => import("./SecurityIdentitySection"
 const SystemMaintenanceCard = dynamic(() => import("./SystemMaintenanceCard"), { ssr: false });
 
 export type SectionId =
-  | "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "syllabus-retrieve" | "usage"
+  | "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "syllabus-retrieve" | "course-intel" | "usage"
   | "identity" | "account"
   | "sync";
 
@@ -27,6 +27,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
       { id: "topics",        label: "Topic Classification", icon: Tag },
       { id: "course-update",     label: "Course Update Search", icon: Search },
       { id: "syllabus-retrieve", label: "Syllabus Retrieve",    icon: BookOpen },
+      { id: "course-intel",      label: "Course Intel",         icon: Sparkles },
       { id: "usage",             label: "Usage Statistics",     icon: BarChart2 },
     ],
   },
@@ -56,13 +57,14 @@ const SECTION_META: Record<SectionId, { title: string; desc: string }> = {
   "topics":        { title: "Topic Classification",   desc: "Prompt template for topic tagging." },
   "course-update":     { title: "Course Update Search",   desc: "Prompt template for web search queries." },
   "syllabus-retrieve": { title: "Syllabus Retrieve Logic", desc: "Prompt template for syllabus retrieval." },
+  "course-intel":      { title: "Course Intel Logic",      desc: "Merged prompt for resources, syllabus, and assignments retrieval." },
   "usage":             { title: "Usage Statistics",       desc: "AI call history, token usage, and cost breakdown." },
   "identity":      { title: "Identity & Security",    desc: "Authentication provider and account status." },
   "account":       { title: "Account",                desc: "Danger zone — irreversible operations." },
   "sync":          { title: "Data Synchronization",   desc: "Synchronize course catalogs from institution scrapers." },
 };
 
-const AI_SECTIONS: SectionId[] = ["engine", "metadata", "scheduling", "study-planner", "topics", "course-update", "syllabus-retrieve", "usage"];
+const AI_SECTIONS: SectionId[] = ["engine", "metadata", "scheduling", "study-planner", "topics", "course-update", "syllabus-retrieve", "course-intel", "usage"];
 
 interface SettingsContainerProps {
   user: User;
@@ -155,7 +157,7 @@ export default function SettingsContainer({ user, profile, aiDefaults }: Setting
           <div className="flex-1 min-h-0 flex flex-col">
             <AISettingsCard
               key={`${active}-${profile ? JSON.stringify(profile) : "default-ai"}`}
-              section={active as "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "usage"}
+              section={active as "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "syllabus-retrieve" | "course-intel" | "usage"}
               initialProvider={(profile?.ai_provider as string) || "perplexity"}
               initialModel={(profile?.ai_default_model as string) || aiDefaults.modelCatalog.perplexity[0] || ""}
               initialWebSearchEnabled={(profile?.ai_web_search_enabled as boolean | undefined) ?? false}
@@ -165,6 +167,7 @@ export default function SettingsContainer({ user, profile, aiDefaults }: Setting
               initialTopicsPromptTemplate={(profile?.ai_topics_prompt_template as string) || ""}
               initialCourseUpdatePromptTemplate={(profile?.ai_course_update_prompt_template as string) || ""}
               initialSyllabusPromptTemplate={(profile?.ai_syllabus_prompt_template as string) || ""}
+              initialCourseIntelPromptTemplate={(profile?.ai_course_intel_prompt_template as string) || ""}
               modelCatalog={aiDefaults.modelCatalog}
             />
           </div>

@@ -6,7 +6,7 @@ import { AI_PROVIDERS } from "@/lib/ai/models-client";
 import { useAppToast } from "@/components/common/AppToastProvider";
 import { Save, Loader2, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles, BookOpen } from "lucide-react";
 
-type AISectionId = "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "syllabus-retrieve" | "usage";
+type AISectionId = "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "syllabus-retrieve" | "course-intel" | "usage";
 
 interface AISettingsCardProps {
   section: AISectionId;
@@ -19,6 +19,7 @@ interface AISettingsCardProps {
   initialTopicsPromptTemplate: string;
   initialCourseUpdatePromptTemplate: string;
   initialSyllabusPromptTemplate: string;
+  initialCourseIntelPromptTemplate: string;
   modelCatalog: { perplexity: string[]; gemini: string[] };
 }
 
@@ -95,6 +96,7 @@ export default function AISettingsCard({
   initialTopicsPromptTemplate,
   initialCourseUpdatePromptTemplate,
   initialSyllabusPromptTemplate,
+  initialCourseIntelPromptTemplate,
   modelCatalog,
 }: AISettingsCardProps) {
   const perplexityModels = modelCatalog.perplexity;
@@ -108,6 +110,7 @@ export default function AISettingsCard({
   const [topicsPromptTemplate, setTopicsPromptTemplate] = useState(initialTopicsPromptTemplate);
   const [courseUpdatePromptTemplate, setCourseUpdatePromptTemplate] = useState(initialCourseUpdatePromptTemplate);
   const [syllabusPromptTemplate, setSyllabusPromptTemplate] = useState(initialSyllabusPromptTemplate);
+  const [courseIntelPromptTemplate, setCourseIntelPromptTemplate] = useState(initialCourseIntelPromptTemplate);
 
   const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [isSavingDescription, setIsSavingDescription] = useState(false);
@@ -116,6 +119,7 @@ export default function AISettingsCard({
   const [isSavingTopics, setIsSavingTopics] = useState(false);
   const [isSavingCourseUpdate, setIsSavingCourseUpdate] = useState(false);
   const [isSavingSyllabus, setIsSavingSyllabus] = useState(false);
+  const [isSavingCourseIntel, setIsSavingCourseIntel] = useState(false);
   const { showToast } = useAppToast();
 
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
@@ -240,6 +244,20 @@ export default function AISettingsCard({
         showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingCourseUpdate(false);
+      }
+    })();
+  };
+
+  const saveCourseIntelPrompt = () => {
+    setIsSavingCourseIntel(true);
+    void (async () => {
+      try {
+        await updateAiPromptTemplates({ courseIntelPromptTemplate });
+        showToast({ type: "success", message: "Course intel logic updated." });
+      } catch (error) {
+        showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
+      } finally {
+        setIsSavingCourseIntel(false);
       }
     })();
   };
@@ -560,6 +578,44 @@ export default function AISettingsCard({
               className="w-full flex-1 min-h-0 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
               placeholder="ENTER_INSTRUCTION_SET..."
               disabled={isSavingSyllabus}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 8. Usage Statistics */}
+      <div className={section === "course-intel" ? "h-full flex flex-col" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
+            <div className="flex items-center gap-2 text-[#222]">
+              <Sparkles className="w-4 h-4 text-[#777]" />
+              <span className="text-sm font-semibold">Course Intel Logic</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={saveCourseIntelPrompt}
+                disabled={isSavingCourseIntel}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
+              >
+                {isSavingCourseIntel ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                Push Course Intel Logic
+              </button>
+              <button
+                onClick={() => setCourseIntelPromptTemplate("")}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0 gap-3">
+            <textarea
+              value={courseIntelPromptTemplate}
+              onChange={(e) => setCourseIntelPromptTemplate(e.target.value)}
+              className="w-full flex-1 min-h-0 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingCourseIntel}
             />
           </div>
         </div>

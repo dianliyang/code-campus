@@ -76,13 +76,13 @@ export const getUser = cache(async () => {
 async function fetchProfileSettings(userId: string): Promise<Record<string, unknown> | null> {
   const supabase = createAdminClient();
   const selectVariants = [
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_planner_prompt_template, ai_topics_prompt_template, ai_course_update_prompt_template, ai_usage_calls, ai_usage_tokens",
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_planner_prompt_template, ai_topics_prompt_template, ai_usage_calls, ai_usage_tokens",
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_planner_prompt_template, ai_topics_prompt_template, ai_usage_calls, ai_usage_tokens",
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_planner_prompt_template, ai_usage_calls, ai_usage_tokens",
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_topics_prompt_template, ai_course_update_prompt_template, ai_usage_calls, ai_usage_tokens",
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_topics_prompt_template, ai_usage_calls, ai_usage_tokens",
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template, ai_course_update_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_planner_prompt_template, ai_topics_prompt_template, ai_course_update_prompt_template, ai_syllabus_prompt_template, ai_course_intel_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_planner_prompt_template, ai_topics_prompt_template, ai_syllabus_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_planner_prompt_template, ai_topics_prompt_template, ai_syllabus_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_planner_prompt_template, ai_syllabus_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_topics_prompt_template, ai_course_update_prompt_template, ai_syllabus_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_study_plan_prompt_template, ai_topics_prompt_template, ai_syllabus_prompt_template, ai_usage_calls, ai_usage_tokens",
+    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template, ai_course_update_prompt_template, ai_syllabus_prompt_template, ai_usage_calls, ai_usage_tokens",
     "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template, ai_usage_calls, ai_usage_tokens",
     "ai_default_model, ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template",
     "ai_web_search_enabled, ai_prompt_template, ai_topics_prompt_template",

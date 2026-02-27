@@ -87,18 +87,26 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
         .order("start_date", { ascending: true })
     : Promise.resolve({ data: [] });
 
+  const syllabusPromise = supabase
+    .from('course_syllabi')
+    .select('source_url, content, schedule, retrieved_at')
+    .eq('course_id', Number(id))
+    .maybeSingle();
+
   const [
     { data, error },
     { data: enrollment },
     { data: topicRows },
     { data: semesterRows },
     { data: studyPlanRows },
+    { data: syllabusData },
   ] = await Promise.all([
     coursePromise,
     enrollmentPromise,
     topicsPromise,
     semestersPromise,
     studyPlansPromise,
+    syllabusPromise,
   ]);
 
   if (error || !data) {
@@ -152,6 +160,12 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
           ? { id: relatedProjectSeminar.id, category: relatedProjectSeminar.category || "Project/Seminar" }
           : null
       }
+      syllabus={syllabusData ? {
+        source_url: syllabusData.source_url,
+        content: (syllabusData.content as Record<string, unknown>) ?? {},
+        schedule: (syllabusData.schedule as unknown[]) ?? [],
+        retrieved_at: syllabusData.retrieved_at,
+      } : null}
     />
   );
 }

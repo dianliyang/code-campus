@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
@@ -10,7 +10,8 @@ import { Check, Clock, ExternalLink, Globe, Info, Loader2, Minus, PenSquare, Plu
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
-import { resolveInitialCourseDetailTab, type CourseDetailTab } from "@/lib/course-detail-tabs";
+import CourseSyllabusTable, { type SyllabusEntry, type SyllabusContent } from "@/components/courses/CourseSyllabusTable";
+import { trackAiUsage } from "@/lib/ai/usage";
 
 interface CourseDetailContentProps {
   course: Course;
@@ -20,6 +21,12 @@ interface CourseDetailContentProps {
   availableSemesters: string[];
   studyPlans: EditableStudyPlan[];
   projectSeminarRef?: { id: number; category: string } | null;
+  syllabus?: {
+    source_url: string | null;
+    content: Record<string, unknown>;
+    schedule: unknown[];
+    retrieved_at: string;
+  } | null;
 }
 
 export default function CourseDetailContent({
@@ -30,10 +37,14 @@ export default function CourseDetailContent({
   availableSemesters,
   studyPlans,
   projectSeminarRef = null,
+  syllabus = null,
 }: CourseDetailContentProps) {
   const [enrolled, setEnrolled] = useState(isEnrolled);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSyllabusRetrieving, setIsSyllabusRetrieving] = useState(false);
+  const [syllabusStatus, setSyllabusStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [syllabusData, setSyllabusData] = useState(syllabus);
   const [isGeneratingPlans, setIsGeneratingPlans] = useState(false);
   const [isConfirmingPlans, setIsConfirmingPlans] = useState(false);
   const [editablePlans, setEditablePlans] = useState<EditableStudyPlan[]>(studyPlans);
@@ -51,11 +62,6 @@ export default function CourseDetailContent({
   const [isAddingUrl, setIsAddingUrl] = useState(false);
   const [removingUrlIndex, setRemovingUrlIndex] = useState<number | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const queryTab = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState<CourseDetailTab>(() =>
-    resolveInitialCourseDetailTab({ isEnrolled, queryTab }),
-  );
   const [scheduleView, setScheduleView] = useState<"list" | "calendar">("list");
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const hasStudyPlans = editablePlans.length > 0;
@@ -107,8 +113,8 @@ export default function CourseDetailContent({
   }, [course.relatedUrls]);
 
   useEffect(() => {
-    setActiveTab(resolveInitialCourseDetailTab({ isEnrolled, queryTab }));
-  }, [isEnrolled, queryTab]);
+    setSyllabusData(syllabus);
+  }, [syllabus]);
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);
@@ -265,6 +271,30 @@ export default function CourseDetailContent({
     }
   };
 
+  const handleRetrieveSyllabus = async () => {
+    setIsSyllabusRetrieving(true);
+    setSyllabusStatus('idle');
+    try {
+      const res = await fetch('/api/ai/syllabus-retrieve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId: course.id }),
+      });
+      if (res.ok) {
+        setSyllabusStatus('success');
+        trackAiUsage({ calls: 1, tokens: 2048 });
+        startTransition(() => router.refresh());
+      } else {
+        setSyllabusStatus('error');
+      }
+    } catch {
+      setSyllabusStatus('error');
+    } finally {
+      setIsSyllabusRetrieving(false);
+      setTimeout(() => setSyllabusStatus('idle'), 3000);
+    }
+  };
+
   return (
     <div className="space-y-4 pb-4">
       <CourseDetailHeader
@@ -272,26 +302,25 @@ export default function CourseDetailContent({
         isEditing={isEditing}
         onToggleEdit={() => setIsEditing(!isEditing)}
         projectSeminarRef={projectSeminarRef}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onRetrieveSyllabus={handleRetrieveSyllabus}
+        isSyllabusRetrieving={isSyllabusRetrieving}
+        syllabusStatus={syllabusStatus}
       />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 space-y-4">
-          {activeTab === "overview" && (
-            <CourseDetailTopSection
-              course={course}
-              descriptionEmptyText={descriptionEmptyText}
-              availableTopics={availableTopics}
-              availableSemesters={availableSemesters}
-              studyPlans={studyPlans}
-              isEditing={isEditing}
-              onEditingChange={setIsEditing}
-              projectSeminarRef={projectSeminarRef}
-              showHeader={false}
-            />
-          )}
+          <CourseDetailTopSection
+            course={course}
+            descriptionEmptyText={descriptionEmptyText}
+            availableTopics={availableTopics}
+            availableSemesters={availableSemesters}
+            studyPlans={studyPlans}
+            isEditing={isEditing}
+            onEditingChange={setIsEditing}
+            projectSeminarRef={projectSeminarRef}
+            showHeader={false}
+          />
 
-          {activeTab === "overview" && codeBreakdown.length > 0 && (
+          {codeBreakdown.length > 0 && (
             <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
               <h2 className="text-base font-semibold text-[#1f1f1f] mb-4">Code Breakdown</h2>
               <dl className="space-y-4 text-sm">
@@ -310,8 +339,7 @@ export default function CourseDetailContent({
             </section>
           )}
 
-          {activeTab === "schedule" && (
-            <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3">
+          <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3">
               <div className="inline-flex items-center rounded-[7px] border border-[#dedede] bg-[#f4f4f4] p-[2px]">
                 <button
                   type="button"
@@ -338,10 +366,9 @@ export default function CourseDetailContent({
                   Calendar
                 </button>
               </div>
-            </section>
-          )}
+          </section>
 
-          {activeTab === "schedule" && scheduleView === "calendar" && (
+          {scheduleView === "calendar" && (
             <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
               <h2 className="text-base font-semibold text-[#1f1f1f] mb-3">Weekly Calendar</h2>
               {editablePlans.length > 0 ? (
@@ -362,7 +389,7 @@ export default function CourseDetailContent({
             </section>
           )}
 
-          {activeTab === "schedule" && scheduleView === "list" && (hasStudyPlans || course.details?.schedule || (course.instructors && course.instructors.length > 0)) && (
+          {scheduleView === "list" && (hasStudyPlans || course.details?.schedule || (course.instructors && course.instructors.length > 0)) && (
             <section>
               <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
               <h2 className="text-base font-semibold text-[#1f1f1f] mb-3">Logistics</h2>
@@ -632,7 +659,7 @@ export default function CourseDetailContent({
             </section>
           )}
 
-          {activeTab === "overview" && (course.prerequisites || course.corequisites) && (
+          {(course.prerequisites || course.corequisites) && (
             <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
               <h2 className="text-base font-semibold text-[#1f1f1f] mb-3">Prerequisites</h2>
               <div className="space-y-8">
@@ -652,19 +679,22 @@ export default function CourseDetailContent({
             </section>
           )}
 
-          {activeTab === "assignments" && (
-            <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-              <h2 className="text-base font-semibold text-[#1f1f1f] mb-2">Assignments</h2>
-              <p className="text-sm text-[#888]">No assignment data yet.</p>
-            </section>
-          )}
+          <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+            <h2 className="text-base font-semibold text-[#1f1f1f] mb-4">Syllabus</h2>
+            {syllabusData ? (
+              <CourseSyllabusTable
+                schedule={(syllabusData.schedule as SyllabusEntry[]) || []}
+                content={(syllabusData.content as SyllabusContent) || {}}
+                sourceUrl={syllabusData.source_url}
+              />
+            ) : (
+              <p className="text-sm text-[#888]">
+                No syllabus retrieved yet. Use the{" "}
+                <span className="font-medium text-[#444]">Retrieve Syllabus</span> button in the header.
+              </p>
+            )}
+          </section>
 
-          {activeTab === "grades" && (
-            <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-              <h2 className="text-base font-semibold text-[#1f1f1f] mb-2">Grades</h2>
-              <p className="text-sm text-[#888]">No grade data yet.</p>
-            </section>
-          )}
         </div>
 
         <aside className="lg:col-span-4 space-y-4">
@@ -710,8 +740,7 @@ export default function CourseDetailContent({
                 </div>
               </div>
 
-              {(activeTab === "overview" || activeTab === "schedule") && (
-                <>
+              <>
                 <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-[#1f1f1f]">Resources</h3>
@@ -871,21 +900,6 @@ export default function CourseDetailContent({
                 </dl>
               </div>
               </>
-              )}
-
-              {activeTab === "assignments" && (
-                <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-                  <h3 className="text-sm font-semibold text-[#1f1f1f] mb-2">Assignments Context</h3>
-                  <p className="text-sm text-[#888]">No immediate deadlines available.</p>
-                </div>
-              )}
-
-              {activeTab === "grades" && (
-                <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-                  <h3 className="text-sm font-semibold text-[#1f1f1f] mb-2">Grades Context</h3>
-                  <p className="text-sm text-[#888]">No grade summary available.</p>
-                </div>
-              )}
 
           </div>
         </aside>

@@ -1258,25 +1258,14 @@ Output requirements:
   return text;
 }
 
-function normalizeAiTopics(rawText: string): string[] {
-  const text = rawText.trim();
-  if (!text) return [];
-
-  const cleaned = text
-    .replace(/^```(?:json)?/i, "")
-    .replace(/```$/i, "")
-    .trim();
-
+function normalizeAiTopics(rawTopics: unknown): string[] {
   let candidates: string[] = [];
-  try {
-    const parsed = JSON.parse(cleaned) as unknown;
-    if (Array.isArray(parsed)) {
-      candidates = parsed.map((item) => String(item || ""));
-    }
-  } catch {
-    candidates = cleaned
-      .split(/[\n,;|]/g)
-      .map((part) => part.trim());
+  if (Array.isArray(rawTopics)) {
+    candidates = rawTopics.map((item) => String(item || ""));
+  } else if (typeof rawTopics === "string") {
+    candidates = rawTopics.split(/[\n,;|]/g).map((part) => part.trim());
+  } else {
+    return [];
   }
 
   const seen = new Set<string>();
@@ -1294,18 +1283,13 @@ function normalizeAiTopics(rawText: string): string[] {
   return normalized.slice(0, 6);
 }
 
-function normalizeAiTopicsFromUnknown(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return normalizeAiTopics(value.map((item) => String(item ?? "")).join(", "));
-  }
-  if (typeof value === "string") {
-    return normalizeAiTopics(value);
-  }
-  return [];
+interface AiCourseMetadata {
+  subdomain: string | null;
+  topics: string[];
 }
 
-function extractTopicsByCourseId(raw: unknown): Map<number, string[]> {
-  const result = new Map<number, string[]>();
+function extractMetadataByCourseId(raw: unknown): Map<number, AiCourseMetadata> {
+  const result = new Map<number, AiCourseMetadata>();
 
   if (!raw || typeof raw !== "object") return result;
 
@@ -1314,8 +1298,11 @@ function extractTopicsByCourseId(raw: unknown): Map<number, string[]> {
       if (!item || typeof item !== "object") continue;
       const id = Number((item as Record<string, unknown>).id ?? (item as Record<string, unknown>).course_id);
       if (!Number.isFinite(id) || id <= 0) continue;
-      const topics = normalizeAiTopicsFromUnknown((item as Record<string, unknown>).topics);
-      result.set(id, topics);
+      
+      const topics = normalizeAiTopics((item as Record<string, unknown>).topics);
+      const subdomain = (item as Record<string, unknown>).subdomain ? String((item as Record<string, unknown>).subdomain) : null;
+      
+      result.set(id, { subdomain, topics });
     }
     return result;
   }
@@ -1323,7 +1310,15 @@ function extractTopicsByCourseId(raw: unknown): Map<number, string[]> {
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
     const id = Number(key);
     if (!Number.isFinite(id) || id <= 0) continue;
-    result.set(id, normalizeAiTopicsFromUnknown(value));
+    
+    if (value && typeof value === "object") {
+      const topics = normalizeAiTopics((value as Record<string, unknown>).topics);
+      const subdomain = (value as Record<string, unknown>).subdomain ? String((value as Record<string, unknown>).subdomain) : null;
+      result.set(id, { subdomain, topics });
+    } else {
+      // Fallback for older formats where it might just be the array of topics
+      result.set(id, { subdomain: null, topics: normalizeAiTopics(value) });
+    }
   }
 
   return result;
@@ -1361,7 +1356,7 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
 
   const { data: rows, error: rowsError } = await supabase
     .from("courses")
-    .select("id, title, fields:course_fields(fields(name))")
+    .select("id, title, description, fields:course_fields(fields(name))")
     .in("id", uniqueCourseIds);
 
   if (rowsError) {
@@ -1385,7 +1380,7 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
                   parts: [{ text: "You are a precise university catalog classifier." }],
                 },
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.2, maxOutputTokens: 220 },
+                generationConfig: { temperature: 0.1, maxOutputTokens: 2500 },
                 tools: webSearchEnabled ? [{ google_search: {} }] : undefined,
               }),
             },
@@ -1407,8 +1402,8 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
                 { role: "system", content: "You are a precise university catalog classifier." },
                 { role: "user", content: prompt },
               ],
-              temperature: 0.2,
-              max_tokens: 1800,
+              temperature: 0.1,
+              max_tokens: 2500,
               return_images: false,
               return_related_questions: false,
               disable_search: !webSearchEnabled,
@@ -1472,6 +1467,7 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
   const coursesForPrompt = (rows || []).map((row) => ({
     id: row.id,
     title: row.title || "",
+    description: row.description || "",
     existing_topics: (
       (row.fields as Array<{ fields: { name: string } | null }>)
         ?.map((entry) => entry.fields?.name || "")
@@ -1479,25 +1475,14 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
     ),
   }));
 
-  const prompt = topicsTemplate.includes("{{course_batch_json}}")
-    ? applyPromptTemplate(topicsTemplate, {
-        course_batch_json: JSON.stringify(coursesForPrompt),
-        course_count: String(coursesForPrompt.length),
-      })
-    : `${topicsTemplate}
-
-Task:
-- Classify topics for ALL courses below in one pass.
-- Return ONLY valid JSON object where keys are course id strings and values are arrays of topic strings.
-- Keep 3-6 concise topics per course.
-- No markdown, no prose.
-
-Courses JSON:
-${JSON.stringify(coursesForPrompt)}`;
+  const prompt = applyPromptTemplate(topicsTemplate, {
+    course_batch_json: JSON.stringify(coursesForPrompt),
+    course_count: String(coursesForPrompt.length),
+  });
 
   const aiResult = await aiGenerate(prompt);
   const parsed = parseLenientJson(aiResult.text);
-  const topicsByCourseId = extractTopicsByCourseId(parsed);
+  const metadataByCourseId = extractMetadataByCourseId(parsed);
 
   await logAiUsage({
     userId: user.id,
@@ -1509,7 +1494,7 @@ ${JSON.stringify(coursesForPrompt)}`;
     prompt,
     responseText: aiResult.text,
     requestPayload: { course_ids: uniqueCourseIds, course_count: uniqueCourseIds.length },
-    responsePayload: Object.fromEntries(topicsByCourseId),
+    responsePayload: Object.fromEntries(metadataByCourseId),
   });
 
   let updated = 0;
@@ -1517,49 +1502,54 @@ ${JSON.stringify(coursesForPrompt)}`;
 
   for (const row of rows || []) {
     try {
-      const topics = topicsByCourseId.get(Number(row.id)) || [];
+      const metadata = metadataByCourseId.get(Number(row.id));
+      const topics = metadata?.topics || [];
+      const subdomain = metadata?.subdomain || null;
 
-      if (!topics.length) {
+      if (!topics.length && !subdomain) {
         failed += 1;
         continue;
       }
 
-      const { error: fieldUpsertError } = await supabase
-        .from("fields")
-        .upsert(topics.map((name) => ({ name })), { onConflict: "name", ignoreDuplicates: true });
-      if (fieldUpsertError) {
-        throw fieldUpsertError;
+      // 1. Update Subdomain
+      if (subdomain) {
+        await supabase
+          .from("courses")
+          .update({ subdomain })
+          .eq("id", row.id);
       }
 
-      const { data: fieldRows, error: fieldFetchError } = await supabase
-        .from("fields")
-        .select("id, name")
-        .in("name", topics);
-      if (fieldFetchError) {
-        throw fieldFetchError;
-      }
+      // 2. Update Topics (Fields)
+      if (topics.length > 0) {
+        const { error: fieldUpsertError } = await supabase
+          .from("fields")
+          .upsert(topics.map((name) => ({ name })), { onConflict: "name", ignoreDuplicates: true });
+        if (fieldUpsertError) throw fieldUpsertError;
 
-      const { error: clearError } = await supabase
-        .from("course_fields")
-        .delete()
-        .eq("course_id", row.id);
-      if (clearError) {
-        throw clearError;
-      }
+        const { data: fieldRows, error: fieldFetchError } = await supabase
+          .from("fields")
+          .select("id, name")
+          .in("name", topics);
+        if (fieldFetchError) throw fieldFetchError;
 
-      if ((fieldRows || []).length > 0) {
-        const { error: linkError } = await supabase
+        const { error: clearError } = await supabase
           .from("course_fields")
-          .insert((fieldRows || []).map((field) => ({ course_id: row.id, field_id: field.id })));
-        if (linkError) {
-          throw linkError;
+          .delete()
+          .eq("course_id", row.id);
+        if (clearError) throw clearError;
+
+        if ((fieldRows || []).length > 0) {
+          const { error: linkError } = await supabase
+            .from("course_fields")
+            .insert((fieldRows || []).map((field) => ({ course_id: row.id, field_id: field.id })));
+          if (linkError) throw linkError;
         }
       }
 
       updated += 1;
     } catch (error) {
       failed += 1;
-      console.error(`Failed to generate topics for course ${row.id}:`, error);
+      console.error(`Failed to generate metadata for course ${row.id}:`, error);
     }
   }
 

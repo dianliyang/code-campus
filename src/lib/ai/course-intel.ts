@@ -282,16 +282,39 @@ export async function runCourseIntel(userId: string, courseId: number) {
     resources: resourcesContext,
   });
 
-  const { text, usage } = await generateText({
-    model: perplexity.chat(modelName),
-    prompt,
-    maxOutputTokens: 4096,
-  });
+  const runExtraction = async (maxOutputTokens: number) => {
+    const { text, usage } = await generateText({
+      model: perplexity.chat(modelName),
+      prompt,
+      maxOutputTokens,
+    });
 
-  const parsedAny = parseLenientJson(text);
-  const parsed = (parsedAny && typeof parsedAny === "object" && !Array.isArray(parsedAny))
-    ? (parsedAny as Record<string, unknown>)
-    : {};
+    const parsedAny = parseLenientJson(text);
+    const parsed = (parsedAny && typeof parsedAny === "object" && !Array.isArray(parsedAny))
+      ? (parsedAny as Record<string, unknown>)
+      : {};
+
+    const scheduleArray = Array.isArray(parsed.schedule) ? (parsed.schedule as Array<Record<string, unknown>>) : [];
+    return { text, usage, parsed, scheduleArray };
+  };
+
+  const firstAttempt = await runExtraction(8192);
+  let extraction = firstAttempt;
+
+  // Retry once when the model likely returned a partial syllabus.
+  if (firstAttempt.scheduleArray.length <= 1) {
+    const retryAttempt = await runExtraction(12000);
+    if (retryAttempt.scheduleArray.length > firstAttempt.scheduleArray.length) {
+      extraction = retryAttempt;
+    }
+  }
+
+  const text = extraction.text;
+  const parsed = extraction.parsed;
+  const usage = {
+    inputTokens: (firstAttempt.usage.inputTokens || 0) + (extraction === firstAttempt ? 0 : (extraction.usage.inputTokens || 0)),
+    outputTokens: (firstAttempt.usage.outputTokens || 0) + (extraction === firstAttempt ? 0 : (extraction.usage.outputTokens || 0)),
+  };
 
   const rawSourceUrl = extractSourceUrlFromRawText(text);
   const rawResources = extractResourcesFromRawText(text);
@@ -299,7 +322,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
   const parsedResources = normalizeResources(parsed.resources);
   const sourceUrl = typeof parsed.source_url === "string" ? parsed.source_url : rawSourceUrl;
   const content = (parsed.content && typeof parsed.content === "object" ? parsed.content : {}) as Json;
-  const scheduleArray = Array.isArray(parsed.schedule) ? (parsed.schedule as Array<Record<string, unknown>>) : [];
+  const scheduleArray = extraction.scheduleArray;
   const schedule = scheduleArray as Json;
   const rawClaimsSchedule = /"schedule"\s*:\s*\[/i.test(text);
   const rawClaimsSource = /"source_url"\s*:/i.test(text);

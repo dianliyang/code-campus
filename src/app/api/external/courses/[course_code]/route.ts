@@ -154,7 +154,7 @@ export async function PATCH(
 
     // Mapping of external body fields to internal database columns
     const updatePayload: Record<string, string | number | boolean | string[] | null> = {};
-    
+
     // Whitelist of allowed fields for partial update
     const allowedFields: Record<string, string> = {
       subdomain: 'subdomain',
@@ -185,32 +185,62 @@ export async function PATCH(
       }
     }
 
-    if (Object.keys(updatePayload).length === 0) {
+    // Schedule updates: only location and kind are allowed
+    const scheduleUpdates = Array.isArray(body.schedules)
+      ? (body.schedules as Array<{ id: string; location?: string; kind?: string }>)
+          .filter((s) => typeof s.id === 'string')
+      : [];
+
+    if (Object.keys(updatePayload).length === 0 && scheduleUpdates.length === 0) {
       return NextResponse.json({ error: 'No valid update fields provided' }, { status: 400 });
     }
 
-    const { error } = await supabase
-      .from('courses')
-      .update(updatePayload)
-      .eq('course_code', courseCode)
-      .select('id, course_code')
-      .single();
+    // Update course fields
+    if (Object.keys(updatePayload).length > 0) {
+      const { error } = await supabase
+        .from('courses')
+        .update(updatePayload)
+        .eq('course_code', courseCode)
+        .select('id, course_code')
+        .single();
 
-    if (error) {
-      console.error('Supabase update error:', error);
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      if (error) {
+        console.error('Supabase update error:', error);
+        if (error.code === 'PGRST116') {
+          return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+        }
+        return NextResponse.json(
+          { error: 'Database error', details: error.message },
+          { status: 500 }
+        );
       }
-      return NextResponse.json(
-        { error: 'Database error', details: error.message },
-        { status: 500 }
-      );
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    // Update schedules (location and kind only)
+    const scheduleErrors: string[] = [];
+    for (const s of scheduleUpdates) {
+      const schedulePayload: { location?: string; kind?: string } = {};
+      if ('location' in s) schedulePayload.location = s.location;
+      if ('kind' in s) schedulePayload.kind = s.kind;
+      if (Object.keys(schedulePayload).length === 0) continue;
+
+      const { error } = await supabase
+        .from('study_plans')
+        .update(schedulePayload)
+        .eq('uid', s.id);
+
+      if (error) {
+        console.error('Schedule update error:', error);
+        scheduleErrors.push(s.id);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
       message: `Course ${courseCode} updated successfully`,
-      updated_fields: Object.keys(updatePayload)
+      updated_fields: Object.keys(updatePayload),
+      updated_schedules: scheduleUpdates.length - scheduleErrors.length,
+      ...(scheduleErrors.length > 0 && { schedule_errors: scheduleErrors }),
     });
   } catch (error) {
     console.error('API implementation error:', error);

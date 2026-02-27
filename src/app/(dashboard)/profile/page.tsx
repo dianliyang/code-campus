@@ -118,33 +118,6 @@ export default async function ProfilePage() {
         </div>
       </section>
 
-      {awards.length > 0 && (
-        <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-          <h2 className="text-base font-semibold text-[#1f1f1f] mb-4 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-            </span>
-            Academic Achievements
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {awards.map((award) => (
-              <div key={award} className="group relative overflow-hidden rounded-xl border border-[#e8e8e8] bg-white p-4 transition-all hover:border-slate-900 hover:shadow-md">
-                <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-slate-900 to-slate-700 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-900 group-hover:bg-slate-900 group-hover:text-white transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 leading-none">Mastery Award</p>
-                    <h3 className="mt-1 text-sm font-semibold text-slate-900 truncate">{award}</h3>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       <section className="grid grid-cols-2 lg:grid-cols-4 rounded-lg overflow-hidden border border-[#e5e5e5] bg-[#fcfcfc]">
         <div className="px-4 py-3 border-r border-b lg:border-b-0 border-[#e5e5e5]">
           <p className="text-xs text-slate-500">Courses Enrolled</p>

@@ -255,6 +255,7 @@ export type Database = {
           ai_planner_prompt_template: string | null
           ai_topics_prompt_template: string | null
           ai_course_update_prompt_template: string | null
+          ai_syllabus_prompt_template: string | null
           ai_web_search_enabled: boolean
           created_at: string
           email: string | null
@@ -272,6 +273,7 @@ export type Database = {
           ai_planner_prompt_template?: string | null
           ai_topics_prompt_template?: string | null
           ai_course_update_prompt_template?: string | null
+          ai_syllabus_prompt_template?: string | null
           ai_web_search_enabled?: boolean
           created_at?: string
           email?: string | null
@@ -289,6 +291,7 @@ export type Database = {
           ai_planner_prompt_template?: string | null
           ai_topics_prompt_template?: string | null
           ai_course_update_prompt_template?: string | null
+          ai_syllabus_prompt_template?: string | null
           ai_web_search_enabled?: boolean
           created_at?: string
           email?: string | null

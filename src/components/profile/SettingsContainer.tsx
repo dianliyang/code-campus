@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { User } from "@supabase/supabase-js";
-import { LucideIcon, Cpu, FileCode, CalendarDays, Tag, Search, BarChart2, Shield, UserX, Database, Sparkles } from "lucide-react";
+import { LucideIcon, Cpu, FileCode, CalendarDays, Tag, Search, BarChart2, Shield, UserX, Database, Sparkles, BookOpen } from "lucide-react";
 
 const AISettingsCard = dynamic(() => import("./AISettingsCard"), { ssr: false });
 const SecurityIdentitySection = dynamic(() => import("./SecurityIdentitySection"), { ssr: false });
 const SystemMaintenanceCard = dynamic(() => import("./SystemMaintenanceCard"), { ssr: false });
 
 export type SectionId =
-  | "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "usage"
+  | "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "syllabus-retrieve" | "usage"
   | "identity" | "account"
   | "sync";
 
@@ -25,8 +25,9 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
       { id: "scheduling",    label: "Scheduling Logic",     icon: CalendarDays },
       { id: "study-planner", label: "Study Planner Logic",  icon: Sparkles },
       { id: "topics",        label: "Topic Classification", icon: Tag },
-      { id: "course-update", label: "Course Update Search", icon: Search },
-      { id: "usage",         label: "Usage Statistics",     icon: BarChart2 },
+      { id: "course-update",     label: "Course Update Search", icon: Search },
+      { id: "syllabus-retrieve", label: "Syllabus Retrieve",    icon: BookOpen },
+      { id: "usage",             label: "Usage Statistics",     icon: BarChart2 },
     ],
   },
   {
@@ -53,14 +54,15 @@ const SECTION_META: Record<SectionId, { title: string; desc: string }> = {
   "scheduling":    { title: "Scheduling Logic",       desc: "Prompt template for study plan generation." },
   "study-planner": { title: "Study Planner Logic",    desc: "Prompt template for AI planner course recommendations." },
   "topics":        { title: "Topic Classification",   desc: "Prompt template for topic tagging." },
-  "course-update": { title: "Course Update Search",   desc: "Prompt template for web search queries." },
-  "usage":         { title: "Usage Statistics",       desc: "AI call history, token usage, and cost breakdown." },
+  "course-update":     { title: "Course Update Search",   desc: "Prompt template for web search queries." },
+  "syllabus-retrieve": { title: "Syllabus Retrieve Logic", desc: "Prompt template for syllabus retrieval." },
+  "usage":             { title: "Usage Statistics",       desc: "AI call history, token usage, and cost breakdown." },
   "identity":      { title: "Identity & Security",    desc: "Authentication provider and account status." },
   "account":       { title: "Account",                desc: "Danger zone — irreversible operations." },
   "sync":          { title: "Data Synchronization",   desc: "Synchronize course catalogs from institution scrapers." },
 };
 
-const AI_SECTIONS: SectionId[] = ["engine", "metadata", "scheduling", "study-planner", "topics", "course-update", "usage"];
+const AI_SECTIONS: SectionId[] = ["engine", "metadata", "scheduling", "study-planner", "topics", "course-update", "syllabus-retrieve", "usage"];
 
 interface SettingsContainerProps {
   user: User;
@@ -73,6 +75,7 @@ interface SettingsContainerProps {
       planner: string;
       topics: string;
       courseUpdate: string;
+      syllabusRetrieve: string;
     };
   };
 }
@@ -169,6 +172,7 @@ export default function SettingsContainer({ user, profile, aiDefaults }: Setting
               initialPlannerPromptTemplate={(profile?.ai_planner_prompt_template as string) || ""}
               initialTopicsPromptTemplate={(profile?.ai_topics_prompt_template as string) || ""}
               initialCourseUpdatePromptTemplate={(profile?.ai_course_update_prompt_template as string) || ""}
+              initialSyllabusPromptTemplate={(profile?.ai_syllabus_prompt_template as string) || ""}
               modelCatalog={aiDefaults.modelCatalog}
               defaultPrompts={aiDefaults.prompts}
             />

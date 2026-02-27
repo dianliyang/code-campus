@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS } from "@/lib/ai/models-client";
 import { useAppToast } from "@/components/common/AppToastProvider";
-import { Save, Loader2, RefreshCcw, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles } from "lucide-react";
+import { Save, Loader2, RefreshCcw, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles, BookOpen } from "lucide-react";
 
-type AISectionId = "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "usage";
+type AISectionId = "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "syllabus-retrieve" | "usage";
 
 interface AISettingsCardProps {
   section: AISectionId;
@@ -18,6 +18,7 @@ interface AISettingsCardProps {
   initialPlannerPromptTemplate: string;
   initialTopicsPromptTemplate: string;
   initialCourseUpdatePromptTemplate: string;
+  initialSyllabusPromptTemplate: string;
   modelCatalog: { perplexity: string[]; gemini: string[] };
   defaultPrompts: {
     description: string;
@@ -25,6 +26,7 @@ interface AISettingsCardProps {
     planner: string;
     topics: string;
     courseUpdate: string;
+    syllabusRetrieve: string;
   };
 }
 
@@ -100,6 +102,7 @@ export default function AISettingsCard({
   initialPlannerPromptTemplate,
   initialTopicsPromptTemplate,
   initialCourseUpdatePromptTemplate,
+  initialSyllabusPromptTemplate,
   modelCatalog,
   defaultPrompts,
 }: AISettingsCardProps) {
@@ -113,6 +116,7 @@ export default function AISettingsCard({
   const [plannerPromptTemplate, setPlannerPromptTemplate] = useState(initialPlannerPromptTemplate || defaultPrompts.planner);
   const [topicsPromptTemplate, setTopicsPromptTemplate] = useState(initialTopicsPromptTemplate || defaultPrompts.topics);
   const [courseUpdatePromptTemplate, setCourseUpdatePromptTemplate] = useState(initialCourseUpdatePromptTemplate || defaultPrompts.courseUpdate);
+  const [syllabusPromptTemplate, setSyllabusPromptTemplate] = useState(initialSyllabusPromptTemplate || defaultPrompts.syllabusRetrieve);
 
   const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [isSavingDescription, setIsSavingDescription] = useState(false);
@@ -120,6 +124,7 @@ export default function AISettingsCard({
   const [isSavingPlanner, setIsSavingPlanner] = useState(false);
   const [isSavingTopics, setIsSavingTopics] = useState(false);
   const [isSavingCourseUpdate, setIsSavingCourseUpdate] = useState(false);
+  const [isSavingSyllabus, setIsSavingSyllabus] = useState(false);
   const { showToast } = useAppToast();
 
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
@@ -216,6 +221,20 @@ export default function AISettingsCard({
         showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
         setIsSavingPlanner(false);
+      }
+    })();
+  };
+
+  const saveSyllabusPrompt = () => {
+    setIsSavingSyllabus(true);
+    void (async () => {
+      try {
+        await updateAiPromptTemplates({ syllabusPromptTemplate });
+        showToast({ type: "success", message: "Syllabus retrieve logic updated." });
+      } catch (error) {
+        showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
+      } finally {
+        setIsSavingSyllabus(false);
       }
     })();
   };
@@ -522,7 +541,46 @@ export default function AISettingsCard({
         </div>
       </div>
 
-      {/* 7. Usage Statistics */}
+      {/* 7. Syllabus Retrieve Logic */}
+      <div className={section === "syllabus-retrieve" ? "h-full flex flex-col" : "hidden"}>
+        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
+            <div className="flex items-center gap-2 text-[#222]">
+              <BookOpen className="w-4 h-4 text-[#777]" />
+              <span className="text-sm font-semibold">Syllabus Retrieve Logic</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={saveSyllabusPrompt}
+                disabled={isSavingSyllabus}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
+              >
+                {isSavingSyllabus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                Push Syllabus Logic
+              </button>
+              <button
+                onClick={() => setSyllabusPromptTemplate(defaultPrompts.syllabusRetrieve)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+              >
+                <RefreshCcw className="w-3 h-3" />
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0 gap-3">
+            <textarea
+              value={syllabusPromptTemplate}
+              onChange={(e) => setSyllabusPromptTemplate(e.target.value)}
+              className="w-full flex-1 min-h-0 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              placeholder="ENTER_INSTRUCTION_SET..."
+              disabled={isSavingSyllabus}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 8. Usage Statistics */}
       <div className={section === "usage" ? "h-full flex flex-col overflow-y-auto" : "hidden"}>
         <div className="bg-white border border-[#e5e5e5] rounded-md p-4">
           <div className="flex items-center gap-2 text-[#222] mb-4 pb-3 border-b border-[#efefef]">

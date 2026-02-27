@@ -81,6 +81,7 @@ export async function updateAiPromptTemplates(input: {
   plannerPromptTemplate?: string;
   topicsPromptTemplate?: string;
   courseUpdatePromptTemplate?: string;
+  syllabusPromptTemplate?: string;
 }) {
   const user = await getUser();
   if (!user) {
@@ -129,6 +130,14 @@ export async function updateAiPromptTemplates(input: {
     updatePayload.ai_course_update_prompt_template = value || null;
   }
 
+  if (typeof input.syllabusPromptTemplate === "string") {
+    const value = input.syllabusPromptTemplate.trim();
+    if (value.length > 8000) {
+      throw new Error("Syllabus prompt template is too long");
+    }
+    updatePayload.ai_syllabus_prompt_template = value || null;
+  }
+
   if (Object.keys(updatePayload).length === 0) {
     return;
   }
@@ -165,6 +174,9 @@ export async function updateAiPromptTemplates(input: {
     }
     if (error.code === "PGRST204" && error.message?.includes("'ai_course_update_prompt_template'")) {
       throw new Error("Database column `profiles.ai_course_update_prompt_template` is missing. Please run the course update prompt migration.");
+    }
+    if (error.code === "PGRST204" && error.message?.includes("'ai_syllabus_prompt_template'")) {
+      throw new Error("Database column `profiles.ai_syllabus_prompt_template` is missing. Please run the syllabus prompt migration.");
     }
     throw new Error("Failed to update AI prompt templates");
   }

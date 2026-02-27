@@ -78,6 +78,7 @@ export default async function SettingsPage() {
             planner: aiRuntime.prompts.planner,
             topics: aiRuntime.prompts.topics,
             courseUpdate: aiRuntime.prompts.courseUpdate,
+            syllabusRetrieve: aiRuntime.prompts.syllabusRetrieve,
           },
         }}
       />

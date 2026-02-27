@@ -36,14 +36,15 @@ export async function POST(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('ai_default_model')
+    .select('ai_default_model, ai_syllabus_prompt_template')
     .eq('id', user.id)
     .maybeSingle();
 
   const runtimeConfig = await getAiRuntimeConfig();
   const modelName = await resolveModelForProvider('perplexity', String(profile?.ai_default_model || '').trim());
+  const template = (profile?.ai_syllabus_prompt_template || '').trim() || runtimeConfig.prompts.syllabusRetrieve;
 
-  const prompt = runtimeConfig.prompts.syllabusRetrieve
+  const prompt = template
     .replace('{{course_code}}', course.course_code)
     .replace('{{university}}', course.university)
     .replace('{{title}}', course.title || '');

@@ -264,15 +264,15 @@ export default function CourseList({
           </div>
           <div className="flex-1 min-w-0">Course</div>
           <div className="w-[18%] flex items-center gap-1.5">
-            <span>Topics</span>
+            <span>Subdomain</span>
             {selectedCourseIds.length >= 2 ? (
               <button
                 type="button"
                 onClick={handleGenerateTopicsForSelected}
                 disabled={isGeneratingTopics}
                 className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
-                title="Generate topics for selected courses"
-                aria-label="Generate topics for selected courses"
+                title="Generate subdomains for selected courses"
+                aria-label="Generate subdomains for selected courses"
               >
                 {isGeneratingTopics ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -287,8 +287,8 @@ export default function CourseList({
                 onClick={handleClearTopicsForSelected}
                 disabled={isClearingTopics}
                 className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
-                title="Clear topics for selected courses"
-                aria-label="Clear topics for selected courses"
+                title="Clear subdomains for selected courses"
+                aria-label="Clear subdomains for selected courses"
               >
                 {isClearingTopics ? (
                   <Loader2 className="h-3 w-3 animate-spin" />

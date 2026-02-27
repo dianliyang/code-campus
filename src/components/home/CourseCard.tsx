@@ -71,8 +71,7 @@ export default function CourseCard({
   };
 
   const credit = course.credit ?? null;
-  const primaryField = course.fields?.[0];
-  const topics = course.fields || [];
+  const primaryField = course.subdomain || course.fields?.[0];
   const level = course.level || null;
   const formattedLevel = level ? `${level.charAt(0).toUpperCase()}${level.slice(1)}` : null;
   const latestSemester = getLatestSemesterLabel(course.semesters || []);
@@ -116,15 +115,12 @@ export default function CourseCard({
         </div>
 
         <div className="w-[18%] hidden md:flex flex-wrap gap-1">
-          {topics.length > 0 ? (
-            topics.slice(0, 3).map((topic) => (
-              <span
-                key={topic}
-                className="inline-flex h-5 items-center rounded bg-[#efefef] px-1.5 text-[10px] font-medium text-[#666]"
-              >
-                {topic}
-              </span>
-            ))
+          {course.subdomain ? (
+            <span
+              className="inline-flex h-5 items-center rounded bg-slate-900 px-1.5 text-[10px] font-medium text-white"
+            >
+              {course.subdomain}
+            </span>
           ) : (
             <span className="text-xs text-[#9a9a9a]">-</span>
           )}

@@ -116,9 +116,7 @@ export default function CourseCard({
 
         <div className="w-[18%] hidden md:flex flex-wrap gap-1">
           {course.subdomain ? (
-            <span
-              className="inline-flex h-5 items-center rounded bg-slate-900 px-1.5 text-[10px] font-medium text-white"
-            >
+            <span className="text-[13px] text-[#444] truncate">
               {course.subdomain}
             </span>
           ) : (

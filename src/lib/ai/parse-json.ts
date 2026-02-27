@@ -88,6 +88,40 @@ function removeTrailingCommas(input: string): string {
   return out;
 }
 
+/**
+ * Repairs the pattern where an AI returns each key-value pair wrapped in its
+ * own extra braces, e.g.:
+ *   {"id1":{...},{"id2":{...},{"id3":{...}}
+ * →  {"id1":{...},"id2":{...},"id3":{...}}
+ *
+ * Each `,{"` (value close + comma + extra open brace before a key) is replaced
+ * with `},"` (just the separator comma). After removing N such extra braces, the
+ * string has N extra trailing `}` characters that are stripped via depth counting.
+ */
+function repairExtraBraceWrapping(input: string): string {
+  const fixed = input.replace(/\},\{"/g, '},"');
+  if (fixed === input) return input; // pattern not found, no repair needed
+
+  // Count brace depth (string-aware) to detect extra trailing }
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (const ch of fixed) {
+    if (inString) {
+      if (escaped) { escaped = false; continue; }
+      if (ch === "\\") { escaped = true; continue; }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === "{") depth++;
+    else if (ch === "}") depth--;
+  }
+
+  // depth < 0 means there are |depth| extra } at the end; trim them
+  return depth < 0 ? fixed.slice(0, depth) : fixed;
+}
+
 function extractCandidates(raw: string): string[] {
   const text = String(raw || "").trim();
   const candidates: string[] = [];
@@ -96,10 +130,14 @@ function extractCandidates(raw: string): string[] {
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenceMatch?.[1]) candidates.push(fenceMatch[1].trim());
 
-  // 2. All balanced objects/arrays
+  // 2. Repair extra-brace-wrapped keys before other strategies
+  const repaired = repairExtraBraceWrapping(text);
+  if (repaired !== text) candidates.push(repaired);
+
+  // 3. All balanced objects/arrays
   const objects = findAllBalancedSegments(text, "{", "}");
   const arrays = findAllBalancedSegments(text, "[", "]");
-  
+
   // If we found multiple objects but no array wrapper, try wrapping them
   if (objects.length > 1) {
     // Attempt to merge them if they are course metadata (object with numeric keys)
@@ -107,7 +145,7 @@ function extractCandidates(raw: string): string[] {
       const inner = obj.trim();
       return inner.startsWith("{") && inner.endsWith("}") ? inner.slice(1, -1) : inner;
     }).join(",")}}`);
-    
+
     // Also try as an array
     candidates.push(`[${objects.join(",")}]`);
   }

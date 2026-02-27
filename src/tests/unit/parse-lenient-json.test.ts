@@ -36,5 +36,15 @@ describe("parseLenientJson", () => {
     const parsed = parseLenientJson(input) as Record<string, unknown>;
     expect(parsed.track).toBe("Aggressive");
   });
+
+  test("repairs extra-brace-wrapped keys from AI output", () => {
+    // AI sometimes outputs: {"id1":{...},{"id2":{...},{"id3":{...}}
+    // instead of:           {"id1":{...},"id2":{...},"id3":{...}}
+    const input = '{"6983":{"subdomain":"AI","topics":["A","B"]},{"9035":{"subdomain":"SE","topics":["C","D"]},{"10176":{"subdomain":"AI","topics":["E","F"]}}}';
+    const parsed = parseLenientJson(input) as Record<string, unknown>;
+    expect(parsed["6983"]).toEqual({ subdomain: "AI", topics: ["A", "B"] });
+    expect(parsed["9035"]).toEqual({ subdomain: "SE", topics: ["C", "D"] });
+    expect(parsed["10176"]).toEqual({ subdomain: "AI", topics: ["E", "F"] });
+  });
 });
 

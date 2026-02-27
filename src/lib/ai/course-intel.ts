@@ -53,6 +53,20 @@ function normalizeResources(input: unknown): string[] {
   );
 }
 
+function extractSourceUrlFromRawText(raw: string): string | null {
+  const m = raw.match(/"source_url"\s*:\s*"([^"]+)"/i);
+  if (!m?.[1]) return null;
+  const v = m[1].trim();
+  return /^https?:\/\//i.test(v) ? v : null;
+}
+
+function extractResourcesFromRawText(raw: string): string[] {
+  const urls = raw.match(/https?:\/\/[^\s"\\]+/gi) || [];
+  return dedupeResourcesByDomain(
+    Array.from(new Set(urls.map((u) => u.trim()).filter((u) => /^https?:\/\//i.test(u))))
+  );
+}
+
 function dedupeResourcesByDomain(input: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -274,17 +288,31 @@ export async function runCourseIntel(userId: string, courseId: number) {
     maxOutputTokens: 4096,
   });
 
-  const parsed = parseLenientJson(text) as Record<string, unknown> | null;
-  if (!parsed) throw new Error("AI returned no valid JSON");
+  const parsedAny = parseLenientJson(text);
+  const parsed = (parsedAny && typeof parsedAny === "object" && !Array.isArray(parsedAny))
+    ? (parsedAny as Record<string, unknown>)
+    : {};
+
+  const rawSourceUrl = extractSourceUrlFromRawText(text);
+  const rawResources = extractResourcesFromRawText(text);
 
   const parsedResources = normalizeResources(parsed.resources);
-  const sourceUrl = typeof parsed.source_url === "string" ? parsed.source_url : null;
+  const sourceUrl = typeof parsed.source_url === "string" ? parsed.source_url : rawSourceUrl;
   const content = (parsed.content && typeof parsed.content === "object" ? parsed.content : {}) as Json;
   const scheduleArray = Array.isArray(parsed.schedule) ? (parsed.schedule as Array<Record<string, unknown>>) : [];
   const schedule = scheduleArray as Json;
+  const rawClaimsSchedule = /"schedule"\s*:\s*\[/i.test(text);
+  const rawClaimsSource = /"source_url"\s*:/i.test(text);
+  if (rawClaimsSchedule && scheduleArray.length === 0) {
+    throw new Error("AI returned malformed/truncated schedule JSON");
+  }
+  if (rawClaimsSource && !sourceUrl) {
+    throw new Error("AI returned malformed/truncated source_url JSON");
+  }
   const scheduleResources = extractResourcesFromSchedule(scheduleArray);
   const mergedResourceCandidates = dedupeResourcesByDomain([
     ...parsedResources,
+    ...rawResources,
     ...scheduleResources,
     ...(sourceUrl ? [sourceUrl] : []),
     ...(Array.isArray(course.resources) ? course.resources : []),

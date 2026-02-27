@@ -184,23 +184,27 @@ export default function CourseList({
       const query = searchParams.get("q") || "";
       const sort = searchParams.get("sort") || "title";
       const enrolledOnly = searchParams.get("enrolled") === "true";
-      const universities = searchParams.get("universities")?.split(",").filter(Boolean) || [];
-      const levels = searchParams.get("levels")?.split(",").filter(Boolean) || [];
+      const universities = searchParams.get("universities") || "";
+      const levels = searchParams.get("levels") || "";
 
-      const nextData = await fetchCoursesAction({
-        page: page + 1,
-        size: perPage,
-        query,
-        sort,
-        enrolledOnly,
+      const params = new URLSearchParams({
+        page: String(page + 1),
+        size: String(perPage),
+        q: query,
+        sort: sort,
+        enrolled: String(enrolledOnly),
         universities,
         levels,
       });
 
-      if (nextData.items.length > 0) {
+      const response = await fetch(`/api/courses?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to fetch more courses");
+      const nextData = await response.json();
+
+      if (nextData.items && nextData.items.length > 0) {
         setCourses((prev) => {
           const existingIds = new Set(prev.map((c) => c.id));
-          const newItems = nextData.items.filter((c) => !existingIds.has(c.id));
+          const newItems = (nextData.items as Course[]).filter((c) => !existingIds.has(c.id));
           return [...prev, ...newItems];
         });
         setPage((prev) => prev + 1);

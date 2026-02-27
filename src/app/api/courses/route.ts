@@ -65,12 +65,12 @@ async function fetchCourses(
   const supabase = await createClient();
 
   const modernSelectString = `
-    id, university, course_code, title, units, url, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
+    id, university, course_code, title, units, url, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, subdomain, is_hidden, is_internal, created_at,
     fields:course_fields(fields(name)),
     semesters:course_semesters(semesters(term, year))
   `;
   const legacySelectString = `
-    id, university, course_code, title, units, url, details, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
+    id, university, course_code, title, units, url, details, department, corequisites, level, difficulty, popularity, workload, subdomain, is_hidden, is_internal, created_at,
     fields:course_fields(fields(name)),
     semesters:course_semesters(semesters(term, year))
   `;

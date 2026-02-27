@@ -68,7 +68,7 @@ export function transformExternalCourse(course: Record<string, unknown>) {
     score: userCourse ? parseNum(userCourse.score) : null,
     createdAtISO8601: course.created_at,
     updatedAtISO8601: userCourse?.updated_at || course.created_at || new Date().toISOString(),
-    topic: fields.length > 0 ? fields[0] : null,
+    topics: fields,
     isEnrolled: !!userCourse,
     isFailed: userCourse?.status === 'failed',
     retry: 0,

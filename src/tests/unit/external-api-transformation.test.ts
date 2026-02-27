@@ -70,7 +70,7 @@ describe('transformExternalCourse', () => {
       score: 4.0,
       createdAtISO8601: '2026-02-01T10:00:00Z',
       updatedAtISO8601: expect.any(String),
-      topic: 'Computer Science',
+      topics: ['Computer Science', 'Algorithm Design'],
       isEnrolled: true,
       isFailed: false,
       retry: 0,

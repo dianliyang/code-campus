@@ -109,7 +109,7 @@ describe('GET /api/external/courses/[course_code]', () => {
         score: null,
         createdAtISO8601: '2026-02-14T00:00:00.000Z',
         updatedAtISO8601: expect.any(String),
-        topic: 'Computer Science',
+        topics: ['Computer Science', 'Machine Learning'],
         isEnrolled: true,
         isFailed: false,
         retry: 0,

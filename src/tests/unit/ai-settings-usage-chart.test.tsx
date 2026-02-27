@@ -67,7 +67,7 @@ describe("AI settings usage chart", () => {
         initialTopicsPromptTemplate=""
         initialCourseUpdatePromptTemplate=""
         initialSyllabusPromptTemplate=""
-        modelCatalog={{ perplexity: ["sonar"], gemini: ["gemini-2.5-flash"] }}
+        modelCatalog={{ perplexity: ["sonar"], gemini: ["gemini-2.5-flash"], openai: ["gpt-5-mini"] }}
       />
     );
 

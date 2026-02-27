@@ -10,6 +10,9 @@ const perplexity = createOpenAI({
   apiKey: process.env.PERPLEXITY_API_KEY || "",
   baseURL: "https://api.perplexity.ai",
 });
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY || "",
+});
 
 type AssignmentKind = "assignment" | "lab" | "exam" | "project" | "quiz" | "other";
 
@@ -242,10 +245,6 @@ function dedupeAssignments(rows: AssignmentRow[]): AssignmentRow[] {
 }
 
 export async function runCourseIntel(userId: string, courseId: number) {
-  if (!process.env.PERPLEXITY_API_KEY) {
-    throw new Error("AI service not configured");
-  }
-
   const supabase = await createClient();
   const { data: course } = await supabase
     .from("courses")
@@ -256,7 +255,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("ai_default_model, ai_course_intel_prompt_template, ai_course_update_prompt_template, ai_syllabus_prompt_template")
+    .select("ai_provider, ai_default_model, ai_course_intel_prompt_template, ai_course_update_prompt_template, ai_syllabus_prompt_template")
     .eq("id", userId)
     .maybeSingle();
 
@@ -267,7 +266,18 @@ export async function runCourseIntel(userId: string, courseId: number) {
     ].filter(Boolean).join("\n\n");
   if (!template) throw new Error("Course intel prompt template not configured");
 
-  const modelName = await resolveModelForProvider("perplexity", String(profile?.ai_default_model || "").trim());
+  const provider = String(profile?.ai_provider || "").trim() === "openai" ? "openai" : "perplexity";
+  if (provider === "openai" && !process.env.OPENAI_API_KEY) {
+    throw new Error("AI service not configured: OPENAI_API_KEY missing");
+  }
+  if (provider === "perplexity" && !process.env.PERPLEXITY_API_KEY) {
+    throw new Error("AI service not configured: PERPLEXITY_API_KEY missing");
+  }
+
+  const modelName = await resolveModelForProvider(provider, String(profile?.ai_default_model || "").trim());
+  if (!modelName) {
+    throw new Error(`AI service not configured: no active model for provider ${provider}`);
+  }
 
   const knownUrls = [course.url, ...(Array.isArray(course.resources) ? course.resources : [])]
     .filter(Boolean) as string[];
@@ -284,7 +294,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
 
   const runExtraction = async (maxOutputTokens: number) => {
     const { text, usage } = await generateText({
-      model: perplexity.chat(modelName),
+      model: provider === "openai" ? openai.chat(modelName) : perplexity.chat(modelName),
       prompt,
       maxOutputTokens,
     });
@@ -392,7 +402,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
 
   await logAiUsage({
     userId,
-    provider: "perplexity",
+    provider,
     model: modelName,
     feature: "course-intel",
     tokensInput: usage.inputTokens,

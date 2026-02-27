@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/server";
 
-export type AIProvider = "perplexity" | "gemini";
+export type AIProvider = "perplexity" | "gemini" | "openai";
 type PricingEntry = { input: number; output: number };
 
 type RuntimeConfigCacheEntry = {
@@ -43,12 +43,13 @@ function normalizeModelCatalog(rows: Array<Record<string, unknown>>): Record<AIP
   const catalog: Record<AIProvider, string[]> = {
     perplexity: [],
     gemini: [],
+    openai: [],
   };
 
   for (const row of rows) {
     const provider = String(row.provider || "").trim().toLowerCase();
     const model = String(row.model || "").trim();
-    if ((provider !== "perplexity" && provider !== "gemini") || !model) continue;
+    if ((provider !== "perplexity" && provider !== "gemini" && provider !== "openai") || !model) continue;
     const key = provider as AIProvider;
     if (!catalog[key].includes(model)) catalog[key].push(model);
   }
@@ -62,7 +63,7 @@ function normalizePricing(rows: Array<Record<string, unknown>>): Record<string, 
   for (const row of rows) {
     const provider = String(row.provider || "").trim().toLowerCase();
     const model = String(row.model || "").trim();
-    if ((provider !== "perplexity" && provider !== "gemini") || !model) continue;
+    if ((provider !== "perplexity" && provider !== "gemini" && provider !== "openai") || !model) continue;
 
     const input = Number(row.input_per_token ?? 0);
     const output = Number(row.output_per_token ?? 0);

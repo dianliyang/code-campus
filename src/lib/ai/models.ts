@@ -1,4 +1,4 @@
-export const AI_PROVIDERS = ["perplexity", "gemini"] as const;
+export const AI_PROVIDERS = ["perplexity", "gemini", "openai"] as const;
 export type AIProvider = (typeof AI_PROVIDERS)[number];
 
 export async function getModelCatalogByProvider(): Promise<Record<AIProvider, string[]>> {
@@ -14,6 +14,7 @@ export async function getModelCatalogByProvider(): Promise<Record<AIProvider, st
       const catalog: Record<AIProvider, string[]> = {
         perplexity: [],
         gemini: [],
+        openai: [],
       };
 
       for (const row of data) {

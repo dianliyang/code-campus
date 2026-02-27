@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
-import { AI_PROVIDERS } from "@/lib/ai/models-client";
+import { AI_PROVIDERS, type AIProvider } from "@/lib/ai/models-client";
 import { useAppToast } from "@/components/common/AppToastProvider";
 import { Save, Loader2, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles, BookOpen } from "lucide-react";
 
@@ -20,7 +20,7 @@ interface AISettingsCardProps {
   initialCourseUpdatePromptTemplate: string;
   initialSyllabusPromptTemplate: string;
   initialCourseIntelPromptTemplate: string;
-  modelCatalog: { perplexity: string[]; gemini: string[] };
+  modelCatalog: { perplexity: string[]; gemini: string[]; openai: string[] };
 }
 
 type UsageStats = {
@@ -101,7 +101,14 @@ export default function AISettingsCard({
 }: AISettingsCardProps) {
   const perplexityModels = modelCatalog.perplexity;
   const geminiModels = modelCatalog.gemini;
-  const [provider, setProvider] = useState(initialProvider === "gemini" ? "gemini" : "perplexity");
+  const openaiModels = modelCatalog.openai;
+  const normalizeProvider = (value: string): AIProvider => {
+    if (value === "gemini") return "gemini";
+    if (value === "openai") return "openai";
+    return "perplexity";
+  };
+  const modelsForProvider = (p: AIProvider) => (p === "gemini" ? geminiModels : p === "openai" ? openaiModels : perplexityModels);
+  const [provider, setProvider] = useState<AIProvider>(normalizeProvider(initialProvider));
   const [defaultModel, setDefaultModel] = useState(initialModel);
   const [webSearchEnabled, setWebSearchEnabled] = useState(initialWebSearchEnabled);
   const [promptTemplate, setPromptTemplate] = useState(initialPromptTemplate);
@@ -126,12 +133,12 @@ export default function AISettingsCard({
   const [usageLoading, setUsageLoading] = useState(true);
 
   useEffect(() => {
-    const available = provider === "gemini" ? geminiModels : perplexityModels;
+    const available = modelsForProvider(provider);
     if (available.length === 0) return;
     if (!available.includes(defaultModel)) {
       setDefaultModel(available[0]);
     }
-  }, [provider, defaultModel, geminiModels, perplexityModels]);
+  }, [provider, defaultModel, geminiModels, perplexityModels, openaiModels]);
 
   useEffect(() => {
     if (section !== "usage") return;
@@ -291,8 +298,8 @@ export default function AISettingsCard({
                     <button
                       key={p}
                       onClick={() => {
-                        const nextProvider = p as "gemini" | "perplexity";
-                        const available = nextProvider === "gemini" ? geminiModels : perplexityModels;
+                        const nextProvider = p as AIProvider;
+                        const available = modelsForProvider(nextProvider);
                         setProvider(nextProvider);
                         if (available.length > 0 && !available.includes(defaultModel)) {
                           setDefaultModel(available[0]);
@@ -313,7 +320,7 @@ export default function AISettingsCard({
               <div className="space-y-2">
                 <label className="text-xs font-medium text-[#666] block">Active Language Model</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {(provider === "gemini" ? geminiModels : perplexityModels).map((m) => (
+                  {modelsForProvider(provider).map((m) => (
                     <button
                       key={m}
                       onClick={() => setDefaultModel(m)}

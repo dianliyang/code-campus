@@ -18,7 +18,7 @@ export async function updateAiPreferences(input: {
     throw new Error("Invalid provider");
   }
 
-  const validModelSet = await getModelSetForProvider(input.provider as "gemini" | "perplexity");
+  const validModelSet = await getModelSetForProvider(input.provider as "gemini" | "perplexity" | "openai");
   
   if (!validModelSet.has(input.defaultModel)) {
     throw new Error(`Invalid model for ${input.provider}: ${input.defaultModel}`);

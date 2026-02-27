@@ -1,3 +1,2 @@
-export const AI_PROVIDERS = ["perplexity", "gemini"] as const;
+export const AI_PROVIDERS = ["perplexity", "gemini", "openai"] as const;
 export type AIProvider = (typeof AI_PROVIDERS)[number];
-

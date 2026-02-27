@@ -12,6 +12,7 @@ import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
 import CourseSyllabusTable, { type SyllabusEntry, type SyllabusContent } from "@/components/courses/CourseSyllabusTable";
 import { trackAiUsage } from "@/lib/ai/usage";
+import { useAppToast } from "@/components/common/AppToastProvider";
 
 interface CourseDetailContentProps {
   course: Course;
@@ -39,6 +40,7 @@ export default function CourseDetailContent({
   projectSeminarRef = null,
   syllabus = null,
 }: CourseDetailContentProps) {
+  const { showToast } = useAppToast();
   const [enrolled, setEnrolled] = useState(isEnrolled);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -281,14 +283,18 @@ export default function CourseDetailContent({
         body: JSON.stringify({ courseId: course.id }),
       });
       if (res.ok) {
+        const data = await res.json();
         setSyllabusStatus('success');
         trackAiUsage({ calls: 1, tokens: 2048 });
+        showToast({ type: 'success', message: `Syllabus retrieved — ${data.scheduleEntries ?? 0} schedule entries found.` });
         startTransition(() => router.refresh());
       } else {
         setSyllabusStatus('error');
+        showToast({ type: 'error', message: 'Failed to retrieve syllabus. Try again.' });
       }
     } catch {
       setSyllabusStatus('error');
+      showToast({ type: 'error', message: 'Failed to retrieve syllabus. Try again.' });
     } finally {
       setIsSyllabusRetrieving(false);
       setTimeout(() => setSyllabusStatus('idle'), 3000);

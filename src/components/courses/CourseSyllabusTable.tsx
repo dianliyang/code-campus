@@ -16,6 +16,7 @@ interface TaskItem {
 
 export interface SyllabusEntry {
   sequence?: string;
+  title?: string | null;
   date?: string | null;
   date_end?: string | null;
   instructor?: string | null;
@@ -178,6 +179,9 @@ export default function CourseSyllabusTable({
                       </td>
                     )}
                     <td className="px-3 py-2.5 align-top">
+                      {entry.title && (
+                        <p className="text-xs font-semibold text-[#1f1f1f] mb-1 leading-snug">{entry.title}</p>
+                      )}
                       <div className="flex flex-wrap gap-1">
                         {(entry.topics || []).map((t, i) => (
                           <span

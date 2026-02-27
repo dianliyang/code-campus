@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: course } = await supabase
     .from('courses')
-    .select('course_code, university, title')
+    .select('course_code, university, title, url, related_urls, resources')
     .eq('id', courseId)
     .single();
   if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 });
@@ -44,10 +44,21 @@ export async function POST(request: NextRequest) {
   const modelName = await resolveModelForProvider('perplexity', String(profile?.ai_default_model || '').trim());
   const template = (profile?.ai_syllabus_prompt_template || '').trim() || runtimeConfig.prompts.syllabusRetrieve;
 
+  // Build a list of known URLs from course resources to give the AI direct context.
+  const knownUrls = [
+    course.url,
+    ...(Array.isArray(course.related_urls) ? course.related_urls : []),
+    ...(Array.isArray(course.resources) ? course.resources : []),
+  ].filter(Boolean) as string[];
+  const resourcesContext = knownUrls.length > 0
+    ? `Known course URLs (check these first for the syllabus):\n${knownUrls.map((u) => `- ${u}`).join('\n')}`
+    : '';
+
   const prompt = template
     .replace('{{course_code}}', course.course_code)
     .replace('{{university}}', course.university)
-    .replace('{{title}}', course.title || '');
+    .replace('{{title}}', course.title || '')
+    .replace('{{resources}}', resourcesContext);
 
   try {
     const { text, usage } = await generateText({

@@ -6,17 +6,16 @@ import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles } from "lucide-react";
+import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, BookOpen } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
-import type { CourseDetailTab } from "@/lib/course-detail-tabs";
-
 interface CourseDetailHeaderProps {
   course: Course;
   isEditing?: boolean;
   onToggleEdit?: () => void;
   projectSeminarRef?: { id: number; category: string } | null;
-  activeTab?: CourseDetailTab;
-  onTabChange?: (tab: CourseDetailTab) => void;
+  onRetrieveSyllabus?: () => void;
+  isSyllabusRetrieving?: boolean;
+  syllabusStatus?: 'idle' | 'success' | 'error';
 }
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -35,8 +34,9 @@ export default function CourseDetailHeader({
   isEditing = false,
   onToggleEdit,
   projectSeminarRef = null,
-  activeTab,
-  onTabChange,
+  onRetrieveSyllabus,
+  isSyllabusRetrieving = false,
+  syllabusStatus = 'idle',
 }: CourseDetailHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -146,6 +146,25 @@ export default function CourseDetailHeader({
             {isAiUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
           </button>
 
+          {/* Retrieve Syllabus */}
+          {onRetrieveSyllabus && (
+            <button
+              onClick={onRetrieveSyllabus}
+              disabled={isSyllabusRetrieving}
+              className={`h-7 w-7 rounded-md border bg-white inline-flex items-center justify-center transition-all disabled:opacity-50 shrink-0 ${
+                syllabusStatus === 'success'
+                  ? 'border-emerald-300 text-emerald-600'
+                  : syllabusStatus === 'error'
+                    ? 'border-rose-300 text-rose-500'
+                    : 'border-[#d3d3d3] text-[#666] hover:bg-[#f8f8f8]'
+              }`}
+              title="Retrieve Syllabus — fetch and parse syllabus from web"
+              aria-label="Retrieve Syllabus"
+            >
+              {isSyllabusRetrieving ? <Loader2 className="w-3 h-3 animate-spin" /> : <BookOpen className="w-3 h-3" />}
+            </button>
+          )}
+
           {/* Google Search */}
           <a
             href={searchHref}
@@ -180,36 +199,6 @@ export default function CourseDetailHeader({
           </button>
         </div>
       </div>
-
-      {activeTab && onTabChange && (
-        <div className="mt-3 flex justify-center sm:justify-start">
-          <div className="inline-flex items-center rounded-[7px] border border-[#dedede] bg-[#f4f4f4] p-[2px]">
-            {([
-              { id: "overview", label: "Overview" },
-              { id: "schedule", label: "Schedule" },
-              { id: "assignments", label: "Assignments" },
-              { id: "grades", label: "Grades" },
-            ] as const).map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => onTabChange(tab.id)}
-                  className={`h-7 rounded-[5px] px-3 text-[12px] font-medium transition-colors ${
-                    isActive
-                      ? "bg-white text-[#111] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
-                      : "text-[#666] hover:bg-[#ececec]"
-                  }`}
-                  aria-pressed={isActive}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Field tags */}
       {(course.fields.length > 0 || projectSeminarRef) && (

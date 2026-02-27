@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import {
-  courseLastUpdatedAt,
   buildCachingHeaders,
-  checkNotModified,
   transformExternalCourse,
-  notModifiedResponse,
 } from '@/lib/external-api';
 
 /**
@@ -48,6 +45,9 @@ export async function GET(request: NextRequest) {
         difficulty,
         popularity,
         workload,
+        subdomain,
+        resources,
+        category,
         is_hidden,
         latest_semester,
         created_at,
@@ -89,19 +89,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const lastUpdatedMs = (data ?? []).reduce<number | null>((maxTime, course) => {
-      const candidate = courseLastUpdatedAt(course as Record<string, unknown>);
-      if (candidate === null) return maxTime;
-      if (maxTime === null || candidate > maxTime) return candidate;
-      return maxTime;
-    }, null);
-
-    const cachingHeaders = buildCachingHeaders(lastUpdatedMs);
-
-    const ifModifiedSince = request.headers.get('if-modified-since');
-    if (checkNotModified(ifModifiedSince, lastUpdatedMs)) {
-      return notModifiedResponse(cachingHeaders);
-    }
+    const cachingHeaders = buildCachingHeaders();
 
     const coursesWithEnrollment = (data ?? [])
       .filter((course) => course.is_hidden !== true)

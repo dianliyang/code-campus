@@ -23,7 +23,10 @@ CREATE TABLE IF NOT EXISTS courses (
   level TEXT,
   difficulty DOUBLE PRECISION,
   popularity INTEGER DEFAULT 0,
-  workload TEXT,
+  workload DOUBLE PRECISION,
+  subdomain TEXT,
+  resources TEXT[] DEFAULT '{}'::text[],
+  category TEXT,
   is_hidden BOOLEAN DEFAULT FALSE,
   is_internal BOOLEAN DEFAULT FALSE,
   latest_semester JSONB,
@@ -34,6 +37,8 @@ CREATE TABLE IF NOT EXISTS courses (
 CREATE INDEX IF NOT EXISTS idx_courses_university ON courses(university);
 CREATE INDEX IF NOT EXISTS idx_courses_course_code ON courses(course_code);
 CREATE INDEX IF NOT EXISTS idx_courses_popularity ON courses(popularity DESC);
+CREATE INDEX IF NOT EXISTS idx_courses_subdomain ON courses(subdomain);
+CREATE INDEX IF NOT EXISTS idx_courses_category ON courses(category);
 CREATE INDEX IF NOT EXISTS idx_courses_created_at ON courses(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_courses_title ON courses(title);
 

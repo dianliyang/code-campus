@@ -55,6 +55,7 @@ describe('transformExternalCourse', () => {
       instructors: ['Prof. Ada'],
       prerequisites: 'CS100',
       resources: ['Syllabus', 'Slides'],
+      subdomain: null,
       platforms: ['Canvas'],
       crossListedCourses: ['EE101'],
       category: 'Computer Science',
@@ -68,7 +69,7 @@ describe('transformExternalCourse', () => {
       gpa: 3.3,
       score: 4.0,
       createdAtISO8601: '2026-02-01T10:00:00Z',
-      updatedAtISO8601: expect.Record<string, unknown>(String),
+      updatedAtISO8601: expect.any(String),
       topic: 'Computer Science',
       isEnrolled: true,
       isFailed: false,
@@ -117,7 +118,7 @@ describe('transformExternalCourse', () => {
     const rawCourse = {
       credit: '4',
       difficulty: '3.5',
-      workload: 'high', // non-numeric
+      workload: '5.5', // numeric string
       course_fields: [],
       user_courses: [],
       study_plans: []
@@ -126,6 +127,6 @@ describe('transformExternalCourse', () => {
     const result = transformExternalCourse(rawCourse as Record<string, unknown>);
     expect(result.credit).toBe(4);
     expect(result.difficulty).toBe(3.5);
-    expect(result.workload).toBeNull(); // parseFloat('high') is NaN -> null
+    expect(result.workload).toBe(5.5);
   });
 });

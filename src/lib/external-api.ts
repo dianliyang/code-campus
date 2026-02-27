@@ -1,135 +1,78 @@
 import { NextResponse } from 'next/server';
 
 export const EXTERNAL_API_CACHE_CONTROL =
-  'private, max-age=3600, stale-while-revalidate=600';
+  'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
 
-export function parseTimestamp(value: unknown): number | null {
-  if (typeof value !== 'string' || value.length === 0) return null;
-  const time = Date.parse(value);
-  return Number.isNaN(time) ? null : time;
-}
-
-export function courseLastUpdatedAt(course: Record<string, unknown>): number | null {
-  let maxTime: number | null = parseTimestamp(course.created_at);
-
-  const plans = Array.isArray(course.study_plans) ? course.study_plans : [];
-  for (const plan of plans) {
-    if (!plan || typeof plan !== 'object') continue;
-    const record = plan as Record<string, unknown>;
-    const updatedAt = parseTimestamp(record.updated_at);
-    const createdAt = parseTimestamp(record.created_at);
-    const candidate = updatedAt ?? createdAt;
-    if (candidate !== null && (maxTime === null || candidate > maxTime)) {
-      maxTime = candidate;
-    }
-  }
-
-  return maxTime;
-}
-
-export function buildCachingHeaders(
-  lastUpdatedMs: number | null
-): Record<string, string> {
+/** Build standard headers including Cache-Control. */
+export function buildCachingHeaders(): Record<string, string> {
   return {
     'Cache-Control': EXTERNAL_API_CACHE_CONTROL,
-    ...(lastUpdatedMs !== null
-      ? { 'Last-Modified': new Date(lastUpdatedMs).toUTCString() }
-      : {}),
   };
 }
 
-/** Returns true when the client already has the current version. */
-export function checkNotModified(
-  ifModifiedSinceHeader: string | null,
-  lastUpdatedMs: number | null
-): boolean {
-  if (!ifModifiedSinceHeader || lastUpdatedMs === null) return false;
-  const clientTime = Date.parse(ifModifiedSinceHeader);
-  if (Number.isNaN(clientTime)) return false;
-  return clientTime >= lastUpdatedMs;
-}
-
-export function transformExternalCourse(course: Record<string, unknown>): Record<string, unknown> {
-  const {
-    course_fields,
-    user_courses,
-    latest_semester,
-    related_urls,
-    ...courseFields
-  } = course as {
-    course_fields: Array<{ fields?: { name?: string } }>;
-    user_courses: Array<Record<string, unknown>>;
-    latest_semester: { term?: string; year?: number } | null;
-    related_urls: string[];
-    [key: string]: unknown;
+/** Transform internal course data to the external API structure. */
+export function transformExternalCourse(course: Record<string, unknown>) {
+  const parseNum = (val: unknown) => {
+    const n = parseFloat(String(val));
+    return isNaN(n) ? null : n;
   };
 
-  const enrollment =
-    Array.isArray(user_courses) && user_courses.length > 0 ? user_courses[0] : null;
-
-  const topics = Array.isArray(course_fields)
-    ? course_fields
-        .map((item) => item?.fields?.name)
-        .filter((name): name is string => typeof name === 'string' && name.length > 0)
-    : [];
-
-  const rawDetails = courseFields.details;
-  const details =
-    rawDetails && typeof rawDetails === 'object' && !Array.isArray(rawDetails)
-      ? (rawDetails as Record<string, unknown>)
-      : {};
-
-  const parseNumber = (val: unknown): number | null => {
-    if (typeof val === 'number') return val;
-    if (typeof val === 'string') {
-      const parsed = parseFloat(val);
-      return isNaN(parsed) ? null : parsed;
-    }
-    return null;
-  };
-
-  const latestTerm = latest_semester
-    ? `${latest_semester.term || ''} ${latest_semester.year || ''}`.trim()
+  const details = (course.details && typeof course.details === 'object' ? course.details : {}) as Record<string, unknown>;
+  const userCourse = Array.isArray(course.user_courses) && course.user_courses.length > 0 
+    ? (course.user_courses[0] as Record<string, unknown>)
     : null;
 
-  const crossListedCourses = courseFields.cross_listed_courses
-    ? String(courseFields.cross_listed_courses)
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
+  const fields = Array.isArray(course.course_fields) 
+    ? (course.course_fields as Array<Record<string, unknown>>).map((cf) => (cf.fields as Record<string, unknown>)?.name).filter(Boolean)
     : [];
 
+  const semester = course.latest_semester as Record<string, unknown> | null;
+  const latestTerm = semester && semester.term && semester.year 
+    ? `${semester.term} ${semester.year}` 
+    : null;
+
+  // New fields priority: subdomain, resources, category
+  // If the new columns are populated, use them. Fallback to old mapping if not.
+  const finalResources = Array.isArray(course.resources) && course.resources.length > 0
+    ? course.resources
+    : (Array.isArray(course.related_urls) ? course.related_urls : []);
+
+  const finalCategory = course.category || (fields.length > 0 ? fields[0] : null);
+
   return {
-    remoteID: courseFields.id,
-    name: courseFields.title,
-    code: courseFields.course_code,
-    university: courseFields.university,
-    units: courseFields.units ? String(courseFields.units) : null,
-    credit: parseNumber(courseFields.credit),
-    desc: courseFields.description,
-    urlString: courseFields.url,
-    instructors: Array.isArray(courseFields.instructors) ? courseFields.instructors : [],
-    prerequisites: courseFields.prerequisites,
-    resources: Array.isArray(related_urls) ? related_urls : [],
+    remoteID: course.id,
+    name: course.title,
+    code: course.course_code,
+    university: course.university,
+    units: course.units,
+    credit: parseNum(course.credit),
+    desc: course.description,
+    urlString: course.url,
+    instructors: Array.isArray(course.instructors) ? course.instructors : [],
+    prerequisites: course.prerequisites,
+    resources: finalResources,
+    subdomain: course.subdomain || null,
     platforms: Array.isArray(details.platforms) ? details.platforms : [],
-    crossListedCourses,
-    category: topics[0] || courseFields.department || null,
-    department: courseFields.department,
-    latestTerm,
+    crossListedCourses: typeof course.cross_listed_courses === 'string' 
+      ? course.cross_listed_courses.split(/[,;]/).map((s: string) => s.trim()).filter(Boolean)
+      : [],
+    category: finalCategory,
+    department: course.department,
+    latestTerm: latestTerm,
     logistics: details.logistics || null,
-    level: courseFields.level,
-    difficulty: parseNumber(courseFields.difficulty),
-    popularity: parseNumber(courseFields.popularity),
-    workload: parseNumber(courseFields.workload),
-    gpa: enrollment ? parseNumber(enrollment.gpa) : null,
-    score: enrollment ? parseNumber(enrollment.score) : null,
-    createdAtISO8601: courseFields.created_at,
-    updatedAtISO8601: new Date(courseLastUpdatedAt(course) || Date.now()).toISOString(),
-    topic: topics[0] || null,
-    isEnrolled: true,
-    isFailed: enrollment?.status === 'failed',
+    level: course.level,
+    difficulty: parseNum(course.difficulty),
+    popularity: parseNum(course.popularity),
+    workload: parseNum(course.workload),
+    gpa: userCourse ? parseNum(userCourse.gpa) : null,
+    score: userCourse ? parseNum(userCourse.score) : null,
+    createdAtISO8601: course.created_at,
+    updatedAtISO8601: userCourse?.updated_at || course.created_at || new Date().toISOString(),
+    topic: fields.length > 0 ? fields[0] : null,
+    isEnrolled: !!userCourse,
+    isFailed: userCourse?.status === 'failed',
     retry: 0,
-    assignments: [],
+    assignments: []
   };
 }
 

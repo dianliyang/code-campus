@@ -42,7 +42,7 @@ export async function POST(request: Request) {
           popularity: 0,
           details: (course.details as Json) || {},
           corequisites: course.corequisites || "",
-          workload: course.workload || "",
+          workload: course.workload || 0,
           difficulty: course.difficulty || 0
         };
 

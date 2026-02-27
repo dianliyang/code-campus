@@ -22,7 +22,10 @@ export async function updateCourse(courseId: number, data: {
   level: string;
   difficulty: number;
   popularity: number;
-  workload: string;
+  workload: number;
+  subdomain?: string;
+  resources?: string[];
+  category?: string;
   isHidden: boolean;
   isInternal: boolean;
   prerequisites?: string;
@@ -67,6 +70,9 @@ export async function updateCourse(courseId: number, data: {
       difficulty: data.difficulty,
       popularity: data.popularity,
       workload: data.workload,
+      subdomain: data.subdomain || null,
+      resources: data.resources || [],
+      category: data.category || null,
       is_hidden: data.isHidden,
       is_internal: data.isInternal,
       prerequisites: data.prerequisites || null,
@@ -176,7 +182,10 @@ interface UpdateCourseFullInput {
   level: string;
   difficulty: number;
   popularity: number;
-  workload: string;
+  workload: number;
+  subdomain: string;
+  resources: string[];
+  category: string;
   isHidden: boolean;
   isInternal: boolean;
   prerequisites: string;
@@ -718,7 +727,7 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
     supabase
       .from("courses")
       .select(
-        "id, university, course_code, title, units, credit, description, url, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, prerequisites, related_urls, cross_listed_courses, details, instructors",
+        "id, university, course_code, title, units, credit, description, url, department, corequisites, level, difficulty, popularity, workload, subdomain, resources, category, is_hidden, is_internal, prerequisites, related_urls, cross_listed_courses, details, instructors",
       )
       .eq("id", courseId)
       .single(),
@@ -770,6 +779,9 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
     difficulty: input.difficulty,
     popularity: input.popularity,
     workload: input.workload,
+    subdomain: input.subdomain || null,
+    resources: input.resources || [],
+    category: input.category || null,
     is_hidden: input.isHidden,
     is_internal: input.isInternal,
     prerequisites: input.prerequisites || null,
@@ -794,7 +806,10 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
     level: existingCourse.level || "",
     difficulty: Number(existingCourse.difficulty || 0),
     popularity: Number(existingCourse.popularity || 0),
-    workload: existingCourse.workload || "",
+    workload: Number(existingCourse.workload || 0),
+    subdomain: existingCourse.subdomain || "",
+    resources: Array.isArray(existingCourse.resources) ? existingCourse.resources : [],
+    category: existingCourse.category || "",
     is_hidden: Boolean(existingCourse.is_hidden),
     is_internal: Boolean(existingCourse.is_internal),
     prerequisites: existingCourse.prerequisites || null,
@@ -1668,7 +1683,7 @@ export async function fetchCoursesAction({
   const offset = (page - 1) * size;
   
   const modernSelectString = `
-    id, university, course_code, title, units, url, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
+    id, university, course_code, title, units, url, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, subdomain, resources, category, is_hidden, is_internal, created_at,
     fields:course_fields(fields(name)),
     semesters:course_semesters(semesters(term, year))
   `;

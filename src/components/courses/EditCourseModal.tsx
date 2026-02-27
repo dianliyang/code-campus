@@ -29,7 +29,7 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
     level: course.level || "undergraduate",
     difficulty: course.difficulty || 0,
     popularity: course.popularity || 0,
-    workload: course.workload || "",
+    workload: course.workload || 0,
     isHidden: course.isHidden || false,
     isInternal: course.isInternal || false,
   });

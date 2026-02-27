@@ -10,7 +10,10 @@ export interface Course {
   department?: string;
   difficulty?: number;
   popularity: number;
-  workload: string;
+  workload?: number;
+  subdomain?: string;
+  resources?: string[];
+  category?: string;
   isHidden: boolean;
   isInternal?: boolean;
   createdAt?: string;
@@ -73,8 +76,11 @@ export interface ImportRequest {
   details?: Record<string, unknown>;
   corequisites?: string;
   semesters?: Semester[];
-  workload?: string;
+  workload?: number;
   difficulty?: number;
+  subdomain?: string;
+  resources?: string[];
+  category?: string;
 }
 
 export interface EnrolledCoursesResponse {

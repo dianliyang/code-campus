@@ -119,7 +119,10 @@ export type Database = {
           units: string | null
           university: string
           url: string | null
-          workload: string | null
+          workload: number | null
+          subdomain: string | null
+          resources: string[] | null
+          category: string | null
         }
         Insert: {
           corequisites?: string | null
@@ -145,7 +148,10 @@ export type Database = {
           units?: string | null
           university: string
           url?: string | null
-          workload?: string | null
+          workload?: number | null
+          subdomain?: string | null
+          resources?: string[] | null
+          category?: string | null
         }
         Update: {
           corequisites?: string | null
@@ -171,7 +177,10 @@ export type Database = {
           units?: string | null
           university?: string
           url?: string | null
-          workload?: string | null
+          workload?: number | null
+          subdomain?: string | null
+          resources?: string[] | null
+          category?: string | null
         }
         Relationships: []
       }

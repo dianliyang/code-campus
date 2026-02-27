@@ -322,7 +322,10 @@ export class SupabaseDatabase {
         level?: string;
         difficulty?: number;
         popularity: number;
-        workload?: string;
+        workload?: number;
+        subdomain?: string;
+        resources?: string[];
+        category?: string;
         is_hidden?: boolean;
         is_internal?: boolean;
         description?: string;
@@ -343,6 +346,9 @@ export class SupabaseDatabase {
         difficulty: c.difficulty,
         popularity: c.popularity || 0,
         workload: c.workload,
+        subdomain: c.subdomain,
+        resources: Array.isArray(c.resources) ? c.resources : [],
+        category: c.category,
         // Never overwrite user-managed fields on force update;
         // only set them on initial insert (new courses have no existing row).
         ...(forceUpdate ? {} : {
@@ -870,7 +876,10 @@ export function mapCourseFromRow(
     details: parsedDetails,
     instructors: Array.isArray(row.instructors) ? (row.instructors as string[]) : [],
     popularity: Number(row.popularity || 0),
-    workload: String(row.workload || ""),
+    workload: row.workload != null ? Number(row.workload) : undefined,
+    subdomain: row.subdomain ? String(row.subdomain) : undefined,
+    resources: Array.isArray(row.resources) ? (row.resources as string[]) : undefined,
+    category: row.category ? String(row.category) : undefined,
     isHidden: Boolean(row.is_hidden),
     isInternal: Boolean(row.is_internal),
     createdAt: typeof row.created_at === "string" ? row.created_at : undefined,

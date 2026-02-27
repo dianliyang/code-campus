@@ -12,7 +12,10 @@ export interface Course {
   difficulty?: number;
   details?: Record<string, unknown>;
   popularity?: number;
-  workload?: string;
+  workload?: number;
+  subdomain?: string;
+  resources?: string[];
+  category?: string;
   isHidden?: boolean;
   isInternal?: boolean;
   fields?: string[];

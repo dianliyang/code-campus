@@ -94,6 +94,7 @@ describe('GET /api/external/courses/[course_code]', () => {
         instructors: ['Prof A'],
         prerequisites: 'Math 101',
         resources: ['https://example.com'],
+        subdomain: null,
         platforms: [],
         crossListedCourses: ['CS-001'],
         category: 'Computer Science',
@@ -140,34 +141,6 @@ describe('GET /api/external/courses/[course_code]', () => {
     expect(res.status).toBe(404);
     const data = await res.json();
     expect(data.error).toBe('Not found');
-  });
-
-  it('should return 304 when x-last-update is up to date', async () => {
-    const mockData = {
-      id: 1,
-      university: 'CAU Kiel',
-      course_code: 'CS-101',
-      title: 'Course 1',
-      created_at: '2026-02-14T12:00:00.000Z',
-      details: null,
-      course_fields: [],
-      study_plans: [{ id: 11, course_id: 1, updated_at: '2026-02-14T12:00:00.000Z', created_at: '2026-02-13T12:00:00.000Z' }],
-      user_courses: [{ status: 'in_progress', progress: 0, gpa: null, score: null, notes: null, priority: 0, updated_at: null }],
-    };
-
-    const { mockFrom } = makeMock({ data: mockData, error: null });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (createAdminClient as any).mockReturnValue({ from: mockFrom });
-
-    const req = new NextRequest('http://localhost:3000/api/external/courses/CS-101', {
-      headers: {
-        'x-api-key': 'test-internal-key',
-        'if-modified-since': 'Sat, 14 Feb 2026 12:00:00 GMT',
-      },
-    });
-
-    const res = await GET(req, { params: Promise.resolve({ course_code: 'CS-101' }) });
-    expect(res.status).toBe(304);
   });
 
   it('should handle database errors', async () => {

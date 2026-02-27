@@ -79,13 +79,14 @@ describe('GET /api/external/courses', () => {
         name: 'Course 1',
         code: 'C1',
         university: 'Uni',
-        units: null,
+        units: undefined,
         credit: null,
         desc: 'desc',
         urlString: 'url',
         instructors: ['Prof A'],
         prerequisites: 'Math 101',
         resources: ['https://example.com'],
+        subdomain: null,
         platforms: ['Canvas'],
         crossListedCourses: ['CS-101'],
         category: 'Computer Science',
@@ -116,32 +117,6 @@ describe('GET /api/external/courses', () => {
     expect(selectArg).toContain('is_hidden');
     expect(selectArg).toContain('latest_semester');
     expect(mockNeq).toHaveBeenCalledWith('user_courses.status', 'hidden');
-  });
-
-  it('should return 304 when x-last-update is up to date', async () => {
-    const mockData = [{
-      id: 1,
-      title: 'Course 1',
-      created_at: '2026-02-14T12:00:00.000Z',
-      details: null,
-      course_fields: [],
-      study_plans: [{ id: 11, course_id: 1, updated_at: '2026-02-14T12:00:00.000Z', created_at: '2026-02-13T12:00:00.000Z' }],
-      user_courses: [],
-    }];
-
-    const { mockFrom } = makeMock({ data: mockData, error: null });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (createAdminClient as any).mockReturnValue({ from: mockFrom });
-
-    const req = new NextRequest('http://localhost:3000/api/external/courses', {
-      headers: {
-        'x-api-key': 'test-internal-key',
-        'if-modified-since': 'Sat, 14 Feb 2026 12:00:00 GMT',
-      },
-    });
-
-    const res = await GET(req);
-    expect(res.status).toBe(304);
   });
 
   it('should handle database errors', async () => {

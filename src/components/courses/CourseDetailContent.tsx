@@ -36,6 +36,15 @@ interface CourseDetailContentProps {
   }>;
 }
 
+type AssignmentItem = {
+  id: number;
+  kind: string;
+  label: string;
+  due_on: string | null;
+  url: string | null;
+  description: string | null;
+};
+
 export default function CourseDetailContent({
   course,
   isEnrolled,
@@ -121,6 +130,38 @@ export default function CourseDetailContent({
   useEffect(() => {
     setSyllabusData(syllabus);
   }, [syllabus]);
+
+  const derivedAssignmentsFromSyllabus = useMemo<AssignmentItem[]>(() => {
+    const scheduleRows = Array.isArray(syllabusData?.schedule) ? (syllabusData?.schedule as Array<Record<string, unknown>>) : [];
+    const out: AssignmentItem[] = [];
+    let id = 0;
+    for (const row of scheduleRows) {
+      const rowDate = typeof row.date === "string" ? row.date : null;
+      const extract = (key: string, kind: string) => {
+        const arr = Array.isArray(row[key]) ? (row[key] as Array<Record<string, unknown>>) : [];
+        for (const item of arr) {
+          const label = typeof item.label === "string" ? item.label.trim() : "";
+          if (!label) continue;
+          id += 1;
+          out.push({
+            id,
+            kind,
+            label,
+            due_on: typeof item.due_date === "string" ? item.due_date : rowDate,
+            url: typeof item.url === "string" ? item.url : null,
+            description: typeof item.description === "string" ? item.description : null,
+          });
+        }
+      };
+      extract("assignments", "assignment");
+      extract("labs", "lab");
+      extract("exams", "exam");
+      extract("projects", "project");
+    }
+    return out;
+  }, [syllabusData?.schedule]);
+
+  const shownAssignments = assignments.length > 0 ? assignments : derivedAssignmentsFromSyllabus;
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);
@@ -676,9 +717,9 @@ export default function CourseDetailContent({
 
           <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
             <h2 className="text-base font-semibold text-[#1f1f1f] mb-4">Assignments</h2>
-            {assignments.length > 0 ? (
+            {shownAssignments.length > 0 ? (
               <ul className="space-y-2">
-                {assignments.map((item) => (
+                {shownAssignments.map((item: AssignmentItem) => (
                   <li key={item.id} className="text-sm text-[#444] border border-[#ececec] rounded px-3 py-2 bg-white">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-medium">{item.label}</span>

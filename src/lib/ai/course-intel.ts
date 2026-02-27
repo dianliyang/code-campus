@@ -53,6 +53,23 @@ function normalizeResources(input: unknown): string[] {
   );
 }
 
+function dedupeResourcesByDomain(input: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of input) {
+    try {
+      const u = new URL(raw);
+      const host = u.hostname.replace(/^www\./i, "").toLowerCase();
+      if (!host || seen.has(host)) continue;
+      seen.add(host);
+      out.push(raw);
+    } catch {
+      // Skip invalid URLs.
+    }
+  }
+  return out;
+}
+
 function toKind(kind: string): AssignmentKind {
   const k = kind.toLowerCase();
   if (k === "assignment") return "assignment";
@@ -61,6 +78,23 @@ function toKind(kind: string): AssignmentKind {
   if (k === "project") return "project";
   if (k === "quiz") return "quiz";
   return "other";
+}
+
+function extractResourcesFromSchedule(scheduleArray: Array<Record<string, unknown>>): string[] {
+  const urls: string[] = [];
+  for (const entry of scheduleArray) {
+    for (const key of ["slides", "videos", "readings", "modules", "assignments", "labs", "exams", "projects"]) {
+      const values = Array.isArray(entry[key]) ? (entry[key] as unknown[]) : [];
+      for (const item of values) {
+        if (!item || typeof item !== "object") continue;
+        const rec = item as Record<string, unknown>;
+        if (typeof rec.url === "string" && /^https?:\/\//i.test(rec.url)) {
+          urls.push(rec.url.trim());
+        }
+      }
+    }
+  }
+  return urls;
 }
 
 function extractAssignmentsFromSchedule(
@@ -101,6 +135,53 @@ function extractAssignmentsFromSchedule(
           updated_at: nowIso,
         });
       }
+    }
+  }
+  return rows;
+}
+
+function extractHeuristicAssignmentsFromSchedule(
+  courseId: number,
+  syllabusId: number | null,
+  scheduleArray: Array<Record<string, unknown>>,
+  nowIso: string
+): AssignmentRow[] {
+  const rows: AssignmentRow[] = [];
+  for (const entry of scheduleArray) {
+    const sequence = typeof entry.sequence === "string" ? entry.sequence : null;
+    const rowDate = normalizeDate(entry.date);
+    const title = typeof entry.title === "string" ? entry.title : "";
+    const description = typeof entry.description === "string" ? entry.description : "";
+    const blob = `${title} ${description}`.toLowerCase();
+
+    const infer = (kind: AssignmentKind, label: string) => {
+      rows.push({
+        course_id: courseId,
+        syllabus_id: syllabusId,
+        kind,
+        label,
+        due_on: rowDate,
+        url: null,
+        description: description || null,
+        source_sequence: sequence,
+        source_row_date: rowDate,
+        metadata: {} as Json,
+        retrieved_at: nowIso,
+        updated_at: nowIso,
+      });
+    };
+
+    if (blob.includes("assignment") && (blob.includes("due") || blob.includes("out"))) {
+      infer("assignment", title || "Assignment");
+    }
+    if (blob.includes("lab") && (blob.includes("due") || blob.includes("out"))) {
+      infer("lab", title || "Lab");
+    }
+    if (blob.includes("exam") || blob.includes("midterm") || blob.includes("final")) {
+      infer("exam", title || "Exam");
+    }
+    if (blob.includes("project") && (blob.includes("due") || blob.includes("proposal") || blob.includes("milestone"))) {
+      infer("project", title || "Project");
     }
   }
   return rows;
@@ -201,15 +282,25 @@ export async function runCourseIntel(userId: string, courseId: number) {
   const content = (parsed.content && typeof parsed.content === "object" ? parsed.content : {}) as Json;
   const scheduleArray = Array.isArray(parsed.schedule) ? (parsed.schedule as Array<Record<string, unknown>>) : [];
   const schedule = scheduleArray as Json;
+  const scheduleResources = extractResourcesFromSchedule(scheduleArray);
+  const mergedResourceCandidates = dedupeResourcesByDomain([
+    ...parsedResources,
+    ...scheduleResources,
+    ...(sourceUrl ? [sourceUrl] : []),
+    ...(Array.isArray(course.resources) ? course.resources : []),
+  ]);
+  const finalResources = mergedResourceCandidates;
 
   const admin = createAdminClient();
   const nowIso = new Date().toISOString();
 
-  const { error: courseUpdateError } = await admin
-    .from("courses")
-    .update({ resources: parsedResources })
-    .eq("id", courseId);
-  if (courseUpdateError) throw new Error(courseUpdateError.message);
+  if (finalResources.length > 0) {
+    const { error: courseUpdateError } = await admin
+      .from("courses")
+      .update({ resources: finalResources })
+      .eq("id", courseId);
+    if (courseUpdateError) throw new Error(courseUpdateError.message);
+  }
 
   const { data: syllabusUpserted, error: syllabusError } = await admin
     .from("course_syllabi")
@@ -231,16 +322,17 @@ export async function runCourseIntel(userId: string, courseId: number) {
 
   const syllabusId = syllabusUpserted?.id ? Number(syllabusUpserted.id) : null;
   const assignmentsFromSchedule = extractAssignmentsFromSchedule(courseId, syllabusId, scheduleArray, nowIso);
+  const heuristicAssignments = extractHeuristicAssignmentsFromSchedule(courseId, syllabusId, scheduleArray, nowIso);
   const topLevelAssignments = extractTopLevelAssignments(courseId, syllabusId, parsed.assignments, nowIso);
-  const assignmentRows = dedupeAssignments([...assignmentsFromSchedule, ...topLevelAssignments]);
-
-  const { error: deleteAssignmentsError } = await admin
-    .from("course_assignments")
-    .delete()
-    .eq("course_id", courseId);
-  if (deleteAssignmentsError) throw new Error(deleteAssignmentsError.message);
+  const assignmentRows = dedupeAssignments([...assignmentsFromSchedule, ...heuristicAssignments, ...topLevelAssignments]);
 
   if (assignmentRows.length > 0) {
+    const { error: deleteAssignmentsError } = await admin
+      .from("course_assignments")
+      .delete()
+      .eq("course_id", courseId);
+    if (deleteAssignmentsError) throw new Error(deleteAssignmentsError.message);
+
     const { error: insertAssignmentsError } = await admin
       .from("course_assignments")
       .insert(assignmentRows);
@@ -258,14 +350,14 @@ export async function runCourseIntel(userId: string, courseId: number) {
     responseText: text,
     requestPayload: { courseId, courseCode: course.course_code, university: course.university },
     responsePayload: {
-      resourcesCount: parsedResources.length,
+      resourcesCount: finalResources.length,
       scheduleEntries: scheduleArray.length,
       assignmentsCount: assignmentRows.length,
     },
   });
 
   return {
-    resources: parsedResources,
+    resources: finalResources,
     scheduleEntries: scheduleArray.length,
     assignmentsCount: assignmentRows.length,
   };

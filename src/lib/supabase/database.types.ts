@@ -64,6 +64,50 @@ export type Database = {
           },
         ]
       }
+      course_syllabi: {
+        Row: {
+          id: number
+          course_id: number
+          source_url: string | null
+          raw_text: string | null
+          content: Json
+          schedule: Json
+          retrieved_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          course_id: number
+          source_url?: string | null
+          raw_text?: string | null
+          content?: Json
+          schedule?: Json
+          retrieved_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          course_id?: number
+          source_url?: string | null
+          raw_text?: string | null
+          content?: Json
+          schedule?: Json
+          retrieved_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_syllabi_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       course_semesters: {
         Row: {
           course_id: number

@@ -6,16 +6,13 @@ import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, BookOpen } from "lucide-react";
+import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
 interface CourseDetailHeaderProps {
   course: Course;
   isEditing?: boolean;
   onToggleEdit?: () => void;
   projectSeminarRef?: { id: number; category: string } | null;
-  onRetrieveSyllabus?: () => void;
-  isSyllabusRetrieving?: boolean;
-  syllabusStatus?: 'idle' | 'success' | 'error';
 }
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -34,9 +31,6 @@ export default function CourseDetailHeader({
   isEditing = false,
   onToggleEdit,
   projectSeminarRef = null,
-  onRetrieveSyllabus,
-  isSyllabusRetrieving = false,
-  syllabusStatus = 'idle',
 }: CourseDetailHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,7 +44,7 @@ export default function CourseDetailHeader({
     setIsAiUpdating(true);
     setAiStatus('idle');
     try {
-      const res = await fetch('/api/ai/course-update', {
+      const res = await fetch('/api/ai/course-intel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ courseId: course.id }),
@@ -140,30 +134,11 @@ export default function CourseDetailHeader({
                   ? 'border-rose-300 text-rose-500'
                   : 'border-[#d3d3d3] text-[#666] hover:bg-[#f8f8f8]'
             }`}
-            title="AI Update — fetch latest course info from web"
-            aria-label="AI Update"
+            title="AI Sync — fetch resources, syllabus, and assignments"
+            aria-label="AI Sync"
           >
             {isAiUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
           </button>
-
-          {/* Retrieve Syllabus */}
-          {onRetrieveSyllabus && (
-            <button
-              onClick={onRetrieveSyllabus}
-              disabled={isSyllabusRetrieving}
-              className={`h-7 w-7 rounded-md border bg-white inline-flex items-center justify-center transition-all disabled:opacity-50 shrink-0 ${
-                syllabusStatus === 'success'
-                  ? 'border-emerald-300 text-emerald-600'
-                  : syllabusStatus === 'error'
-                    ? 'border-rose-300 text-rose-500'
-                    : 'border-[#d3d3d3] text-[#666] hover:bg-[#f8f8f8]'
-              }`}
-              title="Retrieve Syllabus — fetch and parse syllabus from web"
-              aria-label="Retrieve Syllabus"
-            >
-              {isSyllabusRetrieving ? <Loader2 className="w-3 h-3 animate-spin" /> : <BookOpen className="w-3 h-3" />}
-            </button>
-          )}
 
           {/* Google Search */}
           <a

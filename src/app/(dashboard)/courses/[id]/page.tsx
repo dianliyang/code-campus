@@ -93,6 +93,13 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
     .eq('course_id', Number(id))
     .maybeSingle();
 
+  const assignmentsPromise = supabase
+    .from("course_assignments")
+    .select("id, kind, label, due_on, url, description")
+    .eq("course_id", Number(id))
+    .order("due_on", { ascending: true, nullsFirst: false })
+    .order("id", { ascending: true });
+
   const [
     { data, error },
     { data: enrollment },
@@ -100,6 +107,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
     { data: semesterRows },
     { data: studyPlanRows },
     { data: syllabusData },
+    { data: assignmentRows },
   ] = await Promise.all([
     coursePromise,
     enrollmentPromise,
@@ -107,6 +115,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
     semestersPromise,
     studyPlansPromise,
     syllabusPromise,
+    assignmentsPromise,
   ]);
 
   if (error || !data) {
@@ -166,6 +175,14 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
         schedule: (syllabusData.schedule as unknown[]) ?? [],
         retrieved_at: syllabusData.retrieved_at,
       } : null}
+      assignments={(assignmentRows || []).map((item) => ({
+        id: item.id,
+        kind: item.kind,
+        label: item.label,
+        due_on: item.due_on,
+        url: item.url,
+        description: item.description,
+      }))}
     />
   );
 }

@@ -64,6 +64,72 @@ export type Database = {
           },
         ]
       }
+      course_assignments: {
+        Row: {
+          id: number
+          course_id: number
+          syllabus_id: number | null
+          kind: string
+          label: string
+          due_on: string | null
+          url: string | null
+          description: string | null
+          source_sequence: string | null
+          source_row_date: string | null
+          metadata: Json
+          retrieved_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          course_id: number
+          syllabus_id?: number | null
+          kind: string
+          label: string
+          due_on?: string | null
+          url?: string | null
+          description?: string | null
+          source_sequence?: string | null
+          source_row_date?: string | null
+          metadata?: Json
+          retrieved_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          course_id?: number
+          syllabus_id?: number | null
+          kind?: string
+          label?: string
+          due_on?: string | null
+          url?: string | null
+          description?: string | null
+          source_sequence?: string | null
+          source_row_date?: string | null
+          metadata?: Json
+          retrieved_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_assignments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_assignments_syllabus_id_fkey"
+            columns: ["syllabus_id"]
+            isOneToOne: false
+            referencedRelation: "course_syllabi"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       course_syllabi: {
         Row: {
           id: number
@@ -253,6 +319,7 @@ export type Database = {
           ai_topics_prompt_template: string | null
           ai_course_update_prompt_template: string | null
           ai_syllabus_prompt_template: string | null
+          ai_course_intel_prompt_template: string | null
           ai_web_search_enabled: boolean
           created_at: string
           email: string | null
@@ -271,6 +338,7 @@ export type Database = {
           ai_topics_prompt_template?: string | null
           ai_course_update_prompt_template?: string | null
           ai_syllabus_prompt_template?: string | null
+          ai_course_intel_prompt_template?: string | null
           ai_web_search_enabled?: boolean
           created_at?: string
           email?: string | null
@@ -289,6 +357,7 @@ export type Database = {
           ai_topics_prompt_template?: string | null
           ai_course_update_prompt_template?: string | null
           ai_syllabus_prompt_template?: string | null
+          ai_course_intel_prompt_template?: string | null
           ai_web_search_enabled?: boolean
           created_at?: string
           email?: string | null

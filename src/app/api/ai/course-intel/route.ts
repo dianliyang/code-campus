@@ -13,9 +13,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await runCourseIntel(user.id, Number(courseId));
-    return NextResponse.json({ success: true, updated: ["resources"], count: result.resources.length });
+    return NextResponse.json({ success: true, ...result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI call failed";
+    const message = err instanceof Error ? err.message : "Course intel failed";
     const status = /not configured|no valid json/i.test(message) ? 422 : 500;
     return NextResponse.json(
       { error: message },

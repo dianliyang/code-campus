@@ -11,8 +11,6 @@ import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
 import CourseSyllabusTable, { type SyllabusEntry, type SyllabusContent } from "@/components/courses/CourseSyllabusTable";
-import { trackAiUsage } from "@/lib/ai/usage";
-import { useAppToast } from "@/components/common/AppToastProvider";
 
 interface CourseDetailContentProps {
   course: Course;
@@ -28,6 +26,14 @@ interface CourseDetailContentProps {
     schedule: unknown[];
     retrieved_at: string;
   } | null;
+  assignments?: Array<{
+    id: number;
+    kind: string;
+    label: string;
+    due_on: string | null;
+    url: string | null;
+    description: string | null;
+  }>;
 }
 
 export default function CourseDetailContent({
@@ -39,13 +45,11 @@ export default function CourseDetailContent({
   studyPlans,
   projectSeminarRef = null,
   syllabus = null,
+  assignments = [],
 }: CourseDetailContentProps) {
-  const { showToast } = useAppToast();
   const [enrolled, setEnrolled] = useState(isEnrolled);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [isSyllabusRetrieving, setIsSyllabusRetrieving] = useState(false);
-  const [syllabusStatus, setSyllabusStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [syllabusData, setSyllabusData] = useState(syllabus);
   const [isGeneratingPlans, setIsGeneratingPlans] = useState(false);
   const [isConfirmingPlans, setIsConfirmingPlans] = useState(false);
@@ -273,34 +277,6 @@ export default function CourseDetailContent({
     }
   };
 
-  const handleRetrieveSyllabus = async () => {
-    setIsSyllabusRetrieving(true);
-    setSyllabusStatus('idle');
-    try {
-      const res = await fetch('/api/ai/syllabus-retrieve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId: course.id }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSyllabusStatus('success');
-        trackAiUsage({ calls: 1, tokens: 2048 });
-        showToast({ type: 'success', message: `Syllabus retrieved — ${data.scheduleEntries ?? 0} schedule entries found.` });
-        startTransition(() => router.refresh());
-      } else {
-        setSyllabusStatus('error');
-        showToast({ type: 'error', message: 'Failed to retrieve syllabus. Try again.' });
-      }
-    } catch {
-      setSyllabusStatus('error');
-      showToast({ type: 'error', message: 'Failed to retrieve syllabus. Try again.' });
-    } finally {
-      setIsSyllabusRetrieving(false);
-      setTimeout(() => setSyllabusStatus('idle'), 3000);
-    }
-  };
-
   return (
     <div className="space-y-4 pb-4">
       <CourseDetailHeader
@@ -308,9 +284,6 @@ export default function CourseDetailContent({
         isEditing={isEditing}
         onToggleEdit={() => setIsEditing(!isEditing)}
         projectSeminarRef={projectSeminarRef}
-        onRetrieveSyllabus={handleRetrieveSyllabus}
-        isSyllabusRetrieving={isSyllabusRetrieving}
-        syllabusStatus={syllabusStatus}
       />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 space-y-4">
@@ -696,8 +669,34 @@ export default function CourseDetailContent({
             ) : (
               <p className="text-sm text-[#888]">
                 No syllabus retrieved yet. Use the{" "}
-                <span className="font-medium text-[#444]">Retrieve Syllabus</span> button in the header.
+                <span className="font-medium text-[#444]">AI Sync</span> button in the header.
               </p>
+            )}
+          </section>
+
+          <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+            <h2 className="text-base font-semibold text-[#1f1f1f] mb-4">Assignments</h2>
+            {assignments.length > 0 ? (
+              <ul className="space-y-2">
+                {assignments.map((item) => (
+                  <li key={item.id} className="text-sm text-[#444] border border-[#ececec] rounded px-3 py-2 bg-white">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">{item.label}</span>
+                      <span className="text-xs text-[#777] uppercase">{item.kind}</span>
+                    </div>
+                    <div className="text-xs text-[#777] mt-1">
+                      {item.due_on ? `Due: ${item.due_on}` : "No due date"}
+                    </div>
+                    {item.url && (
+                      <a href={item.url} target="_blank" rel="noreferrer" className="text-xs text-[#335b9a] hover:underline mt-1 inline-block">
+                        {item.url}
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[#9a9a9a]">No assignments found yet.</p>
             )}
           </section>
 

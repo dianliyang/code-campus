@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/lib/supabase/server";
 import { runCourseIntel } from "@/lib/ai/course-intel";
+import { getCourseIntelErrorStatus } from "@/lib/ai/course-intel-errors";
 
 export const runtime = "nodejs";
 
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, updated: ["resources"], count: result.resources.length });
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI call failed";
-    const status = /not configured|no valid json/i.test(message) ? 422 : 500;
+    const status = getCourseIntelErrorStatus(message);
     return NextResponse.json(
       { error: message },
       { status }

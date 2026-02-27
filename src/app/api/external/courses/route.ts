@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         details,
         instructors,
         prerequisites,
-        related_urls,
+        resources,
         cross_listed_courses,
         department,
         corequisites,

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { updateAiPreferences, updateAiPromptTemplates } from "@/actions/profile";
 import { AI_PROVIDERS } from "@/lib/ai/models-client";
 import { useAppToast } from "@/components/common/AppToastProvider";
-import { Save, Loader2, RefreshCcw, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles, BookOpen } from "lucide-react";
+import { Save, Loader2, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles, BookOpen } from "lucide-react";
 
 type AISectionId = "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "syllabus-retrieve" | "usage";
 
@@ -20,14 +20,6 @@ interface AISettingsCardProps {
   initialCourseUpdatePromptTemplate: string;
   initialSyllabusPromptTemplate: string;
   modelCatalog: { perplexity: string[]; gemini: string[] };
-  defaultPrompts: {
-    description: string;
-    studyPlan: string;
-    planner: string;
-    topics: string;
-    courseUpdate: string;
-    syllabusRetrieve: string;
-  };
 }
 
 type UsageStats = {
@@ -104,19 +96,18 @@ export default function AISettingsCard({
   initialCourseUpdatePromptTemplate,
   initialSyllabusPromptTemplate,
   modelCatalog,
-  defaultPrompts,
 }: AISettingsCardProps) {
   const perplexityModels = modelCatalog.perplexity;
   const geminiModels = modelCatalog.gemini;
   const [provider, setProvider] = useState(initialProvider === "gemini" ? "gemini" : "perplexity");
   const [defaultModel, setDefaultModel] = useState(initialModel);
   const [webSearchEnabled, setWebSearchEnabled] = useState(initialWebSearchEnabled);
-  const [promptTemplate, setPromptTemplate] = useState(initialPromptTemplate || defaultPrompts.description);
-  const [studyPlanPromptTemplate, setStudyPlanPromptTemplate] = useState(initialStudyPlanPromptTemplate || defaultPrompts.studyPlan);
-  const [plannerPromptTemplate, setPlannerPromptTemplate] = useState(initialPlannerPromptTemplate || defaultPrompts.planner);
-  const [topicsPromptTemplate, setTopicsPromptTemplate] = useState(initialTopicsPromptTemplate || defaultPrompts.topics);
-  const [courseUpdatePromptTemplate, setCourseUpdatePromptTemplate] = useState(initialCourseUpdatePromptTemplate || defaultPrompts.courseUpdate);
-  const [syllabusPromptTemplate, setSyllabusPromptTemplate] = useState(initialSyllabusPromptTemplate || defaultPrompts.syllabusRetrieve);
+  const [promptTemplate, setPromptTemplate] = useState(initialPromptTemplate);
+  const [studyPlanPromptTemplate, setStudyPlanPromptTemplate] = useState(initialStudyPlanPromptTemplate);
+  const [plannerPromptTemplate, setPlannerPromptTemplate] = useState(initialPlannerPromptTemplate);
+  const [topicsPromptTemplate, setTopicsPromptTemplate] = useState(initialTopicsPromptTemplate);
+  const [courseUpdatePromptTemplate, setCourseUpdatePromptTemplate] = useState(initialCourseUpdatePromptTemplate);
+  const [syllabusPromptTemplate, setSyllabusPromptTemplate] = useState(initialSyllabusPromptTemplate);
 
   const [isSavingProvider, setIsSavingProvider] = useState(false);
   const [isSavingDescription, setIsSavingDescription] = useState(false);
@@ -364,11 +355,10 @@ export default function AISettingsCard({
                 Push Metadata Logic
               </button>
               <button
-                onClick={() => setPromptTemplate(defaultPrompts.description)}
+                onClick={() => setPromptTemplate("")}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
-                <RefreshCcw className="w-3 h-3" />
-                Reset
+                Clear
               </button>
             </div>
           </div>
@@ -403,11 +393,10 @@ export default function AISettingsCard({
                 Push Schedule Logic
               </button>
               <button
-                onClick={() => setStudyPlanPromptTemplate(defaultPrompts.studyPlan)}
+                onClick={() => setStudyPlanPromptTemplate("")}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
-                <RefreshCcw className="w-3 h-3" />
-                Reset
+                Clear
               </button>
             </div>
           </div>
@@ -442,11 +431,10 @@ export default function AISettingsCard({
                 Push Study Planner Logic
               </button>
               <button
-                onClick={() => setPlannerPromptTemplate(defaultPrompts.planner)}
+                onClick={() => setPlannerPromptTemplate("")}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
-                <RefreshCcw className="w-3 h-3" />
-                Reset
+                Clear
               </button>
             </div>
           </div>
@@ -481,11 +469,10 @@ export default function AISettingsCard({
                 Push Topic Logic
               </button>
               <button
-                onClick={() => setTopicsPromptTemplate(defaultPrompts.topics)}
+                onClick={() => setTopicsPromptTemplate("")}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
-                <RefreshCcw className="w-3 h-3" />
-                Reset
+                Clear
               </button>
             </div>
           </div>
@@ -520,11 +507,10 @@ export default function AISettingsCard({
                 Push Update Search Logic
               </button>
               <button
-                onClick={() => setCourseUpdatePromptTemplate(defaultPrompts.courseUpdate)}
+                onClick={() => setCourseUpdatePromptTemplate("")}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
-                <RefreshCcw className="w-3 h-3" />
-                Reset
+                Clear
               </button>
             </div>
           </div>
@@ -559,11 +545,10 @@ export default function AISettingsCard({
                 Push Syllabus Logic
               </button>
               <button
-                onClick={() => setSyllabusPromptTemplate(defaultPrompts.syllabusRetrieve)}
+                onClick={() => setSyllabusPromptTemplate("")}
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
               >
-                <RefreshCcw className="w-3 h-3" />
-                Reset
+                Clear
               </button>
             </div>
           </div>

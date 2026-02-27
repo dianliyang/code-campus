@@ -15,7 +15,7 @@ vi.mock("@/actions/courses", () => ({
   confirmGeneratedStudyPlans: vi.fn(),
   previewStudyPlansFromCourseSchedule: vi.fn(),
   toggleCourseEnrollmentAction: vi.fn(),
-  updateCourseRelatedUrls: vi.fn(),
+  updateCourseResources: vi.fn(),
 }));
 
 const baseCourse: Course = {

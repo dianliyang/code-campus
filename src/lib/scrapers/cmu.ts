@@ -131,7 +131,7 @@ export class CMU extends BaseScraper {
     description: string;
     prerequisites: string;
     corequisites: string;
-    relatedUrls: string[];
+    resources: string[];
     crossListedCourses: string;
   }> {
     const cleanCode = courseCode.replace(/-/g, "");
@@ -146,7 +146,7 @@ export class CMU extends BaseScraper {
         description: "",
         prerequisites: "",
         corequisites: "",
-        relatedUrls: [],
+        resources: [],
         crossListedCourses: ""
       };
 
@@ -162,7 +162,7 @@ export class CMU extends BaseScraper {
       const corequisites = $("dt:contains('Corequisites')").next("dd").text().trim();
 
       // Extract related URLs (excluding generic department homepages)
-      const relatedUrls: string[] = [];
+      const resources: string[] = [];
       const ignoredUrls = [
         "http://www.csd.cmu.edu",
         "https://www.csd.cmu.edu",
@@ -172,7 +172,7 @@ export class CMU extends BaseScraper {
       $("#course-detail-related-urls a").each((_, el) => {
         const href = $(el).attr("href");
         if (href && !ignoredUrls.includes(href)) {
-          relatedUrls.push(href);
+          resources.push(href);
         }
       });
 
@@ -183,7 +183,7 @@ export class CMU extends BaseScraper {
         description,
         prerequisites: prerequisites === "None" ? "" : prerequisites,
         corequisites: corequisites === "None" ? "" : corequisites,
-        relatedUrls,
+        resources,
         crossListedCourses: crossListedCourses === "None" ? "" : crossListedCourses
       };
     } catch (error) {
@@ -192,7 +192,7 @@ export class CMU extends BaseScraper {
         description: "",
         prerequisites: "",
         corequisites: "",
-        relatedUrls: [],
+        resources: [],
         crossListedCourses: ""
       };
     }
@@ -283,7 +283,7 @@ export class CMU extends BaseScraper {
             details: {
               sections: [],
               prerequisites: "",
-              relatedUrls: [],
+              resources: [],
               crossListedCourses: "",
               is_partially_scraped: shouldSkip // Flag to indicate details were skipped
             },
@@ -338,7 +338,7 @@ export class CMU extends BaseScraper {
          if (course.details) {
            const d = course.details as any; // eslint-disable-line @typescript-eslint/no-explicit-any
            d.prerequisites = details.prerequisites;
-           d.relatedUrls = details.relatedUrls;
+           d.resources = details.resources;
            d.crossListedCourses = details.crossListedCourses;
          }
        } catch (error) {

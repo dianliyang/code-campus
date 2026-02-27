@@ -80,7 +80,7 @@ export default function CourseDetailTopSection({
     department: course.department || "",
     corequisites: course.corequisites || "",
     prerequisites: course.prerequisites || "",
-    relatedUrlsText: (course.relatedUrls || []).join("\n"),
+    resourcesText: (course.resources || []).join("\n"),
     crossListedCourses: course.crossListedCourses || "",
     level: course.level || "",
     difficulty: String(course.difficulty ?? 0),
@@ -161,7 +161,7 @@ export default function CourseDetailTopSection({
         department: formData.department,
         corequisites: formData.corequisites,
         prerequisites: formData.prerequisites,
-        relatedUrls: formData.relatedUrlsText
+        resources: formData.resourcesText
           .split("\n")
           .map((s) => s.trim())
           .filter((s) => s.length > 0),
@@ -171,7 +171,6 @@ export default function CourseDetailTopSection({
         popularity: Number(formData.popularity || 0),
         workload: Number(formData.workload || 0),
         subdomain: course.subdomain || "",
-        resources: course.resources || [],
         category: course.category || "",
         isHidden: formData.isHidden,
         isInternal: formData.isInternal,
@@ -352,10 +351,10 @@ export default function CourseDetailTopSection({
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-medium text-[#666]">Related URLs (one per line)</label>
+              <label className="text-xs font-medium text-[#666]">Resources (one per line)</label>
               <textarea
-                value={formData.relatedUrlsText}
-                onChange={(e) => setFormData((p) => ({ ...p, relatedUrlsText: e.target.value }))}
+                value={formData.resourcesText}
+                onChange={(e) => setFormData((p) => ({ ...p, resourcesText: e.target.value }))}
                 rows={4}
                 className={textareaClass}
               />

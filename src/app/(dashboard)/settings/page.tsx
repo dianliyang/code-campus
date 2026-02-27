@@ -4,16 +4,14 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getAiRuntimeConfig } from "@/lib/ai/runtime-config";
 import { getModelCatalogByProvider } from "@/lib/ai/models";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const [user, lang, aiRuntime, modelCatalog] = await Promise.all([
+  const [user, lang, modelCatalog] = await Promise.all([
     getUser(),
     getLanguage(),
-    getAiRuntimeConfig(),
     getModelCatalogByProvider(),
   ]);
   const dict = await getDictionary(lang);
@@ -72,14 +70,6 @@ export default async function SettingsPage() {
         profile={profile}
         aiDefaults={{
           modelCatalog,
-          prompts: {
-            description: aiRuntime.prompts.description,
-            studyPlan: aiRuntime.prompts.studyPlan,
-            planner: aiRuntime.prompts.planner,
-            topics: aiRuntime.prompts.topics,
-            courseUpdate: aiRuntime.prompts.courseUpdate,
-            syllabusRetrieve: aiRuntime.prompts.syllabusRetrieve,
-          },
         }}
       />
     </div>

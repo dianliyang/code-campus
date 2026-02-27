@@ -49,7 +49,7 @@ export function transformExternalCourse(course: Record<string, unknown>) {
 
   const finalResources = Array.isArray(course.resources) && course.resources.length > 0
     ? course.resources
-    : (Array.isArray(course.related_urls) ? course.related_urls : []);
+    : (Array.isArray(course.resources) ? course.resources : []);
 
   const finalCategory = course.category || (fields.length > 0 ? fields[0] : null);
 

@@ -3,7 +3,7 @@ import { createAdminClient, getUser } from "@/lib/supabase/server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { logAiUsage } from "@/lib/ai/log-usage";
-import { applyPromptTemplate, getAiRuntimeConfig } from "@/lib/ai/runtime-config";
+import { applyPromptTemplate } from "@/lib/ai/runtime-config";
 import { parseLenientJson } from "@/lib/ai/parse-json";
 import { resolveModelForProvider } from "@/lib/ai/models";
 
@@ -114,10 +114,9 @@ export async function POST(request: NextRequest) {
     enrolled_course_ids: enrolledCourseIds,
   };
 
-  const runtimeConfig = await getAiRuntimeConfig();
   let modelName = await resolveModelForProvider("perplexity", "");
   let providerName = "perplexity";
-  let plannerPromptTemplate = runtimeConfig.prompts.planner;
+  let plannerPromptTemplate = "";
 
   // Support per-user planner prompt overrides while remaining backward-compatible
   // with databases that don't yet have this column.
@@ -134,9 +133,9 @@ export async function POST(request: NextRequest) {
     modelName = await resolveModelForProvider("perplexity", userModel);
   }
 
-  const customPlannerPrompt = String(profilePrompt?.ai_planner_prompt_template || "").trim();
-  if (customPlannerPrompt) {
-    plannerPromptTemplate = customPlannerPrompt;
+  plannerPromptTemplate = String(profilePrompt?.ai_planner_prompt_template || "").trim();
+  if (!plannerPromptTemplate) {
+    return NextResponse.json({ error: "Planner prompt template not configured" }, { status: 422 });
   }
 
   const prompt = applyPromptTemplate(plannerPromptTemplate, {

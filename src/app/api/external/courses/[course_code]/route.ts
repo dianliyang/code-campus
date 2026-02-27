@@ -45,7 +45,7 @@ export async function GET(
         details,
         instructors,
         prerequisites,
-        related_urls,
+        resources,
         cross_listed_courses,
         department,
         corequisites,
@@ -174,7 +174,6 @@ export async function PATCH(
       title: 'title',
       url: 'url',
       cross_listed_courses: 'cross_listed_courses',
-      related_urls: 'related_urls',
       is_hidden: 'is_hidden',
       is_internal: 'is_internal'
     };

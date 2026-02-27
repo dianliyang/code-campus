@@ -3,7 +3,6 @@ import { createClient, getUser, createAdminClient } from '@/lib/supabase/server'
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { logAiUsage } from '@/lib/ai/log-usage';
-import { getAiRuntimeConfig } from '@/lib/ai/runtime-config';
 import { resolveModelForProvider } from '@/lib/ai/models';
 import { parseLenientJson } from '@/lib/ai/parse-json';
 import type { Json } from '@/lib/supabase/database.types';
@@ -29,7 +28,7 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: course } = await supabase
     .from('courses')
-    .select('course_code, university, title, url, related_urls, resources')
+    .select('course_code, university, title, url, resources')
     .eq('id', courseId)
     .single();
   if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 });
@@ -40,14 +39,15 @@ export async function POST(request: NextRequest) {
     .eq('id', user.id)
     .maybeSingle();
 
-  const runtimeConfig = await getAiRuntimeConfig();
   const modelName = await resolveModelForProvider('perplexity', String(profile?.ai_default_model || '').trim());
-  const template = (profile?.ai_syllabus_prompt_template || '').trim() || runtimeConfig.prompts.syllabusRetrieve;
+  const template = (profile?.ai_syllabus_prompt_template || '').trim();
+  if (!template) {
+    return NextResponse.json({ error: 'Syllabus prompt template not configured' }, { status: 422 });
+  }
 
   // Build a list of known URLs from course resources to give the AI direct context.
   const knownUrls = [
     course.url,
-    ...(Array.isArray(course.related_urls) ? course.related_urls : []),
     ...(Array.isArray(course.resources) ? course.resources : []),
   ].filter(Boolean) as string[];
   const resourcesContext = knownUrls.length > 0

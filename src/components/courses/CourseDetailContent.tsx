@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
-import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, toggleCourseEnrollmentAction, updateCourseRelatedUrls, type SchedulePlanPreview } from "@/actions/courses";
+import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, toggleCourseEnrollmentAction, updateCourseResources, type SchedulePlanPreview } from "@/actions/courses";
 import { Check, Clock, ExternalLink, Globe, Info, Loader2, Minus, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
@@ -58,7 +58,7 @@ export default function CourseDetailContent({
     generatedPlans: SchedulePlanPreview[];
   } | null>(null);
   const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([]);
-  const [localRelatedUrls, setLocalRelatedUrls] = useState<string[]>(course.relatedUrls || []);
+  const [localResources, setLocalResources] = useState<string[]>(course.resources || []);
   const [showAddUrl, setShowAddUrl] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [isAddingUrl, setIsAddingUrl] = useState(false);
@@ -111,8 +111,8 @@ export default function CourseDetailContent({
       : "CMU Course Variants";
 
   useEffect(() => {
-    setLocalRelatedUrls(course.relatedUrls || []);
-  }, [course.relatedUrls]);
+    setLocalResources(course.resources || []);
+  }, [course.resources]);
 
   useEffect(() => {
     setSyllabusData(syllabus);
@@ -186,16 +186,16 @@ export default function CourseDetailContent({
       .map((url) => url.trim())
       .filter(Boolean);
     if (!urls.length) return;
-    const updated = [...localRelatedUrls, ...urls];
-    setLocalRelatedUrls(updated);
+    const updated = [...localResources, ...urls];
+    setLocalResources(updated);
     setNewUrl("");
     setShowAddUrl(false);
     setIsAddingUrl(true);
     try {
-      await updateCourseRelatedUrls(course.id, updated);
+      await updateCourseResources(course.id, updated);
     } catch (error) {
       console.error(error);
-      setLocalRelatedUrls(localRelatedUrls);
+      setLocalResources(localResources);
       setNewUrl(urls.join("\n"));
       setShowAddUrl(true);
     } finally {
@@ -204,16 +204,16 @@ export default function CourseDetailContent({
   };
 
   const handleRemoveUrl = async (index: number) => {
-    if (index < 0 || index >= localRelatedUrls.length) return;
-    const previous = localRelatedUrls;
+    if (index < 0 || index >= localResources.length) return;
+    const previous = localResources;
     const updated = previous.filter((_, i) => i !== index);
-    setLocalRelatedUrls(updated);
+    setLocalResources(updated);
     setRemovingUrlIndex(index);
     try {
-      await updateCourseRelatedUrls(course.id, updated);
+      await updateCourseResources(course.id, updated);
     } catch (error) {
       console.error(error);
-      setLocalRelatedUrls(previous);
+      setLocalResources(previous);
     } finally {
       setRemovingUrlIndex(null);
     }
@@ -761,9 +761,9 @@ export default function CourseDetailContent({
                   </button>
                 </div>
                 <div className="space-y-4">
-                  {localRelatedUrls.length > 0 && (
+                  {localResources.length > 0 && (
                     <ul className="space-y-3">
-                      {localRelatedUrls.map((url: string, i: number) => (
+                      {localResources.map((url: string, i: number) => (
                         <li key={`${url}-${i}`} className="flex items-start gap-2">
                           <a href={url} target="_blank" rel="noreferrer" className="text-sm font-medium text-[#335b9a] hover:underline flex items-start gap-2 break-all flex-1 min-w-0">
                             <Globe className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#778fb8]" />
@@ -811,7 +811,7 @@ export default function CourseDetailContent({
                       </ul>
                     </div>
                   )}
-                  {localRelatedUrls.length === 0 && !course.crossListedCourses && variantCodeLinks.length === 0 && !showAddUrl && (
+                  {localResources.length === 0 && !course.crossListedCourses && variantCodeLinks.length === 0 && !showAddUrl && (
                     <p className="text-sm text-[#9a9a9a]">No resources yet.</p>
                   )}
                   {showAddUrl && (

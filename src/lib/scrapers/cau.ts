@@ -243,7 +243,7 @@ export class CAU extends BaseScraper {
 
           const rowRelatedLinks = this.collectRelatedLinksFromContainer(td);
           if (rowRelatedLinks.length > 0) {
-            (course.details as Record<string, unknown>).relatedUrls = rowRelatedLinks;
+            (course.details as Record<string, unknown>).resources = rowRelatedLinks;
           }
 
           td.find("dl dt").each((_, dt) => {
@@ -289,10 +289,10 @@ export class CAU extends BaseScraper {
               const contentsRelatedLinks = this.collectRelatedLinksFromContainer(dd);
               if (contentsRelatedLinks.length > 0) {
                 const current =
-                  Array.isArray((course.details as Record<string, unknown>).relatedUrls)
-                    ? ((course.details as Record<string, unknown>).relatedUrls as string[])
+                  Array.isArray((course.details as Record<string, unknown>).resources)
+                    ? ((course.details as Record<string, unknown>).resources as string[])
                     : [];
-                (course.details as Record<string, unknown>).relatedUrls = Array.from(new Set([...current, ...contentsRelatedLinks]));
+                (course.details as Record<string, unknown>).resources = Array.from(new Set([...current, ...contentsRelatedLinks]));
               }
             } else if (isDepartmentLabel) {
               course.department = value || course.department;
@@ -518,9 +518,9 @@ export class CAU extends BaseScraper {
         sInstr.forEach((i: string) => { if (!tInstr.includes(i)) tInstr.push(i); });
         tDetails.instructors = tInstr;
 
-        const sLinks = Array.isArray(sDetails.relatedUrls) ? (sDetails.relatedUrls as string[]) : [];
-        const tLinks = Array.isArray(tDetails.relatedUrls) ? (tDetails.relatedUrls as string[]) : [];
-        tDetails.relatedUrls = Array.from(new Set([...tLinks, ...sLinks]));
+        const sLinks = Array.isArray(sDetails.resources) ? (sDetails.resources as string[]) : [];
+        const tLinks = Array.isArray(tDetails.resources) ? (tDetails.resources as string[]) : [];
+        tDetails.resources = Array.from(new Set([...tLinks, ...sLinks]));
 
         if (!target.url && source.url) target.url = source.url;
         if (!target.department && source.department) target.department = source.department;

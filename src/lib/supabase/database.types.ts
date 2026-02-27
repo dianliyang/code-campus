@@ -157,7 +157,7 @@ export type Database = {
           level: string | null
           popularity: number | null
           prerequisites: string | null
-          related_urls: string[] | null
+          resources: string[] | null
           search_vector: unknown
           title: string
           units: string | null
@@ -165,7 +165,6 @@ export type Database = {
           url: string | null
           workload: number | null
           subdomain: string | null
-          resources: string[] | null
           category: string | null
         }
         Insert: {
@@ -186,7 +185,7 @@ export type Database = {
           level?: string | null
           popularity?: number | null
           prerequisites?: string | null
-          related_urls?: string[] | null
+          resources?: string[] | null
           search_vector?: unknown
           title: string
           units?: string | null
@@ -194,7 +193,6 @@ export type Database = {
           url?: string | null
           workload?: number | null
           subdomain?: string | null
-          resources?: string[] | null
           category?: string | null
         }
         Update: {
@@ -215,7 +213,7 @@ export type Database = {
           level?: string | null
           popularity?: number | null
           prerequisites?: string | null
-          related_urls?: string[] | null
+          resources?: string[] | null
           search_vector?: unknown
           title?: string
           units?: string | null
@@ -223,7 +221,6 @@ export type Database = {
           url?: string | null
           workload?: number | null
           subdomain?: string | null
-          resources?: string[] | null
           category?: string | null
         }
         Relationships: []

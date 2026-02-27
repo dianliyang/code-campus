@@ -204,7 +204,7 @@ async function fetchCourses(
   const supabase = await createClient();
   
   const modernSelectString = `
-    id, university, course_code, title, units, credit, url, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, subdomain, is_hidden, is_internal, created_at, latest_semester,
+    id, university, course_code, title, units, credit, url, details, instructors, prerequisites, resources, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, subdomain, is_hidden, is_internal, created_at, latest_semester,
     fields:course_fields(fields(name)),
     semesters:course_semesters(semesters(term, year))
   `;
@@ -292,7 +292,7 @@ async function fetchCourses(
     (errorMessage.includes("column") &&
       (errorMessage.includes("instructors") ||
         errorMessage.includes("prerequisites") ||
-        errorMessage.includes("related_urls") ||
+        errorMessage.includes("resources") ||
         errorMessage.includes("cross_listed_courses")));
 
   if (shouldFallbackToLegacy) {

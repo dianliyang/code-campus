@@ -24,7 +24,7 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
     department: course.department || "",
     corequisites: course.corequisites || "",
     prerequisites: course.prerequisites || "",
-    relatedUrls: course.relatedUrls?.join('\n') || "",
+    resources: course.resources?.join('\n') || "",
     crossListedCourses: course.crossListedCourses || "",
     level: course.level || "undergraduate",
     difficulty: course.difficulty || 0,
@@ -45,8 +45,8 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
       const updateData = {
         ...formData,
         prerequisites: formData.prerequisites || undefined,
-        relatedUrls: formData.relatedUrls
-          ? formData.relatedUrls.split('\n').map(url => url.trim()).filter(url => url.length > 0)
+        resources: formData.resources
+          ? formData.resources.split('\n').map(url => url.trim()).filter(url => url.length > 0)
           : undefined,
         crossListedCourses: formData.crossListedCourses || undefined,
       };
@@ -101,11 +101,11 @@ export default function EditCourseModal({ course, onClose }: EditCourseModalProp
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-[#666]">Related URLs (one per line)</label>
+                <label className="text-xs font-medium text-[#666]">Resources (one per line)</label>
                 <textarea
                   rows={3}
-                  value={formData.relatedUrls}
-                  onChange={(e) => setFormData({ ...formData, relatedUrls: e.target.value })}
+                  value={formData.resources}
+                  onChange={(e) => setFormData({ ...formData, resources: e.target.value })}
                   className={textareaClass}
                 />
               </div>

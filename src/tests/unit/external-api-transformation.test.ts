@@ -14,7 +14,7 @@ describe('transformExternalCourse', () => {
       url: 'https://example.edu/cs101',
       instructors: ['Prof. Ada'],
       prerequisites: 'CS100',
-      related_urls: ['Syllabus', 'Slides'],
+      resources: ['Syllabus', 'Slides'],
       cross_listed_courses: 'EE101',
       department: 'CS',
       level: 'Undergraduate',

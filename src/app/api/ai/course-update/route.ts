@@ -4,7 +4,6 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { logAiUsage } from '@/lib/ai/log-usage';
-import { getAiRuntimeConfig } from '@/lib/ai/runtime-config';
 import { resolveModelForProvider } from '@/lib/ai/models';
 
 export const runtime = 'nodejs';
@@ -39,9 +38,11 @@ export async function POST(request: NextRequest) {
     .eq('id', user.id)
     .maybeSingle();
 
-  const runtimeConfig = await getAiRuntimeConfig();
   const modelName = await resolveModelForProvider('perplexity', String(profile?.ai_default_model || '').trim());
-  const template = (profile?.ai_course_update_prompt_template || '').trim() || runtimeConfig.prompts.courseUpdate;
+  const template = (profile?.ai_course_update_prompt_template || '').trim();
+  if (!template) {
+    return NextResponse.json({ error: 'Course update prompt template not configured' }, { status: 422 });
+  }
 
   const prompt = template
     .replace('{course_code}', course.course_code)
@@ -73,8 +74,8 @@ export async function POST(request: NextRequest) {
 
     const updates = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
 
-    const rawUrls = Array.isArray(updates.related_urls) ? updates.related_urls : [];
-    const relatedUrls = Array.from(
+    const rawUrls = Array.isArray(updates.resources) ? updates.resources : [];
+    const resources = Array.from(
       new Set(
         rawUrls
           .filter((u): u is string => typeof u === 'string')
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
     const adminSupabase = createAdminClient();
     const { error: updateError } = await adminSupabase
       .from('courses')
-      .update({ related_urls: relatedUrls })
+      .update({ resources })
       .eq('id', courseId);
 
     if (updateError) {
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, updated: ["related_urls"], count: relatedUrls.length });
+    return NextResponse.json({ success: true, updated: ["resources"], count: resources.length });
   } catch (err) {
     console.error('[course-update] AI call failed:', err);
     return NextResponse.json(

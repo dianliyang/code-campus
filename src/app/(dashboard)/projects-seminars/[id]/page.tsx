@@ -113,8 +113,8 @@ export default async function ProjectsSeminarsDetailPage({ params }: PageProps) 
   );
   const savedRelatedLinks = Array.isArray(row.related_links)
     ? row.related_links.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
-    : Array.isArray(details.related_urls)
-      ? details.related_urls.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    : Array.isArray(details.resources)
+      ? details.resources.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
       : [];
   const relatedLinks = Array.from(
     new Set(

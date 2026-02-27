@@ -282,7 +282,7 @@ export class SupabaseDatabase {
     const upsertCourseCodes = coursesForUpsert.map((c) => c.courseCode);
     const { data: existingCourseRows } = await supabase
       .from("courses")
-      .select("course_code, description, related_urls, details")
+      .select("course_code, description, resources, details")
       .eq("university", university)
       .in("course_code", upsertCourseCodes);
     const existingCourseByCode = new Map(
@@ -299,14 +299,14 @@ export class SupabaseDatabase {
       const rawDescription = c.description || existing?.description || "";
       const { cleanText: cleanedDescription, links: extractedLinks } = extractContentLinks(rawDescription);
       const detailsRelatedLinks =
-        c.details && typeof c.details === "object" && Array.isArray((c.details as Record<string, unknown>).relatedUrls)
-          ? ((c.details as Record<string, unknown>).relatedUrls as unknown[])
+        c.details && typeof c.details === "object" && Array.isArray((c.details as Record<string, unknown>).resources)
+          ? ((c.details as Record<string, unknown>).resources as unknown[])
               .filter((value): value is string => typeof value === "string")
               .map((value) => normalizeExternalUrl(value))
               .filter(Boolean)
           : [];
-      const existingRelatedLinks = Array.isArray(existing?.related_urls)
-        ? existing.related_urls.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+      const existingRelatedLinks = Array.isArray(existing?.resources)
+        ? existing.resources.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
         : [];
       const mergedRelatedLinks = Array.from(new Set([...existingRelatedLinks, ...detailsRelatedLinks, ...extractedLinks]));
 
@@ -332,7 +332,6 @@ export class SupabaseDatabase {
         details?: Json;
         latest_semester?: Json;
         instructors?: string[];
-        related_urls?: string[];
       } = {
         university: university,
         course_code: c.courseCode,
@@ -358,7 +357,7 @@ export class SupabaseDatabase {
       };
 
       if (mergedRelatedLinks.length > 0) {
-        payload.related_urls = mergedRelatedLinks;
+        payload.resources = mergedRelatedLinks;
       }
 
       // Extract instructors from details into top-level column
@@ -615,8 +614,8 @@ export class SupabaseDatabase {
       const rawContentValue = c.description || (rawDetails.contents as string) || existing?.contents || "";
       const { cleanText: cleanedContents, links: extractedLinks } = extractContentLinks(rawContentValue);
       const detailsRelatedLinks =
-        Array.isArray(rawDetails.relatedUrls)
-          ? (rawDetails.relatedUrls as unknown[])
+        Array.isArray(rawDetails.resources)
+          ? (rawDetails.resources as unknown[])
               .filter((value): value is string => typeof value === "string")
               .map((value) => normalizeExternalUrl(value))
               .filter(Boolean)
@@ -870,7 +869,7 @@ export function mapCourseFromRow(
     corequisites: String(row.corequisites || ""),
     level: String(row.level || ""),
     prerequisites: String(row.prerequisites || ""),
-    relatedUrls: Array.isArray(row.related_urls) ? (row.related_urls as string[]) : [],
+    resources: Array.isArray(row.resources) ? (row.resources as string[]) : [],
     crossListedCourses: String(row.cross_listed_courses || ""),
     difficulty: Number(row.difficulty || 0),
     details: parsedDetails,
@@ -878,7 +877,6 @@ export function mapCourseFromRow(
     popularity: Number(row.popularity || 0),
     workload: row.workload != null ? Number(row.workload) : undefined,
     subdomain: row.subdomain ? String(row.subdomain) : undefined,
-    resources: Array.isArray(row.resources) ? (row.resources as string[]) : undefined,
     category: row.category ? String(row.category) : undefined,
     isHidden: Boolean(row.is_hidden),
     isInternal: Boolean(row.is_internal),

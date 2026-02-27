@@ -54,7 +54,7 @@ async function updateCMUDetails() {
       const corequisites = $("dt:contains('Corequisites')").next("dd").text().trim();
       const crossListedCourses = $("dt:contains('Cross-Listed Courses')").next("dd").text().trim();
 
-      const relatedUrls: string[] = [];
+      const resources: string[] = [];
       const ignoredUrls = [
         "http://www.csd.cmu.edu",
         "https://www.csd.cmu.edu",
@@ -64,7 +64,7 @@ async function updateCMUDetails() {
       $("#course-detail-related-urls a").each((_, el) => {
         const href = $(el).attr("href");
         if (href && !ignoredUrls.includes(href)) {
-          relatedUrls.push(href);
+          resources.push(href);
         }
       });
 
@@ -72,7 +72,7 @@ async function updateCMUDetails() {
         description,
         prerequisites: prerequisites === "None" ? "" : prerequisites,
         corequisites: corequisites === "None" ? "" : corequisites,
-        relatedUrls,
+        resources,
         crossListedCourses: crossListedCourses === "None" ? "" : crossListedCourses
       };
 
@@ -84,7 +84,7 @@ async function updateCMUDetails() {
           corequisites: details.corequisites || null,
           details: {
             prerequisites: details.prerequisites || '',
-            relatedUrls: details.relatedUrls || [],
+            resources: details.resources || [],
             crossListedCourses: details.crossListedCourses || '',
           },
         })
@@ -95,8 +95,8 @@ async function updateCMUDetails() {
         skipped++;
       } else {
         updated++;
-        if (details.relatedUrls.length > 0) {
-          console.log(`  ✓ Updated with ${details.relatedUrls.length} related URL(s)`);
+        if (details.resources.length > 0) {
+          console.log(`  ✓ Updated with ${details.resources.length} resource URL(s)`);
         }
       }
     } catch (error) {

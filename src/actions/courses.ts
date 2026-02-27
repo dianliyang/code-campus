@@ -4,7 +4,6 @@ import { createAdminClient, getUser, createClient, mapCourseFromRow, getCachedPr
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { resolveModelForProvider } from "@/lib/ai/models";
-import { getDefaultPromptTemplates } from "@/lib/ai/prompts";
 import { logAiUsage } from "@/lib/ai/log-usage";
 import { parseLenientJson } from "@/lib/ai/parse-json";
 import { Course } from "@/types";
@@ -29,7 +28,6 @@ export async function updateCourse(courseId: number, data: {
   isHidden: boolean;
   isInternal: boolean;
   prerequisites?: string;
-  relatedUrls?: string[];
   crossListedCourses?: string;
   details?: Record<string, unknown>;
 }) {
@@ -54,8 +52,7 @@ export async function updateCourse(courseId: number, data: {
 
   mergedDetails = { ...existingDetails, ...(data.details || {}) };
   delete mergedDetails.prerequisites;
-  delete mergedDetails.relatedUrls;
-  delete mergedDetails.crossListedCourses;
+    delete mergedDetails.crossListedCourses;
   delete mergedDetails.instructors;
 
   const { error } = await supabase
@@ -76,7 +73,6 @@ export async function updateCourse(courseId: number, data: {
       is_hidden: data.isHidden,
       is_internal: data.isInternal,
       prerequisites: data.prerequisites || null,
-      related_urls: data.relatedUrls || [],
       cross_listed_courses: data.crossListedCourses || null,
       details: JSON.stringify(mergedDetails),
     })
@@ -118,7 +114,7 @@ export async function deleteCourse(courseId: number) {
   revalidatePath("/courses");
 }
 
-export async function updateCourseRelatedUrls(courseId: number, relatedUrls: string[]) {
+export async function updateCourseResources(courseId: number, resources: string[]) {
   const user = await getUser();
   if (!user) {
     throw new Error("Unauthorized");
@@ -128,12 +124,12 @@ export async function updateCourseRelatedUrls(courseId: number, relatedUrls: str
 
   const { error } = await supabase
     .from("courses")
-    .update({ related_urls: relatedUrls })
+    .update({ resources: resources })
     .eq("id", courseId);
 
   if (error) {
-    console.error("Failed to update course related URLs:", error);
-    throw new Error("Failed to update course related URLs");
+    console.error("Failed to update course resources:", error);
+    throw new Error("Failed to update course resources");
   }
 
   revalidatePath(`/courses/${courseId}`);
@@ -189,7 +185,6 @@ interface UpdateCourseFullInput {
   isHidden: boolean;
   isInternal: boolean;
   prerequisites: string;
-  relatedUrls: string[];
   crossListedCourses: string;
   detailsJson: string;
   instructors: string[];
@@ -707,14 +702,13 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
 
   delete parsedDetails.instructors;
   delete parsedDetails.prerequisites;
-  delete parsedDetails.relatedUrls;
-  delete parsedDetails.crossListedCourses;
+    delete parsedDetails.crossListedCourses;
 
   const [courseRes, topicsRes, semestersRes, plansRes] = await Promise.all([
     supabase
       .from("courses")
       .select(
-        "id, university, course_code, title, units, credit, description, url, department, corequisites, level, difficulty, popularity, workload, subdomain, resources, category, is_hidden, is_internal, prerequisites, related_urls, cross_listed_courses, details, instructors",
+        "id, university, course_code, title, units, credit, description, url, department, corequisites, level, difficulty, popularity, workload, subdomain, resources, category, is_hidden, is_internal, prerequisites, cross_listed_courses, details, instructors",
       )
       .eq("id", courseId)
       .single(),
@@ -772,7 +766,6 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
     is_hidden: input.isHidden,
     is_internal: input.isInternal,
     prerequisites: input.prerequisites || null,
-    related_urls: input.relatedUrls || [],
     cross_listed_courses: input.crossListedCourses || null,
     details: JSON.stringify(parsedDetails),
     instructors: input.instructors,
@@ -800,7 +793,6 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
     is_hidden: Boolean(existingCourse.is_hidden),
     is_internal: Boolean(existingCourse.is_internal),
     prerequisites: existingCourse.prerequisites || null,
-    related_urls: Array.isArray(existingCourse.related_urls) ? existingCourse.related_urls : [],
     cross_listed_courses: existingCourse.cross_listed_courses || null,
     details: stableStringify(existingDetailsParsed),
     instructors: Array.isArray(existingCourse.instructors) ? existingCourse.instructors : [],
@@ -1062,9 +1054,10 @@ export async function regenerateCourseDescription(courseId: number) {
   const selectedModel = (profile?.ai_default_model as string || "").trim();
   const model = await resolveModelForProvider(provider, selectedModel);
   const webSearchEnabled = (profile?.ai_web_search_enabled as boolean) ?? false;
-  const customTemplate = (profile?.ai_prompt_template as string || "").trim();
-  const defaults = await getDefaultPromptTemplates();
-  const template = customTemplate || defaults.description;
+  const template = (profile?.ai_prompt_template as string || "").trim();
+  if (!template) {
+    throw new Error("Metadata prompt is not configured. Set Metadata Logic in Settings first.");
+  }
   const prompt = applyPromptTemplate(template, {
     title: row.title || "",
     course_code: row.course_code || "",
@@ -1670,7 +1663,7 @@ export async function fetchCoursesAction({
   const offset = (page - 1) * size;
   
   const modernSelectString = `
-    id, university, course_code, title, units, url, details, instructors, prerequisites, related_urls, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, subdomain, resources, category, is_hidden, is_internal, created_at,
+    id, university, course_code, title, units, url, details, instructors, prerequisites, resources, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, subdomain, resources, category, is_hidden, is_internal, created_at,
     fields:course_fields(fields(name)),
     semesters:course_semesters(semesters(term, year))
   `;

@@ -69,14 +69,6 @@ interface SettingsContainerProps {
   profile: Record<string, unknown> | null;
   aiDefaults: {
     modelCatalog: { perplexity: string[]; gemini: string[] };
-    prompts: {
-      description: string;
-      studyPlan: string;
-      planner: string;
-      topics: string;
-      courseUpdate: string;
-      syllabusRetrieve: string;
-    };
   };
 }
 
@@ -174,7 +166,6 @@ export default function SettingsContainer({ user, profile, aiDefaults }: Setting
               initialCourseUpdatePromptTemplate={(profile?.ai_course_update_prompt_template as string) || ""}
               initialSyllabusPromptTemplate={(profile?.ai_syllabus_prompt_template as string) || ""}
               modelCatalog={aiDefaults.modelCatalog}
-              defaultPrompts={aiDefaults.prompts}
             />
           </div>
         ) : null}

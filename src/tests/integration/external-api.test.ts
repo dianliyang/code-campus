@@ -42,7 +42,7 @@ describe('GET /api/external/courses', () => {
       is_internal: true,
       instructors: ['Prof A'],
       prerequisites: 'Math 101',
-      related_urls: ['https://example.com'],
+      resources: ['https://example.com'],
       cross_listed_courses: 'CS-101',
       department: 'CS',
       details: {

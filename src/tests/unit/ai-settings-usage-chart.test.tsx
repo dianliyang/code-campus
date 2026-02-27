@@ -68,14 +68,6 @@ describe("AI settings usage chart", () => {
         initialCourseUpdatePromptTemplate=""
         initialSyllabusPromptTemplate=""
         modelCatalog={{ perplexity: ["sonar"], gemini: ["gemini-2.5-flash"] }}
-        defaultPrompts={{
-          description: "desc",
-          studyPlan: "plan",
-          planner: "planner",
-          topics: "topics",
-          courseUpdate: "update",
-          syllabusRetrieve: "syllabus",
-        }}
       />
     );
 

@@ -73,6 +73,39 @@ const DEFAULT_PROMPTS = {
     "{\"related_urls\":[\"string\"]}",
     "Course: {{course_code}} at {{university}}.",
   ].join("\n"),
+  syllabusRetrieve: [
+    "Search for the official course syllabus for {{course_code}} at {{university}} (course title: {{title}}).",
+    "Find the most recent semester's syllabus page or PDF.",
+    "Extract and return ONLY valid JSON with this exact structure:",
+    "{",
+    "  \"source_url\": \"string or null\",",
+    "  \"content\": {",
+    "    \"objectives\": [\"string\"],",
+    "    \"grading\": [{\"component\": \"string\", \"weight\": 0}],",
+    "    \"textbooks\": [\"string\"],",
+    "    \"policies\": \"string\"",
+    "  },",
+    "  \"schedule\": [",
+    "    {",
+    "      \"sequence\": \"Week 1 or Lecture 1 or Event name\",",
+    "      \"date\": \"YYYY-MM-DD or null\",",
+    "      \"date_end\": \"YYYY-MM-DD or null\",",
+    "      \"instructor\": \"string or null\",",
+    "      \"topics\": [\"string\"],",
+    "      \"description\": \"string or null\",",
+    "      \"slides\": [{\"label\": \"string\", \"url\": \"string or null\"}],",
+    "      \"videos\": [{\"label\": \"string\", \"url\": \"string or null\"}],",
+    "      \"readings\": [{\"label\": \"string\", \"url\": \"string or null\"}],",
+    "      \"modules\": [{\"label\": \"string\", \"url\": \"string or null\"}],",
+    "      \"assignments\": [{\"label\": \"string\", \"due_date\": \"YYYY-MM-DD or null\"}],",
+    "      \"labs\": [{\"label\": \"string\", \"due_date\": \"YYYY-MM-DD or null\"}],",
+    "      \"exams\": [{\"label\": \"string\", \"due_date\": \"YYYY-MM-DD or null\"}],",
+    "      \"projects\": [{\"label\": \"string\", \"due_date\": \"YYYY-MM-DD or null\"}]",
+    "    }",
+    "  ]",
+    "}",
+    "Omit empty arrays. Omit null fields. Return only the JSON, no explanation.",
+  ].join("\n"),
 } as const;
 
 export type AiRuntimeConfig = {
@@ -89,6 +122,7 @@ export type AiRuntimeConfig = {
     studyPlan: string;
     topics: string;
     courseUpdate: string;
+    syllabusRetrieve: string;
   };
   pricing: Record<string, PricingEntry>;
 };
@@ -165,6 +199,7 @@ function buildRuntimeConfigFromRows(rows: Array<Record<string, unknown>>): AiRun
       studyPlan: DEFAULT_PROMPTS.studyPlan,
       topics: DEFAULT_PROMPTS.topics,
       courseUpdate: DEFAULT_PROMPTS.courseUpdate,
+      syllabusRetrieve: DEFAULT_PROMPTS.syllabusRetrieve,
     },
     pricing: normalizePricing(rows),
   };

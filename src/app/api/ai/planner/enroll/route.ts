@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     .delete()
     .eq("user_id", user.id)
     .in("course_id", selectedCourseIds)
-    .like("type", "AI Planner:%");
+    .like("kind", "AI Planner:%");
 
   if (studyPlan.length > 0) {
     const start = nextMonday(new Date());
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         start_time: "19:00:00",
         end_time: "21:00:00",
         location: w.tasks?.[0]?.slice(0, 120) || "Self-study",
-        type: `AI Planner: ${w.focus || `Week ${w.week}`}`.slice(0, 120),
+        kind: `AI Planner: ${w.focus || `Week ${w.week}`}`.slice(0, 120),
         updated_at: now,
       };
     });

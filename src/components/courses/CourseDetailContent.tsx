@@ -137,7 +137,7 @@ export default function CourseDetailContent({
           startTime: plan.startTime,
           endTime: plan.endTime,
           location: plan.location,
-          type: plan.type,
+          kind: plan.kind,
           startDate: plan.startDate,
           endDate: plan.endDate,
         }));
@@ -250,7 +250,7 @@ export default function CourseDetailContent({
             startTime: normalizeTime(plan.startTime),
             endTime: normalizeTime(plan.endTime),
             location: plan.location,
-            type: plan.type,
+            kind: plan.kind,
           }),
         });
         if (!res.ok) throw new Error("Failed to update study plan");
@@ -352,7 +352,7 @@ export default function CourseDetailContent({
                         {(plan.daysOfWeek || []).map((d) => dayLabels[d] || String(d)).join(", ") || "No days"}
                       </p>
                       <p className="text-sm font-medium text-[#222]">{plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}</p>
-                      <p className="text-xs text-[#777]">{plan.location || "TBD"} • {plan.type || "Session"}</p>
+                      <p className="text-xs text-[#777]">{plan.location || "TBD"} • {plan.kind || "Session"}</p>
                     </div>
                   ))}
                 </div>
@@ -457,8 +457,8 @@ export default function CourseDetailContent({
                                   />
                                 </div>
                                 <input
-                                  value={plan.type || ""}
-                                  onChange={(e) => setEditablePlans((prev) => prev.map((p, i) => i === idx ? { ...p, type: e.target.value } : p))}
+                                  value={plan.kind || ""}
+                                  onChange={(e) => setEditablePlans((prev) => prev.map((p, i) => i === idx ? { ...p, kind: e.target.value } : p))}
                                   className="h-8 rounded-md border border-[#d8d8d8] bg-white px-2.5 text-[13px] text-[#333]"
                                   placeholder="Type"
                                 />
@@ -489,7 +489,7 @@ export default function CourseDetailContent({
                                 </li>
                                 <li className="text-xs text-[#666] flex items-center gap-1.5">
                                   <span className="inline-block rounded-md border border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] whitespace-normal break-words">
-                                    {plan.type || "Session"}
+                                    {plan.kind || "Session"}
                                   </span>
                                   <span>@ {plan.location || "TBD"}</span>
                                 </li>
@@ -583,7 +583,7 @@ export default function CourseDetailContent({
                                   </span>
                                   <span className="block text-xs text-[#666]">
                                     <span className="inline-block rounded-md border border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] whitespace-normal break-words mr-1.5">
-                                      {plan.type || "Session"}
+                                      {plan.kind || "Session"}
                                     </span>
                                     @ {plan.location}
                                     {plan.alreadyExists ? " (will replace existing)" : ""}

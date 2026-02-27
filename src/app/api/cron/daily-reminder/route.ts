@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         start_time,
         end_time,
         location,
-        type,
+        kind,
         days_of_week,
         courses(id, title, course_code, university)
       `)

@@ -22,7 +22,7 @@ interface StudyPlan {
   start_time: string;
   end_time: string;
   location: string | null;
-  type: string;
+  kind: string;
   courses: {
     id: number;
     title: string;
@@ -54,7 +54,7 @@ interface GeneratedEvent {
   courseCode: string;
   university: string;
   location: string | null;
-  type: string;
+  kind: string;
 }
 
 interface StudyCalendarProps {
@@ -134,7 +134,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
           courseCode: plan.courses.course_code,
           university: plan.courses.university,
           location: plan.location,
-          type: plan.type || 'lecture'
+          kind: plan.kind || 'lecture'
         };
 
         if (!map.has(day)) {
@@ -273,7 +273,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
             startTime: p.startTime,
             endTime: p.endTime,
             location: p.location,
-            type: p.type,
+            kind: p.kind,
             startDate: p.startDate,
             endDate: p.endDate,
           }));
@@ -525,15 +525,15 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                             <span className={`uppercase font-semibold flex-shrink-0 ml-auto text-[10px] ${
                               effectiveCompleted
                                 ? 'text-gray-400'
-                                : event.type.toLowerCase().includes('lecture')
+                                : event.kind.toLowerCase().includes('lecture')
                                   ? 'text-violet-600'
-                                  : event.type.toLowerCase().includes('exercise') || event.type.toLowerCase().includes('lab')
+                                  : event.kind.toLowerCase().includes('exercise') || event.kind.toLowerCase().includes('lab')
                                     ? 'text-emerald-600'
-                                    : event.type.toLowerCase().includes('exam')
+                                    : event.kind.toLowerCase().includes('exam')
                                       ? 'text-rose-600'
                                       : 'text-brand-blue'
                             }`}>
-                              {event.type}
+                              {event.kind}
                             </span>
                           </div>
                         </div>
@@ -624,7 +624,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate,
                                 )}
                               </div>
                               <div className="text-[10px] text-gray-500">
-                                {plan.type} @ {plan.location}{disabled ? " (already exists)" : ""}
+                                {plan.kind} @ {plan.location}{disabled ? " (already exists)" : ""}
                               </div>
                             </div>
                           </li>

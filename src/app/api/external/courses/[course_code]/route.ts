@@ -66,6 +66,7 @@ export async function GET(
         ),
         study_plans(
           id,
+          uid,
           course_id,
           start_date,
           end_date,
@@ -73,7 +74,8 @@ export async function GET(
           start_time,
           end_time,
           location,
-          type,
+          kind,
+          timezone,
           created_at,
           updated_at
         ),

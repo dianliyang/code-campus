@@ -81,7 +81,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
   const studyPlansPromise = user
     ? supabase
         .from("study_plans")
-        .select("id, start_date, end_date, days_of_week, start_time, end_time, location, type")
+        .select("id, start_date, end_date, days_of_week, start_time, end_time, location, kind")
         .eq("user_id", user.id)
         .eq("course_id", Number(id))
         .order("start_date", { ascending: true })
@@ -136,7 +136,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
     startTime: p.start_time || "09:00:00",
     endTime: p.end_time || "10:00:00",
     location: p.location || "",
-    type: p.type || "",
+    kind: p.kind || "",
   }));
 
   return (

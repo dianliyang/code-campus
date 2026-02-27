@@ -169,7 +169,7 @@ interface EditableStudyPlanInput {
   startTime: string;
   endTime: string;
   location: string;
-  type: string;
+  kind: string;
 }
 
 interface UpdateCourseFullInput {
@@ -297,7 +297,7 @@ function parseScheduleLine(line: string, fallbackType: string) {
     startTime,
     endTime,
     location: location || "TBD",
-    type: fallbackType || "class",
+    kind: fallbackType || "class",
   };
 }
 
@@ -306,14 +306,14 @@ function planKey(plan: {
   startTime: string;
   endTime: string;
   location: string;
-  type: string;
+  kind: string;
 }) {
   return [
     (plan.daysOfWeek || []).join(","),
     plan.startTime,
     plan.endTime,
     plan.location || "",
-    plan.type || "",
+    plan.kind || "",
   ].join("|");
 }
 
@@ -333,7 +333,7 @@ export interface SchedulePlanPreview {
   startTime: string;
   endTime: string;
   location: string;
-  type: string;
+  kind: string;
   startDate: string;
   endDate: string;
   alreadyExists: boolean;
@@ -407,7 +407,7 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
     startTime: string;
     endTime: string;
     location: string;
-    type: string;
+    kind: string;
   }> = [];
 
   try {
@@ -481,7 +481,8 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
               startTime: string;
               endTime: string;
               location: string;
-              type: string;
+              type?: string;
+              kind?: string;
             } =>
               !!item &&
               typeof item === "object" &&
@@ -500,7 +501,7 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
               startTime: normalizeTimeToken(item.startTime) || item.startTime,
               endTime: normalizeTimeToken(item.endTime) || item.endTime,
               location: item.location || "TBD",
-              type: item.type || item.sourceType || "class",
+              kind: item.type || item.sourceType || "class",
             }))
             .filter((item) => item.daysOfWeek.length > 0 && !!item.startTime && !!item.endTime);
         }
@@ -517,7 +518,7 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
 
   const { data: existingPlans } = await supabase
     .from("study_plans")
-    .select("days_of_week, start_time, end_time, location, type")
+    .select("days_of_week, start_time, end_time, location, kind")
     .eq("user_id", user.id)
     .eq("course_id", courseId);
 
@@ -526,7 +527,7 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
     startTime: p.start_time || "",
     endTime: p.end_time || "",
     location: p.location || "",
-    type: p.type || "",
+    kind: p.kind || "",
   })));
 
   const generatedPlans: SchedulePlanPreview[] = parsedCandidates.map((p) => ({
@@ -536,7 +537,7 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
     startTime: p.startTime,
     endTime: p.endTime,
     location: p.location,
-    type: p.type,
+    kind: p.kind,
     startDate: ("startDate" in p && typeof p.startDate === "string" && p.startDate) ? p.startDate : startDate,
     endDate: ("endDate" in p && typeof p.endDate === "string" && p.endDate) ? p.endDate : endDate,
     alreadyExists: existingKeys.has(planKey(p)),
@@ -550,7 +551,7 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
   startTime: string;
   endTime: string;
   location: string;
-  type: string;
+  kind: string;
   startDate: string;
   endDate: string;
 }>, options?: { replaceExisting?: boolean }) {
@@ -577,7 +578,7 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
       start_time: p.startTime,
       end_time: p.endTime,
       location: p.location,
-      type: p.type,
+      kind: p.kind,
     }))
     .filter((plan) => {
       const key = planKey({
@@ -585,7 +586,7 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
         startTime: plan.start_time,
         endTime: plan.end_time,
         location: plan.location || "",
-        type: plan.type || "",
+        kind: plan.kind || "",
       });
       if (dedupe.has(key)) return false;
       dedupe.add(key);
@@ -609,7 +610,7 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
   } else {
     const { data: existingPlans } = await supabase
       .from("study_plans")
-      .select("days_of_week, start_time, end_time, location, type")
+      .select("days_of_week, start_time, end_time, location, kind")
       .eq("user_id", user.id)
       .eq("course_id", courseId);
 
@@ -618,7 +619,7 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
       startTime: p.start_time || "",
       endTime: p.end_time || "",
       location: p.location || "",
-      type: p.type || "",
+      kind: p.kind || "",
     })));
 
     const unique = toInsert.filter((plan) => {
@@ -627,7 +628,7 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
         startTime: plan.start_time,
         endTime: plan.end_time,
         location: plan.location || "",
-        type: plan.type || "",
+        kind: plan.kind || "",
       });
       return !existingKeys.has(key);
     });
@@ -721,7 +722,7 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
     supabase.from("course_semesters").select("semesters(term, year)").eq("course_id", courseId),
     supabase
       .from("study_plans")
-      .select("id, start_date, end_date, days_of_week, start_time, end_time, location, type")
+      .select("id, start_date, end_date, days_of_week, start_time, end_time, location, kind")
       .eq("user_id", user.id)
       .eq("course_id", courseId),
   ]);
@@ -960,7 +961,7 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
       start_time: string;
       end_time: string;
       location: string | null;
-      type: string | null;
+      kind: string | null;
     }>).map((plan) => [plan.id, plan]),
   );
 
@@ -974,7 +975,7 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
       start_time: normalizeTimeWithSeconds(plan.startTime),
       end_time: normalizeTimeWithSeconds(plan.endTime),
       location: plan.location,
-      type: plan.type || null,
+      kind: plan.kind || null,
       updated_at: new Date().toISOString(),
     };
 
@@ -988,7 +989,7 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
             start_time: normalizeTimeWithSeconds(existing.start_time),
             end_time: normalizeTimeWithSeconds(existing.end_time),
             location: existing.location || "",
-            type: existing.type || null,
+            kind: existing.kind || null,
           }
         : null;
       const hasPlanChanged =
@@ -999,7 +1000,7 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
         existingComparable.start_time !== payload.start_time ||
         existingComparable.end_time !== payload.end_time ||
         existingComparable.location !== payload.location ||
-        existingComparable.type !== payload.type;
+        existingComparable.kind !== payload.kind;
 
       if (hasPlanChanged) {
         const { error: updatePlanError } = await supabase

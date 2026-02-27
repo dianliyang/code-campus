@@ -16,7 +16,8 @@ export async function POST(request: Request) {
       startTime?: string;
       endTime?: string;
       location?: string;
-      type?: string;
+      kind?: string;
+      timezone?: string;
     };
 
     const planId = Number(body.planId);
@@ -35,7 +36,8 @@ export async function POST(request: Request) {
         start_time: body.startTime || "09:00:00",
         end_time: body.endTime || "11:00:00",
         location: body.location || "",
-        type: body.type || null,
+        kind: body.kind || null,
+        timezone: body.timezone || 'UTC',
         updated_at: new Date().toISOString(),
       })
       .eq("id", planId)

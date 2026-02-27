@@ -16,7 +16,7 @@ describe('external-api utils', () => {
     expect(headers['Last-Modified']).toBeUndefined();
   });
 
-  it('transformExternalCourse strips is_hidden, is_internal, and private details keys', () => {
+  it('transformExternalCourse strips internal fields and returns only public schema', () => {
     const course = {
       id: 1,
       title: 'Test',
@@ -24,14 +24,13 @@ describe('external-api utils', () => {
       is_internal: true,
       private_details: {},
       study_plans: [],
-      other: 'keep',
     };
     const result = transformExternalCourse(course);
-    expect(result.is_hidden).toBeUndefined();
-    expect(result.is_internal).toBeUndefined();
-    expect(result.private_details).toBeUndefined();
-    expect(result.study_plans).toBeUndefined();
-    expect(result.other).toBe('keep');
+    expect((result as Record<string, unknown>).is_hidden).toBeUndefined();
+    expect((result as Record<string, unknown>).is_internal).toBeUndefined();
+    expect((result as Record<string, unknown>).private_details).toBeUndefined();
+    expect((result as Record<string, unknown>).study_plans).toBeUndefined();
     expect(result.assignments).toEqual([]);
+    expect(result.schedules).toEqual([]);
   });
 });

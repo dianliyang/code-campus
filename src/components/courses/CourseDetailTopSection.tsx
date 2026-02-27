@@ -17,7 +17,7 @@ export interface EditableStudyPlan {
   startTime: string;
   endTime: string;
   location: string;
-  type: string;
+  kind: string;
 }
 
 interface CourseDetailTopSectionProps {

@@ -73,6 +73,41 @@ const DEFAULT_PROMPTS = {
     "{\"related_urls\":[\"string\"]}",
     "Course: {{course_code}} at {{university}}.",
   ].join("\n"),
+  syllabusRetrieve: [
+    "Search for the official course syllabus for {{course_code}} at {{university}} (course title: {{title}}).",
+    "{{resources}}",
+    "Find the most recent semester's syllabus page or PDF.",
+    "Extract and return ONLY valid JSON with this exact structure:",
+    "{",
+    "  \"source_url\": \"string or null\",",
+    "  \"content\": {",
+    "    \"objectives\": [\"string\"],",
+    "    \"grading\": [{\"component\": \"string\", \"weight\": 0}],",
+    "    \"textbooks\": [\"string\"],",
+    "    \"policies\": \"string\"",
+    "  },",
+    "  \"schedule\": [",
+    "    {",
+    "      \"sequence\": \"Lecture 1 or Week 1 — the sequence label only, not the title\",",
+    "      \"title\": \"The bold heading/title for the lecture (e.g. 'Why Parallelism? Why Efficiency?'), NOT the bullet-point subtopics. null if not present.\",",
+    "      \"date\": \"YYYY-MM-DD or null\",",
+    "      \"date_end\": \"YYYY-MM-DD or null\",",
+    "      \"instructor\": \"string or null\",",
+    "      \"topics\": [\"string\"],",
+    "      \"description\": \"string or null\",",
+    "      \"slides\": [{\"label\": \"string\", \"url\": \"string or null\"}],",
+    "      \"videos\": [{\"label\": \"string\", \"url\": \"string or null\"}],",
+    "      \"readings\": [{\"label\": \"string\", \"url\": \"string or null\"}],",
+    "      \"modules\": [{\"label\": \"string\", \"url\": \"string or null\"}],",
+    "      \"assignments\": [{\"label\": \"string\", \"due_date\": \"YYYY-MM-DD or null\"}],",
+    "      \"labs\": [{\"label\": \"string\", \"due_date\": \"YYYY-MM-DD or null\"}],",
+    "      \"exams\": [{\"label\": \"string\", \"due_date\": \"YYYY-MM-DD or null\"}],",
+    "      \"projects\": [{\"label\": \"string\", \"due_date\": \"YYYY-MM-DD or null\"}]",
+    "    }",
+    "  ]",
+    "}",
+    "Omit empty arrays. Omit null fields. Return only the JSON, no explanation.",
+  ].join("\n"),
 } as const;
 
 export type AiRuntimeConfig = {
@@ -94,26 +129,15 @@ export type AiRuntimeConfig = {
   pricing: Record<string, PricingEntry>;
 };
 
-type LoadedRows = {
-  pricingRows: Array<Record<string, unknown>>;
-  runtimeRows: Array<{ key: string; value: unknown }>;
-};
-
-async function loadRows(): Promise<LoadedRows> {
+async function loadPricingRows() {
   const supabase = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  const [pricingResult, runtimeResult] = await Promise.all([
-    supabase
-      .from("ai_model_pricing")
-      .select("provider, model, input_per_token, output_per_token, is_active")
-      .eq("is_active", true),
-    supabase
-      .from("app_runtime_config")
-      .select("key, value"),
-  ]);
-  return {
-    pricingRows: Array.isArray(pricingResult.data) ? pricingResult.data : [],
-    runtimeRows: Array.isArray(runtimeResult.data) ? runtimeResult.data : [],
-  };
+  const { data, error } = await supabase
+    .from("ai_model_pricing")
+    .select("provider, model, input_per_token, output_per_token, is_active")
+    .eq("is_active", true);
+
+  if (error || !Array.isArray(data)) return [];
+  return data;
 }
 
 function normalizeModelCatalog(rows: Array<Record<string, unknown>>): Record<AIProvider, string[]> {
@@ -155,18 +179,13 @@ function normalizePricing(rows: Array<Record<string, unknown>>): Record<string, 
   return pricing;
 }
 
-function buildRuntimeConfigFromRows({ pricingRows, runtimeRows }: LoadedRows): AiRuntimeConfig {
-  const modelCatalog = normalizeModelCatalog(pricingRows);
+function buildRuntimeConfigFromRows(rows: Array<Record<string, unknown>>): AiRuntimeConfig {
+  const modelCatalog = normalizeModelCatalog(rows);
   if (modelCatalog.perplexity.length === 0 || modelCatalog.gemini.length === 0) {
     throw new Error("AI runtime config missing: ai_model_pricing must contain active models for both perplexity and gemini.");
   }
 
   const defaultModel = modelCatalog.perplexity[0] || modelCatalog.gemini[0];
-
-  // Load configurable prompts from app_runtime_config (key → string value).
-  const runtimeMap = Object.fromEntries(
-    runtimeRows.map((r) => [r.key, typeof r.value === "string" ? r.value : ""])
-  );
 
   return {
     modelCatalog,
@@ -182,9 +201,9 @@ function buildRuntimeConfigFromRows({ pricingRows, runtimeRows }: LoadedRows): A
       studyPlan: DEFAULT_PROMPTS.studyPlan,
       topics: DEFAULT_PROMPTS.topics,
       courseUpdate: DEFAULT_PROMPTS.courseUpdate,
-      syllabusRetrieve: runtimeMap["prompt.syllabusRetrieve"] || "",
+      syllabusRetrieve: DEFAULT_PROMPTS.syllabusRetrieve,
     },
-    pricing: normalizePricing(pricingRows),
+    pricing: normalizePricing(rows),
   };
 }
 
@@ -199,8 +218,8 @@ export async function getAiRuntimeConfig(): Promise<AiRuntimeConfig> {
   }
 
   runtimeConfigInFlight = (async () => {
-    const rows = await loadRows();
-    const value = buildRuntimeConfigFromRows(rows);
+    const rows = await loadPricingRows();
+    const value = buildRuntimeConfigFromRows(rows as Array<Record<string, unknown>>);
     runtimeConfigCache = {
       value,
       expiresAt: Date.now() + getRuntimeCacheTtlMs(),

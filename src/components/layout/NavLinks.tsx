@@ -91,6 +91,7 @@ export default function NavLinks({
           <Link 
             key={item.name} 
             href={item.href}
+            prefetch={false}
             ref={(el) => { linksRef.current[idx] = el; }}
             className={`group relative flex items-center justify-center transition-all duration-500 z-10 ${
               collapsed 

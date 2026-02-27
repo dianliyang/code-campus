@@ -1480,9 +1480,22 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
     course_count: String(coursesForPrompt.length),
   });
 
-  const aiResult = await aiGenerate(prompt);
+  const aiResult = await (async () => {
+    try {
+      return await aiGenerate(prompt);
+    } catch (e) {
+      console.error("AI Generation Network/API error:", e);
+      throw new Error(`AI service error: ${e instanceof Error ? e.message : "Connection failed"}. Check your API keys and provider status.`);
+    }
+  })();
+
   const parsed = parseLenientJson(aiResult.text);
   const metadataByCourseId = extractMetadataByCourseId(parsed);
+
+  if (metadataByCourseId.size === 0) {
+    console.error("AI returned invalid or empty metadata. Raw text:", aiResult.text);
+    throw new Error("AI returned an incompatible response format. Try adjusting your prompt template or using a more capable model (e.g. Gemini 1.5 Pro).");
+  }
 
   await logAiUsage({
     userId: user.id,

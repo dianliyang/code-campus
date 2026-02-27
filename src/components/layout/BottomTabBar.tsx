@@ -58,6 +58,7 @@ export default function BottomTabBar({ labels }: BottomTabBarProps) {
             <Link
               key={tab.href}
               href={tab.href}
+              prefetch={false}
               aria-current={tab.isActive ? "page" : undefined}
               className={`flex flex-col items-center justify-center flex-1 gap-0.5 py-1.5 rounded-full transition-all ${
                 tab.isActive

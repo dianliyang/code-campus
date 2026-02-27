@@ -49,6 +49,7 @@ function RailItem({
   return (
     <Link
       href={href}
+      prefetch={false}
       className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[14px] leading-none transition-colors ${
         active
           ? "bg-[#e7e7e7] text-[#1f1f1f] font-medium"

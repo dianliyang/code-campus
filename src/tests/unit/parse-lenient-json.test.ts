@@ -18,5 +18,23 @@ describe("parseLenientJson", () => {
     const parsed = parseLenientJson(input) as Record<string, unknown>;
     expect(parsed.track).toBe("Data Engineering");
   });
+
+  test("parses multiple root objects separated by commas", () => {
+    const input = "{\"1\":{\"val\":1}},{\"2\":{\"val\":2}}";
+    const parsed = parseLenientJson(input) as Record<string, unknown>;
+    expect(parsed).toEqual({ "1": { "val": 1 }, "2": { "val": 2 } });
+  });
+
+  test("parses multiple root objects separated by newline", () => {
+    const input = "{\"1\":{\"val\":1}}\n{\"2\":{\"val\":2}}";
+    const parsed = parseLenientJson(input) as Record<string, unknown>;
+    expect(parsed).toEqual({ "1": { "val": 1 }, "2": { "val": 2 } });
+  });
+
+  test("aggressive cleanup of non-json prefix/suffix", () => {
+    const input = "Result is: {\"track\":\"Aggressive\"} !!!";
+    const parsed = parseLenientJson(input) as Record<string, unknown>;
+    expect(parsed.track).toBe("Aggressive");
+  });
 });
 

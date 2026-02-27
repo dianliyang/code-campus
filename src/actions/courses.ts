@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient, getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
+import { createAdminClient, getUser, createClient, mapCourseFromRow, getCachedProfileSettings } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { resolveModelForProvider } from "@/lib/ai/models";
@@ -384,27 +384,13 @@ export async function previewStudyPlansFromCourseSchedule(courseId: number) {
       .filter((v): v is NonNullable<typeof v> => v !== null);
   });
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_study_plan_prompt_template")
-    .eq("id", user.id)
-    .maybeSingle();
-  if (profileError) {
-    if (
-      profileError.code === "PGRST204" ||
-      profileError.message?.includes("ai_study_plan_prompt_template") ||
-      profileError.message?.includes("column")
-    ) {
-      throw new Error("Database column `profiles.ai_study_plan_prompt_template` is missing. Please run the study plan prompt migration.");
-    }
-    throw new Error("Failed to load study plan prompt settings.");
-  }
+  const profile = await getCachedProfileSettings(user.id);
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
-  const selectedModel = (profile?.ai_default_model || "").trim();
+  const selectedModel = (profile?.ai_default_model as string || "").trim();
   const model = await resolveModelForProvider(provider, selectedModel);
-  const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
-  const promptTemplate = (profile?.ai_study_plan_prompt_template || "").trim();
+  const webSearchEnabled = (profile?.ai_web_search_enabled as boolean) ?? false;
+  const promptTemplate = (profile?.ai_study_plan_prompt_template as string || "").trim();
   if (!promptTemplate) {
     throw new Error("Study plan prompt is not configured. Set Study Plan Prompt in Settings first.");
   }
@@ -1069,17 +1055,13 @@ export async function regenerateCourseDescription(courseId: number) {
     throw new Error("Course not found");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template")
-    .eq("id", user.id)
-    .maybeSingle();
+  const profile = await getCachedProfileSettings(user.id);
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
-  const selectedModel = (profile?.ai_default_model || "").trim();
+  const selectedModel = (profile?.ai_default_model as string || "").trim();
   const model = await resolveModelForProvider(provider, selectedModel);
-  const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
-  const customTemplate = (profile?.ai_prompt_template || "").trim();
+  const webSearchEnabled = (profile?.ai_web_search_enabled as boolean) ?? false;
+  const customTemplate = (profile?.ai_prompt_template as string || "").trim();
   const defaults = await getDefaultPromptTemplates();
   const template = customTemplate || defaults.description;
   const prompt = applyPromptTemplate(template, {
@@ -1293,32 +1275,34 @@ function extractMetadataByCourseId(raw: unknown): Map<number, AiCourseMetadata> 
 
   if (!raw || typeof raw !== "object") return result;
 
+  const processObject = (obj: Record<string, unknown>) => {
+    for (const [key, value] of Object.entries(obj)) {
+      const id = Number(key);
+      if (Number.isFinite(id) && id > 0) {
+        if (value && typeof value === "object") {
+          const topics = normalizeAiTopics((value as Record<string, unknown>).topics);
+          const subdomain = (value as Record<string, unknown>).subdomain ? String((value as Record<string, unknown>).subdomain) : null;
+          result.set(id, { subdomain, topics });
+        } else {
+          result.set(id, { subdomain: null, topics: normalizeAiTopics(value) });
+        }
+      } else if ((key === "id" || key === "course_id") && typeof value === "number") {
+        // Handle object that HAS an id field instead of using it as a key
+        const topics = normalizeAiTopics(obj.topics);
+        const subdomain = obj.subdomain ? String(obj.subdomain) : null;
+        result.set(value, { subdomain, topics });
+      }
+    }
+  };
+
   if (Array.isArray(raw)) {
     for (const item of raw) {
-      if (!item || typeof item !== "object") continue;
-      const id = Number((item as Record<string, unknown>).id ?? (item as Record<string, unknown>).course_id);
-      if (!Number.isFinite(id) || id <= 0) continue;
-      
-      const topics = normalizeAiTopics((item as Record<string, unknown>).topics);
-      const subdomain = (item as Record<string, unknown>).subdomain ? String((item as Record<string, unknown>).subdomain) : null;
-      
-      result.set(id, { subdomain, topics });
+      if (item && typeof item === "object") {
+        processObject(item as Record<string, unknown>);
+      }
     }
-    return result;
-  }
-
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    const id = Number(key);
-    if (!Number.isFinite(id) || id <= 0) continue;
-    
-    if (value && typeof value === "object") {
-      const topics = normalizeAiTopics((value as Record<string, unknown>).topics);
-      const subdomain = (value as Record<string, unknown>).subdomain ? String((value as Record<string, unknown>).subdomain) : null;
-      result.set(id, { subdomain, topics });
-    } else {
-      // Fallback for older formats where it might just be the array of topics
-      result.set(id, { subdomain: null, topics: normalizeAiTopics(value) });
-    }
+  } else {
+    processObject(raw as Record<string, unknown>);
   }
 
   return result;
@@ -1338,18 +1322,17 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
     throw new Error("Rate limit exceeded. Please try again shortly.");
   }
 
+  const profile = await getCachedProfileSettings(user.id);
   const supabase = createAdminClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("ai_provider, ai_default_model, ai_web_search_enabled, ai_topics_prompt_template")
-    .eq("id", user.id)
-    .maybeSingle();
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
-  const selectedModel = (profile?.ai_default_model || "").trim();
+  const selectedModel = (profile?.ai_default_model as string || "").trim();
   const model = await resolveModelForProvider(provider, selectedModel);
-  const webSearchEnabled = profile?.ai_web_search_enabled ?? false;
-  const topicsTemplate = (profile?.ai_topics_prompt_template || "").trim();
+  const webSearchEnabled = (profile?.ai_web_search_enabled as boolean) ?? false;
+
+  console.log(`[generateTopics] User: ${user.id}, Provider: ${provider}, Model: ${model} (Selected: ${selectedModel})`);
+
+  const topicsTemplate = (profile?.ai_topics_prompt_template as string || "").trim();
   if (!topicsTemplate) {
     throw new Error("Topic prompt is not configured. Set Topic Classification Logic in Settings first.");
   }
@@ -1493,8 +1476,8 @@ export async function generateTopicsForCoursesAction(courseIds: number[]) {
   const metadataByCourseId = extractMetadataByCourseId(parsed);
 
   if (metadataByCourseId.size === 0) {
-    console.error("AI returned invalid or empty metadata. Raw text:", aiResult.text);
-    throw new Error("AI returned an incompatible response format. Try adjusting your prompt template or using a more capable model (e.g. Gemini 1.5 Pro).");
+    console.error(`AI returned invalid or empty metadata using model ${model}. Raw text:`, aiResult.text);
+    throw new Error(`AI returned an incompatible response format using ${model}. This usually happens when the model ignores formatting instructions. Try a more capable model like Gemini 1.5 Pro or Perplexity Sonar Pro.`);
   }
 
   await logAiUsage({

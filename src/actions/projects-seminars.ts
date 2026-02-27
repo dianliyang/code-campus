@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
+import { createAdminClient, createClient, getUser, getCachedProfileSettings } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { resolveModelForProvider } from "@/lib/ai/models";
 import { logAiUsage } from "@/lib/ai/log-usage";
@@ -65,40 +65,7 @@ export async function regenerateProjectSeminarDescription(projectSeminarId: numb
     };
   }
 
-  const profileSelectVariants = [
-    "ai_provider, ai_default_model, ai_web_search_enabled, ai_prompt_template",
-    "ai_default_model, ai_web_search_enabled, ai_prompt_template",
-    "ai_web_search_enabled, ai_prompt_template",
-    "ai_prompt_template",
-    "id",
-  ];
-  let profile: Record<string, unknown> | null = null;
-  let lastProfileError: { code?: string; message?: string } | null = null;
-
-  for (const selectColumns of profileSelectVariants) {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(selectColumns)
-      .eq("id", user.id)
-      .maybeSingle();
-    if (!error) {
-      profile = (data as Record<string, unknown> | null) || null;
-      lastProfileError = null;
-      break;
-    }
-    lastProfileError = error;
-  }
-
-  if (lastProfileError) {
-    const msg = lastProfileError.message || "";
-    if (
-      (lastProfileError.code === "PGRST204" && msg.includes("'ai_prompt_template'")) ||
-      msg.includes('column "ai_prompt_template"')
-    ) {
-      throw new Error("Database column `profiles.ai_prompt_template` is missing. Please run the prompt template migration.");
-    }
-    throw new Error("Failed to load AI profile settings.");
-  }
+  const profile = await getCachedProfileSettings(user.id);
 
   const provider = profile?.ai_provider === "gemini" ? "gemini" : "perplexity";
   const selectedModel = (String(profile?.ai_default_model || "")).trim();

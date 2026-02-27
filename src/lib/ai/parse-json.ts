@@ -1,4 +1,5 @@
-function findBalancedSegment(input: string, openChar: "{" | "[", closeChar: "}" | "]"): string | null {
+function findAllBalancedSegments(input: string, openChar: "{" | "[", closeChar: "}" | "]"): string[] {
+  const segments: string[] = [];
   let depth = 0;
   let start = -1;
   let inString = false;
@@ -36,12 +37,13 @@ function findBalancedSegment(input: string, openChar: "{" | "[", closeChar: "}" 
     if (ch === closeChar && depth > 0) {
       depth -= 1;
       if (depth === 0 && start >= 0) {
-        return input.slice(start, i + 1);
+        segments.push(input.slice(start, i + 1));
+        start = -1;
       }
     }
   }
 
-  return null;
+  return segments;
 }
 
 function removeTrailingCommas(input: string): string {
@@ -87,19 +89,40 @@ function removeTrailingCommas(input: string): string {
 }
 
 function extractCandidates(raw: string): string[] {
-  const text = String(raw || "");
+  const text = String(raw || "").trim();
   const candidates: string[] = [];
 
+  // 1. Markdown code fences
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenceMatch?.[1]) candidates.push(fenceMatch[1].trim());
 
-  const objectSegment = findBalancedSegment(text, "{", "}");
-  if (objectSegment) candidates.push(objectSegment.trim());
+  // 2. All balanced objects/arrays
+  const objects = findAllBalancedSegments(text, "{", "}");
+  const arrays = findAllBalancedSegments(text, "[", "]");
+  
+  // If we found multiple objects but no array wrapper, try wrapping them
+  if (objects.length > 1) {
+    // Attempt to merge them if they are course metadata (object with numeric keys)
+    candidates.push(`{${objects.map(obj => {
+      const inner = obj.trim();
+      return inner.startsWith("{") && inner.endsWith("}") ? inner.slice(1, -1) : inner;
+    }).join(",")}}`);
+    
+    // Also try as an array
+    candidates.push(`[${objects.join(",")}]`);
+  }
 
-  const arraySegment = findBalancedSegment(text, "[", "]");
-  if (arraySegment) candidates.push(arraySegment.trim());
+  // Handle case like {"id":...},{"id":...} without outer braces
+  if (text.includes("},{") || text.includes("}\n{")) {
+    const multiMatch = text.replace(/\s+/g, " ");
+    candidates.push(`[${multiMatch}]`);
+    candidates.push(`{${multiMatch}}`);
+  }
 
-  candidates.push(text.trim());
+  if (objects.length > 0) candidates.push(objects[0]);
+  if (arrays.length > 0) candidates.push(arrays[0]);
+
+  candidates.push(text);
 
   return Array.from(new Set(candidates.filter(Boolean)));
 }
@@ -120,6 +143,17 @@ export function parseLenientJson(raw: string): unknown {
     } catch (err) {
       lastError = err as Error;
     }
+  }
+
+  // Final fallback: aggressive cleanup for common AI failures
+  const aggressive = raw
+    .replace(/^[^{[]+/, "") // remove prefix text
+    .replace(/[^}\]]+$/, ""); // remove suffix text
+  
+  try {
+    return JSON.parse(aggressive);
+  } catch {
+    // Ignore
   }
 
   throw lastError || new Error("Invalid JSON");

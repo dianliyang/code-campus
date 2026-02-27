@@ -50,16 +50,22 @@ export function checkNotModified(
 }
 
 export function transformExternalCourse(course: Record<string, unknown>): Record<string, unknown> {
-  const { study_plans, course_fields, user_courses, ...courseFields } = course as {
-    study_plans: unknown[];
+  const {
+    course_fields,
+    user_courses,
+    latest_semester,
+    related_urls,
+    ...courseFields
+  } = course as {
     course_fields: Array<{ fields?: { name?: string } }>;
-    user_courses: unknown[];
+    user_courses: Array<Record<string, unknown>>;
+    latest_semester: { term?: string; year?: number } | null;
+    related_urls: string[];
     [key: string]: unknown;
   };
 
-  const publicCourseFields = { ...courseFields } as Record<string, unknown>;
-  delete publicCourseFields.is_hidden;
-  delete publicCourseFields.is_internal;
+  const enrollment =
+    Array.isArray(user_courses) && user_courses.length > 0 ? user_courses[0] : null;
 
   const topics = Array.isArray(course_fields)
     ? course_fields
@@ -70,33 +76,60 @@ export function transformExternalCourse(course: Record<string, unknown>): Record
   const rawDetails = courseFields.details;
   const details =
     rawDetails && typeof rawDetails === 'object' && !Array.isArray(rawDetails)
-      ? (() => {
-          const {
-            schedule,
-            prerequisites,
-            relatedUrls,
-            crossListedCourses,
-            instructors,
-            ...rest
-          } = rawDetails as Record<string, unknown>;
-          void schedule;
-          void prerequisites;
-          void relatedUrls;
-          void crossListedCourses;
-          void instructors;
-          return rest;
-        })()
-      : rawDetails;
+      ? (rawDetails as Record<string, unknown>)
+      : {};
 
-  const enrollment =
-    Array.isArray(user_courses) && user_courses.length > 0 ? user_courses[0] : null;
+  const parseNumber = (val: unknown): number | null => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? null : parsed;
+    }
+    return null;
+  };
+
+  const latestTerm = latest_semester
+    ? `${latest_semester.term || ''} ${latest_semester.year || ''}`.trim()
+    : null;
+
+  const crossListedCourses = courseFields.cross_listed_courses
+    ? String(courseFields.cross_listed_courses)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
 
   return {
-    ...publicCourseFields,
-    details,
-    topics,
-    schedule: study_plans ?? [],
-    enrollment,
+    remoteID: courseFields.id,
+    name: courseFields.title,
+    code: courseFields.course_code,
+    university: courseFields.university,
+    units: courseFields.units ? String(courseFields.units) : null,
+    credit: parseNumber(courseFields.credit),
+    desc: courseFields.description,
+    urlString: courseFields.url,
+    instructors: Array.isArray(courseFields.instructors) ? courseFields.instructors : [],
+    prerequisites: courseFields.prerequisites,
+    resources: Array.isArray(related_urls) ? related_urls : [],
+    platforms: Array.isArray(details.platforms) ? details.platforms : [],
+    crossListedCourses,
+    category: topics[0] || courseFields.department || null,
+    department: courseFields.department,
+    latestTerm,
+    logistics: details.logistics || null,
+    level: courseFields.level,
+    difficulty: parseNumber(courseFields.difficulty),
+    popularity: parseNumber(courseFields.popularity),
+    workload: parseNumber(courseFields.workload),
+    gpa: enrollment ? parseNumber(enrollment.gpa) : null,
+    score: enrollment ? parseNumber(enrollment.score) : null,
+    createdAtISO8601: courseFields.created_at,
+    updatedAtISO8601: new Date(courseLastUpdatedAt(course) || Date.now()).toISOString(),
+    topic: topics[0] || null,
+    isEnrolled: true,
+    isFailed: enrollment?.status === 'failed',
+    retry: 0,
+    assignments: [],
   };
 }
 

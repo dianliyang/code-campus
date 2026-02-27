@@ -34,24 +34,30 @@ describe('GET /api/external/courses', () => {
     const mockData = [{
       id: 1,
       title: 'Course 1',
+      course_code: 'C1',
+      university: 'Uni',
+      description: 'desc',
+      url: 'url',
       is_hidden: false,
       is_internal: true,
       instructors: ['Prof A'],
       prerequisites: 'Math 101',
       related_urls: ['https://example.com'],
       cross_listed_courses: 'CS-101',
+      department: 'CS',
       details: {
-        schedule: { Lecture: ['Mon 10:00'] },
+        platforms: ['Canvas'],
+        logistics: 'Online',
         internalId: 'x1',
-        relatedUrls: ['legacy-url'],
-        prerequisites: 'legacy-prereq',
       },
+      latest_semester: { term: 'Spring', year: 2026 },
       course_fields: [
         { fields: { name: 'Computer Science' } },
         { fields: { name: 'Machine Learning' } },
       ],
       study_plans: [{ id: 11, course_id: 1 }],
       user_courses: [{ status: 'in_progress', progress: 50, gpa: null, score: null, notes: null, priority: 0, updated_at: null }],
+      created_at: '2026-02-14T12:00:00Z',
     }];
 
     const { mockFrom, mockSelect, mockNeq } = makeMock({ data: mockData, error: null });
@@ -67,18 +73,40 @@ describe('GET /api/external/courses', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe(EXTERNAL_API_CACHE_CONTROL);
-    expect(data).toEqual([{
-      id: 1,
-      title: 'Course 1',
-      instructors: ['Prof A'],
-      prerequisites: 'Math 101',
-      related_urls: ['https://example.com'],
-      cross_listed_courses: 'CS-101',
-      details: { internalId: 'x1' },
-      topics: ['Computer Science', 'Machine Learning'],
-      schedule: [{ id: 11, course_id: 1 }],
-      enrollment: { status: 'in_progress', progress: 50, gpa: null, score: null, notes: null, priority: 0, updated_at: null },
-    }]);
+    expect(data).toEqual({
+      courses: [{
+        remoteID: 1,
+        name: 'Course 1',
+        code: 'C1',
+        university: 'Uni',
+        units: null,
+        credit: null,
+        desc: 'desc',
+        urlString: 'url',
+        instructors: ['Prof A'],
+        prerequisites: 'Math 101',
+        resources: ['https://example.com'],
+        platforms: ['Canvas'],
+        crossListedCourses: ['CS-101'],
+        category: 'Computer Science',
+        department: 'CS',
+        latestTerm: 'Spring 2026',
+        logistics: 'Online',
+        level: undefined,
+        difficulty: null,
+        popularity: null,
+        workload: null,
+        gpa: null,
+        score: null,
+        createdAtISO8601: '2026-02-14T12:00:00Z',
+        updatedAtISO8601: expect.any(String),
+        topic: 'Computer Science',
+        isEnrolled: true,
+        isFailed: false,
+        retry: 0,
+        assignments: [],
+      }]
+    });
 
     expect(mockFrom).toHaveBeenCalledWith('courses');
     const selectArg = mockSelect.mock.calls[0][0] as string;
@@ -86,6 +114,7 @@ describe('GET /api/external/courses', () => {
     expect(selectArg).toContain('course_fields');
     expect(selectArg).toContain('user_courses');
     expect(selectArg).toContain('is_hidden');
+    expect(selectArg).toContain('latest_semester');
     expect(mockNeq).toHaveBeenCalledWith('user_courses.status', 'hidden');
   });
 

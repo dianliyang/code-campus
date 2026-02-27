@@ -57,6 +57,7 @@ export async function GET(
         popularity,
         workload,
         is_hidden,
+        latest_semester,
         created_at,
         course_fields(
           fields(
@@ -117,7 +118,7 @@ export async function GET(
     }
 
     return NextResponse.json(
-      transformExternalCourse(course as Record<string, unknown>),
+      { courses: [transformExternalCourse(course as Record<string, unknown>)] },
       { headers: cachingHeaders }
     );
   } catch (error) {

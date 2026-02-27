@@ -64,28 +64,32 @@ describe('external-api utils', () => {
     const raw = {
       id: 1,
       title: 'Test',
+      course_code: 'T101',
+      university: 'Uni',
+      description: 'desc',
+      url: 'http',
       is_hidden: false,
       is_internal: true,
       details: {
-        schedule: { Lecture: ['Mon'] },
+        platforms: ['P'],
+        logistics: 'L',
         internalId: 'x',
-        relatedUrls: [],
-        prerequisites: 'none',
-        crossListedCourses: [],
-        instructors: [],
       },
       course_fields: [{ fields: { name: 'CS' } }],
       study_plans: [{ id: 11 }],
       user_courses: [{ status: 'active' }],
+      created_at: '2026-02-14T12:00:00.000Z',
     };
     const result = transformExternalCourse(raw as Record<string, unknown>);
     expect(result.is_hidden).toBeUndefined();
     expect(result.is_internal).toBeUndefined();
-    expect((result.details as Record<string, unknown>).internalId).toBe('x');
-    expect((result.details as Record<string, unknown>).schedule).toBeUndefined();
-    expect(result.topics).toEqual(['CS']);
-    expect(result.schedule).toEqual([{ id: 11 }]);
-    expect(result.enrollment).toEqual({ status: 'active' });
+    expect(result.remoteID).toBe(1);
+    expect(result.name).toBe('Test');
+    expect(result.code).toBe('T101');
+    expect(result.topic).toBe('CS');
+    expect(result.platforms).toEqual(['P']);
+    expect(result.logistics).toBe('L');
+    expect((result as Record<string, unknown>).details).toBeUndefined();
   });
 
   it('notModifiedResponse returns a 304 NextResponse with the given headers', async () => {

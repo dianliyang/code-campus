@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
         popularity,
         workload,
         is_hidden,
+        latest_semester,
         created_at,
         course_fields(
           fields(
@@ -104,13 +105,9 @@ export async function GET(request: NextRequest) {
 
     const coursesWithEnrollment = (data ?? [])
       .filter((course) => course.is_hidden !== true)
-      .filter((course) => {
-        const uc = Array.isArray(course.user_courses) ? course.user_courses : [];
-        return uc.some((r) => r.status !== 'hidden');
-      })
       .map((course) => transformExternalCourse(course as Record<string, unknown>));
 
-    return NextResponse.json(coursesWithEnrollment, { headers: cachingHeaders });
+    return NextResponse.json({ courses: coursesWithEnrollment }, { headers: cachingHeaders });
   } catch (error) {
     console.error('API implementation error:', error);
     return NextResponse.json(

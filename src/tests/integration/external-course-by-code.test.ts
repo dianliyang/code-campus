@@ -82,29 +82,38 @@ describe('GET /api/external/courses/[course_code]', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe(EXTERNAL_API_CACHE_CONTROL);
     expect(data).toEqual({
-      id: 1,
-      university: 'CAU Kiel',
-      course_code: 'CS-101',
-      title: 'Course 1',
-      units: '3',
-      credit: 3,
-      description: 'desc',
-      url: 'https://example.com/course',
-      details: { internalId: 'x1' },
-      instructors: ['Prof A'],
-      prerequisites: 'Math 101',
-      related_urls: ['https://example.com'],
-      cross_listed_courses: 'CS-001',
-      department: 'CS',
-      corequisites: null,
-      level: 'undergraduate',
-      difficulty: 2,
-      popularity: 10,
-      workload: 'medium',
-      created_at: '2026-02-14T00:00:00.000Z',
-      topics: ['Computer Science', 'Machine Learning'],
-      schedule: [{ id: 11, course_id: 1 }],
-      enrollment: { status: 'in_progress', progress: 75, gpa: null, score: null, notes: null, priority: 1, updated_at: null },
+      courses: [{
+        remoteID: 1,
+        name: 'Course 1',
+        code: 'CS-101',
+        university: 'CAU Kiel',
+        units: '3',
+        credit: 3,
+        desc: 'desc',
+        urlString: 'https://example.com/course',
+        instructors: ['Prof A'],
+        prerequisites: 'Math 101',
+        resources: ['https://example.com'],
+        platforms: [],
+        crossListedCourses: ['CS-001'],
+        category: 'Computer Science',
+        department: 'CS',
+        latestTerm: null,
+        logistics: null,
+        level: 'undergraduate',
+        difficulty: 2,
+        popularity: 10,
+        workload: null, // 'medium' is not a number
+        gpa: null,
+        score: null,
+        createdAtISO8601: '2026-02-14T00:00:00.000Z',
+        updatedAtISO8601: expect.any(String),
+        topic: 'Computer Science',
+        isEnrolled: true,
+        isFailed: false,
+        retry: 0,
+        assignments: [],
+      }]
     });
 
     expect(mockFrom).toHaveBeenCalledWith('courses');
@@ -113,6 +122,7 @@ describe('GET /api/external/courses/[course_code]', () => {
     expect(selectArg).toContain('study_plans');
     expect(selectArg).toContain('user_courses');
     expect(selectArg).toContain('is_hidden');
+    expect(selectArg).toContain('latest_semester');
     expect(mockNeq).toHaveBeenCalledWith('user_courses.status', 'hidden');
     expect(mockEq2).toHaveBeenCalledWith('course_code', 'CS-101');
   });

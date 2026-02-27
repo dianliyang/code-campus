@@ -8,6 +8,7 @@ import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
+import { useAppToast } from "@/components/common/AppToastProvider";
 interface CourseDetailHeaderProps {
   course: Course;
   isEditing?: boolean;
@@ -37,6 +38,7 @@ export default function CourseDetailHeader({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAiUpdating, setIsAiUpdating] = useState(false);
   const [aiStatus, setAiStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const { showToast } = useAppToast();
   const searchQuery = `${course.university || ""} ${course.courseCode || ""} ${course.title || ""}`.trim();
   const searchHref = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
 
@@ -51,13 +53,24 @@ export default function CourseDetailHeader({
       });
       if (res.ok) {
         setAiStatus('success');
+        showToast({ type: "success", message: "AI sync completed." });
         trackAiUsage({ calls: 1, tokens: 1024 });
         router.refresh();
       } else {
         setAiStatus('error');
+        let errorMessage = "AI sync failed.";
+        try {
+          const payload = await res.json();
+          const candidate = typeof payload?.error === "string" ? payload.error.trim() : "";
+          if (candidate) errorMessage = candidate;
+        } catch {
+          // Ignore parse error and use default message.
+        }
+        showToast({ type: "error", message: errorMessage });
       }
     } catch {
       setAiStatus('error');
+      showToast({ type: "error", message: "Network error while running AI sync." });
     } finally {
       setIsAiUpdating(false);
       setTimeout(() => setAiStatus('idle'), 3000);

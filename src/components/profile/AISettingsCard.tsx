@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   deactivateAiModelPricing,
   deactivateAiProviderPricing,
@@ -91,6 +92,13 @@ const FEATURE_LABELS: Record<string, string> = {
   "schedule-parse": "Schedule Parse",
 };
 
+const PROVIDER_HINTS: Record<AIProvider, string> = {
+  perplexity: "Best for grounded web retrieval",
+  gemini: "Fast general-purpose generation",
+  openai: "Strong structured output quality",
+  vertex: "Google Vertex-hosted Gemini",
+};
+
 export default function AISettingsCard({
   section,
   initialProvider,
@@ -105,6 +113,7 @@ export default function AISettingsCard({
   initialCourseIntelPromptTemplate,
   modelCatalog,
 }: AISettingsCardProps) {
+  const router = useRouter();
   const perplexityModels = modelCatalog.perplexity;
   const geminiModels = modelCatalog.gemini;
   const openaiModels = modelCatalog.openai;
@@ -169,7 +178,7 @@ export default function AISettingsCard({
   useEffect(() => {
     if (section !== "usage") return;
     setUsageLoading(true);
-    fetch("/api/ai/usage/stats")
+    fetch("/api/ai/usage/stats", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (!d.error) {
@@ -189,6 +198,7 @@ export default function AISettingsCard({
       try {
         await updateAiPreferences({ provider, defaultModel, webSearchEnabled });
         showToast({ type: "success", message: "Intelligence preferences updated." });
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
@@ -209,6 +219,7 @@ export default function AISettingsCard({
         });
         showToast({ type: "success", message: "Model added to provider catalog." });
         setNewModelName("");
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Failed to add model." });
       } finally {
@@ -223,6 +234,7 @@ export default function AISettingsCard({
       try {
         await deactivateAiModelPricing({ provider, model });
         showToast({ type: "success", message: `Model removed: ${model}` });
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Failed to delete model." });
       } finally {
@@ -237,6 +249,7 @@ export default function AISettingsCard({
       try {
         await deactivateAiProviderPricing({ provider });
         showToast({ type: "success", message: `Provider removed: ${provider}` });
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Failed to delete provider." });
       } finally {
@@ -251,6 +264,7 @@ export default function AISettingsCard({
       try {
         await updateAiPromptTemplates({ descriptionPromptTemplate: promptTemplate });
         showToast({ type: "success", message: "Metadata instructions updated." });
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
@@ -265,6 +279,7 @@ export default function AISettingsCard({
       try {
         await updateAiPromptTemplates({ studyPlanPromptTemplate });
         showToast({ type: "success", message: "Scheduling logic updated." });
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
@@ -279,6 +294,7 @@ export default function AISettingsCard({
       try {
         await updateAiPromptTemplates({ topicsPromptTemplate });
         showToast({ type: "success", message: "Topic classification logic updated." });
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
@@ -293,6 +309,7 @@ export default function AISettingsCard({
       try {
         await updateAiPromptTemplates({ plannerPromptTemplate });
         showToast({ type: "success", message: "Study planner logic updated." });
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
@@ -307,6 +324,7 @@ export default function AISettingsCard({
       try {
         await updateAiPromptTemplates({ syllabusPromptTemplate });
         showToast({ type: "success", message: "Syllabus retrieve logic updated." });
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
@@ -321,6 +339,7 @@ export default function AISettingsCard({
       try {
         await updateAiPromptTemplates({ courseUpdatePromptTemplate });
         showToast({ type: "success", message: "Course update search logic updated." });
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
@@ -335,6 +354,7 @@ export default function AISettingsCard({
       try {
         await updateAiPromptTemplates({ courseIntelPromptTemplate });
         showToast({ type: "success", message: "Course intel logic updated." });
+        router.refresh();
       } catch (error) {
         showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
       } finally {
@@ -363,142 +383,136 @@ export default function AISettingsCard({
             </button>
           </div>
 
-          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-[#666] block">Intelligence Provider</label>
-                <div className="flex gap-2">
-                  {AI_PROVIDERS.map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => {
-                        const nextProvider = p as AIProvider;
-                        const available = modelsForProvider(nextProvider);
-                        setProvider(nextProvider);
-                        if (available.length > 0 && !available.includes(defaultModel)) {
-                          setDefaultModel(available[0]);
-                        }
-                      }}
-                      className={`flex-1 h-8 rounded-md border transition-colors text-[13px] font-medium ${
-                        provider === p
-                          ? "bg-[#1f1f1f] border-[#1f1f1f] text-white"
-                          : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-[#666] block">Active Language Model</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {modelsForProvider(provider).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setDefaultModel(m)}
-                      className={`h-8 px-2.5 rounded-md border transition-colors text-[12px] font-medium ${
-                        defaultModel === m
-                          ? "bg-[#1f1f1f] border-[#1f1f1f] text-white"
-                          : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
-                      }`}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2 rounded-md border border-[#e6e6e6] p-3">
-                <label className="text-xs font-semibold text-[#555] block">Provider Catalog Management</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <input
-                    value={newModelName}
-                    onChange={(e) => setNewModelName(e.target.value)}
-                    placeholder="model id (e.g. gemini-2.5-pro)"
-                    className="h-8 rounded-md border border-[#d8d8d8] px-2 text-[12px] outline-none focus:border-[#bcbcbc]"
-                    disabled={isSavingCatalog}
-                  />
-                  <input
-                    value={newModelInputPerMillion}
-                    onChange={(e) => setNewModelInputPerMillion(e.target.value)}
-                    placeholder="input $ / 1M"
-                    className="h-8 rounded-md border border-[#d8d8d8] px-2 text-[12px] outline-none focus:border-[#bcbcbc]"
-                    disabled={isSavingCatalog}
-                  />
-                  <input
-                    value={newModelOutputPerMillion}
-                    onChange={(e) => setNewModelOutputPerMillion(e.target.value)}
-                    placeholder="output $ / 1M"
-                    className="h-8 rounded-md border border-[#d8d8d8] px-2 text-[12px] outline-none focus:border-[#bcbcbc]"
-                    disabled={isSavingCatalog}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
+          <div className="flex-1 min-h-0 space-y-4 overflow-y-auto pr-1">
+            <div className="rounded-md border border-[#e8e8e8] bg-[#fcfcfc] p-3">
+              <p className="text-xs font-semibold text-[#5a5a5a] mb-2 uppercase tracking-wide">Provider</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                {AI_PROVIDERS.map((p) => (
                   <button
-                    onClick={handleAddModelToCatalog}
-                    disabled={isSavingCatalog || !newModelName.trim()}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[12px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
+                    key={p}
+                    onClick={() => {
+                      const nextProvider = p as AIProvider;
+                      const available = modelsForProvider(nextProvider);
+                      setProvider(nextProvider);
+                      if (available.length > 0 && !available.includes(defaultModel)) setDefaultModel(available[0]);
+                    }}
+                    className={`rounded-md border px-3 py-2 text-left transition-colors ${
+                      provider === p
+                        ? "border-[#1f1f1f] bg-[#1f1f1f] text-white"
+                        : "border-[#d8d8d8] bg-white text-[#333] hover:bg-[#f8f8f8]"
+                    }`}
                   >
-                    {isSavingCatalog ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                    Add Model
+                    <p className="text-sm font-semibold capitalize">{p}</p>
+                    <p className={`text-[11px] mt-0.5 ${provider === p ? "text-[#efefef]" : "text-[#6f6f6f]"}`}>
+                      {PROVIDER_HINTS[p as AIProvider]}
+                    </p>
                   </button>
-                  <button
-                    onClick={handleDeleteProviderFromCatalog}
-                    disabled={isSavingCatalog}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#ebd0d0] bg-white px-2.5 text-[12px] font-medium text-[#9d3b3b] hover:bg-[#fff5f5] transition-colors disabled:opacity-50"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    Delete Provider
-                  </button>
-                </div>
-                <div className="max-h-28 overflow-y-auto rounded border border-[#efefef]">
-                  {modelsForProvider(provider).length === 0 ? (
-                    <p className="text-[12px] text-[#888] p-2">No active models for this provider.</p>
-                  ) : (
-                    <div className="divide-y divide-[#f2f2f2]">
-                      {modelsForProvider(provider).map((m) => (
-                        <div key={m} className="flex items-center justify-between px-2 py-1.5 text-[12px]">
-                          <span className="font-mono text-[#444]">{m}</span>
-                          <button
-                            onClick={() => handleDeleteModelFromCatalog(m)}
-                            disabled={isSavingCatalog}
-                            className="inline-flex items-center gap-1 rounded border border-[#ebd0d0] px-1.5 py-0.5 text-[#9d3b3b] hover:bg-[#fff5f5] disabled:opacity-50"
-                            aria-label={`Delete model ${m}`}
-                            title={`Delete model ${m}`}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                            Delete
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-1">
-                <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-md border border-[#e5e5e5] hover:bg-[#fafafa] transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={webSearchEnabled}
-                    onChange={(e) => setWebSearchEnabled(e.target.checked)}
-                    disabled={isSavingProvider}
-                    className="w-4 h-4 rounded border-gray-300 text-[#1f1f1f] focus:ring-[#1f1f1f] transition-all"
-                  />
-                  <div>
-                    <span className="block text-[13px] font-medium text-[#222]">Web Grounding</span>
-                    <span className="text-xs text-[#777]">Real-time data synthesis enabled.</span>
-                  </div>
-                </label>
+                ))}
               </div>
             </div>
 
-            <div className="bg-[#fafafa] rounded-md p-4 border border-[#e5e5e5] flex flex-col justify-center">
-              <p className="text-xs text-[#666] leading-relaxed">
-                &quot;System Preferences define the core execution parameters for all synthesized responses. Choosing a specific provider alters the latency and grounding capabilities of the intelligence layer.&quot;
-              </p>
+            <div className="rounded-md border border-[#e8e8e8] bg-white p-3">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <p className="text-xs font-semibold text-[#5a5a5a] uppercase tracking-wide">Model</p>
+                <p className="text-[11px] text-[#7a7a7a]">Selected provider: <span className="font-semibold capitalize">{provider}</span></p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {modelsForProvider(provider).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setDefaultModel(m)}
+                    className={`rounded-md border px-3 py-2 text-left transition-colors ${
+                      defaultModel === m
+                        ? "border-[#1f1f1f] bg-[#111] text-white"
+                        : "border-[#d8d8d8] bg-white text-[#333] hover:bg-[#f8f8f8]"
+                    }`}
+                  >
+                    <p className="text-[12px] font-medium font-mono">{m}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-md border border-[#e8e8e8] bg-white p-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={webSearchEnabled}
+                  onChange={(e) => setWebSearchEnabled(e.target.checked)}
+                  disabled={isSavingProvider}
+                  className="mt-1 w-4 h-4 rounded border-gray-300 text-[#1f1f1f] focus:ring-[#1f1f1f]"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-[#222]">Web Grounding</p>
+                  <p className="text-xs text-[#666] mt-0.5">
+                    When enabled, retrieval uses web-grounded context (Perplexity + fetched resource pages) before parsing syllabus JSON.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <div className="rounded-md border border-[#e8e8e8] bg-white p-3">
+              <p className="text-xs font-semibold text-[#5a5a5a] uppercase tracking-wide mb-2">Provider Catalog</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                <input
+                  value={newModelName}
+                  onChange={(e) => setNewModelName(e.target.value)}
+                  placeholder="model id"
+                  className="h-9 rounded-md border border-[#d8d8d8] px-2.5 text-[12px] outline-none focus:border-[#bcbcbc]"
+                  disabled={isSavingCatalog}
+                />
+                <input
+                  value={newModelInputPerMillion}
+                  onChange={(e) => setNewModelInputPerMillion(e.target.value)}
+                  placeholder="input $ / 1M"
+                  className="h-9 rounded-md border border-[#d8d8d8] px-2.5 text-[12px] outline-none focus:border-[#bcbcbc]"
+                  disabled={isSavingCatalog}
+                />
+                <input
+                  value={newModelOutputPerMillion}
+                  onChange={(e) => setNewModelOutputPerMillion(e.target.value)}
+                  placeholder="output $ / 1M"
+                  className="h-9 rounded-md border border-[#d8d8d8] px-2.5 text-[12px] outline-none focus:border-[#bcbcbc]"
+                  disabled={isSavingCatalog}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <button
+                  onClick={handleAddModelToCatalog}
+                  disabled={isSavingCatalog || !newModelName.trim()}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[12px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
+                >
+                  {isSavingCatalog ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                  Add Model
+                </button>
+                <button
+                  onClick={handleDeleteProviderFromCatalog}
+                  disabled={isSavingCatalog}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#ebd0d0] bg-white px-2.5 text-[12px] font-medium text-[#9d3b3b] hover:bg-[#fff5f5] transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Delete Provider
+                </button>
+              </div>
+              <div className="rounded border border-[#efefef] divide-y divide-[#f2f2f2] max-h-40 overflow-y-auto">
+                {modelsForProvider(provider).length === 0 ? (
+                  <p className="text-[12px] text-[#888] p-2">No active models for this provider.</p>
+                ) : (
+                  modelsForProvider(provider).map((m) => (
+                    <div key={m} className="flex items-center justify-between px-2.5 py-1.5 text-[12px]">
+                      <span className="font-mono text-[#333]">{m}</span>
+                      <button
+                        onClick={() => handleDeleteModelFromCatalog(m)}
+                        disabled={isSavingCatalog}
+                        className="inline-flex items-center gap-1 rounded border border-[#ebd0d0] px-1.5 py-0.5 text-[#9d3b3b] hover:bg-[#fff5f5] disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Delete
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>

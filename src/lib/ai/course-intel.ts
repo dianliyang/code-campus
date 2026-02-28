@@ -259,6 +259,38 @@ function dedupeLinks(links: Array<{ label: string; url: string }>): Array<{ labe
   return out;
 }
 
+function dedupeTaskLinks(
+  links: Array<{ label: string; url: string; due_date: string | null }>
+): Array<{ label: string; url: string; due_date: string | null }> {
+  const seen = new Set<string>();
+  const out: Array<{ label: string; url: string; due_date: string | null }> = [];
+  for (const item of links) {
+    const key = `${item.url.trim().toLowerCase()}|${item.label.trim().toLowerCase()}`;
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      label: item.label.trim(),
+      url: item.url.trim(),
+      due_date: item.due_date,
+    });
+  }
+  return out;
+}
+
+function isNoisyContextUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./i, "").toLowerCase();
+    const path = u.pathname.toLowerCase();
+    if (/youtube\.com|youtu\.be|x\.com|twitter\.com|facebook\.com|instagram\.com|tiktok\.com/i.test(host)) return true;
+    if (/discord\.com/i.test(host) && !/\/invite\//.test(path)) return true;
+    if (/medium\.com|substack\.com/i.test(host)) return true;
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 function parseWeekSignalsFromBundle(js: string): WeekSignal[] {
   const weekMatches = Array.from(js.matchAll(/Week\s+(\d+):\s*([^"]{1,180})/gi))
     .map((m) => ({
@@ -385,6 +417,7 @@ function extractBundleScriptUrls(html: string, pageUrl: string): string[] {
 
 async function fetchUrlTextSnippet(url: string, timeoutMs = 8000): Promise<string | null> {
   if (!/^https?:\/\//i.test(url)) return null;
+  if (isNoisyContextUrl(url)) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -434,6 +467,7 @@ async function fetchUrlTextSnippet(url: string, timeoutMs = 8000): Promise<strin
 
 async function fetchWeekSignalsForUrl(url: string, timeoutMs = 8000): Promise<WeekSignal[]> {
   if (!/^https?:\/\//i.test(url)) return [];
+  if (isNoisyContextUrl(url)) return [];
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -493,6 +527,7 @@ async function fetchWeekSignalsForUrl(url: string, timeoutMs = 8000): Promise<We
 
 async function fetchGradingSignalsForUrl(url: string, timeoutMs = 8000): Promise<GradingSignal[]> {
   if (!/^https?:\/\//i.test(url)) return [];
+  if (isNoisyContextUrl(url)) return [];
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -808,7 +843,12 @@ function parseGenericScheduleAndGrading(html: string): DeterministicSignals {
     return null;
   };
 
-  const categorizeLinks = (root: ReturnType<typeof $>) => {
+  const parseDueDate = (text: string, fallbackDate: string | null): string | null => {
+    const parsed = parseDate(text);
+    return parsed || fallbackDate;
+  };
+
+  const categorizeLinks = (root: ReturnType<typeof $>, rowDateHint: string | null) => {
     const slides: Array<{ label: string; url: string }> = [];
     const videos: Array<{ label: string; url: string }> = [];
     const readings: Array<{ label: string; url: string }> = [];
@@ -827,11 +867,11 @@ function parseGenericScheduleAndGrading(html: string): DeterministicSignals {
       } else if (/reading|paper|article|textbook/i.test(label)) {
         readings.push({ label, url: href });
       } else if (/lab/i.test(label)) {
-        labs.push({ label, url: href, due_date: null });
+        labs.push({ label, url: href, due_date: parseDueDate(label, rowDateHint) });
       } else if (/project|proposal|milestone|report/i.test(label)) {
-        projects.push({ label, url: href, due_date: null });
+        projects.push({ label, url: href, due_date: parseDueDate(label, rowDateHint) });
       } else if (/assignment|homework|problem set|pset|quiz/i.test(label)) {
-        assignments.push({ label, url: href, due_date: null });
+        assignments.push({ label, url: href, due_date: parseDueDate(label, rowDateHint) });
       } else {
         readings.push({ label, url: href });
       }
@@ -840,9 +880,9 @@ function parseGenericScheduleAndGrading(html: string): DeterministicSignals {
       slides: dedupeLinks(slides),
       videos: dedupeLinks(videos),
       readings: dedupeLinks(readings),
-      assignments: dedupeLinks(assignments.map((x) => ({ label: x.label, url: x.url }))).map((x) => ({ ...x, due_date: null })),
-      labs: dedupeLinks(labs.map((x) => ({ label: x.label, url: x.url }))).map((x) => ({ ...x, due_date: null })),
-      projects: dedupeLinks(projects.map((x) => ({ label: x.label, url: x.url }))).map((x) => ({ ...x, due_date: null })),
+      assignments: dedupeTaskLinks(assignments),
+      labs: dedupeTaskLinks(labs),
+      projects: dedupeTaskLinks(projects),
     };
   };
 
@@ -863,11 +903,12 @@ function parseGenericScheduleAndGrading(html: string): DeterministicSignals {
     const key = `${seqText || ""}|${parseDate(dateText || "") || ""}|${title.toLowerCase()}`;
     if (seen.has(key)) return;
     seen.add(key);
-    const links = categorizeLinks(row);
+    const rowDate = parseDate(dateText || "");
+    const links = categorizeLinks(row, rowDate);
     scheduleRows.push({
       sequence: seqText,
       title,
-      date: parseDate(dateText || ""),
+      date: rowDate,
       date_end: null,
       instructor: null,
       topics: [title],
@@ -893,7 +934,7 @@ function parseGenericScheduleAndGrading(html: string): DeterministicSignals {
     const key = `${seq || ""}|${date || ""}|${title.toLowerCase()}`;
     if (seen.has(key)) return;
     seen.add(key);
-    const links = categorizeLinks(block);
+    const links = categorizeLinks(block, date);
     scheduleRows.push({
       sequence: seq,
       title,
@@ -910,6 +951,42 @@ function parseGenericScheduleAndGrading(html: string): DeterministicSignals {
       labs: links.labs,
       exams: [],
       projects: links.projects,
+    });
+  });
+
+  // Fallback: extract assignment-like entries from free-form list/calendar text.
+  const seenFallback = new Set<string>();
+  $("li,p,tr").each((_, el) => {
+    const node = $(el);
+    const text = node.text().replace(/\s+/g, " ").trim();
+    if (!text || text.length > 260) return;
+    if (!/assignment|homework|pset|problem set|lab|project|quiz|exam/i.test(text)) return;
+    if (!/due|deadline|out|submit|deliverable/i.test(text)) return;
+    const due = parseDate(text);
+    const hrefRaw = String(node.find("a[href]").first().attr("href") || "").trim();
+    const href = /^https?:\/\//i.test(hrefRaw) ? hrefRaw : "";
+    const kind: "assignments" | "labs" | "projects" =
+      /lab/i.test(text) ? "labs" : /project|proposal|milestone|report/i.test(text) ? "projects" : "assignments";
+    const key = `${kind}|${text.toLowerCase()}|${due || ""}`;
+    if (seenFallback.has(key)) return;
+    seenFallback.add(key);
+
+    scheduleRows.push({
+      sequence: null,
+      title: text,
+      date: due,
+      date_end: null,
+      instructor: null,
+      topics: [],
+      description: text,
+      slides: [],
+      videos: [],
+      readings: [],
+      modules: [],
+      assignments: kind === "assignments" ? [{ label: text, url: href, due_date: due }] : [],
+      labs: kind === "labs" ? [{ label: text, url: href, due_date: due }] : [],
+      exams: [],
+      projects: kind === "projects" ? [{ label: text, url: href, due_date: due }] : [],
     });
   });
 
@@ -971,6 +1048,7 @@ function parseGenericScheduleAndGrading(html: string): DeterministicSignals {
 
 async function fetchDeterministicSignalsForUrl(url: string, timeoutMs = 10000): Promise<DeterministicSignals> {
   if (!/^https?:\/\//i.test(url)) return { scheduleRows: [], gradingSignals: [], extraResources: [] };
+  if (isNoisyContextUrl(url)) return { scheduleRows: [], gradingSignals: [], extraResources: [] };
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -1213,16 +1291,16 @@ function extractHeuristicAssignmentsFromSchedule(
       });
     };
 
-    if (blob.includes("assignment") && (blob.includes("due") || blob.includes("out"))) {
+    if (blob.includes("assignment") && (blob.includes("due") || blob.includes("out") || Boolean(rowDate))) {
       infer("assignment", title || "Assignment");
     }
-    if (blob.includes("lab") && (blob.includes("due") || blob.includes("out"))) {
+    if (blob.includes("lab") && (blob.includes("due") || blob.includes("out") || Boolean(rowDate))) {
       infer("lab", title || "Lab");
     }
     if (blob.includes("exam") || blob.includes("midterm") || blob.includes("final")) {
       infer("exam", title || "Exam");
     }
-    if (blob.includes("project") && (blob.includes("due") || blob.includes("proposal") || blob.includes("milestone"))) {
+    if (blob.includes("project") && (blob.includes("due") || blob.includes("proposal") || blob.includes("milestone") || Boolean(rowDate))) {
       infer("project", title || "Project");
     }
   }
@@ -1392,6 +1470,55 @@ function isLikelyCourseSubpage(url: string, anchorText: string): boolean {
   return /(syllabus|calendar|schedule|resource|reading|lecture|lab|office hour|assignment|policy|note|material)/i.test(haystack);
 }
 
+function filterRelevantResourceUrls(
+  urls: string[],
+  contextUrls: string[],
+  courseCode: string,
+  title: string
+): string[] {
+  const primaryHosts = new Set(
+    contextUrls
+      .map((u) => {
+        try {
+          return new URL(u).hostname.replace(/^www\./i, "").toLowerCase();
+        } catch {
+          return "";
+        }
+      })
+      .filter(Boolean)
+  );
+
+  const codeToken = courseCode.replace(/\s+/g, "").toLowerCase();
+  const titleToken = title.toLowerCase();
+  const out: Array<{ url: string; score: number }> = [];
+
+  for (const raw of dedupeResourcesByDomain(urls)) {
+    let score = 0;
+    try {
+      if (isNoisyContextUrl(raw)) continue;
+      const u = new URL(raw);
+      const host = u.hostname.replace(/^www\./i, "").toLowerCase();
+      const path = `${u.pathname}${u.search}`.toLowerCase();
+      const full = `${host}${path}`;
+
+      if (primaryHosts.has(host)) score += 70;
+      if (/syllabus|calendar|schedule|resource|materials?|reading|assignment|homework|lab|project|policy|lecture|notes?/i.test(path)) score += 55;
+      if (/github\.io|github\.com|docs\.google\.com|drive\.google\.com|explorecourses\.stanford\.edu|canvas|edstem|piazza/i.test(host)) score += 30;
+      if (codeToken && full.includes(codeToken)) score += 25;
+      if (titleToken && titleToken.length > 8 && full.includes(titleToken.split(" ").slice(0, 2).join("-"))) score += 10;
+
+      if (score >= 30) out.push({ url: raw, score });
+    } catch {
+      // Skip invalid URL.
+    }
+  }
+
+  return out
+    .sort((a, b) => b.score - a.score)
+    .map((x) => x.url)
+    .slice(0, 25);
+}
+
 function isAllowedCourseLinkHost(seedHost: string, linkHost: string): boolean {
   const normalizedSeed = seedHost.replace(/^www\./i, "").toLowerCase();
   const normalizedLink = linkHost.replace(/^www\./i, "").toLowerCase();
@@ -1432,9 +1559,13 @@ async function discoverImportantCourseLinks(seedUrls: string[], timeoutMs = 9000
       });
 
       if (res.url && /^https?:\/\//i.test(res.url)) {
-        scored.set(res.url, Math.max(scored.get(res.url) || 0, 25));
+        if (!isNoisyContextUrl(res.url)) {
+          scored.set(res.url, Math.max(scored.get(res.url) || 0, 25));
+        }
       } else {
-        scored.set(seed, Math.max(scored.get(seed) || 0, 25));
+        if (!isNoisyContextUrl(seed)) {
+          scored.set(seed, Math.max(scored.get(seed) || 0, 25));
+        }
       }
       if (!res.ok) continue;
 
@@ -1463,6 +1594,7 @@ async function discoverImportantCourseLinks(seedUrls: string[], timeoutMs = 9000
         }
 
         if (!isLikelyCourseSubpage(resolved, textRaw)) return;
+        if (isNoisyContextUrl(resolved)) return;
         const score = scoreCourseLink(resolved, textRaw);
         if (score > 0) {
           scored.set(resolved, Math.max(scored.get(resolved) || 0, score));
@@ -1539,6 +1671,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
   const seedContextUrls = dedupeUrlsExact([...knownUrls, ...discoveredUrls].filter((u) => /^https?:\/\//i.test(String(u))));
   const expandedUrls = webSearchEnabled ? await discoverImportantCourseLinks(seedContextUrls) : [];
   const fullContextUrls = dedupeUrlsExact([...expandedUrls, ...seedContextUrls]).slice(0, 8);
+  const analysisContextUrls = fullContextUrls.filter((u) => !isNoisyContextUrl(u)).slice(0, 6);
   const contextUrls = dedupeResourcesByDomain(fullContextUrls);
   const resourcesContext = knownUrls.length > 0
     ? `Known course URLs:\n${knownUrls.map((u) => `- ${u}`).join("\n")}`
@@ -1548,16 +1681,16 @@ export async function runCourseIntel(userId: string, courseId: number) {
     ? await buildFetchedResourcesContext(contextUrls, String(course.course_code || ""), String(course.university || ""))
     : "";
   const fetchedPageTextContext = webSearchEnabled
-    ? await Promise.allSettled(fullContextUrls.slice(0, 6).map((u) => fetchUrlTextSnippet(u)))
+    ? await Promise.allSettled(analysisContextUrls.map((u) => fetchUrlTextSnippet(u)))
     : [];
   const fetchedWeekSignals = webSearchEnabled
-    ? await Promise.allSettled(fullContextUrls.slice(0, 6).map((u) => fetchWeekSignalsForUrl(u)))
+    ? await Promise.allSettled(analysisContextUrls.map((u) => fetchWeekSignalsForUrl(u)))
     : [];
   const fetchedGradingSignals = webSearchEnabled
-    ? await Promise.allSettled(fullContextUrls.slice(0, 6).map((u) => fetchGradingSignalsForUrl(u)))
+    ? await Promise.allSettled(analysisContextUrls.map((u) => fetchGradingSignalsForUrl(u)))
     : [];
   const deterministicSignalSettled = await Promise.allSettled(
-    fullContextUrls.slice(0, 6).map((u) => fetchDeterministicSignalsForUrl(u))
+    analysisContextUrls.map((u) => fetchDeterministicSignalsForUrl(u))
   );
   const deterministicSignals = deterministicSignalSettled
     .filter((r): r is PromiseFulfilledResult<DeterministicSignals> => r.status === "fulfilled")
@@ -1772,7 +1905,12 @@ export async function runCourseIntel(userId: string, courseId: number) {
     ...(sourceUrl ? [sourceUrl] : []),
     ...(Array.isArray(course.resources) ? course.resources : []),
   ]);
-  const finalResources = mergedResourceCandidates;
+  const finalResources = filterRelevantResourceUrls(
+    mergedResourceCandidates,
+    fullContextUrls,
+    String(course.course_code || ""),
+    String(course.title || "")
+  );
 
   const admin = createAdminClient();
   const nowIso = new Date().toISOString();

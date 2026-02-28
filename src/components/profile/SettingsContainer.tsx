@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { User } from "@supabase/supabase-js";
 import { LucideIcon, Cpu, FileCode, CalendarDays, Tag, BarChart2, Shield, UserX, Database, Sparkles } from "lucide-react";
+import AILearningPlanner from "@/components/home/AILearningPlanner";
 
 const AISettingsCard = dynamic(() => import("./AISettingsCard"), { ssr: false });
 const SecurityIdentitySection = dynamic(() => import("./SecurityIdentitySection"), { ssr: false });
 const SystemMaintenanceCard = dynamic(() => import("./SystemMaintenanceCard"), { ssr: false });
 
 export type SectionId =
-  | "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-intel" | "usage"
+  | "engine" | "metadata" | "scheduling" | "study-planner" | "learning-planner" | "topics" | "course-intel" | "usage"
   | "identity" | "account"
   | "sync";
 
@@ -24,6 +25,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
       { id: "metadata",      label: "Metadata Logic",       icon: FileCode },
       { id: "scheduling",    label: "Scheduling Logic",     icon: CalendarDays },
       { id: "study-planner", label: "Study Planner Logic",  icon: Sparkles },
+      { id: "learning-planner", label: "AI Learning Planner", icon: Sparkles },
       { id: "topics",        label: "Domain Classifcation", icon: Tag },
       { id: "course-intel",      label: "Course Intel",         icon: Sparkles },
       { id: "usage",             label: "Usage Statistics",     icon: BarChart2 },
@@ -52,6 +54,7 @@ const SECTION_META: Record<SectionId, { title: string; desc: string }> = {
   "metadata":      { title: "Metadata Logic",         desc: "Prompt template for course description generation." },
   "scheduling":    { title: "Scheduling Logic",       desc: "Prompt template for study plan generation." },
   "study-planner": { title: "Study Planner Logic",    desc: "Prompt template for AI planner course recommendations." },
+  "learning-planner": { title: "AI Learning Planner", desc: "Generate and apply roadmap recommendations directly from Settings." },
   "topics":        { title: "Domain Classifcation",   desc: "Prompt template for topic tagging." },
   "course-intel":      { title: "Course Intel Logic",      desc: "Merged prompt for resources, syllabus, and assignments retrieval." },
   "usage":             { title: "Usage Statistics",       desc: "AI call history, token usage, and cost breakdown." },
@@ -168,6 +171,11 @@ export default function SettingsContainer({ user, profile, aiDefaults }: Setting
             />
           </div>
         ) : null}
+
+        {/* AI Learning Planner */}
+        <div className={active === "learning-planner" ? "flex-1 min-h-0" : "hidden"}>
+          <AILearningPlanner />
+        </div>
 
         {/* Identity & Security */}
         <div className={active === "identity" ? "flex-1 min-h-0" : "hidden"}>

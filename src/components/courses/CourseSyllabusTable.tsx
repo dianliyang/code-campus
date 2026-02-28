@@ -134,7 +134,6 @@ export default function CourseSyllabusTable({
   const hasTasks = schedule.some(
     (e) =>
       (e.assignments?.length ?? 0) > 0 ||
-      (e.readings?.length ?? 0) > 0 ||
       (e.labs?.length ?? 0) > 0 ||
       (e.exams?.length ?? 0) > 0 ||
       (e.projects?.length ?? 0) > 0
@@ -191,7 +190,6 @@ export default function CourseSyllabusTable({
                 ];
                 const allTasks = [
                   ...(entry.assignments || []).map((t) => ({ ...t, kind: "Assignment" })),
-                  ...(entry.readings || []).map((t) => ({ ...t, kind: "Reading" })),
                   ...(entry.labs || []).map((t) => ({ ...t, kind: "Lab" })),
                   ...(entry.exams || []).map((t) => ({ ...t, kind: "Exam" })),
                   ...(entry.projects || []).map((t) => ({ ...t, kind: "Project" })),

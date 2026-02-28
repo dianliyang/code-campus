@@ -1,14 +1,22 @@
-import { getUser, createClient } from "@/lib/supabase/server";
+import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import { Badge } from "@/components/ui/badge";
+import RoadmapAchievementsSection from "@/components/home/RoadmapAchievementsSection";
+import { Course } from "@/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const [user, lang, supabase] = await Promise.all([getUser(), getLanguage(), createClient()]);
+  type CompletedAchievement = Course & {
+    gpa?: number;
+    score?: number;
+    attendance?: { attended: number; total: number };
+    updated_at: string;
+  };
 
-  const [dict, { data: enrolledData }] = await Promise.all([
+  const [dict, { data: enrolledData }, completedCoursesRes] = await Promise.all([
     getDictionary(lang),
     user
       ? supabase
@@ -17,6 +25,18 @@ export default async function ProfilePage() {
           .eq("user_id", user.id)
           .neq("status", "hidden")
       : Promise.resolve({ data: null }),
+    user
+      ? supabase
+          .from("courses")
+          .select(`
+            id, university, course_code, title, units, credit, url, description, details, is_hidden,
+            uc:user_courses!inner(status, progress, updated_at, gpa, score),
+            semesters:course_semesters(semesters(term, year))
+          `)
+          .eq("user_courses.user_id", user.id)
+          .eq("user_courses.status", "completed")
+          .order("updated_at", { foreignTable: "user_courses", ascending: false })
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   if (!user) return <div className="p-10 text-center">{dict.dashboard.profile.user_not_found}</div>;
@@ -57,13 +77,33 @@ export default async function ProfilePage() {
   const totalCourses = enrolledData?.length || 0;
   const completedCount = statusCounts.completed || 0;
 
-  const awards = Array.from(
-    new Set(
-      (enrolledData as Array<{ status: string; courses: { subdomain: string | null } }>)
-        ?.filter((r) => r.status === "completed" && r.courses?.subdomain)
-        .map((r) => String(r.courses.subdomain))
-    )
-  ).sort();
+  const completedRows = completedCoursesRes.data || [];
+  const completedAchievements: CompletedAchievement[] = completedRows.map((row: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const course = mapCourseFromRow(row);
+    const semesterNames =
+      (row.semesters as { semesters: { term: string; year: number } }[] | null)
+        ?.map((s) => `${s.semesters.term} ${s.semesters.year}`) || [];
+    const uc =
+      (row.uc as { updated_at: string; gpa?: number; score?: number }[] | null)?.[0] ||
+      (row.user_courses as { updated_at: string; gpa?: number; score?: number }[] | null)?.[0];
+
+    return {
+      ...course,
+      fields: [],
+      semesters: semesterNames,
+      updated_at: uc?.updated_at || new Date().toISOString(),
+      gpa: uc?.gpa,
+      score: uc?.score,
+    } as CompletedAchievement;
+  });
+
+  const availableSemesters = Array.from(new Set(completedAchievements.flatMap((c) => c.semesters))).sort((a, b) => {
+    const [termA, yearA] = a.split(" ");
+    const [termB, yearB] = b.split(" ");
+    if (yearA !== yearB) return Number(yearB) - Number(yearA);
+    const order: Record<string, number> = { Fall: 3, Summer: 2, Spring: 1, Winter: 0 };
+    return (order[termB] ?? -1) - (order[termA] ?? -1);
+  });
 
   const topField = allFieldStats[0]?.name || dict.dashboard.profile.none;
   const lastActiveData = enrolledData?.sort(
@@ -193,6 +233,13 @@ export default async function ProfilePage() {
           </div>
         </div>
       </section>
+
+      <RoadmapAchievementsSection
+        availableSemesters={availableSemesters}
+        completed={completedAchievements}
+        title={dict.dashboard.roadmap.phase_2_title}
+        emptyText={dict.dashboard.roadmap.peak_ahead}
+      />
     </main>
   );
 }

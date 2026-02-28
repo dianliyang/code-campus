@@ -1,10 +1,8 @@
 import { Suspense } from "react";
 import { Course } from "@/types";
 import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
-import AILearningPlanner from "@/components/home/AILearningPlanner";
 import StudyPlanHeader from "@/components/home/StudyPlanHeader";
 import StudyCalendar from "@/components/home/StudyCalendar";
-import RoadmapAchievementsSection from "@/components/home/RoadmapAchievementsSection";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -241,16 +239,6 @@ async function StudyPlanContent({
     return acc + (course.credit || 0);
   }, 0);
 
-  const availableSemesters = Array.from(new Set(
-    completed.flatMap(c => c.semesters)
-  )).sort((a, b) => {
-    const [yearA, termA] = a.split(' ');
-    const [yearB, termB] = b.split(' ');
-    if (yearA !== yearB) return parseInt(yearB) - parseInt(yearA);
-    const order: Record<string, number> = { 'Fall': 3, 'Summer': 2, 'Spring': 1 };
-    return (order[termB] || 0) - (order[termA] || 0);
-  });
-
   return (
     <div className="space-y-4">
       <StudyPlanHeader
@@ -276,14 +264,6 @@ async function StudyPlanContent({
 
       <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
         <div className="mb-3">
-          <h3 className="text-base font-semibold text-[#1f1f1f]">AI Learning Planner</h3>
-          <p className="text-xs text-[#7a7a7a]">Smart course recommendations</p>
-        </div>
-        <AILearningPlanner />
-      </section>
-
-      <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
-        <div className="mb-3">
           <h3 className="text-base font-semibold text-[#1f1f1f]">{dict.dashboard.roadmap.phase_1_title}</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -303,13 +283,6 @@ async function StudyPlanContent({
           )}
         </div>
       </section>
-
-      <RoadmapAchievementsSection
-        availableSemesters={availableSemesters}
-        completed={completed}
-        title={dict.dashboard.roadmap.phase_2_title}
-        emptyText={dict.dashboard.roadmap.peak_ahead}
-      />
 
       {enrolledCourses.length === 0 && enrolledProjectsSeminars.length === 0 && (
         <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] py-16 text-center">
@@ -394,12 +367,6 @@ function StudyPlanSkeleton() {
       <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
         <div className="h-4 w-40 bg-[#f0f0f0] rounded" />
         <div className="h-48 bg-[#f5f5f5] rounded-lg" />
-      </div>
-      {/* AI Learning Planner section */}
-      <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-2">
-        <div className="h-4 w-36 bg-[#f0f0f0] rounded" />
-        <div className="h-3 w-52 bg-[#f5f5f5] rounded" />
-        <div className="h-20 bg-[#f5f5f5] rounded-lg mt-1" />
       </div>
       {/* Active courses section */}
       <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">

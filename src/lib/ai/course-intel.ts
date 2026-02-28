@@ -70,6 +70,64 @@ function extractResourcesFromRawText(raw: string): string[] {
   );
 }
 
+function extractScheduleRowsFromRawText(raw: string): Array<Record<string, unknown>> {
+  const match = raw.match(/"schedule"\s*:\s*\[/i);
+  if (!match) return [];
+  const start = match.index ?? -1;
+  if (start < 0) return [];
+
+  const openBracket = raw.indexOf("[", start);
+  if (openBracket < 0) return [];
+
+  const rows: Array<Record<string, unknown>> = [];
+  let inString = false;
+  let escape = false;
+  let objDepth = 0;
+  let objStart = -1;
+
+  for (let i = openBracket + 1; i < raw.length; i += 1) {
+    const ch = raw[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (ch === "\\") {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+
+    if (ch === "{") {
+      if (objDepth === 0) objStart = i;
+      objDepth += 1;
+      continue;
+    }
+    if (ch === "}") {
+      if (objDepth > 0) objDepth -= 1;
+      if (objDepth === 0 && objStart >= 0) {
+        const chunk = raw.slice(objStart, i + 1);
+        try {
+          const parsed = JSON.parse(chunk) as unknown;
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            rows.push(parsed as Record<string, unknown>);
+          }
+        } catch {
+          // Skip malformed row chunks.
+        }
+        objStart = -1;
+      }
+      continue;
+    }
+    if (ch === "]" && objDepth === 0) break;
+  }
+
+  return rows;
+}
+
 function dedupeResourcesByDomain(input: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -332,13 +390,13 @@ export async function runCourseIntel(userId: string, courseId: number) {
   const parsedResources = normalizeResources(parsed.resources);
   const sourceUrl = typeof parsed.source_url === "string" ? parsed.source_url : rawSourceUrl;
   const content = (parsed.content && typeof parsed.content === "object" ? parsed.content : {}) as Json;
-  const scheduleArray = extraction.scheduleArray;
+  const recoveredScheduleRows = extractScheduleRowsFromRawText(text);
+  const scheduleArray = extraction.scheduleArray.length > 0 ? extraction.scheduleArray : recoveredScheduleRows;
   const schedule = scheduleArray as Json;
   const rawClaimsSchedule = /"schedule"\s*:\s*\[/i.test(text);
   const rawClaimsSource = /"source_url"\s*:/i.test(text);
-  if (rawClaimsSchedule && scheduleArray.length === 0) {
-    throw new Error("AI returned malformed/truncated schedule JSON");
-  }
+  // Prefer graceful degradation: recover rows from raw text if top-level JSON is truncated.
+  // Keep hard failure only when source_url is malformed and cannot be recovered.
   if (rawClaimsSource && !sourceUrl) {
     throw new Error("AI returned malformed/truncated source_url JSON");
   }

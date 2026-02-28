@@ -1252,6 +1252,53 @@ function dedupeAssignments(rows: AssignmentRow[]): AssignmentRow[] {
   return Array.from(map.values());
 }
 
+function summarizeGeminiApiError(status: number, rawBody: string, fallbackModel?: string): string {
+  const body = String(rawBody || "").trim();
+  let parsedMessage = "";
+  let retrySeconds: number | null = null;
+  let quotaModel = String(fallbackModel || "").trim();
+
+  try {
+    const parsed = JSON.parse(body) as Record<string, unknown>;
+    const err = parsed.error && typeof parsed.error === "object" ? (parsed.error as Record<string, unknown>) : {};
+    parsedMessage = typeof err.message === "string" ? err.message : "";
+    const details = Array.isArray(err.details) ? (err.details as Array<Record<string, unknown>>) : [];
+    for (const detail of details) {
+      const retryDelay = typeof detail.retryDelay === "string" ? detail.retryDelay : "";
+      if (retryDelay.endsWith("s")) {
+        const value = Number(retryDelay.slice(0, -1));
+        if (Number.isFinite(value) && value > 0) retrySeconds = value;
+      }
+      const violations = Array.isArray(detail.violations) ? (detail.violations as Array<Record<string, unknown>>) : [];
+      for (const violation of violations) {
+        const dims = violation.quotaDimensions && typeof violation.quotaDimensions === "object"
+          ? (violation.quotaDimensions as Record<string, unknown>)
+          : {};
+        if (!quotaModel && typeof dims.model === "string") quotaModel = dims.model;
+      }
+    }
+  } catch {
+    parsedMessage = body;
+  }
+
+  const msg = parsedMessage || body;
+  const modelLabel = quotaModel || "selected Gemini model";
+
+  if (status === 429 || /quota|resource_exhausted|rate limit/i.test(msg)) {
+    const retryHint = retrySeconds && retrySeconds > 0 ? ` Retry in about ${Math.ceil(retrySeconds)}s.` : "";
+    return `Gemini quota exceeded for ${modelLabel}. Check plan/billing and limits.${retryHint}`;
+  }
+  if (status === 401 || status === 403 || /unauthorized|forbidden|api key/i.test(msg)) {
+    return "Gemini authentication failed. Check GEMINI_API_KEY and project permissions.";
+  }
+  if (status >= 500) {
+    return "Gemini service is temporarily unavailable. Please retry.";
+  }
+
+  const firstLine = msg.split("\n")[0].replace(/\s+/g, " ").trim();
+  return `Gemini API error (${status}): ${firstLine || "request failed"}`;
+}
+
 async function fetchBraveSnippetForUrl(
   url: string,
   courseCode: string,
@@ -1500,7 +1547,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
       });
       if (!res.ok) {
         const body = await res.text().catch(() => "");
-        throw new Error(`Gemini API error (${res.status}): ${body || "request failed"}`);
+        throw new Error(summarizeGeminiApiError(res.status, body, modelName));
       }
       const json = (await res.json()) as Record<string, unknown>;
       const candidates = Array.isArray(json.candidates) ? (json.candidates as Array<Record<string, unknown>>) : [];

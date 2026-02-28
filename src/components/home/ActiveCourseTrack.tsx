@@ -7,6 +7,7 @@ import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
 import AddPlanModal from "./AddPlanModal";
+import { useAppToast } from "@/components/common/AppToastProvider";
 import {
   ExternalLink,
   Trophy,
@@ -16,6 +17,7 @@ import {
   Check,
   Clock,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 
 interface ActiveCourseTrackProps {
@@ -47,6 +49,9 @@ export default function ActiveCourseTrack({
   const [showAddPlanModal, setShowAddPlanModal] = useState(false);
   const [localPlan, setLocalPlan] = useState(plan);
   const [gpa, setGpa] = useState("");
+  const [isAiUpdating, setIsAiUpdating] = useState(false);
+  const [aiStatus, setAiStatus] = useState<"idle" | "success" | "error">("idle");
+  const { showToast } = useAppToast();
 
   const detailHref = `/courses/${course.id}`;
 
@@ -103,6 +108,40 @@ export default function ActiveCourseTrack({
       console.error("Failed to complete course:", e);
     } finally {
       setIsInUpdating(false);
+    }
+  };
+
+  const handleAiSync = async () => {
+    setIsAiUpdating(true);
+    setAiStatus("idle");
+    try {
+      const res = await fetch("/api/ai/course-intel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId: course.id }),
+      });
+      if (res.ok) {
+        setAiStatus("success");
+        showToast({ type: "success", message: "AI sync completed." });
+        startTransition(() => router.refresh());
+      } else {
+        setAiStatus("error");
+        let message = "AI sync failed.";
+        try {
+          const payload = await res.json();
+          const candidate = typeof payload?.error === "string" ? payload.error.trim() : "";
+          if (candidate) message = candidate;
+        } catch {
+          // Ignore parse error and use default message.
+        }
+        showToast({ type: "error", message });
+      }
+    } catch {
+      setAiStatus("error");
+      showToast({ type: "error", message: "Network error while running AI sync." });
+    } finally {
+      setIsAiUpdating(false);
+      setTimeout(() => setAiStatus("idle"), 3000);
     }
   };
 
@@ -294,6 +333,22 @@ export default function ActiveCourseTrack({
         </div>
 
         <div className="flex items-center gap-1.5 flex-1 justify-end">
+          <button
+            onClick={handleAiSync}
+            disabled={isAiUpdating}
+            className={`w-7 h-7 rounded-md flex items-center justify-center transition-all border disabled:opacity-50 ${
+              aiStatus === "success"
+                ? "bg-white text-emerald-600 border-emerald-300"
+                : aiStatus === "error"
+                  ? "bg-white text-rose-500 border-rose-300"
+                  : "bg-white text-[#666] border-[#d3d3d3] hover:bg-[#f0f0f0] hover:text-[#1f1f1f]"
+            }`}
+            title="AI Sync"
+            aria-label="AI Sync course intel"
+          >
+            {isAiUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+          </button>
+
           <button
             onClick={() => setShowAddPlanModal(true)}
             className={`w-7 h-7 rounded-md flex items-center justify-center transition-all border ${

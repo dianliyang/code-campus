@@ -16,8 +16,13 @@ export async function POST(request: NextRequest) {
     const result = await runCourseIntel(user.id, Number(courseId));
     return NextResponse.json({ success: true, updated: ["resources"], count: result.resources.length });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI call failed";
-    const status = getCourseIntelErrorStatus(message);
+    const rawMessage = err instanceof Error ? err.message : "AI call failed";
+    const message =
+      /^unauthorized$/i.test(rawMessage) || /^forbidden$/i.test(rawMessage)
+        ? "AI provider authentication failed. Check provider keys/permissions."
+        : rawMessage;
+    let status = getCourseIntelErrorStatus(rawMessage);
+    if (status === 401 && /^unauthorized$/i.test(rawMessage)) status = 502;
     return NextResponse.json(
       { error: message },
       { status }

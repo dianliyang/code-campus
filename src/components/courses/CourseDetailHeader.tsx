@@ -104,7 +104,10 @@ export default function CourseDetailHeader({
   const btnBase = "h-7 w-7 rounded-md border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] inline-flex items-center justify-center transition-colors shrink-0";
 
   return (
-    <header data-course-title-header className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
+    <header
+      data-course-title-header
+      className="sticky top-0 z-20 rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4"
+    >
 
       {/* Single row: logo · info · actions */}
       <div className="flex items-center gap-2.5 sm:gap-3">

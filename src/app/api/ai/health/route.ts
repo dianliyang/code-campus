@@ -54,15 +54,32 @@ export async function GET() {
         if (!isSet(process.env.PERPLEXITY_API_KEY)) {
           return { ok: false, status: null, reason: "PERPLEXITY_API_KEY missing" };
         }
-        const res = await fetch("https://api.perplexity.ai/models", {
+        const preferredModel =
+          typeof profile?.ai_default_model === "string" && profile.ai_default_model.trim().length > 0
+            ? profile.ai_default_model.trim()
+            : "sonar";
+        const res = await fetch("https://api.perplexity.ai/chat/completions", {
+          method: "POST",
           headers: { Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}` },
+          body: JSON.stringify({
+            model: preferredModel,
+            messages: [{ role: "user", content: "ping" }],
+            max_tokens: 1,
+          }),
           cache: "no-store",
           signal: controller.signal,
         });
         return {
           ok: res.ok,
           status: res.status,
-          reason: res.ok ? undefined : res.status === 401 || res.status === 403 ? "API key rejected (Unauthorized/Forbidden)" : "Upstream request failed",
+          reason:
+            res.ok
+              ? undefined
+              : res.status === 401 || res.status === 403
+                ? "API key rejected (Unauthorized/Forbidden)"
+                : res.status === 400
+                  ? "Auth likely OK, but selected model/payload was rejected"
+                  : "Upstream request failed",
         };
       }
 

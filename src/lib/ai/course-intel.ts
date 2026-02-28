@@ -86,7 +86,7 @@ function extractSourceUrlFromRawText(raw: string): string | null {
 
 function extractResourcesFromRawText(raw: string): string[] {
   const urls = raw.match(/https?:\/\/[^\s"\\]+/gi) || [];
-  return dedupeUrlsExact(
+  return dedupeResourcesByDomain(
     Array.from(new Set(urls.map((u) => u.trim()).filter((u) => /^https?:\/\//i.test(u))))
   );
 }
@@ -1632,7 +1632,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
     throw new Error("AI returned malformed/truncated source_url JSON");
   }
   const scheduleResources = extractResourcesFromSchedule(mergedScheduleArray);
-  const mergedResourceCandidates = dedupeUrlsExact([
+  const mergedResourceCandidates = dedupeResourcesByDomain([
     ...parsedResources,
     ...rawResources,
     ...deterministicResources,

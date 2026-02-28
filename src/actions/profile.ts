@@ -3,6 +3,7 @@
 import { createClient, getUser, invalidateCachedProfileSettings } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { AI_PROVIDERS, getModelSetForProvider } from "@/lib/ai/models";
+import { invalidateRuntimeConfig } from "@/lib/ai/runtime-config";
 
 export async function updateAiPreferences(input: {
   provider: string;
@@ -18,7 +19,7 @@ export async function updateAiPreferences(input: {
     throw new Error("Invalid provider");
   }
 
-  const validModelSet = await getModelSetForProvider(input.provider as "gemini" | "perplexity" | "openai");
+  const validModelSet = await getModelSetForProvider(input.provider as "gemini" | "perplexity" | "openai" | "vertex");
   
   if (!validModelSet.has(input.defaultModel)) {
     throw new Error(`Invalid model for ${input.provider}: ${input.defaultModel}`);
@@ -73,6 +74,103 @@ export async function updateAiPreferences(input: {
   revalidatePath("/profile");
   revalidatePath("/settings");
   invalidateCachedProfileSettings(user.id);
+}
+
+export async function upsertAiModelPricing(input: {
+  provider: string;
+  model: string;
+  inputPerMillion: number;
+  outputPerMillion: number;
+}) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  if (!AI_PROVIDERS.includes(input.provider as (typeof AI_PROVIDERS)[number])) {
+    throw new Error("Invalid provider");
+  }
+
+  const provider = input.provider.trim();
+  const model = input.model.trim();
+  if (!model) throw new Error("Model is required");
+
+  const inputPerMillion = Number(input.inputPerMillion);
+  const outputPerMillion = Number(input.outputPerMillion);
+  if (!Number.isFinite(inputPerMillion) || inputPerMillion < 0) throw new Error("Invalid input price");
+  if (!Number.isFinite(outputPerMillion) || outputPerMillion < 0) throw new Error("Invalid output price");
+
+  const inputPerToken = inputPerMillion / 1_000_000;
+  const outputPerToken = outputPerMillion / 1_000_000;
+  const now = new Date().toISOString();
+
+  const { createAdminClient } = await import("@/lib/supabase/server");
+  const admin = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const { error } = await admin
+    .from("ai_model_pricing")
+    .upsert(
+      {
+        provider,
+        model,
+        input_per_token: inputPerToken,
+        output_per_token: outputPerToken,
+        is_active: true,
+        updated_at: now,
+      },
+      { onConflict: "provider,model" }
+    );
+
+  if (error) throw new Error(error.message || "Failed to save model pricing");
+
+  invalidateRuntimeConfig();
+  revalidatePath("/settings");
+}
+
+export async function deactivateAiModelPricing(input: { provider: string; model: string }) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  if (!AI_PROVIDERS.includes(input.provider as (typeof AI_PROVIDERS)[number])) {
+    throw new Error("Invalid provider");
+  }
+
+  const provider = input.provider.trim();
+  const model = input.model.trim();
+  if (!model) throw new Error("Model is required");
+
+  const { createAdminClient } = await import("@/lib/supabase/server");
+  const admin = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const { error } = await admin
+    .from("ai_model_pricing")
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq("provider", provider)
+    .eq("model", model);
+
+  if (error) throw new Error(error.message || "Failed to delete model");
+
+  invalidateRuntimeConfig();
+  revalidatePath("/settings");
+}
+
+export async function deactivateAiProviderPricing(input: { provider: string }) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  if (!AI_PROVIDERS.includes(input.provider as (typeof AI_PROVIDERS)[number])) {
+    throw new Error("Invalid provider");
+  }
+
+  const provider = input.provider.trim();
+
+  const { createAdminClient } = await import("@/lib/supabase/server");
+  const admin = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const { error } = await admin
+    .from("ai_model_pricing")
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq("provider", provider);
+
+  if (error) throw new Error(error.message || "Failed to delete provider");
+
+  invalidateRuntimeConfig();
+  revalidatePath("/settings");
 }
 
 export async function updateAiPromptTemplates(input: {

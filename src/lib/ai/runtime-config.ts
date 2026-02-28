@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/server";
 
-export type AIProvider = "perplexity" | "gemini" | "openai";
+export type AIProvider = "perplexity" | "gemini" | "openai" | "vertex";
 type PricingEntry = { input: number; output: number };
 
 type RuntimeConfigCacheEntry = {
@@ -44,12 +44,13 @@ function normalizeModelCatalog(rows: Array<Record<string, unknown>>): Record<AIP
     perplexity: [],
     gemini: [],
     openai: [],
+    vertex: [],
   };
 
   for (const row of rows) {
     const provider = String(row.provider || "").trim().toLowerCase();
     const model = String(row.model || "").trim();
-    if ((provider !== "perplexity" && provider !== "gemini" && provider !== "openai") || !model) continue;
+    if ((provider !== "perplexity" && provider !== "gemini" && provider !== "openai" && provider !== "vertex") || !model) continue;
     const key = provider as AIProvider;
     if (!catalog[key].includes(model)) catalog[key].push(model);
   }
@@ -63,7 +64,7 @@ function normalizePricing(rows: Array<Record<string, unknown>>): Record<string, 
   for (const row of rows) {
     const provider = String(row.provider || "").trim().toLowerCase();
     const model = String(row.model || "").trim();
-    if ((provider !== "perplexity" && provider !== "gemini" && provider !== "openai") || !model) continue;
+    if ((provider !== "perplexity" && provider !== "gemini" && provider !== "openai" && provider !== "vertex") || !model) continue;
 
     const input = Number(row.input_per_token ?? 0);
     const output = Number(row.output_per_token ?? 0);
@@ -81,11 +82,16 @@ function normalizePricing(rows: Array<Record<string, unknown>>): Record<string, 
 
 function buildRuntimeConfigFromRows(rows: Array<Record<string, unknown>>): AiRuntimeConfig {
   const modelCatalog = normalizeModelCatalog(rows);
-  if (modelCatalog.perplexity.length === 0 || modelCatalog.gemini.length === 0) {
-    throw new Error("AI runtime config missing: ai_model_pricing must contain active models for both perplexity and gemini.");
+  const hasAnyModel =
+    modelCatalog.perplexity.length > 0 ||
+    modelCatalog.gemini.length > 0 ||
+    modelCatalog.openai.length > 0 ||
+    modelCatalog.vertex.length > 0;
+  if (!hasAnyModel) {
+    throw new Error("AI runtime config missing: ai_model_pricing must contain at least one active model.");
   }
 
-  const defaultModel = modelCatalog.perplexity[0] || modelCatalog.gemini[0];
+  const defaultModel = modelCatalog.perplexity[0] || modelCatalog.gemini[0] || modelCatalog.openai[0] || modelCatalog.vertex[0];
 
   return {
     modelCatalog,

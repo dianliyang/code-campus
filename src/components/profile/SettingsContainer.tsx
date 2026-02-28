@@ -66,7 +66,7 @@ interface SettingsContainerProps {
   user: User;
   profile: Record<string, unknown> | null;
   aiDefaults: {
-    modelCatalog: { perplexity: string[]; gemini: string[]; openai: string[] };
+    modelCatalog: { perplexity: string[]; gemini: string[]; openai: string[]; vertex: string[] };
   };
 }
 
@@ -155,7 +155,7 @@ export default function SettingsContainer({ user, profile, aiDefaults }: Setting
               key={`${active}-${profile ? JSON.stringify(profile) : "default-ai"}`}
               section={active as "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-intel" | "usage"}
               initialProvider={(profile?.ai_provider as string) || "perplexity"}
-              initialModel={(profile?.ai_default_model as string) || aiDefaults.modelCatalog.perplexity[0] || aiDefaults.modelCatalog.openai[0] || ""}
+              initialModel={(profile?.ai_default_model as string) || aiDefaults.modelCatalog.perplexity[0] || aiDefaults.modelCatalog.openai[0] || aiDefaults.modelCatalog.vertex[0] || ""}
               initialWebSearchEnabled={(profile?.ai_web_search_enabled as boolean | undefined) ?? false}
               initialPromptTemplate={(profile?.ai_prompt_template as string) || ""}
               initialStudyPlanPromptTemplate={(profile?.ai_study_plan_prompt_template as string) || ""}

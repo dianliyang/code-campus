@@ -8,7 +8,7 @@ vi.mock("@/actions/profile", () => ({
 }));
 
 vi.mock("@/lib/ai/models-client", () => ({
-  AI_PROVIDERS: ["perplexity", "gemini"],
+  AI_PROVIDERS: ["perplexity", "gemini", "openai", "vertex"],
 }));
 
 describe("AI settings usage chart", () => {
@@ -67,7 +67,7 @@ describe("AI settings usage chart", () => {
         initialTopicsPromptTemplate=""
         initialCourseUpdatePromptTemplate=""
         initialSyllabusPromptTemplate=""
-        modelCatalog={{ perplexity: ["sonar"], gemini: ["gemini-2.5-flash"], openai: ["gpt-5-mini"] }}
+        modelCatalog={{ perplexity: ["sonar"], gemini: ["gemini-2.5-flash"], openai: ["gpt-5-mini"], vertex: ["gemini-2.5-pro"] }}
       />
     );
 

@@ -1,5 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
+import { VertexAI } from "@google-cloud/vertexai";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { resolveModelForProvider } from "@/lib/ai/models";
 import { parseLenientJson } from "@/lib/ai/parse-json";
@@ -324,12 +325,21 @@ export async function runCourseIntel(userId: string, courseId: number) {
     ].filter(Boolean).join("\n\n");
   if (!template) throw new Error("Course intel prompt template not configured");
 
-  const provider = String(profile?.ai_provider || "").trim() === "openai" ? "openai" : "perplexity";
+  const providerRaw = String(profile?.ai_provider || "").trim();
+  const provider = providerRaw === "openai" ? "openai" : providerRaw === "vertex" ? "vertex" : "perplexity";
   if (provider === "openai" && !process.env.OPENAI_API_KEY) {
     throw new Error("AI service not configured: OPENAI_API_KEY missing");
   }
   if (provider === "perplexity" && !process.env.PERPLEXITY_API_KEY) {
     throw new Error("AI service not configured: PERPLEXITY_API_KEY missing");
+  }
+  if (provider === "vertex") {
+    if (!process.env.GOOGLE_CLOUD_PROJECT) {
+      throw new Error("AI service not configured: GOOGLE_CLOUD_PROJECT missing");
+    }
+    if (!process.env.GOOGLE_CLOUD_LOCATION) {
+      throw new Error("AI service not configured: GOOGLE_CLOUD_LOCATION missing");
+    }
   }
 
   const modelName = await resolveModelForProvider(provider, String(profile?.ai_default_model || "").trim());
@@ -351,11 +361,38 @@ export async function runCourseIntel(userId: string, courseId: number) {
   });
 
   const runExtraction = async (maxOutputTokens: number, promptOverride?: string) => {
-    const { text, usage } = await generateText({
-      model: provider === "openai" ? openai.chat(modelName) : perplexity.chat(modelName),
-      prompt: promptOverride || prompt,
-      maxOutputTokens,
-    });
+    let text = "";
+    let usage = { inputTokens: 0, outputTokens: 0 };
+    if (provider === "vertex") {
+      const vertexAI = new VertexAI({
+        project: process.env.GOOGLE_CLOUD_PROJECT!,
+        location: process.env.GOOGLE_CLOUD_LOCATION!,
+      });
+      const model = vertexAI.getGenerativeModel({ model: modelName });
+      const response = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: promptOverride || prompt }] }],
+        generationConfig: { maxOutputTokens },
+      });
+      text = (response.response?.candidates?.[0]?.content?.parts || [])
+        .map((p) => p.text || "")
+        .join("");
+      const usageMetadata = response.response?.usageMetadata;
+      usage = {
+        inputTokens: Number(usageMetadata?.promptTokenCount || 0),
+        outputTokens: Number(usageMetadata?.candidatesTokenCount || 0),
+      };
+    } else {
+      const out = await generateText({
+        model: provider === "openai" ? openai.chat(modelName) : perplexity.chat(modelName),
+        prompt: promptOverride || prompt,
+        maxOutputTokens,
+      });
+      text = out.text;
+      usage = {
+        inputTokens: Number(out.usage.inputTokens || 0),
+        outputTokens: Number(out.usage.outputTokens || 0),
+      };
+    }
 
     const parsedAny = parseLenientJson(text);
     const parsed = (parsedAny && typeof parsedAny === "object" && !Array.isArray(parsedAny))
@@ -392,8 +429,8 @@ export async function runCourseIntel(userId: string, courseId: number) {
   const text = extraction.text;
   const parsed = extraction.parsed;
   const usage = {
-    inputTokens: (firstAttempt.usage.inputTokens || 0) + (extraction === firstAttempt ? 0 : (extraction.usage.inputTokens || 0)),
-    outputTokens: (firstAttempt.usage.outputTokens || 0) + (extraction === firstAttempt ? 0 : (extraction.usage.outputTokens || 0)),
+    inputTokens: Number(firstAttempt.usage.inputTokens || 0) + (extraction === firstAttempt ? 0 : Number(extraction.usage.inputTokens || 0)),
+    outputTokens: Number(firstAttempt.usage.outputTokens || 0) + (extraction === firstAttempt ? 0 : Number(extraction.usage.outputTokens || 0)),
   };
 
   const rawSourceUrl = extractSourceUrlFromRawText(text);
@@ -405,7 +442,6 @@ export async function runCourseIntel(userId: string, courseId: number) {
   const recoveredScheduleRows = extractScheduleRowsFromRawText(text);
   const scheduleArray = extraction.scheduleArray.length > 0 ? extraction.scheduleArray : recoveredScheduleRows;
   const schedule = scheduleArray as Json;
-  const rawClaimsSchedule = /"schedule"\s*:\s*\[/i.test(text);
   const rawClaimsSource = /"source_url"\s*:/i.test(text);
   // Prefer graceful degradation: recover rows from raw text if top-level JSON is truncated.
   // Keep hard failure only when source_url is malformed and cannot be recovered.

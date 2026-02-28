@@ -60,3 +60,6 @@ docs/plans/
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Local cloud credentials
+vertex-app-key.json

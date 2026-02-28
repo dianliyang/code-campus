@@ -31,8 +31,8 @@ export default async function SettingsPage() {
 
   // Auto-heal profile model/provider when runtime catalog changed and values drift.
   const rawProvider = String(profile?.ai_provider || "").trim();
-  const normalizedProvider: "perplexity" | "gemini" | "openai" =
-    rawProvider === "gemini" ? "gemini" : rawProvider === "openai" ? "openai" : "perplexity";
+  const normalizedProvider: "perplexity" | "gemini" | "openai" | "vertex" =
+    rawProvider === "gemini" ? "gemini" : rawProvider === "openai" ? "openai" : rawProvider === "vertex" ? "vertex" : "perplexity";
   const catalogForProvider = modelCatalog[normalizedProvider] || [];
   const rawModel = String(profile?.ai_default_model || "").trim();
   const normalizedModel = catalogForProvider.includes(rawModel) ? rawModel : (catalogForProvider[0] || "");

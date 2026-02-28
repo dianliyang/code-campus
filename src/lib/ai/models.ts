@@ -1,4 +1,4 @@
-export const AI_PROVIDERS = ["perplexity", "gemini", "openai"] as const;
+export const AI_PROVIDERS = ["perplexity", "gemini", "openai", "vertex"] as const;
 export type AIProvider = (typeof AI_PROVIDERS)[number];
 
 export async function getModelCatalogByProvider(): Promise<Record<AIProvider, string[]>> {
@@ -15,6 +15,7 @@ export async function getModelCatalogByProvider(): Promise<Record<AIProvider, st
         perplexity: [],
         gemini: [],
         openai: [],
+        vertex: [],
       };
 
       for (const row of data) {
@@ -24,7 +25,7 @@ export async function getModelCatalogByProvider(): Promise<Record<AIProvider, st
         if (!catalog[provider].includes(model)) catalog[provider].push(model);
       }
 
-      if (catalog.perplexity.length > 0 && catalog.gemini.length > 0) {
+      if (catalog.perplexity.length > 0 || catalog.gemini.length > 0 || catalog.openai.length > 0 || catalog.vertex.length > 0) {
         return catalog;
       }
     }

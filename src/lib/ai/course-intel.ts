@@ -149,15 +149,31 @@ function extractScheduleRowsFromRawText(raw: string): Array<Record<string, unkno
 }
 
 function dedupeResourcesByDomain(input: string[]): string[] {
+  const pathSensitiveHosts = [
+    "github.com",
+    "gist.github.com",
+    "gitlab.com",
+    "bitbucket.org",
+    "docs.google.com",
+    "drive.google.com",
+  ];
+
   const seen = new Set<string>();
   const out: string[] = [];
   for (const raw of input) {
     try {
       const u = new URL(raw);
+      u.hash = "";
       const host = u.hostname.replace(/^www\./i, "").toLowerCase();
-      if (!host || seen.has(host)) continue;
-      seen.add(host);
-      out.push(raw);
+      if (!host) continue;
+
+      const normalized = u.toString();
+      const isPathSensitive = pathSensitiveHosts.some((h) => host === h || host.endsWith(`.${h}`));
+      const dedupeKey = isPathSensitive ? normalized : host;
+
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      out.push(normalized);
     } catch {
       // Skip invalid URLs.
     }

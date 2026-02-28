@@ -68,6 +68,13 @@ export class CMU extends BaseScraper {
 
     console.log(`[${this.name}] Using semester code: ${cmuSemester}`);
 
+    const availableSemesters = await this.fetchAvailableSemesterCodes(url);
+    if (availableSemesters.length > 0 && !availableSemesters.includes(cmuSemester)) {
+      throw new Error(
+        `CMU source does not expose semester ${cmuSemester}. Available semesters: ${availableSemesters.join(", ")}`
+      );
+    }
+
     const upToDateCodes = new Set<string>();
     if (this.db) {
       const existingMap = await this.db.getExistingCourseCodes("CMU");
@@ -100,6 +107,15 @@ export class CMU extends BaseScraper {
       return await this.parser(html, upToDateCodes);
     }
     return [];
+  }
+
+  private async fetchAvailableSemesterCodes(url: string): Promise<string[]> {
+    const html = await this.fetchPage(url);
+    if (!html) return [];
+    const found = Array.from(html.matchAll(/<option[^>]*value=\"([A-Z][0-9]{2})\"/g))
+      .map((m) => m[1])
+      .filter((v): v is string => Boolean(v));
+    return Array.from(new Set(found));
   }
 
   private async fetchWithBody(url: string, body?: URLSearchParams): Promise<string> {

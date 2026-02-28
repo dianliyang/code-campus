@@ -230,7 +230,68 @@ export class MIT extends BaseScraper {
 
   async retrieve(): Promise<Course[]> {
     const courses = await super.retrieve();
-    return this.dedupeCoursesByTitleAndPattern(courses);
+    if (courses.length > 0) {
+      return this.dedupeCoursesByTitleAndPattern(courses);
+    }
+
+    // Historical fallback: MIT registrar archive pages sometimes stop exposing old term links.
+    // Fall back to MIT Catalog subject pages for Course 6 and Course 18.
+    const catalogFallback = await this.retrieveFromCatalogFallback();
+    return this.dedupeCoursesByTitleAndPattern(catalogFallback);
+  }
+
+  private async retrieveFromCatalogFallback(): Promise<Course[]> {
+    const subjectPages = [
+      "https://catalog.mit.edu/subjects/6/",
+      "https://catalog.mit.edu/subjects/18/",
+    ];
+    const input = this.semester?.toLowerCase() || "";
+    const { term, year } = parseSemesterCode(input);
+    const sem = { term, year };
+    const all: Course[] = [];
+
+    for (const pageUrl of subjectPages) {
+      const html = await this.fetchPage(pageUrl);
+      if (!html) continue;
+      const $ = cheerio.load(html);
+
+      $(".courseblock").each((_, el) => {
+        const block = $(el);
+        const titleRaw = block.find(".courseblocktitle strong").first().text().replace(/\s+/g, " ").trim();
+        if (!titleRaw) return;
+        const m = titleRaw.match(/^([A-Z0-9]+\.[A-Z]?\d+[A-Z]?)\s+(.+)$/);
+        if (!m?.[1] || !m?.[2]) return;
+
+        const code = m[1].trim();
+        const title = m[2].trim();
+        const desc = block.find(".courseblockdesc").first().text().replace(/\s+/g, " ").trim();
+        const unitsText = block.find(".courseblockhours").first().text().replace(/\s+/g, " ").trim();
+        const termsText = block.find(".courseblockterms").first().text().replace(/\s+/g, " ").trim();
+        const instructorsText = block.find(".courseblockinstructors").first().text().replace(/\s+/g, " ").trim();
+
+        all.push({
+          university: this.name,
+          courseCode: code,
+          title,
+          description: desc || "",
+          units: unitsText || "",
+          url: pageUrl,
+          department: this.getDepartmentFromCourseCode(code),
+          level: this.inferLevelFromCourseCode(code),
+          semesters: [sem],
+          details: {
+            terms: termsText ? [termsText] : [],
+            instructors: instructorsText ? [instructorsText] : [],
+            source: "mit-catalog-fallback",
+          },
+        });
+      });
+    }
+
+    if (all.length > 0) {
+      console.log(`[${this.name}] Using MIT catalog fallback for historical term: ${this.semester || "unknown"}. Retrieved ${all.length} entries.`);
+    }
+    return all;
   }
 
   private parseCourseCode(code: string): {

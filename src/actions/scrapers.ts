@@ -38,149 +38,225 @@ function isCauProjectSeminarWorkshop(
 export async function runManualScraperAction({
   university,
   semester,
+  year,
   forceUpdate = false
 }: {
   university: string;
-  semester: string;
+  semester?: string;
+  year?: number;
   forceUpdate?: boolean;
 }) {
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
 
-  try {
-    const db = new SupabaseDatabase();
-    const startedAtMs = Date.now();
+  const runSingleSemester = async (sem: string) => {
+    try {
+      const db = new SupabaseDatabase();
+      const startedAtMs = Date.now();
 
-    if (university === "cau-sport") {
+      if (university === "cau-sport") {
+        const jobId = await startScraperJob({
+          university: "cau-sport",
+          semester: sem,
+          trigger: "manual",
+          triggeredByUserId: user.id,
+          forceUpdate: true,
+          jobType: "workouts",
+        });
+        const scraper = new CAUSport();
+        scraper.semester = sem;
+        try {
+          const workouts = await scraper.retrieveWorkouts();
+
+          const supabase = createAdminClient();
+          const source = "CAU Kiel Sportzentrum";
+          const { error: deleteError } = await supabase
+            .from("workouts")
+            .delete()
+            .eq("source", source);
+
+          if (deleteError) {
+            throw new Error(deleteError.message);
+          }
+
+          if (workouts.length > 0) {
+            await db.saveWorkouts(workouts);
+          }
+
+          await completeScraperJob(jobId, {
+            courseCount: workouts.length,
+            durationMs: Date.now() - startedAtMs,
+            meta: { saved_workouts: workouts.length, semester: sem },
+          });
+          revalidatePath("/workouts");
+          return { success: true, count: workouts.length };
+        } catch (error) {
+          await failScraperJob(jobId, error, Date.now() - startedAtMs);
+          throw error;
+        }
+      }
+
+      let scraper: BaseScraper | null = null;
+
+      if (university === 'mit') scraper = new MIT();
+      else if (university === 'stanford') scraper = new Stanford();
+      else if (university === 'cmu') scraper = new CMU();
+      else if (university === 'ucb') scraper = new UCB();
+      else if (university === "cau") scraper = new CAU();
+
+      if (!scraper) throw new Error(`University "${university}" not found.`);
       const jobId = await startScraperJob({
-        university: "cau-sport",
-        semester,
+        university: scraper.name,
+        semester: sem,
         trigger: "manual",
         triggeredByUserId: user.id,
-        forceUpdate: true,
-        jobType: "workouts",
+        forceUpdate,
+        jobType: "courses",
+        meta: { requested_university: university },
       });
-      const scraper = new CAUSport();
-      scraper.semester = semester;
+
+      scraper.semester = sem;
+      scraper.db = db;
+
+      console.log(`[Manual Scrape] Running ${scraper.name} for ${sem}...`);
       try {
-        const workouts = await scraper.retrieveWorkouts();
+        const items = await scraper.retrieve();
 
-        const supabase = createAdminClient();
-        const source = "CAU Kiel Sportzentrum";
-        const { error: deleteError } = await supabase
-          .from("workouts")
-          .delete()
-          .eq("source", source);
+        if (items.length > 0) {
+          if (university === "cau") {
+            const projectsSeminars = items.filter((item) =>
+              isCauProjectSeminarWorkshop({
+                title: item.title,
+                details: (item.details as Record<string, unknown> | undefined) || {},
+              }),
+            );
+            const standardCourses = items.filter(
+              (item) =>
+                !isCauProjectSeminarWorkshop({
+                  title: item.title,
+                  details: (item.details as Record<string, unknown> | undefined) || {},
+                }),
+            );
 
-        if (deleteError) {
-          throw new Error(deleteError.message);
-        }
-
-        if (workouts.length > 0) {
-          await db.saveWorkouts(workouts);
+            if (standardCourses.length > 0) {
+              await db.saveCourses(standardCourses, { forceUpdate });
+            }
+            if (projectsSeminars.length > 0) {
+              await db.saveProjectsSeminars(projectsSeminars);
+            }
+            revalidatePath("/projects-seminars");
+            await completeScraperJob(jobId, {
+              courseCount: items.length,
+              durationMs: Date.now() - startedAtMs,
+              meta: {
+                saved_courses: standardCourses.length,
+                saved_projects_seminars: projectsSeminars.length,
+                semester: sem,
+                force_update: forceUpdate,
+              },
+            });
+          } else {
+            await db.saveCourses(items, { forceUpdate });
+            await completeScraperJob(jobId, {
+              courseCount: items.length,
+              durationMs: Date.now() - startedAtMs,
+              meta: { saved_courses: items.length, semester: sem, force_update: forceUpdate },
+            });
+          }
+          revalidatePath("/courses");
+          return { success: true, count: items.length };
         }
 
         await completeScraperJob(jobId, {
-          courseCount: workouts.length,
+          courseCount: 0,
           durationMs: Date.now() - startedAtMs,
-          meta: { saved_workouts: workouts.length, semester },
+          meta: { semester: sem, force_update: forceUpdate },
         });
-        revalidatePath("/workouts");
-        return { success: true, count: workouts.length };
+        return { success: true, count: 0 };
       } catch (error) {
         await failScraperJob(jobId, error, Date.now() - startedAtMs);
         throw error;
       }
-    }
-
-    let scraper: BaseScraper | null = null;
-
-    if (university === 'mit') scraper = new MIT();
-    else if (university === 'stanford') scraper = new Stanford();
-    else if (university === 'cmu') scraper = new CMU();
-    else if (university === 'ucb') scraper = new UCB();
-    else if (university === "cau") scraper = new CAU();
-
-    if (!scraper) throw new Error(`University "${university}" not found.`);
-    const jobId = await startScraperJob({
-      university: scraper.name,
-      semester,
-      trigger: "manual",
-      triggeredByUserId: user.id,
-      forceUpdate,
-      jobType: "courses",
-      meta: { requested_university: university },
-    });
-
-    scraper.semester = semester;
-    scraper.db = db;
-
-    console.log(`[Manual Scrape] Running ${scraper.name} for ${semester}...`);
-    try {
-      const items = await scraper.retrieve();
-
-      if (items.length > 0) {
-        if (university === "cau") {
-          const projectsSeminars = items.filter((item) =>
-            isCauProjectSeminarWorkshop({
-              title: item.title,
-              details: (item.details as Record<string, unknown> | undefined) || {},
-            }),
-          );
-          const standardCourses = items.filter(
-            (item) =>
-              !isCauProjectSeminarWorkshop({
-                title: item.title,
-                details: (item.details as Record<string, unknown> | undefined) || {},
-              }),
-          );
-
-          if (standardCourses.length > 0) {
-            await db.saveCourses(standardCourses, { forceUpdate });
-          }
-          if (projectsSeminars.length > 0) {
-            await db.saveProjectsSeminars(projectsSeminars);
-          }
-          revalidatePath("/projects-seminars");
-          await completeScraperJob(jobId, {
-            courseCount: items.length,
-            durationMs: Date.now() - startedAtMs,
-            meta: {
-              saved_courses: standardCourses.length,
-              saved_projects_seminars: projectsSeminars.length,
-              semester,
-              force_update: forceUpdate,
-            },
-          });
-        } else {
-          await db.saveCourses(items, { forceUpdate });
-          await completeScraperJob(jobId, {
-            courseCount: items.length,
-            durationMs: Date.now() - startedAtMs,
-            meta: { saved_courses: items.length, semester, force_update: forceUpdate },
-          });
-        }
-        revalidatePath("/courses");
-        return { success: true, count: items.length };
-      }
-
-      await completeScraperJob(jobId, {
-        courseCount: 0,
-        durationMs: Date.now() - startedAtMs,
-        meta: { semester, force_update: forceUpdate },
-      });
-      return { success: true, count: 0 };
     } catch (error) {
-      await failScraperJob(jobId, error, Date.now() - startedAtMs);
-      throw error;
+      console.error(`[Manual Scrape] Failed for ${university}:`, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+        count: 0,
+      };
     }
-  } catch (error) {
-    console.error(`[Manual Scrape] Failed for ${university}:`, error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Unknown error occurred" 
-    };
+  };
+
+  const normalizeSemesterKey = (uni: string, sem: string) => {
+    const input = sem.toLowerCase();
+    const yy = Number(input.match(/\d{2}/)?.[0] || "25");
+    if (uni === "cau" || uni === "cau-sport") {
+      if (input.startsWith("wi") || input.startsWith("fa") || input.includes("winter") || input.includes("fall")) {
+        return `${uni}:w${yy}`;
+      }
+      if (input.startsWith("sp") || input.startsWith("su") || input.includes("spring") || input.includes("summer")) {
+        return `${uni}:s${yy}`;
+      }
+    }
+    if (uni === "cmu" && (input.startsWith("wi") || input.includes("winter"))) {
+      return `${uni}:sp${yy}`;
+    }
+    return `${uni}:${input}`;
+  };
+
+  const semesterListForYear = (uni: string, targetYear: number): string[] => {
+    const yy = String(targetYear).slice(-2);
+    if (uni === "cau" || uni === "cau-sport") {
+      return [`wi${yy}`, `sp${yy}`];
+    }
+    return [`wi${yy}`, `sp${yy}`, `su${yy}`, `fa${yy}`];
+  };
+
+  if (!semester && !year) {
+    return { success: false, error: "Either semester or year is required" };
   }
+
+  if (year && !semester) {
+    const rawSemesters = semesterListForYear(university, year);
+    const deduped = new Map<string, string>();
+    for (const sem of rawSemesters) {
+      deduped.set(normalizeSemesterKey(university, sem), sem);
+    }
+    const semesters = Array.from(deduped.values());
+    const runs: Array<{ semester: string; count: number; success: boolean; error?: string }> = [];
+    let total = 0;
+    let successRuns = 0;
+    for (const sem of semesters) {
+      const result = await runSingleSemester(sem);
+      const count = Number(result.count || 0);
+      if (result.success) {
+        total += count;
+        successRuns += 1;
+      }
+      runs.push({
+        semester: sem,
+        count,
+        success: Boolean(result.success),
+        error: result.success ? undefined : result.error,
+      });
+    }
+    if (successRuns === 0) {
+      const failed = runs.map((r) => `${r.semester}: ${r.error || "failed"}`).join(", ");
+      return { success: false, count: 0, error: failed, runs };
+    }
+    if (successRuns < semesters.length) {
+      const failed = runs.filter((r) => !r.success).map((r) => `${r.semester}: ${r.error || "failed"}`).join(", ");
+      return {
+        success: false,
+        count: total,
+        error: `Partial success (${successRuns}/${semesters.length}). ${failed}`,
+        runs,
+      };
+    }
+    return { success: true, count: total, runs };
+  }
+
+  return runSingleSemester(String(semester));
 }
 
 export async function fetchWorkoutsAction({

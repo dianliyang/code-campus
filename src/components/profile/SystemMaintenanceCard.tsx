@@ -15,34 +15,12 @@ const UNIVERSITIES = [
   { id: "cau-sport", name: "CAU Sport" },
 ];
 
-const SEMESTERS = [
-  { id: "fa25", name: "Fall 2025" },
-  { id: "wi25", name: "Winter 2025/26" },
-  { id: "sp26", name: "Spring 2026" },
-  { id: "su26", name: "Summer 2026" },
-  { id: "fa26", name: "Fall 2026" },
-];
-
-function normalizeSemesterForSync(university: string, semesterId: string): string {
-  const sem = semesterId.toLowerCase();
-  const year = Number((sem.match(/\d{2}/)?.[0] || "25"));
-
-  if (university === "cau" || university === "cau-sport") {
-    if (sem.startsWith("wi") || sem.startsWith("fa") || sem.includes("winter") || sem.includes("fall")) {
-      return `${university}:w${year}`;
-    }
-    if (sem.startsWith("sp") || sem.startsWith("su") || sem.includes("spring") || sem.includes("summer")) {
-      return `${university}:s${year}`;
-    }
-  }
-
-  return `${university}:${semesterId}`;
-}
-
 export default function SystemMaintenanceCard() {
   const [isPending, startTransition] = useTransition();
   const [selectedUnis, setSelectedUnis] = useState<string[]>(["mit"]);
-  const [selectedSems, setSelectedSems] = useState<string[]>([SEMESTERS[2].id]);
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 4 }, (_, i) => currentYear - i);
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [forceUpdate, setForceUpdate] = useState(false);
   const [status, setStatus] = useState<{
     type: "idle" | "success" | "error";
@@ -92,14 +70,6 @@ export default function SystemMaintenanceCard() {
     }
   };
 
-  const toggleSem = (id: string) => {
-    if (selectedSems.includes(id)) {
-      setSelectedSems(selectedSems.filter(s => s !== id));
-    } else {
-      setSelectedSems([...selectedSems, id]);
-    }
-  };
-
   const handleRunScrapers = () => {
     setStatus({ type: "idle", runs: [] });
     if (forceUpdate) {
@@ -114,33 +84,45 @@ export default function SystemMaintenanceCard() {
         let totalCount = 0;
         let successCount = 0;
         const errors: string[] = [];
-        const dedupedRunMap = new Map<string, { uni: string; sem: string }>();
-        for (const uni of selectedUnis) {
-          for (const sem of selectedSems) {
-            dedupedRunMap.set(normalizeSemesterForSync(uni, sem), { uni, sem });
-          }
-        }
-        const dedupedRuns = Array.from(dedupedRunMap.values());
-        const expectedRuns = dedupedRuns.length;
+        const expectedRuns = selectedUnis.length;
         const runs: Array<{ label: string; count: number; ok: boolean; error?: string }> = [];
 
-        for (const { uni, sem } of dedupedRuns) {
+        for (const uni of selectedUnis) {
           const result = await runManualScraperAction({
             university: uni,
-            semester: sem,
+            year: selectedYear,
             forceUpdate,
           });
-          const label = `${uni.toUpperCase()} ${sem.toUpperCase()}`;
+          const label = `${uni.toUpperCase()} · ${selectedYear}`;
+          const perSemesterRuns = Array.isArray((result as { runs?: Array<{ semester: string; count: number; success: boolean; error?: string }> }).runs)
+            ? ((result as { runs?: Array<{ semester: string; count: number; success: boolean; error?: string }> }).runs || [])
+            : [];
 
           if (result.success) {
             const count = result.count || 0;
             totalCount += count;
             successCount++;
             runs.push({ label, count, ok: true });
+            for (const run of perSemesterRuns) {
+              runs.push({
+                label: `${uni.toUpperCase()} ${run.semester.toUpperCase()}`,
+                count: run.count,
+                ok: run.success,
+                error: run.error,
+              });
+            }
           } else {
             const error = result.error || "Unknown error";
             errors.push(`${label}: ${error}`);
             runs.push({ label, count: 0, ok: false, error });
+            for (const run of perSemesterRuns) {
+              runs.push({
+                label: `${uni.toUpperCase()} ${run.semester.toUpperCase()}`,
+                count: run.count,
+                ok: run.success,
+                error: run.error,
+              });
+            }
           }
         }
         
@@ -207,29 +189,22 @@ export default function SystemMaintenanceCard() {
         </div>
       </div>
 
-      {/* Semester Selection */}
+      {/* Year Selection */}
       <div className="space-y-2">
-        <label className="text-xs font-medium text-[#666] block">Target Semester</label>
-        <div className="flex flex-wrap gap-2">
-          {SEMESTERS.map((sem) => {
-            const isSelected = selectedSems.includes(sem.id);
-            return (
-              <button
-                key={sem.id}
-                onClick={() => toggleSem(sem.id)}
-                disabled={isPending}
-                className={`flex items-center justify-between h-8 px-2.5 rounded-md border transition-colors text-[13px] font-medium ${
-                  isSelected 
-                    ? "bg-[#1f1f1f] border-[#1f1f1f] text-white" 
-                    : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
-                } disabled:opacity-50`}
-              >
-                {sem.name}
-                {isSelected && <Check className="w-3 h-3 ml-2" />}
-              </button>
-            );
-          })}
-        </div>
+        <label className="text-xs font-medium text-[#666] block">Target Year</label>
+        <select
+          value={selectedYear}
+          onChange={(event) => setSelectedYear(Number(event.target.value))}
+          disabled={isPending}
+          className="h-8 w-full rounded-md border border-[#d8d8d8] bg-white px-2.5 text-[13px] font-medium text-[#444] disabled:opacity-50"
+        >
+          {yearOptions.map((year) => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </select>
+        <p className="text-[11px] text-[#777]">
+          Runs all semesters for the selected year (CAU/CAU Sport run winter + spring terms for that year).
+        </p>
       </div>
 
       {/* Action Area */}
@@ -247,7 +222,7 @@ export default function SystemMaintenanceCard() {
 
         <button
           onClick={handleRunScrapers}
-          disabled={isPending || selectedUnis.length === 0 || selectedSems.length === 0}
+          disabled={isPending || selectedUnis.length === 0}
           className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
         >
           {isPending ? (

@@ -303,43 +303,56 @@ function dedupeAssignments(rows: AssignmentRow[]): AssignmentRow[] {
   return Array.from(map.values());
 }
 
-function cleanHtmlToText(input: string): string {
-  return input
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-async function fetchUrlExcerpt(url: string, timeoutMs = 8000, maxChars = 2200): Promise<string | null> {
+async function fetchBraveSnippetForUrl(
+  url: string,
+  courseCode: string,
+  university: string,
+  timeoutMs = 8000
+): Promise<string | null> {
   if (!/^https?:\/\//i.test(url)) return null;
+  const token = process.env.BRAVE_SEARCH_API_KEY;
+  if (!token) return null;
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, {
+    const host = new URL(url).hostname.replace(/^www\./i, "");
+    const q = `site:${host} ${courseCode} ${university} syllabus schedule assignments`;
+    const endpoint = `https://api.search.brave.com/res/v1/web/search?${new URLSearchParams({
+      q,
+      count: "5",
+      search_lang: "en",
+      country: "US",
+    }).toString()}`;
+
+    const res = await fetch(endpoint, {
       method: "GET",
-      redirect: "follow",
       signal: controller.signal,
       headers: {
-        "User-Agent": "CodeCampus/1.0 (+course-intel)",
+        Accept: "application/json",
+        "X-Subscription-Token": token,
       },
+      cache: "no-store",
     });
     if (!res.ok) return null;
-    const contentType = (res.headers.get("content-type") || "").toLowerCase();
-    if (!contentType.includes("text/html") && !contentType.includes("text/plain") && !contentType.includes("application/xhtml+xml")) {
-      return null;
-    }
-    const body = await res.text();
-    const text = cleanHtmlToText(body);
-    if (!text || text.length < 80) return null;
-    const excerpt = text.slice(0, maxChars);
-    return `URL: ${url}\nExcerpt: ${excerpt}`;
+    const json = (await res.json()) as Record<string, unknown>;
+    const web = (json.web && typeof json.web === "object") ? (json.web as Record<string, unknown>) : {};
+    const results = Array.isArray(web.results) ? (web.results as Array<Record<string, unknown>>) : [];
+    if (results.length === 0) return null;
+
+    const picked = results
+      .filter((r) => typeof r.url === "string" && typeof r.description === "string")
+      .slice(0, 2)
+      .map((r) => ({
+        url: String(r.url || "").trim(),
+        title: typeof r.title === "string" ? r.title.trim() : "",
+        description: String(r.description || "").replace(/\s+/g, " ").trim(),
+      }))
+      .filter((r) => r.url.length > 0 && r.description.length > 0);
+
+    if (picked.length === 0) return null;
+    const snippets = picked.map((r, i) => `${i + 1}. ${r.title || r.url}\n   ${r.url}\n   ${r.description}`).join("\n");
+    return `Resource seed: ${url}\nBrave snippets:\n${snippets}`;
   } catch {
     return null;
   } finally {
@@ -347,10 +360,12 @@ async function fetchUrlExcerpt(url: string, timeoutMs = 8000, maxChars = 2200): 
   }
 }
 
-async function buildFetchedResourcesContext(urls: string[]): Promise<string> {
+async function buildFetchedResourcesContext(urls: string[], courseCode: string, university: string): Promise<string> {
   const uniqueUrls = Array.from(new Set(urls.filter((u) => /^https?:\/\//i.test(u)))).slice(0, 4);
   if (uniqueUrls.length === 0) return "";
-  const settled = await Promise.allSettled(uniqueUrls.map((u) => fetchUrlExcerpt(u)));
+  const settled = await Promise.allSettled(
+    uniqueUrls.map((u) => fetchBraveSnippetForUrl(u, courseCode, university))
+  );
   const snippets = settled
     .filter((r): r is PromiseFulfilledResult<string | null> => r.status === "fulfilled")
     .map((r) => r.value)
@@ -411,7 +426,9 @@ export async function runCourseIntel(userId: string, courseId: number) {
     ? `Known course URLs:\n${knownUrls.map((u) => `- ${u}`).join("\n")}`
     : "";
 
-  const fetchedResourcesContext = webSearchEnabled ? await buildFetchedResourcesContext(knownUrls) : "";
+  const fetchedResourcesContext = webSearchEnabled
+    ? await buildFetchedResourcesContext(knownUrls, String(course.course_code || ""), String(course.university || ""))
+    : "";
 
   const basePrompt = applyTemplate(template, {
     course_code: String(course.course_code || ""),

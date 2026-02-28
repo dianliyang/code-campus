@@ -303,6 +303,62 @@ function dedupeAssignments(rows: AssignmentRow[]): AssignmentRow[] {
   return Array.from(map.values());
 }
 
+function cleanHtmlToText(input: string): string {
+  return input
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function fetchUrlExcerpt(url: string, timeoutMs = 8000, maxChars = 2200): Promise<string | null> {
+  if (!/^https?:\/\//i.test(url)) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "CodeCampus/1.0 (+course-intel)",
+      },
+    });
+    if (!res.ok) return null;
+    const contentType = (res.headers.get("content-type") || "").toLowerCase();
+    if (!contentType.includes("text/html") && !contentType.includes("text/plain") && !contentType.includes("application/xhtml+xml")) {
+      return null;
+    }
+    const body = await res.text();
+    const text = cleanHtmlToText(body);
+    if (!text || text.length < 80) return null;
+    const excerpt = text.slice(0, maxChars);
+    return `URL: ${url}\nExcerpt: ${excerpt}`;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function buildFetchedResourcesContext(urls: string[]): Promise<string> {
+  const uniqueUrls = Array.from(new Set(urls.filter((u) => /^https?:\/\//i.test(u)))).slice(0, 4);
+  if (uniqueUrls.length === 0) return "";
+  const settled = await Promise.allSettled(uniqueUrls.map((u) => fetchUrlExcerpt(u)));
+  const snippets = settled
+    .filter((r): r is PromiseFulfilledResult<string | null> => r.status === "fulfilled")
+    .map((r) => r.value)
+    .filter((v): v is string => Boolean(v));
+  if (snippets.length === 0) return "";
+  return `Fetched URL context:\n${snippets.map((s, i) => `[${i + 1}] ${s}`).join("\n\n")}`;
+}
+
 export async function runCourseIntel(userId: string, courseId: number) {
   const supabase = await createClient();
   const { data: course } = await supabase
@@ -355,12 +411,15 @@ export async function runCourseIntel(userId: string, courseId: number) {
     ? `Known course URLs:\n${knownUrls.map((u) => `- ${u}`).join("\n")}`
     : "";
 
-  const prompt = applyTemplate(template, {
+  const fetchedResourcesContext = webSearchEnabled ? await buildFetchedResourcesContext(knownUrls) : "";
+
+  const basePrompt = applyTemplate(template, {
     course_code: String(course.course_code || ""),
     university: String(course.university || ""),
     title: String(course.title || ""),
     resources: resourcesContext,
   });
+  const prompt = fetchedResourcesContext ? `${basePrompt}\n\n${fetchedResourcesContext}` : basePrompt;
 
   const runExtraction = async (maxOutputTokens: number, promptOverride?: string) => {
     let text = "";

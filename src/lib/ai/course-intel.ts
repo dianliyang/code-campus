@@ -152,6 +152,7 @@ function dedupeResourcesByDomain(input: string[]): string[] {
   const pathSensitiveHosts = [
     "github.com",
     "gist.github.com",
+    "github.io",
     "gitlab.com",
     "bitbucket.org",
     "docs.google.com",
@@ -1401,8 +1402,19 @@ function isAllowedCourseLinkHost(seedHost: string, linkHost: string): boolean {
 }
 
 async function discoverImportantCourseLinks(seedUrls: string[], timeoutMs = 9000): Promise<string[]> {
-  const expanded: string[] = [];
+  const scored = new Map<string, number>();
   const targets = dedupeUrlsExact(seedUrls).slice(0, 4);
+
+  const scoreCourseLink = (url: string, anchorText: string): number => {
+    const haystack = `${url} ${anchorText}`.toLowerCase();
+    let score = 0;
+    if (/syllabus/.test(haystack)) score += 100;
+    if (/calendar|schedule/.test(haystack)) score += 90;
+    if (/resource|material|notes?/.test(haystack)) score += 80;
+    if (/assignment|homework|project|lab|office hour|policy|grading/.test(haystack)) score += 70;
+    if (/week|lecture|reading/.test(haystack)) score += 45;
+    return score;
+  };
 
   for (const seed of targets) {
     if (!/^https?:\/\//i.test(seed)) continue;
@@ -1420,9 +1432,9 @@ async function discoverImportantCourseLinks(seedUrls: string[], timeoutMs = 9000
       });
 
       if (res.url && /^https?:\/\//i.test(res.url)) {
-        expanded.push(res.url);
+        scored.set(res.url, Math.max(scored.get(res.url) || 0, 25));
       } else {
-        expanded.push(seed);
+        scored.set(seed, Math.max(scored.get(seed) || 0, 25));
       }
       if (!res.ok) continue;
 
@@ -1451,7 +1463,10 @@ async function discoverImportantCourseLinks(seedUrls: string[], timeoutMs = 9000
         }
 
         if (!isLikelyCourseSubpage(resolved, textRaw)) return;
-        expanded.push(resolved);
+        const score = scoreCourseLink(resolved, textRaw);
+        if (score > 0) {
+          scored.set(resolved, Math.max(scored.get(resolved) || 0, score));
+        }
       });
     } catch {
       // Skip failed seed and continue with the rest.
@@ -1460,7 +1475,10 @@ async function discoverImportantCourseLinks(seedUrls: string[], timeoutMs = 9000
     }
   }
 
-  return dedupeUrlsExact(expanded).slice(0, 12);
+  return Array.from(scored.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([url]) => url)
+    .slice(0, 8);
 }
 
 export async function runCourseIntel(userId: string, courseId: number) {
@@ -1520,7 +1538,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
     : [];
   const seedContextUrls = dedupeUrlsExact([...knownUrls, ...discoveredUrls].filter((u) => /^https?:\/\//i.test(String(u))));
   const expandedUrls = webSearchEnabled ? await discoverImportantCourseLinks(seedContextUrls) : [];
-  const fullContextUrls = dedupeUrlsExact([...seedContextUrls, ...expandedUrls]);
+  const fullContextUrls = dedupeUrlsExact([...expandedUrls, ...seedContextUrls]).slice(0, 8);
   const contextUrls = dedupeResourcesByDomain(fullContextUrls);
   const resourcesContext = knownUrls.length > 0
     ? `Known course URLs:\n${knownUrls.map((u) => `- ${u}`).join("\n")}`
@@ -1750,6 +1768,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
     ...rawResources,
     ...deterministicResources,
     ...scheduleResources,
+    ...fullContextUrls,
     ...(sourceUrl ? [sourceUrl] : []),
     ...(Array.isArray(course.resources) ? course.resources : []),
   ]);

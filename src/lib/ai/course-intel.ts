@@ -314,7 +314,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("ai_provider, ai_default_model, ai_course_intel_prompt_template, ai_course_update_prompt_template, ai_syllabus_prompt_template")
+    .select("ai_provider, ai_web_search_enabled, ai_default_model, ai_course_intel_prompt_template, ai_course_update_prompt_template, ai_syllabus_prompt_template")
     .eq("id", userId)
     .maybeSingle();
 
@@ -326,7 +326,9 @@ export async function runCourseIntel(userId: string, courseId: number) {
   if (!template) throw new Error("Course intel prompt template not configured");
 
   const providerRaw = String(profile?.ai_provider || "").trim();
-  const provider = providerRaw === "openai" ? "openai" : providerRaw === "vertex" ? "vertex" : "perplexity";
+  const preferredProvider = providerRaw === "openai" ? "openai" : providerRaw === "vertex" ? "vertex" : "perplexity";
+  const webSearchEnabled = Boolean(profile?.ai_web_search_enabled);
+  const provider = webSearchEnabled && process.env.PERPLEXITY_API_KEY ? "perplexity" : preferredProvider;
   if (provider === "openai" && !process.env.OPENAI_API_KEY) {
     throw new Error("AI service not configured: OPENAI_API_KEY missing");
   }

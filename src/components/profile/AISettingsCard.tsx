@@ -54,11 +54,17 @@ type ProviderHealth = {
   healthy: boolean;
   missing: string[];
   checks: Record<string, boolean>;
+  probe?: {
+    ok: boolean;
+    status: number | null;
+    reason?: string;
+  };
 };
 
 type AIHealthStats = {
   healthy: boolean;
   providers: ProviderHealth[];
+  active?: { provider: string | null; model: string | null };
   checked_at: string;
 };
 
@@ -214,6 +220,7 @@ export default function AISettingsCard({
           setHealthStats({
             healthy: Boolean(d.healthy),
             providers: Array.isArray(d.providers) ? d.providers : [],
+            active: d.active && typeof d.active === "object" ? d.active : undefined,
             checked_at: typeof d.checked_at === "string" ? d.checked_at : new Date().toISOString(),
           });
         }
@@ -427,6 +434,7 @@ export default function AISettingsCard({
                           setHealthStats({
                             healthy: Boolean(d.healthy),
                             providers: Array.isArray(d.providers) ? d.providers : [],
+                            active: d.active && typeof d.active === "object" ? d.active : undefined,
                             checked_at: typeof d.checked_at === "string" ? d.checked_at : new Date().toISOString(),
                           });
                         }
@@ -471,12 +479,12 @@ export default function AISettingsCard({
                           <span className="text-[12px] font-semibold capitalize text-[#333]">{item.provider}</span>
                           <span
                             className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                              item.healthy
+                              item.healthy && item.probe?.ok !== false
                                 ? "border-[#cce5cc] bg-[#f3fbf3] text-[#2f7a2f]"
                                 : "border-[#f0d0d0] bg-[#fff6f6] text-[#9d3b3b]"
                             }`}
                           >
-                            {item.healthy ? "Healthy" : "Missing config"}
+                            {item.healthy && item.probe?.ok !== false ? "Healthy" : "Needs attention"}
                           </span>
                         </div>
                         {!item.healthy && item.missing.length > 0 ? (
@@ -486,9 +494,21 @@ export default function AISettingsCard({
                         ) : (
                           <p className="mt-1.5 text-[11px] text-[#5f7b5f]">Required environment vars detected.</p>
                         )}
+                        {item.probe ? (
+                          <p className={`mt-1 text-[11px] ${item.probe.ok ? "text-[#5f7b5f]" : "text-[#8a4a4a]"}`}>
+                            Probe: {item.probe.ok ? "OK" : "Failed"}
+                            {item.probe.status ? ` (HTTP ${item.probe.status})` : ""}
+                            {item.probe.reason ? ` - ${item.probe.reason}` : ""}
+                          </p>
+                        ) : null}
                       </div>
                     ))}
                   </div>
+                  {healthStats.active ? (
+                    <p className="text-[11px] text-[#666]">
+                      Active engine: {healthStats.active.provider || "-"} / {healthStats.active.model || "-"}
+                    </p>
+                  ) : null}
                   <p className="text-[10px] text-[#9a9a9a]">
                     Checked: {new Date(healthStats.checked_at).toLocaleString()}
                   </p>

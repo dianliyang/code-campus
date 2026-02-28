@@ -11,7 +11,7 @@ import {
 } from "@/actions/profile";
 import { AI_PROVIDERS, type AIProvider } from "@/lib/ai/models-client";
 import { useAppToast } from "@/components/common/AppToastProvider";
-import { Save, Loader2, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles, BookOpen, Trash2 } from "lucide-react";
+import { Save, Loader2, Cpu, FileCode, CalendarDays, Tag, BarChart2, Search, Sparkles, BookOpen, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 
 type AISectionId = "engine" | "metadata" | "scheduling" | "study-planner" | "topics" | "course-update" | "syllabus-retrieve" | "course-intel" | "usage";
 
@@ -47,6 +47,19 @@ type UsageStats = {
     created_at: string;
   }>;
   daily: Record<string, { requests: number; cost_usd: number }>;
+};
+
+type ProviderHealth = {
+  provider: AIProvider;
+  healthy: boolean;
+  missing: string[];
+  checks: Record<string, boolean>;
+};
+
+type AIHealthStats = {
+  healthy: boolean;
+  providers: ProviderHealth[];
+  checked_at: string;
 };
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -153,6 +166,8 @@ export default function AISettingsCard({
 
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [usageLoading, setUsageLoading] = useState(true);
+  const [healthStats, setHealthStats] = useState<AIHealthStats | null>(null);
+  const [healthLoading, setHealthLoading] = useState(true);
   const totalCostUsd = Number(usageStats?.totals?.cost_usd || 0);
   const sortedFeatureStats = usageStats
     ? Object.entries(usageStats.byFeature).sort((a, b) => {
@@ -190,6 +205,24 @@ export default function AISettingsCard({
       })
       .catch(() => {})
       .finally(() => setUsageLoading(false));
+  }, [section]);
+
+  useEffect(() => {
+    if (section !== "engine") return;
+    setHealthLoading(true);
+    fetch("/api/ai/health", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.error) {
+          setHealthStats({
+            healthy: Boolean(d.healthy),
+            providers: Array.isArray(d.providers) ? d.providers : [],
+            checked_at: typeof d.checked_at === "string" ? d.checked_at : new Date().toISOString(),
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setHealthLoading(false));
   }, [section]);
 
   const saveProviderSettings = () => {
@@ -384,6 +417,88 @@ export default function AISettingsCard({
           </div>
 
           <div className="flex-1 min-h-0 space-y-4 overflow-y-auto pr-1">
+            <div className="rounded-md border border-[#e8e8e8] bg-[#fcfcfc] p-3">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <p className="text-xs font-semibold text-[#5a5a5a] uppercase tracking-wide">AI Provider Health</p>
+                <button
+                  onClick={() => {
+                    setHealthLoading(true);
+                    fetch("/api/ai/health", { cache: "no-store" })
+                      .then((r) => r.json())
+                      .then((d) => {
+                        if (!d.error) {
+                          setHealthStats({
+                            healthy: Boolean(d.healthy),
+                            providers: Array.isArray(d.providers) ? d.providers : [],
+                            checked_at: typeof d.checked_at === "string" ? d.checked_at : new Date().toISOString(),
+                          });
+                        }
+                      })
+                      .catch(() => {})
+                      .finally(() => setHealthLoading(false));
+                  }}
+                  disabled={healthLoading}
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-[#d8d8d8] bg-white px-2 text-[11px] font-medium text-[#444] hover:bg-[#f8f8f8] disabled:opacity-60"
+                >
+                  {healthLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                  Refresh
+                </button>
+              </div>
+              {healthLoading ? (
+                <div className="flex items-center gap-2 text-[12px] text-[#777]">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Checking environment status...
+                </div>
+              ) : !healthStats ? (
+                <p className="text-[12px] text-[#8a8a8a]">Health status unavailable.</p>
+              ) : (
+                <div className="space-y-2">
+                  <div
+                    className={`rounded-md border px-2.5 py-2 text-[12px] ${
+                      healthStats.healthy
+                        ? "border-[#d6ebd6] bg-[#f6fbf6] text-[#256b25]"
+                        : "border-[#efd8d8] bg-[#fff7f7] text-[#8b3434]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      {healthStats.healthy ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                      <span className="font-medium">
+                        {healthStats.healthy ? "All providers are configured." : "One or more providers are missing required settings."}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {healthStats.providers.map((item) => (
+                      <div key={item.provider} className="rounded-md border border-[#e9e9e9] bg-white p-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[12px] font-semibold capitalize text-[#333]">{item.provider}</span>
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                              item.healthy
+                                ? "border-[#cce5cc] bg-[#f3fbf3] text-[#2f7a2f]"
+                                : "border-[#f0d0d0] bg-[#fff6f6] text-[#9d3b3b]"
+                            }`}
+                          >
+                            {item.healthy ? "Healthy" : "Missing config"}
+                          </span>
+                        </div>
+                        {!item.healthy && item.missing.length > 0 ? (
+                          <p className="mt-1.5 text-[11px] text-[#8a4a4a] break-words">
+                            Missing: {item.missing.join(", ")}
+                          </p>
+                        ) : (
+                          <p className="mt-1.5 text-[11px] text-[#5f7b5f]">Required environment vars detected.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-[#9a9a9a]">
+                    Checked: {new Date(healthStats.checked_at).toLocaleString()}
+                  </p>
+                </div>
+              )}
+            </div>
+
             <div className="rounded-md border border-[#e8e8e8] bg-[#fcfcfc] p-3">
               <p className="text-xs font-semibold text-[#5a5a5a] mb-2 uppercase tracking-wide">Provider</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">

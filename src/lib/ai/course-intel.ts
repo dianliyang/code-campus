@@ -1,6 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
-import { VertexAI } from "@google-cloud/vertexai";
 import { load } from "cheerio";
 import { createAdminClient } from "@/lib/supabase/server";
 import { resolveModelForProvider } from "@/lib/ai/models";
@@ -1350,9 +1349,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
   const preferredProvider =
     providerRaw === "openai"
       ? "openai"
-      : providerRaw === "vertex"
-        ? "vertex"
-        : providerRaw === "gemini"
+      : providerRaw === "gemini"
           ? "gemini"
           : "perplexity";
   const webSearchEnabled = Boolean(profile?.ai_web_search_enabled);
@@ -1365,14 +1362,6 @@ export async function runCourseIntel(userId: string, courseId: number) {
   }
   if (provider === "perplexity" && !process.env.PERPLEXITY_API_KEY) {
     throw new Error("AI service not configured: PERPLEXITY_API_KEY missing");
-  }
-  if (provider === "vertex") {
-    if (!process.env.GOOGLE_CLOUD_PROJECT) {
-      throw new Error("AI service not configured: GOOGLE_CLOUD_PROJECT missing");
-    }
-    if (!process.env.GOOGLE_CLOUD_LOCATION) {
-      throw new Error("AI service not configured: GOOGLE_CLOUD_LOCATION missing");
-    }
   }
 
   const modelName = await resolveModelForProvider(provider, String(profile?.ai_default_model || "").trim());
@@ -1498,25 +1487,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
   const runExtraction = async (maxOutputTokens: number, promptOverride?: string) => {
     let text = "";
     let usage = { inputTokens: 0, outputTokens: 0 };
-    if (provider === "vertex") {
-      const vertexAI = new VertexAI({
-        project: process.env.GOOGLE_CLOUD_PROJECT!,
-        location: process.env.GOOGLE_CLOUD_LOCATION!,
-      });
-      const model = vertexAI.getGenerativeModel({ model: modelName });
-      const response = await model.generateContent({
-        contents: [{ role: "user", parts: [{ text: promptOverride || prompt }] }],
-        generationConfig: { maxOutputTokens },
-      });
-      text = (response.response?.candidates?.[0]?.content?.parts || [])
-        .map((p) => p.text || "")
-        .join("");
-      const usageMetadata = response.response?.usageMetadata;
-      usage = {
-        inputTokens: Number(usageMetadata?.promptTokenCount || 0),
-        outputTokens: Number(usageMetadata?.candidatesTokenCount || 0),
-      };
-    } else if (provider === "gemini") {
+    if (provider === "gemini") {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY || "")}`;
       const res = await fetch(endpoint, {
         method: "POST",

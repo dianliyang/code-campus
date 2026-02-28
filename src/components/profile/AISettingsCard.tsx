@@ -27,7 +27,7 @@ interface AISettingsCardProps {
   initialCourseUpdatePromptTemplate: string;
   initialSyllabusPromptTemplate: string;
   initialCourseIntelPromptTemplate: string;
-  modelCatalog: { perplexity: string[]; gemini: string[]; openai: string[]; vertex: string[] };
+  modelCatalog: { perplexity: string[]; gemini: string[]; openai: string[]; vertex?: string[] };
 }
 
 type UsageStats = {
@@ -109,7 +109,6 @@ const PROVIDER_HINTS: Record<AIProvider, string> = {
   perplexity: "Best for grounded web retrieval",
   gemini: "Fast general-purpose generation",
   openai: "Strong structured output quality",
-  vertex: "Google Vertex-hosted Gemini",
 };
 
 export default function AISettingsCard({
@@ -130,15 +129,13 @@ export default function AISettingsCard({
   const perplexityModels = modelCatalog.perplexity;
   const geminiModels = modelCatalog.gemini;
   const openaiModels = modelCatalog.openai;
-  const vertexModels = modelCatalog.vertex;
   const normalizeProvider = (value: string): AIProvider => {
     if (value === "gemini") return "gemini";
     if (value === "openai") return "openai";
-    if (value === "vertex") return "vertex";
     return "perplexity";
   };
   const modelsForProvider = (p: AIProvider) =>
-    p === "gemini" ? geminiModels : p === "openai" ? openaiModels : p === "vertex" ? vertexModels : perplexityModels;
+    p === "gemini" ? geminiModels : p === "openai" ? openaiModels : perplexityModels;
   const [provider, setProvider] = useState<AIProvider>(normalizeProvider(initialProvider));
   const [defaultModel, setDefaultModel] = useState(initialModel);
   const [webSearchEnabled, setWebSearchEnabled] = useState(initialWebSearchEnabled);
@@ -188,7 +185,7 @@ export default function AISettingsCard({
     if (!available.includes(defaultModel)) {
       setDefaultModel(available[0]);
     }
-  }, [provider, defaultModel, geminiModels, perplexityModels, openaiModels, vertexModels]);
+  }, [provider, defaultModel, geminiModels, perplexityModels, openaiModels]);
 
   useEffect(() => {
     if (section !== "usage") return;

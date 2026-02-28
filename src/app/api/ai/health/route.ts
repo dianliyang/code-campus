@@ -3,7 +3,7 @@ import { getUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-type ProviderKey = "openai" | "gemini" | "perplexity" | "vertex";
+type ProviderKey = "openai" | "gemini" | "perplexity";
 
 function isSet(value: string | undefined): boolean {
   return Boolean(value && value.trim().length > 0);
@@ -22,11 +22,6 @@ export async function GET() {
     },
     perplexity: {
       PERPLEXITY_API_KEY: isSet(process.env.PERPLEXITY_API_KEY),
-    },
-    vertex: {
-      GOOGLE_CLOUD_PROJECT: isSet(process.env.GOOGLE_CLOUD_PROJECT),
-      GOOGLE_CLOUD_LOCATION: isSet(process.env.GOOGLE_CLOUD_LOCATION),
-      GOOGLE_APPLICATION_CREDENTIALS: isSet(process.env.GOOGLE_APPLICATION_CREDENTIALS),
     },
   };
 

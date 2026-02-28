@@ -1386,6 +1386,83 @@ async function buildFetchedResourcesContext(urls: string[], courseCode: string, 
   return `Fetched URL context:\n${snippets.map((s, i) => `[${i + 1}] ${s}`).join("\n\n")}`;
 }
 
+function isLikelyCourseSubpage(url: string, anchorText: string): boolean {
+  const haystack = `${url} ${anchorText}`.toLowerCase();
+  return /(syllabus|calendar|schedule|resource|reading|lecture|lab|office hour|assignment|policy|note|material)/i.test(haystack);
+}
+
+function isAllowedCourseLinkHost(seedHost: string, linkHost: string): boolean {
+  const normalizedSeed = seedHost.replace(/^www\./i, "").toLowerCase();
+  const normalizedLink = linkHost.replace(/^www\./i, "").toLowerCase();
+  if (!normalizedSeed || !normalizedLink) return false;
+  if (normalizedSeed === normalizedLink) return true;
+  if (normalizedLink.endsWith(`.${normalizedSeed}`) || normalizedSeed.endsWith(`.${normalizedLink}`)) return true;
+  return /github\.com|docs\.google\.com|drive\.google\.com|canvas\.|edstem\.org|piazza\.com/i.test(normalizedLink);
+}
+
+async function discoverImportantCourseLinks(seedUrls: string[], timeoutMs = 9000): Promise<string[]> {
+  const expanded: string[] = [];
+  const targets = dedupeUrlsExact(seedUrls).slice(0, 4);
+
+  for (const seed of targets) {
+    if (!/^https?:\/\//i.test(seed)) continue;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const seedHost = new URL(seed).hostname;
+      const res = await fetch(seed, {
+        method: "GET",
+        signal: controller.signal,
+        cache: "no-store",
+        headers: {
+          "User-Agent": "CodeCampusBot/1.0 (+course-intel)",
+        },
+      });
+
+      if (res.url && /^https?:\/\//i.test(res.url)) {
+        expanded.push(res.url);
+      } else {
+        expanded.push(seed);
+      }
+      if (!res.ok) continue;
+
+      const contentType = String(res.headers.get("content-type") || "").toLowerCase();
+      if (!contentType.includes("text/html")) continue;
+
+      const html = await res.text();
+      const $ = load(html);
+      $("a[href]").each((_, el) => {
+        const hrefRaw = ($(el).attr("href") || "").trim();
+        const textRaw = $(el).text().trim();
+        if (!hrefRaw || hrefRaw.startsWith("#") || /^javascript:/i.test(hrefRaw) || /^mailto:/i.test(hrefRaw)) return;
+        let resolved = "";
+        try {
+          resolved = new URL(hrefRaw, res.url || seed).toString();
+        } catch {
+          return;
+        }
+        if (!/^https?:\/\//i.test(resolved)) return;
+
+        try {
+          const linkHost = new URL(resolved).hostname;
+          if (!isAllowedCourseLinkHost(seedHost, linkHost)) return;
+        } catch {
+          return;
+        }
+
+        if (!isLikelyCourseSubpage(resolved, textRaw)) return;
+        expanded.push(resolved);
+      });
+    } catch {
+      // Skip failed seed and continue with the rest.
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  return dedupeUrlsExact(expanded).slice(0, 12);
+}
+
 export async function runCourseIntel(userId: string, courseId: number) {
   const supabase = createAdminClient();
   const { data: course } = await supabase
@@ -1441,8 +1518,10 @@ export async function runCourseIntel(userId: string, courseId: number) {
       String(course.title || "")
     )
     : [];
-  const contextUrls = dedupeResourcesByDomain([...knownUrls, ...discoveredUrls]);
-  const fullContextUrls = Array.from(new Set([...knownUrls, ...discoveredUrls].filter((u) => /^https?:\/\//i.test(String(u)))));
+  const seedContextUrls = dedupeUrlsExact([...knownUrls, ...discoveredUrls].filter((u) => /^https?:\/\//i.test(String(u))));
+  const expandedUrls = webSearchEnabled ? await discoverImportantCourseLinks(seedContextUrls) : [];
+  const fullContextUrls = dedupeUrlsExact([...seedContextUrls, ...expandedUrls]);
+  const contextUrls = dedupeResourcesByDomain(fullContextUrls);
   const resourcesContext = knownUrls.length > 0
     ? `Known course URLs:\n${knownUrls.map((u) => `- ${u}`).join("\n")}`
     : "";
@@ -1451,16 +1530,16 @@ export async function runCourseIntel(userId: string, courseId: number) {
     ? await buildFetchedResourcesContext(contextUrls, String(course.course_code || ""), String(course.university || ""))
     : "";
   const fetchedPageTextContext = webSearchEnabled
-    ? await Promise.allSettled(fullContextUrls.slice(0, 3).map((u) => fetchUrlTextSnippet(u)))
+    ? await Promise.allSettled(fullContextUrls.slice(0, 6).map((u) => fetchUrlTextSnippet(u)))
     : [];
   const fetchedWeekSignals = webSearchEnabled
-    ? await Promise.allSettled(fullContextUrls.slice(0, 3).map((u) => fetchWeekSignalsForUrl(u)))
+    ? await Promise.allSettled(fullContextUrls.slice(0, 6).map((u) => fetchWeekSignalsForUrl(u)))
     : [];
   const fetchedGradingSignals = webSearchEnabled
-    ? await Promise.allSettled(fullContextUrls.slice(0, 3).map((u) => fetchGradingSignalsForUrl(u)))
+    ? await Promise.allSettled(fullContextUrls.slice(0, 6).map((u) => fetchGradingSignalsForUrl(u)))
     : [];
   const deterministicSignalSettled = await Promise.allSettled(
-    fullContextUrls.slice(0, 3).map((u) => fetchDeterministicSignalsForUrl(u))
+    fullContextUrls.slice(0, 6).map((u) => fetchDeterministicSignalsForUrl(u))
   );
   const deterministicSignals = deterministicSignalSettled
     .filter((r): r is PromiseFulfilledResult<DeterministicSignals> => r.status === "fulfilled")

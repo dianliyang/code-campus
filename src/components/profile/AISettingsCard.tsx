@@ -131,6 +131,19 @@ export default function AISettingsCard({
 
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [usageLoading, setUsageLoading] = useState(true);
+  const totalCostUsd = Number(usageStats?.totals?.cost_usd || 0);
+  const sortedFeatureStats = usageStats
+    ? Object.entries(usageStats.byFeature).sort((a, b) => {
+        const costDiff = Number(b[1].cost_usd || 0) - Number(a[1].cost_usd || 0);
+        return costDiff !== 0 ? costDiff : b[1].requests - a[1].requests;
+      })
+    : [];
+  const sortedModelStats = usageStats
+    ? Object.entries(usageStats.byModel).sort((a, b) => {
+        const costDiff = Number(b[1].cost_usd || 0) - Number(a[1].cost_usd || 0);
+        return costDiff !== 0 ? costDiff : b[1].requests - a[1].requests;
+      })
+    : [];
 
   useEffect(() => {
     const available = modelsForProvider(provider);
@@ -670,7 +683,9 @@ export default function AISettingsCard({
               {usageStats.recentResponses.length > 0 && (
                 <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
                   <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
-                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">Recent AI Responses (10)</p>
+                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">
+                      Recent AI Responses ({usageStats.recentResponses.length})
+                    </p>
                   </div>
                   <div className="divide-y divide-[#f5f5f5]">
                     {usageStats.recentResponses.map((item) => (
@@ -698,20 +713,23 @@ export default function AISettingsCard({
                 </div>
               )}
 
-              {Object.keys(usageStats.byFeature).length > 0 && (
+              {sortedFeatureStats.length > 0 && (
                 <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
                   <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
-                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Feature</p>
+                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Feature (Top Spend)</p>
                   </div>
                   <div className="divide-y divide-[#f5f5f5]">
-                    {Object.entries(usageStats.byFeature)
-                      .sort((a, b) => b[1].requests - a[1].requests)
-                      .map(([feature, stat]) => (
+                    {sortedFeatureStats.map(([feature, stat]) => (
                         <div key={feature} className="px-3 py-2 flex items-center justify-between">
-                          <span className="text-[13px] text-[#444]">{FEATURE_LABELS[feature] ?? feature}</span>
+                          <div>
+                            <span className="text-[13px] text-[#444]">{FEATURE_LABELS[feature] ?? feature}</span>
+                            <p className="text-[10px] text-[#9a9a9a]">
+                              {totalCostUsd > 0 ? `${((Number(stat.cost_usd || 0) / totalCostUsd) * 100).toFixed(1)}% of total spend` : "0.0% of total spend"}
+                            </p>
+                          </div>
                           <div className="flex items-center gap-4 text-right">
                             <span className="text-[11px] text-[#888]">{stat.requests} req</span>
-                            <span className="text-[11px] font-medium text-[#555] w-16">${stat.cost_usd.toFixed(4)}</span>
+                            <span className="text-[11px] font-medium text-[#555] w-16">${Number(stat.cost_usd || 0).toFixed(4)}</span>
                           </div>
                         </div>
                       ))}
@@ -719,20 +737,23 @@ export default function AISettingsCard({
                 </div>
               )}
 
-              {Object.keys(usageStats.byModel).length > 0 && (
+              {sortedModelStats.length > 0 && (
                 <div className="rounded-md border border-[#f0f0f0] overflow-hidden">
                   <div className="px-3 py-2 bg-[#fafafa] border-b border-[#f0f0f0]">
-                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Model</p>
+                    <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest">By Model (Top Spend)</p>
                   </div>
                   <div className="divide-y divide-[#f5f5f5]">
-                    {Object.entries(usageStats.byModel)
-                      .sort((a, b) => b[1].requests - a[1].requests)
-                      .map(([model, stat]) => (
+                    {sortedModelStats.map(([model, stat]) => (
                         <div key={model} className="px-3 py-2 flex items-center justify-between">
-                          <span className="text-[13px] font-mono text-[#444]">{model}</span>
+                          <div>
+                            <span className="text-[13px] font-mono text-[#444]">{model}</span>
+                            <p className="text-[10px] text-[#9a9a9a]">
+                              avg ${stat.requests > 0 ? (Number(stat.cost_usd || 0) / stat.requests).toFixed(4) : "0.0000"} / req
+                            </p>
+                          </div>
                           <div className="flex items-center gap-4 text-right">
                             <span className="text-[11px] text-[#888]">{stat.requests} req</span>
-                            <span className="text-[11px] font-medium text-[#555] w-16">${stat.cost_usd.toFixed(4)}</span>
+                            <span className="text-[11px] font-medium text-[#555] w-16">${Number(stat.cost_usd || 0).toFixed(4)}</span>
                           </div>
                         </div>
                       ))}

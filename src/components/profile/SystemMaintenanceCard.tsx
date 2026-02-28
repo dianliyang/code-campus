@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { runManualScraperAction } from "@/actions/scrapers";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { Loader2, Play, CheckCircle2, AlertCircle, Check, RefreshCw } from "lucide-react";
 
 const ACTIVE_SECTION_STORAGE_KEY = "settings_active_section";
@@ -20,10 +21,11 @@ export default function SystemMaintenanceCard() {
   const [selectedUnis, setSelectedUnis] = useState<string[]>(["mit"]);
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 4 }, (_, i) => currentYear - i);
-  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const [selectedYears, setSelectedYears] = useState<number[]>([currentYear]);
+  const [executionMode, setExecutionMode] = useState<"sequential" | "concurrent">("sequential");
   const [forceUpdate, setForceUpdate] = useState(false);
   const [status, setStatus] = useState<{
-    type: "idle" | "success" | "error";
+    type: "idle" | "running" | "success" | "error";
     message?: string;
     runs?: Array<{ label: string; count: number; ok: boolean; error?: string }>;
   }>({ type: "idle" });
@@ -62,6 +64,24 @@ export default function SystemMaintenanceCard() {
     void loadRecentJobs();
   }, []);
 
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    const channel = supabase
+      .channel("scraper_jobs:live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "scraper_jobs" },
+        () => {
+          void loadRecentJobs();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, []);
+
   const toggleUni = (id: string) => {
     if (selectedUnis.includes(id)) {
       setSelectedUnis(selectedUnis.filter(u => u !== id));
@@ -70,8 +90,16 @@ export default function SystemMaintenanceCard() {
     }
   };
 
+  const toggleYear = (year: number) => {
+    if (selectedYears.includes(year)) {
+      setSelectedYears(selectedYears.filter((y) => y !== year));
+    } else {
+      setSelectedYears([...selectedYears, year]);
+    }
+  };
+
   const handleRunScrapers = () => {
-    setStatus({ type: "idle", runs: [] });
+    setStatus({ type: "running", message: "Preparing synchronization...", runs: [] });
     if (forceUpdate) {
       try {
         window.localStorage.removeItem(ACTIVE_SECTION_STORAGE_KEY);
@@ -83,46 +111,76 @@ export default function SystemMaintenanceCard() {
       try {
         let totalCount = 0;
         let successCount = 0;
+        let completedRuns = 0;
         const errors: string[] = [];
-        const expectedRuns = selectedUnis.length;
         const runs: Array<{ label: string; count: number; ok: boolean; error?: string }> = [];
+        const pairs = selectedUnis.flatMap((uni) => selectedYears.map((year) => ({ uni, year })));
+        const expectedRuns = pairs.length;
 
-        for (const uni of selectedUnis) {
+        const publishProgress = () => {
+          setStatus({
+            type: "running",
+            message: `Running sync... ${completedRuns}/${expectedRuns} finished, ${totalCount} records scraped`,
+            runs: [...runs],
+          });
+        };
+
+        const executePair = async ({ uni, year }: { uni: string; year: number }) => {
           const result = await runManualScraperAction({
             university: uni,
-            year: selectedYear,
+            year,
             forceUpdate,
           });
-          const label = `${uni.toUpperCase()} · ${selectedYear}`;
+          const label = `${uni.toUpperCase()} · ${year}`;
           const perSemesterRuns = Array.isArray((result as { runs?: Array<{ semester: string; count: number; success: boolean; error?: string }> }).runs)
             ? ((result as { runs?: Array<{ semester: string; count: number; success: boolean; error?: string }> }).runs || [])
             : [];
+          const subRuns = perSemesterRuns.map((run) => ({
+            label: `${uni.toUpperCase()} ${run.semester.toUpperCase()} · ${year}`,
+            count: run.count,
+            ok: run.success,
+            error: run.error,
+          }));
+          return { uni, year, label, result, subRuns };
+        };
 
-          if (result.success) {
-            const count = result.count || 0;
-            totalCount += count;
-            successCount++;
-            runs.push({ label, count, ok: true });
-            for (const run of perSemesterRuns) {
-              runs.push({
-                label: `${uni.toUpperCase()} ${run.semester.toUpperCase()}`,
-                count: run.count,
-                ok: run.success,
-                error: run.error,
-              });
+        if (executionMode === "concurrent") {
+          await Promise.all(
+            pairs.map(async (pair) => {
+              const { result, label, subRuns } = await executePair(pair);
+              if (result.success) {
+                const count = result.count || 0;
+                totalCount += count;
+                successCount++;
+                runs.push({ label, count, ok: true });
+                runs.push(...subRuns);
+              } else {
+                const error = result.error || "Unknown error";
+                errors.push(`${label}: ${error}`);
+                runs.push({ label, count: 0, ok: false, error });
+                runs.push(...subRuns);
+              }
+              completedRuns += 1;
+              publishProgress();
+            })
+          );
+        } else {
+          for (const pair of pairs) {
+            const { result, label, subRuns } = await executePair(pair);
+            if (result.success) {
+              const count = result.count || 0;
+              totalCount += count;
+              successCount++;
+              runs.push({ label, count, ok: true });
+              runs.push(...subRuns);
+            } else {
+              const error = result.error || "Unknown error";
+              errors.push(`${label}: ${error}`);
+              runs.push({ label, count: 0, ok: false, error });
+              runs.push(...subRuns);
             }
-          } else {
-            const error = result.error || "Unknown error";
-            errors.push(`${label}: ${error}`);
-            runs.push({ label, count: 0, ok: false, error });
-            for (const run of perSemesterRuns) {
-              runs.push({
-                label: `${uni.toUpperCase()} ${run.semester.toUpperCase()}`,
-                count: run.count,
-                ok: run.success,
-                error: run.error,
-              });
-            }
+            completedRuns += 1;
+            publishProgress();
           }
         }
         
@@ -192,19 +250,57 @@ export default function SystemMaintenanceCard() {
       {/* Year Selection */}
       <div className="space-y-2">
         <label className="text-xs font-medium text-[#666] block">Target Year</label>
-        <select
-          value={selectedYear}
-          onChange={(event) => setSelectedYear(Number(event.target.value))}
-          disabled={isPending}
-          className="h-8 w-full rounded-md border border-[#d8d8d8] bg-white px-2.5 text-[13px] font-medium text-[#444] disabled:opacity-50"
-        >
-          {yearOptions.map((year) => (
-            <option key={year} value={year}>{year}</option>
-          ))}
-        </select>
+        <div className="flex flex-wrap gap-2">
+          {yearOptions.map((year) => {
+            const isSelected = selectedYears.includes(year);
+            return (
+              <button
+                key={year}
+                onClick={() => toggleYear(year)}
+                disabled={isPending}
+                className={`flex items-center justify-between h-8 px-2.5 rounded-md border transition-colors text-[13px] font-medium ${
+                  isSelected
+                    ? "bg-[#1f1f1f] border-[#1f1f1f] text-white"
+                    : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
+                } disabled:opacity-50`}
+              >
+                {year}
+                {isSelected && <Check className="w-3 h-3 ml-2" />}
+              </button>
+            );
+          })}
+        </div>
         <p className="text-[11px] text-[#777]">
-          Runs all semesters for the selected year (CAU/CAU Sport run winter + spring terms for that year).
+          Runs all semesters for each selected year (CAU/CAU Sport run winter + spring terms for each year).
         </p>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-[#666] block">Execution Mode</label>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setExecutionMode("sequential")}
+            disabled={isPending}
+            className={`h-8 px-2.5 rounded-md border text-[13px] font-medium ${
+              executionMode === "sequential"
+                ? "bg-[#1f1f1f] border-[#1f1f1f] text-white"
+                : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
+            } disabled:opacity-50`}
+          >
+            One by one
+          </button>
+          <button
+            onClick={() => setExecutionMode("concurrent")}
+            disabled={isPending}
+            className={`h-8 px-2.5 rounded-md border text-[13px] font-medium ${
+              executionMode === "concurrent"
+                ? "bg-[#1f1f1f] border-[#1f1f1f] text-white"
+                : "bg-white border-[#d8d8d8] text-[#666] hover:bg-[#f8f8f8]"
+            } disabled:opacity-50`}
+          >
+            Concurrent
+          </button>
+        </div>
       </div>
 
       {/* Action Area */}
@@ -222,7 +318,7 @@ export default function SystemMaintenanceCard() {
 
         <button
           onClick={handleRunScrapers}
-          disabled={isPending || selectedUnis.length === 0}
+          disabled={isPending || selectedUnis.length === 0 || selectedYears.length === 0}
           className="w-full h-8 rounded-md border border-[#d3d3d3] bg-white text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
         >
           {isPending ? (

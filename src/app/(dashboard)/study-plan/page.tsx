@@ -266,7 +266,7 @@ async function StudyPlanContent({
         <div className="mb-3">
           <h3 className="text-base font-semibold text-[#1f1f1f]">{dict.dashboard.roadmap.phase_1_title}</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="flex flex-col gap-3">
           {inProgress.length > 0 && inProgress.map(course => (
             <ActiveCourseTrack
               key={`course-${course.id}`}
@@ -302,7 +302,7 @@ async function StudyPlanContent({
 
 function ActiveProjectSeminarTrack({ item }: { item: EnrolledProjectSeminar }) {
   return (
-    <div className="bg-white border border-[#e5e5e5] rounded-md p-3 flex flex-col gap-3">
+    <div className="bg-white border border-[#e5e5e5] rounded-md p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
           <UniversityIcon
@@ -327,7 +327,7 @@ function ActiveProjectSeminarTrack({ item }: { item: EnrolledProjectSeminar }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#f0f0f0]">
+      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#f0f0f0] md:pt-0 md:border-t-0 md:w-[240px]">
         <div className="rounded-md bg-[#fafafa] border border-[#efefef] px-2.5 py-1.5">
           <p className="text-[9px] uppercase tracking-wider text-[#9a9a9a]">Semester</p>
           <p className="text-[11px] text-[#2f2f2f]">{item.semesterLabel}</p>
@@ -371,7 +371,7 @@ function StudyPlanSkeleton() {
       {/* Active courses section */}
       <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4 space-y-3">
         <div className="h-4 w-32 bg-[#f0f0f0] rounded" />
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="flex flex-col gap-3">
           <div className="h-28 bg-[#f5f5f5] rounded-lg" />
           <div className="h-28 bg-[#f5f5f5] rounded-lg" />
           <div className="h-28 bg-[#f5f5f5] rounded-lg" />

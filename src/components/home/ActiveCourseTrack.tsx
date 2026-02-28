@@ -112,7 +112,7 @@ export default function ActiveCourseTrack({
   const activeFocusSegments = Math.round((progress / 100) * focusSegments);
 
   return (
-    <div className="bg-white border border-[#e5e5e5] rounded-md p-3 flex flex-col gap-3">
+    <div className="bg-white border border-[#e5e5e5] rounded-md p-3 grid grid-cols-1 md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_auto] gap-3 md:items-center">
       {/* Modals */}
       <AddPlanModal
         isOpen={showAddPlanModal}
@@ -275,7 +275,7 @@ export default function ActiveCourseTrack({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-2 border-t border-[#f0f0f0]">
+      <div className="flex items-center gap-2 pt-2 border-t border-[#f0f0f0] md:pt-0 md:border-t-0 md:pl-2 md:border-l md:border-[#f0f0f0]">
         <div className="flex gap-1">
           {quickIncrements.map((inc) => (
             <button

@@ -350,10 +350,10 @@ export async function runCourseIntel(userId: string, courseId: number) {
     resources: resourcesContext,
   });
 
-  const runExtraction = async (maxOutputTokens: number) => {
+  const runExtraction = async (maxOutputTokens: number, promptOverride?: string) => {
     const { text, usage } = await generateText({
       model: provider === "openai" ? openai.chat(modelName) : perplexity.chat(modelName),
-      prompt,
+      prompt: promptOverride || prompt,
       maxOutputTokens,
     });
 
@@ -374,6 +374,18 @@ export async function runCourseIntel(userId: string, courseId: number) {
     const retryAttempt = await runExtraction(12000);
     if (retryAttempt.scheduleArray.length > firstAttempt.scheduleArray.length) {
       extraction = retryAttempt;
+    }
+  }
+
+  // Recovery retry when model returns prose/refusal instead of JSON object.
+  const looksLikeNonJsonReply =
+    !/^\s*\{/.test((extraction.text || "").trim()) &&
+    (/I (can't|cannot|need to clarify)|I'?m Perplexity|search results provided|I appreciate your/i.test(extraction.text || ""));
+  if (looksLikeNonJsonReply) {
+    const forcedJsonPrompt = `${prompt}\n\nIMPORTANT: Return ONLY a single valid JSON object. Do not include any prose, disclaimers, citations, markdown, or code fences.`;
+    const jsonRetry = await runExtraction(12000, forcedJsonPrompt);
+    if (jsonRetry.scheduleArray.length >= extraction.scheduleArray.length) {
+      extraction = jsonRetry;
     }
   }
 

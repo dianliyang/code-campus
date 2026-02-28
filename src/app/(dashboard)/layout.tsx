@@ -5,6 +5,10 @@ import LeftRail from "@/components/dashboard/LeftRail";
 import OfflineIndicator from "@/components/common/OfflineIndicator";
 import { AppToastProvider } from "@/components/common/AppToastProvider";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export default async function DashboardLayout({
   children,
 }: {

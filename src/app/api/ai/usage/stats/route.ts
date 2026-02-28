@@ -102,12 +102,19 @@ export async function GET() {
 
   const recentResponses = (recentResponsesData || []) as RecentResponse[];
 
-  return NextResponse.json({
-    totals,
-    byFeature,
-    byModel,
-    recentTotals,
-    recentResponses,
-    daily,
-  });
+  return NextResponse.json(
+    {
+      totals,
+      byFeature,
+      byModel,
+      recentTotals,
+      recentResponses,
+      daily,
+    },
+    {
+      headers: {
+        "Cache-Control": "private, no-store, max-age=0, must-revalidate",
+      },
+    }
+  );
 }

@@ -12,6 +12,7 @@ interface MaterialItem {
 interface TaskItem {
   label: string;
   due_date?: string | null;
+  url?: string | null;
 }
 
 export interface SyllabusEntry {
@@ -35,8 +36,8 @@ export interface SyllabusEntry {
 export interface SyllabusContent {
   objectives?: string[];
   grading?: { component: string; weight: number }[];
-  textbooks?: string[];
-  policies?: string;
+  textbooks?: Array<string | { title?: string; url?: string | null; authors?: string[]; required?: boolean }>;
+  policies?: string | Record<string, unknown>;
 }
 
 interface CourseSyllabusTableProps {
@@ -65,14 +66,55 @@ function MaterialLink({ item }: { item: MaterialItem }) {
 }
 
 function TaskBadge({ item }: { item: TaskItem }) {
+  const titleNode = item.url ? (
+    <a
+      href={item.url}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-1 text-[#335b9a] hover:underline"
+    >
+      {item.label}
+      <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+    </a>
+  ) : (
+    <span className="font-medium text-[#333]">{item.label}</span>
+  );
   return (
     <span className="inline-flex flex-col text-xs">
-      <span className="font-medium text-[#333]">{item.label}</span>
+      {titleNode}
       {item.due_date && (
         <span className="text-[#888] text-[11px]">due {item.due_date}</span>
       )}
     </span>
   );
+}
+
+type TextbookValue = NonNullable<SyllabusContent["textbooks"]>[number];
+
+function normalizeTextbook(tb: TextbookValue): {
+  title: string;
+  url: string | null;
+  authors: string[];
+  required: boolean | null;
+} {
+  if (typeof tb === "string") {
+    return { title: tb, url: null, authors: [], required: null };
+  }
+  const title = typeof tb.title === "string" && tb.title.trim() ? tb.title.trim() : "Untitled textbook";
+  const url = typeof tb.url === "string" && tb.url.trim() ? tb.url.trim() : null;
+  const authors = Array.isArray(tb.authors) ? tb.authors.filter((a): a is string => typeof a === "string" && a.trim().length > 0) : [];
+  const required = typeof tb.required === "boolean" ? tb.required : null;
+  return { title, url, authors, required };
+}
+
+function renderPolicies(policies: SyllabusContent["policies"]): string {
+  if (!policies) return "";
+  if (typeof policies === "string") return policies;
+  try {
+    return JSON.stringify(policies, null, 2);
+  } catch {
+    return String(policies);
+  }
 }
 
 // ---- main component --------------------------------------------------------
@@ -92,6 +134,7 @@ export default function CourseSyllabusTable({
   const hasTasks = schedule.some(
     (e) =>
       (e.assignments?.length ?? 0) > 0 ||
+      (e.readings?.length ?? 0) > 0 ||
       (e.labs?.length ?? 0) > 0 ||
       (e.exams?.length ?? 0) > 0 ||
       (e.projects?.length ?? 0) > 0
@@ -148,6 +191,7 @@ export default function CourseSyllabusTable({
                 ];
                 const allTasks = [
                   ...(entry.assignments || []).map((t) => ({ ...t, kind: "Assignment" })),
+                  ...(entry.readings || []).map((t) => ({ ...t, kind: "Reading" })),
                   ...(entry.labs || []).map((t) => ({ ...t, kind: "Lab" })),
                   ...(entry.exams || []).map((t) => ({ ...t, kind: "Exam" })),
                   ...(entry.projects || []).map((t) => ({ ...t, kind: "Project" })),
@@ -260,7 +304,28 @@ export default function CourseSyllabusTable({
               <h3 className="text-sm font-semibold text-[#1f1f1f] mb-3">Textbooks</h3>
               <ul className="space-y-1.5">
                 {content.textbooks.map((t, i) => (
-                  <li key={i} className="text-sm text-[#555]">{t}</li>
+                  (() => {
+                    const tb = normalizeTextbook(t);
+                    return (
+                      <li key={i} className="text-sm text-[#555]">
+                        {tb.url ? (
+                          <a href={tb.url} target="_blank" rel="noreferrer" className="text-[#335b9a] hover:underline inline-flex items-center gap-1">
+                            {tb.title}
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          <span>{tb.title}</span>
+                        )}
+                        {(tb.authors.length > 0 || tb.required !== null) && (
+                          <span className="block text-xs text-[#777]">
+                            {tb.authors.length > 0 ? `Authors: ${tb.authors.join(", ")}` : ""}
+                            {tb.authors.length > 0 && tb.required !== null ? " • " : ""}
+                            {tb.required === true ? "Required" : tb.required === false ? "Optional" : ""}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })()
                 ))}
               </ul>
             </div>
@@ -268,7 +333,7 @@ export default function CourseSyllabusTable({
           {content.policies && (
             <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
               <h3 className="text-sm font-semibold text-[#1f1f1f] mb-3">Policies</h3>
-              <p className="text-sm text-[#555] leading-relaxed">{content.policies}</p>
+              <p className="text-sm text-[#555] leading-relaxed whitespace-pre-wrap">{renderPolicies(content.policies)}</p>
             </div>
           )}
         </div>

@@ -1613,14 +1613,25 @@ async function discoverImportantCourseLinks(seedUrls: string[], timeoutMs = 9000
     .slice(0, 8);
 }
 
-export async function runCourseIntel(userId: string, courseId: number) {
+export async function runCourseIntel(
+  userId: string,
+  courseId: number,
+  options?: { fastMode?: boolean }
+) {
   const supabase = createAdminClient();
+  const fastMode = Boolean(options?.fastMode);
+  const t0 = Date.now();
+  const timings: Record<string, number> = {};
+  const mark = (name: string) => {
+    timings[name] = Date.now() - t0;
+  };
   const { data: course } = await supabase
     .from("courses")
     .select("id, course_code, university, title, url, resources")
     .eq("id", courseId)
     .single();
   if (!course) throw new Error("Course not found");
+  mark("loaded_course");
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -1634,6 +1645,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
       String(profile?.ai_syllabus_prompt_template || "").trim(),
     ].filter(Boolean).join("\n\n");
   if (!template) throw new Error("Course intel prompt template not configured");
+  mark("loaded_profile");
 
   const providerRaw = String(profile?.ai_provider || "").trim();
   const preferredProvider =
@@ -1661,7 +1673,10 @@ export async function runCourseIntel(userId: string, courseId: number) {
 
   const knownUrls = [course.url, ...(Array.isArray(course.resources) ? course.resources : [])]
     .filter(Boolean) as string[];
-  const discoveredUrls = webSearchEnabled
+
+  // Optimization: if we already have enough known URLs, skip Brave discovery to reduce latency.
+  const shouldRunWebDiscovery = webSearchEnabled && knownUrls.length < 2;
+  const discoveredUrls = shouldRunWebDiscovery
     ? await discoverCourseUrlsWithBrave(
       String(course.course_code || ""),
       String(course.university || ""),
@@ -1669,9 +1684,11 @@ export async function runCourseIntel(userId: string, courseId: number) {
     )
     : [];
   const seedContextUrls = dedupeUrlsExact([...knownUrls, ...discoveredUrls].filter((u) => /^https?:\/\//i.test(String(u))));
-  const expandedUrls = webSearchEnabled ? await discoverImportantCourseLinks(seedContextUrls) : [];
-  const fullContextUrls = dedupeUrlsExact([...expandedUrls, ...seedContextUrls]).slice(0, 8);
-  const analysisContextUrls = fullContextUrls.filter((u) => !isNoisyContextUrl(u)).slice(0, 6);
+  const expandedUrls = shouldRunWebDiscovery ? await discoverImportantCourseLinks(seedContextUrls) : [];
+  const contextLimit = fastMode ? 5 : 8;
+  const analysisLimit = fastMode ? 3 : 6;
+  const fullContextUrls = dedupeUrlsExact([...expandedUrls, ...seedContextUrls]).slice(0, contextLimit);
+  const analysisContextUrls = fullContextUrls.filter((u) => !isNoisyContextUrl(u)).slice(0, analysisLimit);
   const contextUrls = dedupeResourcesByDomain(fullContextUrls);
   const resourcesContext = knownUrls.length > 0
     ? `Known course URLs:\n${knownUrls.map((u) => `- ${u}`).join("\n")}`
@@ -1695,6 +1712,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
   const deterministicSignals = deterministicSignalSettled
     .filter((r): r is PromiseFulfilledResult<DeterministicSignals> => r.status === "fulfilled")
     .map((r) => r.value);
+  mark("collected_context_signals");
   const deterministicRows = deterministicSignals.flatMap((s) => s.scheduleRows);
   const deterministicGradings = deterministicSignals.flatMap((s) => s.gradingSignals);
   const deterministicResources = deterministicSignals.flatMap((s) => s.extraResources);
@@ -1830,11 +1848,11 @@ export async function runCourseIntel(userId: string, courseId: number) {
     return { text, usage, parsed, scheduleArray };
   };
 
-  const firstAttempt = await runExtraction(14000);
+  const firstAttempt = await runExtraction(fastMode ? 9000 : 14000);
   let extraction = firstAttempt;
 
   // Retry once when the model likely returned a partial syllabus.
-  if (firstAttempt.scheduleArray.length <= 1) {
+  if (!fastMode && firstAttempt.scheduleArray.length <= 1) {
     const retryAttempt = await runExtraction(22000);
     if (retryAttempt.scheduleArray.length > firstAttempt.scheduleArray.length) {
       extraction = retryAttempt;
@@ -1849,7 +1867,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
     firstRecoveredRows <= 1 &&
     firstParsedResources <= 1 &&
     firstParsedAssignments === 0;
-  if (looksIncomplete) {
+  if (!fastMode && looksIncomplete) {
     const stricterPrompt = `${prompt}\n\nIMPORTANT: Return a COMPLETE result for the full course. Return ONLY one valid JSON object with all known schedule rows, resources, and assignments. No prose. No markdown.`;
     const qualityRetry = await runExtraction(24000, stricterPrompt);
     const qualityRetryRecovered = extractScheduleRowsFromRawText(qualityRetry.text).length;
@@ -1864,11 +1882,12 @@ export async function runCourseIntel(userId: string, courseId: number) {
     (/I (can't|cannot|need to clarify)|I'?m Perplexity|search results provided|I appreciate your/i.test(extraction.text || ""));
   if (looksLikeNonJsonReply) {
     const forcedJsonPrompt = `${prompt}\n\nIMPORTANT: Return ONLY a single valid JSON object. Do not include any prose, disclaimers, citations, markdown, or code fences.`;
-    const jsonRetry = await runExtraction(22000, forcedJsonPrompt);
+    const jsonRetry = await runExtraction(fastMode ? 10000 : 22000, forcedJsonPrompt);
     if (jsonRetry.scheduleArray.length >= extraction.scheduleArray.length) {
       extraction = jsonRetry;
     }
   }
+  mark("ai_extraction_done");
 
   const text = extraction.text;
   const parsed = extraction.parsed;
@@ -1969,6 +1988,8 @@ export async function runCourseIntel(userId: string, courseId: number) {
     assignmentsPreserved = true;
   }
 
+  mark("db_persist_done");
+
   await logAiUsage({
     userId,
     provider,
@@ -1985,6 +2006,8 @@ export async function runCourseIntel(userId: string, courseId: number) {
       assignmentsCount: assignmentRows.length,
       assignmentsPersisted,
       assignmentsPreserved,
+      fastMode,
+      timings,
     },
   });
 
@@ -1994,5 +2017,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
     assignmentsCount: assignmentRows.length,
     assignmentsPersisted,
     assignmentsPreserved,
+    fastMode,
+    timings,
   };
 }

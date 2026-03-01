@@ -1947,17 +1947,26 @@ export async function runCourseIntel(userId: string, courseId: number) {
   const topLevelAssignments = extractTopLevelAssignments(courseId, syllabusId, parsed.assignments, nowIso);
   const assignmentRows = dedupeAssignments([...assignmentsFromSchedule, ...heuristicAssignments, ...topLevelAssignments]);
 
-  const { error: deleteAssignmentsError } = await admin
-    .from("course_assignments")
-    .delete()
-    .eq("course_id", courseId);
-  if (deleteAssignmentsError) throw new Error(deleteAssignmentsError.message);
+  let assignmentsPersisted = 0;
+  let assignmentsPreserved = false;
 
+  // Safety guard: only replace assignments when we extracted at least one row.
+  // This prevents wiping existing assignments on weak/partial model output.
   if (assignmentRows.length > 0) {
+    const { error: deleteAssignmentsError } = await admin
+      .from("course_assignments")
+      .delete()
+      .eq("course_id", courseId);
+    if (deleteAssignmentsError) throw new Error(deleteAssignmentsError.message);
+
     const { error: insertAssignmentsError } = await admin
       .from("course_assignments")
       .insert(assignmentRows);
     if (insertAssignmentsError) throw new Error(insertAssignmentsError.message);
+
+    assignmentsPersisted = assignmentRows.length;
+  } else {
+    assignmentsPreserved = true;
   }
 
   await logAiUsage({
@@ -1974,6 +1983,8 @@ export async function runCourseIntel(userId: string, courseId: number) {
       resourcesCount: finalResources.length,
       scheduleEntries: mergedScheduleArray.length,
       assignmentsCount: assignmentRows.length,
+      assignmentsPersisted,
+      assignmentsPreserved,
     },
   });
 
@@ -1981,5 +1992,7 @@ export async function runCourseIntel(userId: string, courseId: number) {
     resources: finalResources,
     scheduleEntries: mergedScheduleArray.length,
     assignmentsCount: assignmentRows.length,
+    assignmentsPersisted,
+    assignmentsPreserved,
   };
 }

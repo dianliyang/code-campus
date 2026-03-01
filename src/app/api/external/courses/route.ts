@@ -71,6 +71,24 @@ export async function GET(request: NextRequest) {
           created_at,
           updated_at
         ),
+        course_assignments(
+          id,
+          kind,
+          label,
+          due_on,
+          url,
+          description,
+          source_sequence,
+          source_row_date,
+          updated_at
+        ),
+        course_syllabi(
+          source_url,
+          content,
+          schedule,
+          retrieved_at,
+          updated_at
+        ),
         user_courses!inner(
           status,
           progress,

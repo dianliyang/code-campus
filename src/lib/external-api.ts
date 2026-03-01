@@ -26,6 +26,20 @@ function transformSchedules(plans: Array<Record<string, unknown>>) {
   }));
 }
 
+function transformAssignments(rows: Array<Record<string, unknown>>) {
+  return rows.map((row) => ({
+    id: row.id ?? null,
+    kind: typeof row.kind === 'string' ? row.kind : 'other',
+    label: typeof row.label === 'string' ? row.label : null,
+    dueOn: row.due_on ?? null,
+    url: typeof row.url === 'string' ? row.url : null,
+    description: typeof row.description === 'string' ? row.description : null,
+    sourceSequence: typeof row.source_sequence === 'string' ? row.source_sequence : null,
+    sourceRowDate: row.source_row_date ?? null,
+    updatedAt: row.updated_at ?? null,
+  }));
+}
+
 /** Transform internal course data to the external API structure. */
 export function transformExternalCourse(course: Record<string, unknown>) {
   const parseNum = (val: unknown) => {
@@ -56,6 +70,12 @@ export function transformExternalCourse(course: Record<string, unknown>) {
   const studyPlans = Array.isArray(course.study_plans)
     ? (course.study_plans as Array<Record<string, unknown>>)
     : [];
+  const assignmentRows = Array.isArray(course.course_assignments)
+    ? (course.course_assignments as Array<Record<string, unknown>>)
+    : [];
+  const syllabus = Array.isArray(course.course_syllabi) && course.course_syllabi.length > 0
+    ? (course.course_syllabi[0] as Record<string, unknown>)
+    : null;
 
   return {
     code: course.course_code,
@@ -80,7 +100,16 @@ export function transformExternalCourse(course: Record<string, unknown>) {
     retry: 0,
     gpa: userCourse ? parseNum(userCourse.gpa) : null,
     score: userCourse ? parseNum(userCourse.score) : null,
-    assignments: [],
+    assignments: transformAssignments(assignmentRows),
+    syllabus: syllabus
+      ? {
+          sourceUrl: typeof syllabus.source_url === 'string' ? syllabus.source_url : null,
+          content: syllabus.content ?? null,
+          schedule: syllabus.schedule ?? null,
+          retrievedAt: syllabus.retrieved_at ?? null,
+          updatedAt: syllabus.updated_at ?? null,
+        }
+      : null,
     schedules: transformSchedules(studyPlans),
   };
 }

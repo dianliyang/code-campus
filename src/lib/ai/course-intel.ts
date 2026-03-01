@@ -51,6 +51,41 @@ type DeterministicSignals = {
   extraResources: string[];
 };
 
+type CacheEntry = {
+  expiresAt: number;
+  value: unknown;
+};
+
+const COURSE_INTEL_CACHE_TTL_MS = 15 * 60 * 1000;
+const courseIntelCache = new Map<string, CacheEntry>();
+
+async function withCourseIntelCache<T>(
+  key: string,
+  loader: () => Promise<T>,
+  ttlMs = COURSE_INTEL_CACHE_TTL_MS
+): Promise<T> {
+  const now = Date.now();
+  const cached = courseIntelCache.get(key);
+  if (cached && cached.expiresAt > now) {
+    return cached.value as T;
+  }
+
+  const value = await loader();
+  courseIntelCache.set(key, {
+    expiresAt: now + ttlMs,
+    value,
+  });
+
+  // Lightweight cleanup to avoid unbounded growth.
+  if (courseIntelCache.size > 500) {
+    for (const [k, v] of courseIntelCache.entries()) {
+      if (v.expiresAt <= now) courseIntelCache.delete(k);
+    }
+  }
+
+  return value;
+}
+
 function applyTemplate(template: string, values: Record<string, string>) {
   return template
     .replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? "")
@@ -1695,19 +1730,22 @@ export async function runCourseIntel(
     : "";
 
   const fetchedResourcesContext = webSearchEnabled
-    ? await buildFetchedResourcesContext(contextUrls, String(course.course_code || ""), String(course.university || ""))
+    ? await withCourseIntelCache(
+      `resources-context:${String(course.course_code || "")}:${String(course.university || "")}:${contextUrls.join("|")}`,
+      () => buildFetchedResourcesContext(contextUrls, String(course.course_code || ""), String(course.university || "")),
+    )
     : "";
   const fetchedPageTextContext = webSearchEnabled
-    ? await Promise.allSettled(analysisContextUrls.map((u) => fetchUrlTextSnippet(u)))
+    ? await Promise.allSettled(analysisContextUrls.map((u) => withCourseIntelCache(`page-text:${u}`, () => fetchUrlTextSnippet(u))))
     : [];
   const fetchedWeekSignals = webSearchEnabled
-    ? await Promise.allSettled(analysisContextUrls.map((u) => fetchWeekSignalsForUrl(u)))
+    ? await Promise.allSettled(analysisContextUrls.map((u) => withCourseIntelCache(`week-signals:${u}`, () => fetchWeekSignalsForUrl(u))))
     : [];
   const fetchedGradingSignals = webSearchEnabled
-    ? await Promise.allSettled(analysisContextUrls.map((u) => fetchGradingSignalsForUrl(u)))
+    ? await Promise.allSettled(analysisContextUrls.map((u) => withCourseIntelCache(`grading-signals:${u}`, () => fetchGradingSignalsForUrl(u))))
     : [];
   const deterministicSignalSettled = await Promise.allSettled(
-    analysisContextUrls.map((u) => fetchDeterministicSignalsForUrl(u))
+    analysisContextUrls.map((u) => withCourseIntelCache(`deterministic-signals:${u}`, () => fetchDeterministicSignalsForUrl(u)))
   );
   const deterministicSignals = deterministicSignalSettled
     .filter((r): r is PromiseFulfilledResult<DeterministicSignals> => r.status === "fulfilled")
@@ -1989,6 +2027,7 @@ export async function runCourseIntel(
   }
 
   mark("db_persist_done");
+  const totalMs = Date.now() - t0;
 
   await logAiUsage({
     userId,
@@ -2008,6 +2047,7 @@ export async function runCourseIntel(
       assignmentsPreserved,
       fastMode,
       timings,
+      totalMs,
     },
   });
 
@@ -2019,5 +2059,6 @@ export async function runCourseIntel(
     assignmentsPreserved,
     fastMode,
     timings,
+    totalMs,
   };
 }

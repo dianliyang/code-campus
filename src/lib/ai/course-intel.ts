@@ -1374,12 +1374,23 @@ function extractTopLevelAssignments(
 }
 
 function dedupeAssignments(rows: AssignmentRow[]): AssignmentRow[] {
-  const map = new Map<string, AssignmentRow>();
+  const canonical = new Map<string, AssignmentRow>();
   for (const row of rows) {
-    const key = `${row.kind}|${row.label.toLowerCase()}|${row.due_on || ""}`;
-    if (!map.has(key)) map.set(key, row);
+    const baseKey = `${row.kind}|${row.label.toLowerCase()}`;
+    const existing = canonical.get(baseKey);
+    if (!existing) {
+      canonical.set(baseKey, row);
+      continue;
+    }
+
+    // Prefer the row with a concrete due date and URL/details richness.
+    const existingScore = (existing.due_on ? 2 : 0) + (existing.url ? 1 : 0) + (existing.description ? 1 : 0);
+    const currentScore = (row.due_on ? 2 : 0) + (row.url ? 1 : 0) + (row.description ? 1 : 0);
+    if (currentScore > existingScore) {
+      canonical.set(baseKey, row);
+    }
   }
-  return Array.from(map.values());
+  return Array.from(canonical.values());
 }
 
 function summarizeGeminiApiError(status: number, rawBody: string, fallbackModel?: string): string {
@@ -1998,7 +2009,16 @@ export async function runCourseIntel(
     .maybeSingle();
   if (syllabusError) throw new Error(syllabusError.message);
 
-  const syllabusId = syllabusUpserted?.id ? Number(syllabusUpserted.id) : null;
+  let syllabusId = syllabusUpserted?.id ? Number(syllabusUpserted.id) : null;
+  if (!syllabusId) {
+    const { data: syllabusFetched, error: syllabusFetchError } = await admin
+      .from("course_syllabi")
+      .select("id")
+      .eq("course_id", courseId)
+      .maybeSingle();
+    if (syllabusFetchError) throw new Error(syllabusFetchError.message);
+    syllabusId = syllabusFetched?.id ? Number(syllabusFetched.id) : null;
+  }
   const assignmentsFromSchedule = extractAssignmentsFromSchedule(courseId, syllabusId, mergedScheduleArray, nowIso);
   const heuristicAssignments = extractHeuristicAssignmentsFromSchedule(courseId, syllabusId, mergedScheduleArray, nowIso);
   const topLevelAssignments = extractTopLevelAssignments(courseId, syllabusId, parsed.assignments, nowIso);

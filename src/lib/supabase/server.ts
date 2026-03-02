@@ -525,6 +525,47 @@ export class SupabaseDatabase {
       return timeStr + ":00";
     };
 
+    const formatShortDateWithYear = (dateStr: string, semester: string): string | null => {
+      const parsed = parseGermanDate(dateStr, semester);
+      if (!parsed) return null;
+      const [, year, month, day] = parsed.match(/^(\d{4})-(\d{2})-(\d{2})$/) || [];
+      if (!year || !month || !day) return null;
+      return `${year} ${day}.${month}`;
+    };
+
+    const normalizeDurationWithSemester = (duration: string | null | undefined, semester: string): string | null => {
+      if (!duration || typeof duration !== "string") return null;
+      const m = duration.match(/(\d{1,2}\.\d{1,2}\.?)\s*-\s*(\d{1,2}\.\d{1,2}\.?)/);
+      if (!m) return duration;
+      const start = formatShortDateWithYear(m[1], semester);
+      const end = formatShortDateWithYear(m[2], semester);
+      if (!start || !end) return duration;
+      return `${start} - ${end}`;
+    };
+
+    const normalizeWorkoutDetails = (rawDetails: unknown, semester: string): Json => {
+      const details = rawDetails && typeof rawDetails === "object" && !Array.isArray(rawDetails)
+        ? { ...(rawDetails as Record<string, unknown>) }
+        : {};
+
+      if (typeof details.duration === "string") {
+        details.duration = normalizeDurationWithSemester(details.duration, semester);
+      }
+
+      if (Array.isArray(details.aggregatedEntries)) {
+        details.aggregatedEntries = details.aggregatedEntries.map((entry) => {
+          if (!entry || typeof entry !== "object") return entry;
+          const rec = { ...(entry as Record<string, unknown>) };
+          if (typeof rec.duration === "string") {
+            rec.duration = normalizeDurationWithSemester(rec.duration, semester);
+          }
+          return rec;
+        });
+      }
+
+      return details as Json;
+    };
+
     const toUpsertRaw = aggregatedWorkouts.map((w) => ({
       source: w.source,
       course_code: w.courseCode,
@@ -548,7 +589,7 @@ export class SupabaseDatabase {
       booking_url: w.bookingUrl || null,
       url: w.url || null,
       semester: w.semester || null,
-      details: (w.details && Object.keys(w.details).length > 0 ? w.details : {}) as Json,
+      details: normalizeWorkoutDetails(w.details, w.semester || ""),
       updated_at: new Date().toISOString(),
     }));
 

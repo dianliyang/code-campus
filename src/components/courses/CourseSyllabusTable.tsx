@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Minus } from "lucide-react";
 
 // ---- types ----------------------------------------------------------------
 
@@ -125,14 +125,21 @@ export default function CourseSyllabusTable({
   content,
   sourceUrl,
 }: CourseSyllabusTableProps) {
+  const normalizeForCompare = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
+  const getEntryKey = (entry: SyllabusEntry, idx: number) =>
+    `${idx}|${entry.sequence ?? ""}|${entry.date ?? ""}|${entry.date_end ?? ""}|${entry.title ?? ""}`;
   const [showAllGrading, setShowAllGrading] = useState(false);
   const [showAllObjectives, setShowAllObjectives] = useState(false);
   const [showAllPolicies, setShowAllPolicies] = useState(false);
+  const [deletedEntryKeys, setDeletedEntryKeys] = useState<Set<string>>(new Set());
   const filteredSchedule = schedule.filter((e) => {
     const date = typeof e.date === "string" ? e.date.trim() : "";
     const dateEnd = typeof e.date_end === "string" ? e.date_end.trim() : "";
     return Boolean(date || dateEnd);
   });
+  const visibleSchedule = filteredSchedule
+    .map((entry, idx) => ({ entry, idx, key: getEntryKey(entry, idx) }))
+    .filter(({ key }) => !deletedEntryKeys.has(key));
 
   return (
     <div className="space-y-4">
@@ -151,9 +158,17 @@ export default function CourseSyllabusTable({
         </div>
       )}
 
-      {filteredSchedule.length > 0 && (
+      {visibleSchedule.length > 0 && (
         <div className="space-y-2.5">
-          {filteredSchedule.map((entry, idx) => {
+          {visibleSchedule.map(({ entry, idx, key: entryKey }) => {
+            const title = typeof entry.title === "string" ? entry.title.trim() : "";
+            const topics = (entry.topics || [])
+              .filter((topic): topic is string => typeof topic === "string" && topic.trim().length > 0)
+              .map((topic) => topic.trim());
+            const topicsToShow = title
+              ? topics.filter((topic) => normalizeForCompare(topic) !== normalizeForCompare(title))
+              : topics;
+            const description = typeof entry.description === "string" ? entry.description.trim() : "";
             const allMaterials = [
               ...(entry.slides || []).map((m) => ({ ...m, kind: "Slides" })),
               ...(entry.videos || []).map((m) => ({ ...m, kind: "Video" })),
@@ -166,6 +181,7 @@ export default function CourseSyllabusTable({
               ...(entry.exams || []).map((t) => ({ ...t, kind: "Exam" })),
               ...(entry.projects || []).map((t) => ({ ...t, kind: "Project" })),
             ];
+            const hasMetaSections = allMaterials.length > 0 || allTasks.length > 0 || Boolean(description);
 
             return (
               <article key={idx} className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3">
@@ -182,25 +198,45 @@ export default function CourseSyllabusTable({
                       {entry.instructor && (
                         <p className="text-xs text-[#555] mt-0.5">{entry.instructor}</p>
                       )}
-                      {entry.title && (
-                        <p className="text-xs font-semibold text-[#1f1f1f] mt-1">{entry.title}</p>
+                      {title && (
+                        <p className="text-xs font-semibold text-[#1f1f1f] mt-1">{title}</p>
                       )}
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {(entry.topics || []).map((t, i) => (
-                          <span key={i} className="inline-block rounded border border-[#e5e5e5] bg-white px-1.5 py-0.5 text-[11px] text-[#444]">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
+                      {topicsToShow.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {topicsToShow.map((t, i) => (
+                            <span key={i} className="inline-block rounded border border-[#e5e5e5] bg-white px-1.5 py-0.5 text-[11px] text-[#444]">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <span className="text-[10px] font-medium text-[#888] whitespace-nowrap">#{entry.sequence ?? idx + 1}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-medium text-[#888] whitespace-nowrap">#{entry.sequence ?? idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeletedEntryKeys((prev) => {
+                          const next = new Set(prev);
+                          next.add(entryKey);
+                          return next;
+                        });
+                      }}
+                      className="h-6 w-6 rounded-md border border-[#efcaca] bg-white text-red-600 hover:bg-red-50 inline-flex items-center justify-center"
+                      title="Delete syllabus item"
+                      aria-label="Delete syllabus item"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="pt-2 border-t border-[#ececec] space-y-2">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[#888]">Materials</p>
-                    {allMaterials.length > 0 ? (
+                {hasMetaSections && (
+                  <div className="pt-2 border-t border-[#ececec] space-y-2">
+                  {allMaterials.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[#888]">Materials</p>
                       <div className="mt-1 space-y-1">
                         {allMaterials.map((m, i) => (
                           <div key={i} className="flex items-center gap-1">
@@ -209,14 +245,12 @@ export default function CourseSyllabusTable({
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-xs text-[#aaa] mt-0.5">—</p>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[#888]">Tasks</p>
-                    {allTasks.length > 0 ? (
+                  {allTasks.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[#888]">Tasks</p>
                       <div className="mt-1 space-y-1.5">
                         {allTasks.map((t, i) => (
                           <div key={i} className="flex items-start gap-1">
@@ -225,16 +259,17 @@ export default function CourseSyllabusTable({
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-xs text-[#aaa] mt-0.5">—</p>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[#888]">Description</p>
-                    <p className="text-xs text-[#666] leading-relaxed mt-0.5">{entry.description || "—"}</p>
+                  {description && (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[#888]">Description</p>
+                      <p className="text-xs text-[#666] leading-relaxed mt-0.5">{description}</p>
+                    </div>
+                  )}
                   </div>
-                </div>
+                )}
               </article>
             );
           })}
@@ -333,7 +368,7 @@ export default function CourseSyllabusTable({
         </div>
       )}
 
-      {filteredSchedule.length === 0 && (
+      {visibleSchedule.length === 0 && (
         <p className="text-sm text-[#888]">No schedule entries found in syllabus.</p>
       )}
     </div>

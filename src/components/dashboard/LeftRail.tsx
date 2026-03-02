@@ -138,28 +138,7 @@ export default function LeftRail({ labels, collapsed = false, onToggle }: LeftRa
             <span className="text-[24px] tracking-tight font-semibold text-[#2b2b2b]">Codecampus</span>
           )}
         </Link>
-        <button
-          type="button"
-          onClick={onToggle}
-          className={`h-8 w-8 rounded-md border border-[#e5e5e5] bg-white text-[#666] hover:text-[#222] hover:bg-[#f7f7f7] flex items-center justify-center ${collapsed ? "hidden" : ""}`}
-          aria-label="Collapse sidebar"
-          title="Collapse sidebar"
-        >
-          <PanelLeftClose className="h-4 w-4" />
-        </button>
       </div>
-
-      {collapsed && (
-        <button
-          type="button"
-          onClick={onToggle}
-          className="mb-3 h-8 w-full rounded-md border border-[#e5e5e5] bg-white text-[#666] hover:text-[#222] hover:bg-[#f7f7f7] flex items-center justify-center"
-          aria-label="Expand sidebar"
-          title="Expand sidebar"
-        >
-          <PanelLeftOpen className="h-4 w-4" />
-        </button>
-      )}
 
       <GroupLabel text={labels.command} collapsed={collapsed} />
       <nav className="space-y-0.5">
@@ -238,6 +217,19 @@ export default function LeftRail({ labels, collapsed = false, onToggle }: LeftRa
       </nav>
 
       <div className="mt-auto space-y-0.5">
+        <button
+          type="button"
+          onClick={onToggle}
+          className={`mb-2 rounded-md border border-[#e5e5e5] bg-white text-[#666] hover:text-[#222] hover:bg-[#f7f7f7] flex items-center justify-center ${
+            collapsed ? "h-8 w-full" : "h-8 w-full gap-2 text-[13px] font-medium"
+          }`}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          {!collapsed && <span>Collapse</span>}
+        </button>
+
         <div
           className={`flex items-center rounded-md py-2 text-[14px] text-[#767676] ${
             collapsed ? "justify-center px-2" : "gap-2.5 px-2.5"

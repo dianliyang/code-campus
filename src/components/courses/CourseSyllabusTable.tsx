@@ -124,22 +124,28 @@ export default function CourseSyllabusTable({
   content,
   sourceUrl,
 }: CourseSyllabusTableProps) {
-  const hasMaterials = schedule.some(
+  const filteredSchedule = schedule.filter((e) => {
+    const date = typeof e.date === "string" ? e.date.trim() : "";
+    const dateEnd = typeof e.date_end === "string" ? e.date_end.trim() : "";
+    return Boolean(date || dateEnd);
+  });
+
+  const hasMaterials = filteredSchedule.some(
     (e) =>
       (e.slides?.length ?? 0) > 0 ||
       (e.videos?.length ?? 0) > 0 ||
       (e.readings?.length ?? 0) > 0 ||
       (e.modules?.length ?? 0) > 0
   );
-  const hasTasks = schedule.some(
+  const hasTasks = filteredSchedule.some(
     (e) =>
       (e.assignments?.length ?? 0) > 0 ||
       (e.labs?.length ?? 0) > 0 ||
       (e.exams?.length ?? 0) > 0 ||
       (e.projects?.length ?? 0) > 0
   );
-  const hasInstructor = schedule.some((e) => !!e.instructor);
-  const hasDescription = schedule.some((e) => !!e.description);
+  const hasInstructor = filteredSchedule.some((e) => !!e.instructor);
+  const hasDescription = filteredSchedule.some((e) => !!e.description);
 
   return (
     <div className="space-y-4">
@@ -158,7 +164,7 @@ export default function CourseSyllabusTable({
         </div>
       )}
 
-      {schedule.length > 0 && (
+      {filteredSchedule.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-[#e5e5e5]">
           <table className="w-full text-sm border-collapse">
             <thead>
@@ -181,7 +187,7 @@ export default function CourseSyllabusTable({
               </tr>
             </thead>
             <tbody>
-              {schedule.map((entry, idx) => {
+              {filteredSchedule.map((entry, idx) => {
                 const allMaterials = [
                   ...(entry.slides || []).map((m) => ({ ...m, kind: "Slides" })),
                   ...(entry.videos || []).map((m) => ({ ...m, kind: "Video" })),
@@ -337,7 +343,7 @@ export default function CourseSyllabusTable({
         </div>
       )}
 
-      {schedule.length === 0 && (
+      {filteredSchedule.length === 0 && (
         <p className="text-sm text-[#888]">No schedule entries found in syllabus.</p>
       )}
     </div>

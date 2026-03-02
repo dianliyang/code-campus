@@ -138,6 +138,7 @@ export const externalApiOpenApiSpec = {
             },
           },
           resourcesCount: { type: "integer" },
+          syllabusCount: { type: "integer" },
           syllabus: {
             type: "object",
             nullable: true,

@@ -238,6 +238,7 @@ export async function GET(
         updatedAt: typeof details.ai_sync_skip_updated_at === 'string' ? details.ai_sync_skip_updated_at : null,
       },
       resourcesCount: Array.isArray(course.resources) ? course.resources.length : 0,
+      syllabusCount: syllabus ? 1 : 0,
       syllabus: syllabus
         ? {
             sourceUrl: syllabus.source_url ?? null,

@@ -126,14 +126,20 @@ async function StudyPlanContent({
   const rawPlans = plansRes.data || [];
   const logs = logsRes.data || [];
 
+  const toRows = <T,>(value: unknown): T[] => {
+    if (Array.isArray(value)) return value as T[];
+    if (value && typeof value === "object") return [value as T];
+    return [];
+  };
+
   const enrolledCourses: EnrolledCourse[] = enrolledRows.map((row: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const course = mapCourseFromRow(row);
     const semesterNames = (row.semesters as { semesters: { term: string; year: number } }[] | null)?.map((s) => `${s.semesters.term} ${s.semesters.year}`) || [];
     const uc = (row.uc as { status: string, progress: number, updated_at: string, gpa?: number, score?: number }[] | null)?.[0] ||
                (row.user_courses as { status: string, progress: number, updated_at: string, gpa?: number, score?: number }[] | null)?.[0];
 
-    const assignmentRows = Array.isArray(row.course_assignments) ? row.course_assignments : [];
-    const syllabusRows = Array.isArray(row.course_syllabi) ? row.course_syllabi : [];
+    const assignmentRows = toRows<{ id: number }>(row.course_assignments);
+    const syllabusRows = toRows<{ id: number; schedule?: unknown }>(row.course_syllabi);
     const syllabus = syllabusRows.length > 0 ? syllabusRows[0] as { schedule?: unknown } : null;
     const syllabusScheduleEntries = Array.isArray(syllabus?.schedule) ? syllabus.schedule.length : 0;
 

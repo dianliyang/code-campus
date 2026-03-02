@@ -28,7 +28,9 @@ export default async function DashboardLayout({
               studyPlan: dict.navbar?.roadmap || "Roadmap",
               workouts: dict.navbar?.workouts || "Workouts",
               profile: dict.navbar?.profile || "Profile",
-              settings: dict.navbar?.settings || "Settings",
+              settingsIntelligence: "Settings · Intelligence",
+              settingsSecurity: "Settings · Security",
+              settingsSystem: "Settings · System",
             }}
           />
           <section className="flex-1 min-w-0 h-full overflow-hidden p-1.5 sm:p-2">

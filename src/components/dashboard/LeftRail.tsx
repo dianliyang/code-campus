@@ -22,7 +22,9 @@ interface LeftRailProps {
     studyPlan: string;
     workouts: string;
     profile: string;
-    settings: string;
+    settingsIntelligence: string;
+    settingsSecurity: string;
+    settingsSystem: string;
   };
 }
 
@@ -32,7 +34,9 @@ const navItems = [
   { href: "/study-plan", key: "studyPlan", icon: CalendarDays },
   { href: "/workouts", key: "workouts", icon: Dumbbell },
   { href: "/profile", key: "profile", icon: User },
-  { href: "/settings", key: "settings", icon: Settings },
+  { href: "/settings/intelligence", key: "settingsIntelligence", icon: Settings },
+  { href: "/settings/security", key: "settingsSecurity", icon: Settings },
+  { href: "/settings/system", key: "settingsSystem", icon: Settings },
 ] as const;
 
 function RailItem({

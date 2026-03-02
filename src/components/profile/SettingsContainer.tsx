@@ -71,9 +71,10 @@ interface SettingsContainerProps {
   aiDefaults: {
     modelCatalog: { perplexity: string[]; gemini: string[]; openai: string[]; vertex?: string[] };
   };
+  initialSection?: SectionId;
 }
 
-export default function SettingsContainer({ user, profile, aiDefaults }: SettingsContainerProps) {
+export default function SettingsContainer({ user, profile, aiDefaults, initialSection }: SettingsContainerProps) {
   const [active, setActive] = useState<SectionId>(() => {
     if (typeof window === "undefined") return "engine";
     try {
@@ -83,6 +84,9 @@ export default function SettingsContainer({ user, profile, aiDefaults }: Setting
       }
     } catch {
       // Ignore storage access errors.
+    }
+    if (initialSection && ALL_ITEMS.some((item) => item.id === initialSection)) {
+      return initialSection;
     }
     return "engine";
   });

@@ -63,3 +63,4 @@ docs/plans/
 
 # Local cloud credentials
 vertex-app-key.json
+.env.prod

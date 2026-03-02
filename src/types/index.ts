@@ -36,6 +36,9 @@ export interface Course {
   enrolled?: boolean;
   status?: string;
   progress?: number;
+  assignmentsCount?: number;
+  hasSyllabus?: boolean;
+  syllabusScheduleEntries?: number;
 }
 
 export interface University {

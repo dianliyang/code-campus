@@ -76,7 +76,9 @@ async function StudyPlanContent({
       .select(`
         id, university, course_code, title, units, credit, url, description, details, is_hidden,
         uc:user_courses!inner(status, progress, updated_at, gpa, score),
-        semesters:course_semesters(semesters(term, year))
+        semesters:course_semesters(semesters(term, year)),
+        course_assignments(id),
+        course_syllabi(id, schedule)
       `)
       .eq('user_courses.user_id', userId)
       .neq('user_courses.status', 'hidden')
@@ -131,6 +133,11 @@ async function StudyPlanContent({
     const uc = (row.uc as { status: string, progress: number, updated_at: string, gpa?: number, score?: number }[] | null)?.[0] ||
                (row.user_courses as { status: string, progress: number, updated_at: string, gpa?: number, score?: number }[] | null)?.[0];
 
+    const assignmentRows = Array.isArray(row.course_assignments) ? row.course_assignments : [];
+    const syllabusRows = Array.isArray(row.course_syllabi) ? row.course_syllabi : [];
+    const syllabus = syllabusRows.length > 0 ? syllabusRows[0] as { schedule?: unknown } : null;
+    const syllabusScheduleEntries = Array.isArray(syllabus?.schedule) ? syllabus.schedule.length : 0;
+
     return {
       ...course,
       fields: [],
@@ -140,6 +147,9 @@ async function StudyPlanContent({
       updated_at: uc?.updated_at || new Date().toISOString(),
       gpa: uc?.gpa,
       score: uc?.score,
+      assignmentsCount: assignmentRows.length,
+      hasSyllabus: syllabusRows.length > 0,
+      syllabusScheduleEntries,
     } as EnrolledCourse;
   });
 

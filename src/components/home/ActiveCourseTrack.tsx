@@ -238,6 +238,14 @@ export default function ActiveCourseTrack({
             <h3 className="text-base font-semibold text-[#1f1f1f] tracking-tight leading-tight line-clamp-1">
               <Link href={detailHref}>{course.title}</Link>
             </h3>
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className="text-[10px] rounded border border-[#e5e5e5] bg-[#fafafa] px-1.5 py-0.5 text-[#555]">
+                Assignments: {course.assignmentsCount ?? 0}
+              </span>
+              <span className="text-[10px] rounded border border-[#e5e5e5] bg-[#fafafa] px-1.5 py-0.5 text-[#555]">
+                Syllabus: {course.hasSyllabus ? `Yes (${course.syllabusScheduleEntries ?? 0})` : "No"}
+              </span>
+            </div>
           </div>
         </div>
 

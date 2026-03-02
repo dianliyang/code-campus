@@ -6,7 +6,7 @@ import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
 import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, toggleCourseEnrollmentAction, updateCourseResources, type SchedulePlanPreview } from "@/actions/courses";
-import { Check, Clock, ExternalLink, Globe, Info, Loader2, Minus, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
+import { Check, Clock, Globe, Info, Loader2, Minus, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
@@ -328,6 +328,9 @@ export default function CourseDetailContent({
         isEditing={isEditing}
         onToggleEdit={() => setIsEditing(!isEditing)}
         projectSeminarRef={projectSeminarRef}
+        enrolled={enrolled}
+        isEnrolling={isEnrolling}
+        onToggleEnroll={handleEnrollToggle}
       />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 space-y-4">
@@ -344,16 +347,16 @@ export default function CourseDetailContent({
           />
 
           {codeBreakdown.length > 0 && (
-            <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-              <h2 className="text-base font-semibold text-[#1f1f1f] mb-4">Code Breakdown</h2>
-              <dl className="space-y-4 text-sm">
+            <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3">
+              <h2 className="text-sm font-semibold text-[#1f1f1f] mb-2">Code Breakdown</h2>
+              <dl className="space-y-2 text-xs">
                 {codeBreakdown.map((item, idx) => (
-                  <div key={`${item.label}-${idx}`} className="flex justify-between py-1">
+                  <div key={`${item.label}-${idx}`} className="flex justify-between py-0.5">
                     <dt className="text-[#666] flex-shrink-0">{item.label}</dt>
-                    <dd className="text-right pl-4">
+                    <dd className="text-right pl-3">
                       <p className="font-medium text-[#222] break-words">{item.value}</p>
                       {item.detail && (
-                        <p className="text-[11px] text-[#666] break-words">{item.detail}</p>
+                        <p className="text-[10px] text-[#666] break-words">{item.detail}</p>
                       )}
                     </dd>
                   </div>
@@ -486,7 +489,7 @@ export default function CourseDetailContent({
                                   {plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}
                                 </li>
                                 <li className="text-xs text-[#666] flex items-center gap-1.5">
-                                  <span className="inline-block rounded-md border border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] whitespace-normal break-words">
+                                  <span className="inline-block max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap rounded-md border border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] align-bottom">
                                     {plan.kind || "Session"}
                                   </span>
                                   <span>@ {plan.location || "TBD"}</span>
@@ -581,7 +584,7 @@ export default function CourseDetailContent({
                                     {daysText} • {plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}
                                   </span>
                                   <span className="block text-xs text-[#666]">
-                                    <span className="inline-block rounded-md border border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] whitespace-normal break-words mr-1.5">
+                                    <span className="inline-block max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap rounded-md border border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] mr-1.5 align-bottom">
                                       {plan.kind || "Session"}
                                     </span>
                                     @ {plan.location}
@@ -696,47 +699,6 @@ export default function CourseDetailContent({
 
         <aside className="lg:col-span-4 space-y-4">
           <div className="sticky top-0 space-y-4">
-              <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-                <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-[#666]">Your Status</span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${enrolled ? "bg-green-50 text-green-700 border-green-100" : "bg-[#f3f3f3] text-[#666] border-[#e5e5e5]"}`}>
-                    {enrolled ? "Enrolled" : "Not Enrolled"}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={handleEnrollToggle}
-                    disabled={isEnrolling}
-                    className={`inline-flex h-8 items-center justify-center w-full gap-2 rounded-md border px-2.5 text-[13px] font-medium transition-colors disabled:opacity-50 ${
-                      enrolled
-                        ? "border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
-                        : "border-[#c3d9c3] bg-[#f0f7f0] text-[#2d6a2d] hover:bg-[#e4f0e4]"
-                    }`}
-                  >
-                    {isEnrolling ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : enrolled ? (
-                      <X className="w-3.5 h-3.5" />
-                    ) : (
-                      <Plus className="w-3.5 h-3.5" />
-                    )}
-                    {enrolled ? "Unenroll" : "Enroll"}
-                  </button>
-                  <a
-                    href={course.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-8 items-center justify-center w-full gap-2 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-                  >
-                    <span>Visit</span>
-                    <ExternalLink className="w-3.5 h-3.5 text-[#777]" />
-                  </a>
-                </div>
-                </div>
-              </div>
-
               <>
                 <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
                 <div className="flex items-center justify-between mb-4">

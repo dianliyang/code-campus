@@ -6,7 +6,7 @@ import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles } from "lucide-react";
+import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, Plus, X, ExternalLink } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
 import { useAppToast } from "@/components/common/AppToastProvider";
 interface CourseDetailHeaderProps {
@@ -14,6 +14,9 @@ interface CourseDetailHeaderProps {
   isEditing?: boolean;
   onToggleEdit?: () => void;
   projectSeminarRef?: { id: number; category: string } | null;
+  enrolled?: boolean;
+  isEnrolling?: boolean;
+  onToggleEnroll?: () => void;
 }
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -32,6 +35,9 @@ export default function CourseDetailHeader({
   isEditing = false,
   onToggleEdit,
   projectSeminarRef = null,
+  enrolled = false,
+  isEnrolling = false,
+  onToggleEnroll,
 }: CourseDetailHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -196,6 +202,47 @@ export default function CourseDetailHeader({
           >
             {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
           </button>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-md border border-[#e5e5e5] bg-white p-3">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-[#666]">Your Status</span>
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${enrolled ? "bg-green-50 text-green-700 border-green-100" : "bg-[#f3f3f3] text-[#666] border-[#e5e5e5]"}`}>
+              {enrolled ? "Enrolled" : "Not Enrolled"}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={onToggleEnroll}
+              disabled={isEnrolling}
+              className={`inline-flex h-8 items-center justify-center w-full gap-2 rounded-md border px-2.5 text-[13px] font-medium transition-colors disabled:opacity-50 ${
+                enrolled
+                  ? "border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
+                  : "border-[#c3d9c3] bg-[#f0f7f0] text-[#2d6a2d] hover:bg-[#e4f0e4]"
+              }`}
+            >
+              {isEnrolling ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : enrolled ? (
+                <X className="w-3.5 h-3.5" />
+              ) : (
+                <Plus className="w-3.5 h-3.5" />
+              )}
+              {enrolled ? "Unenroll" : "Enroll"}
+            </button>
+            <a
+              href={course.url || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex h-8 items-center justify-center w-full gap-2 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors ${course.url ? "" : "pointer-events-none opacity-50"}`}
+            >
+              <span>Visit</span>
+              <ExternalLink className="w-3.5 h-3.5 text-[#777]" />
+            </a>
+          </div>
         </div>
       </div>
 

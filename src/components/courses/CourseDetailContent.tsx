@@ -6,7 +6,7 @@ import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
 import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, toggleCourseEnrollmentAction, updateCourseResources, type SchedulePlanPreview } from "@/actions/courses";
-import { CalendarDays, Check, Clock, Globe, Info, Loader2, Minus, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
+import { CalendarDays, Check, ChevronLeft, ChevronRight, Clock, Globe, Info, Loader2, Minus, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
@@ -98,6 +98,7 @@ export default function CourseDetailContent({
   const [removingUrlIndex, setRemovingUrlIndex] = useState<number | null>(null);
   const [showAllResources, setShowAllResources] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
+  const [visibleCalendarMonthKey, setVisibleCalendarMonthKey] = useState<string | null>(null);
   const router = useRouter();
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const hasStudyPlans = editablePlans.length > 0;
@@ -265,6 +266,27 @@ export default function CourseDetailContent({
     const firstEventDate = Array.from(studyPlanCalendar.eventsByDate.keys()).sort()[0] || null;
     setSelectedCalendarDate(firstEventDate || studyPlanCalendar.range.startIso);
   }, [studyPlanCalendar, selectedCalendarDate]);
+
+  useEffect(() => {
+    const months = studyPlanCalendar.months;
+    if (months.length === 0) {
+      setVisibleCalendarMonthKey(null);
+      return;
+    }
+    if (visibleCalendarMonthKey && months.some((month) => month.key === visibleCalendarMonthKey)) {
+      return;
+    }
+    const selectedMonthKey = selectedCalendarDate ? selectedCalendarDate.slice(0, 7) : null;
+    if (selectedMonthKey && months.some((month) => month.key === selectedMonthKey)) {
+      setVisibleCalendarMonthKey(selectedMonthKey);
+      return;
+    }
+    setVisibleCalendarMonthKey(months[0].key);
+  }, [studyPlanCalendar.months, selectedCalendarDate, visibleCalendarMonthKey]);
+
+  const visibleCalendarMonthIndex = studyPlanCalendar.months.findIndex((month) => month.key === visibleCalendarMonthKey);
+  const resolvedCalendarMonthIndex = visibleCalendarMonthIndex >= 0 ? visibleCalendarMonthIndex : 0;
+  const visibleCalendarMonth = studyPlanCalendar.months[resolvedCalendarMonthIndex] || null;
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);
@@ -749,28 +771,61 @@ export default function CourseDetailContent({
             </div>
             {studyPlanCalendar.range ? (
               <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-3">
-                <div className="space-y-4">
-                  {studyPlanCalendar.months.map((month) => (
-                    <div key={month.key} className="rounded-md border border-[#e7e7e7] bg-white p-2.5">
-                      <p className="text-sm font-semibold text-[#2a2a2a] mb-2">{month.label}</p>
+                <div>
+                  {visibleCalendarMonth ? (
+                    <div className="rounded-md border border-[#e7e7e7] bg-white p-2.5">
+                      <div className="flex items-center justify-between mb-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (resolvedCalendarMonthIndex <= 0) return;
+                            const previousMonth = studyPlanCalendar.months[resolvedCalendarMonthIndex - 1];
+                            if (previousMonth) setVisibleCalendarMonthKey(previousMonth.key);
+                          }}
+                          disabled={resolvedCalendarMonthIndex <= 0}
+                          className="h-7 w-7 rounded-md border border-[#dcdcdc] bg-white text-[#666] hover:bg-[#f7f7f7] disabled:opacity-40 inline-flex items-center justify-center"
+                          title="Previous month"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                        </button>
+                        <p className="text-sm font-semibold text-[#2a2a2a]">{visibleCalendarMonth.label}</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (resolvedCalendarMonthIndex >= studyPlanCalendar.months.length - 1) return;
+                            const nextMonth = studyPlanCalendar.months[resolvedCalendarMonthIndex + 1];
+                            if (nextMonth) setVisibleCalendarMonthKey(nextMonth.key);
+                          }}
+                          disabled={resolvedCalendarMonthIndex >= studyPlanCalendar.months.length - 1}
+                          className="h-7 w-7 rounded-md border border-[#dcdcdc] bg-white text-[#666] hover:bg-[#f7f7f7] disabled:opacity-40 inline-flex items-center justify-center"
+                          title="Next month"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                       <div className="grid grid-cols-7 gap-1 mb-1">
                         {dayLabels.map((day) => (
-                          <div key={`${month.key}-${day}`} className="text-[10px] text-[#8a8a8a] font-medium text-center py-1">
+                          <div key={`${visibleCalendarMonth.key}-${day}`} className="text-[10px] text-[#8a8a8a] font-medium text-center py-1">
                             {day}
                           </div>
                         ))}
                       </div>
                       <div className="grid grid-cols-7 gap-1">
-                        {month.cells.map((cell) => {
+                        {visibleCalendarMonth.cells.map((cell) => {
                           const events = studyPlanCalendar.eventsByDate.get(cell.dateIso) || [];
                           const isSelected = selectedCalendarDate === cell.dateIso;
                           const canSelect = cell.inRange;
                           return (
                             <button
                               type="button"
-                              key={`${month.key}-${cell.dateIso}`}
+                              key={`${visibleCalendarMonth.key}-${cell.dateIso}`}
                               onClick={() => {
-                                if (canSelect) setSelectedCalendarDate(cell.dateIso);
+                                if (!canSelect) return;
+                                setSelectedCalendarDate(cell.dateIso);
+                                const targetMonthKey = cell.dateIso.slice(0, 7);
+                                if (targetMonthKey !== visibleCalendarMonth.key) {
+                                  setVisibleCalendarMonthKey(targetMonthKey);
+                                }
                               }}
                               disabled={!canSelect}
                               className={`min-h-[72px] rounded border p-1.5 text-left ${
@@ -810,7 +865,7 @@ export default function CourseDetailContent({
                         })}
                       </div>
                     </div>
-                  ))}
+                  ) : null}
                 </div>
                 <aside className="rounded-md border border-[#e7e7e7] bg-white p-3 h-fit xl:sticky xl:top-3">
                   <h3 className="text-sm font-semibold text-[#2a2a2a]">Day Details</h3>

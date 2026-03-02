@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, getUser } from "@/lib/supabase/server";
-import { runCourseIntel } from "@/lib/ai/course-intel";
+import { runCourseIntel, type CourseIntelSourceMode } from "@/lib/ai/course-intel";
 import {
   appendCourseIntelJobActivity,
   completeCourseIntelJob,
@@ -17,8 +17,9 @@ async function executeCourseIntelJob(params: {
   jobId: number;
   userId: string;
   courseId: number;
+  sourceMode: CourseIntelSourceMode;
 }) {
-  const { jobId, userId, courseId } = params;
+  const { jobId, userId, courseId, sourceMode } = params;
   try {
     await markCourseIntelJobRunning(jobId);
     await appendCourseIntelJobActivity(jobId, {
@@ -29,6 +30,7 @@ async function executeCourseIntelJob(params: {
     });
 
     const result = await runCourseIntel(userId, courseId, {
+      sourceMode,
       onProgress: async (event) => {
         await appendCourseIntelJobActivity(jobId, {
           ts: new Date().toISOString(),
@@ -48,14 +50,22 @@ async function executeCourseIntelJob(params: {
       details: {
         resources: result.resources.length,
         scheduleEntries: result.scheduleEntries,
+        scheduleRowsPersisted: result.scheduleRowsPersisted,
         assignmentsCount: result.assignmentsCount,
+        curatedTasks: result.curatedTasks,
+        practicalPlanDays: result.practicalPlanDays,
+        sourceMode: result.sourceMode,
       },
     });
     await completeCourseIntelJob(jobId, {
       course_id: courseId,
       resources: result.resources.length,
       scheduleEntries: result.scheduleEntries,
+      scheduleRowsPersisted: result.scheduleRowsPersisted,
       assignmentsCount: result.assignmentsCount,
+      curatedTasks: result.curatedTasks,
+      practicalPlanDays: result.practicalPlanDays,
+      sourceMode: result.sourceMode,
       totalMs: result.totalMs,
     });
   } catch (error) {
@@ -94,9 +104,11 @@ export async function POST(request: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { courseId } = await request.json();
+  const { courseId, sourceMode } = await request.json();
   const numericCourseId = Number(courseId || 0);
   if (!numericCourseId) return NextResponse.json({ error: "courseId required" }, { status: 400 });
+  const normalizedSourceMode: CourseIntelSourceMode =
+    sourceMode === "fresh" || sourceMode === "existing" || sourceMode === "auto" ? sourceMode : "auto";
   const supabase = createAdminClient();
   const { data: course } = await supabase
     .from("courses")
@@ -108,6 +120,7 @@ export async function POST(request: NextRequest) {
     userId: user.id,
     courseId: numericCourseId,
     university: String(course?.university || "course-intel"),
+    sourceMode: normalizedSourceMode,
   });
   if (!jobId) {
     return NextResponse.json({ error: "Failed to create AI sync job" }, { status: 500 });
@@ -117,6 +130,7 @@ export async function POST(request: NextRequest) {
     jobId,
     userId: user.id,
     courseId: numericCourseId,
+    sourceMode: normalizedSourceMode,
   });
 
   return NextResponse.json({
@@ -128,7 +142,8 @@ export async function POST(request: NextRequest) {
       meta: {
         course_id: numericCourseId,
         progress: 0,
-        activity: [{ ts: new Date().toISOString(), stage: "queued", message: "AI sync queued.", progress: 0 }],
+        source_mode: normalizedSourceMode,
+        activity: [{ ts: new Date().toISOString(), stage: "queued", message: "AI sync queued.", progress: 0, details: { sourceMode: normalizedSourceMode } }],
       },
     },
   }, { status: 202 });

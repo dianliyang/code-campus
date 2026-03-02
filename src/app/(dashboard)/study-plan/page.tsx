@@ -78,7 +78,7 @@ async function StudyPlanContent({
         uc:user_courses!inner(status, progress, updated_at, gpa, score),
         semesters:course_semesters(semesters(term, year)),
         course_assignments(id),
-        course_syllabi(id, schedule)
+        course_syllabi(id, schedule, content)
       `)
       .eq('user_courses.user_id', userId)
       .neq('user_courses.status', 'hidden')
@@ -140,9 +140,23 @@ async function StudyPlanContent({
                (row.user_courses as { status: string, progress: number, updated_at: string, gpa?: number, score?: number }[] | null)?.[0];
 
     const assignmentRows = toRows<{ id: number }>(row.course_assignments);
-    const syllabusRows = toRows<{ id: number; schedule?: unknown }>(row.course_syllabi);
-    const syllabus = syllabusRows.length > 0 ? syllabusRows[0] as { schedule?: unknown } : null;
+    const syllabusRows = toRows<{ id: number; schedule?: unknown; content?: unknown }>(row.course_syllabi);
+    const syllabus = syllabusRows.length > 0 ? syllabusRows[0] as { schedule?: unknown; content?: unknown } : null;
     const syllabusScheduleEntries = Array.isArray(syllabus?.schedule) ? syllabus.schedule.length : 0;
+    const content = syllabus?.content && typeof syllabus.content === "object" ? (syllabus.content as Record<string, unknown>) : {};
+    const intel = content.course_intel && typeof content.course_intel === "object" ? (content.course_intel as Record<string, unknown>) : {};
+    const practicalPlan = intel.practical_plan && typeof intel.practical_plan === "object" ? (intel.practical_plan as Record<string, unknown>) : {};
+    const practicalDaysRaw = Array.isArray(practicalPlan.days) ? practicalPlan.days : [];
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const practicalDays = practicalDaysRaw
+      .filter((day): day is Record<string, unknown> => Boolean(day) && typeof day === "object")
+      .map((day) => ({
+        date: typeof day.date === "string" ? day.date : "",
+        focus: typeof day.focus === "string" ? day.focus : "",
+      }))
+      .filter((day) => /^\d{4}-\d{2}-\d{2}$/.test(day.date) && day.date >= todayIso)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const nextPlanDay = practicalDays[0] || null;
 
     return {
       ...course,
@@ -156,6 +170,11 @@ async function StudyPlanContent({
       assignmentsCount: assignmentRows.length,
       hasSyllabus: syllabusRows.length > 0,
       syllabusScheduleEntries,
+      aiPlanSummary: {
+        nextDate: nextPlanDay?.date || null,
+        nextFocus: nextPlanDay?.focus || null,
+        days: practicalDays.length,
+      },
     } as EnrolledCourse;
   });
 
@@ -206,18 +225,6 @@ async function StudyPlanContent({
   const plans = allPlans.filter((plan: { course_id: number }) => enrolledCourseIds.has(plan.course_id));
   const validPlanIds = new Set(plans.map((plan: { id: number }) => plan.id));
   const filteredLogs = (logs || []).filter((log: { plan_id: number }) => validPlanIds.has(log.plan_id));
-
-  // Identify CAU courses that have schedule data but no study plans yet
-  const courseIdsWithPlans = new Set(plans.map((p: { course_id: number }) => p.course_id));
-  const coursesWithoutPlans = enrolledCourses
-    .filter(c =>
-      c.university === 'CAU Kiel' &&
-      !courseIdsWithPlans.has(c.id) &&
-      c.details?.schedule &&
-      typeof c.details.schedule === 'object' &&
-      Object.keys(c.details.schedule as Record<string, unknown>).length > 0
-    )
-    .map(c => ({ id: c.id, courseCode: c.courseCode, title: c.title }));
 
   const enrolledWithAttendance = enrolledCourses.map(course => {
     const coursePlans = plans?.filter((p: { course_id: number }) => p.course_id === course.id) || [];

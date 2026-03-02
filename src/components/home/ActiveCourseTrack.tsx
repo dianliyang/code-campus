@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { useState } from "react";
 import { Course } from "@/types";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -136,15 +136,14 @@ export default function ActiveCourseTrack({
     setIsAiUpdating(true);
     setAiStatus("idle");
     try {
-      const res = await fetch("/api/ai/course-intel", {
+      const res = await fetch("/api/ai/course-intel/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseId: course.id }),
       });
-      if (res.ok) {
+      if (res.ok || res.status === 202) {
         setAiStatus("success");
-        showToast({ type: "success", message: "AI sync completed." });
-        // startTransition(() => router.refresh());
+        showToast({ type: "success", message: "AI sync started in background." });
       } else {
         setAiStatus("error");
         let message = "AI sync failed.";
@@ -267,12 +266,15 @@ export default function ActiveCourseTrack({
               <Link href={detailHref}>{course.title}</Link>
             </h3>
             <div className="mt-1 flex items-center gap-1.5">
-              <span className="text-[10px] rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 font-medium text-amber-800">
-                Assignments: {course.assignmentsCount ?? 0}
-              </span>
-              <span className="text-[10px] rounded border border-sky-200 bg-sky-50 px-1.5 py-0.5 font-medium text-sky-800">
-                Syllabus: {course.hasSyllabus ? `Yes (${course.syllabusScheduleEntries ?? 0})` : "No"}
-              </span>
+              {course.aiPlanSummary?.days ? (
+                <span className="text-[10px] rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-medium text-emerald-800">
+                  {course.aiPlanSummary.nextDate ? `AI Plan ${course.aiPlanSummary.nextDate}` : "AI Plan Ready"}{course.aiPlanSummary.nextFocus ? ` · ${course.aiPlanSummary.nextFocus}` : ""}
+                </span>
+              ) : (
+                <span className="text-[10px] rounded border border-[#e3e3e3] bg-[#f8f8f8] px-1.5 py-0.5 font-medium text-[#666]">
+                  AI Plan pending sync
+                </span>
+              )}
             </div>
           </div>
         </div>

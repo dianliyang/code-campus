@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { usePathname, useRouter } from "next/navigation";
 import { User } from "@supabase/supabase-js";
 import { LucideIcon, Cpu, FileCode, CalendarDays, Tag, Shield, Database, Sparkles, Library, KeyRound, BookOpen } from "lucide-react";
 import AILearningPlanner from "@/components/home/AILearningPlanner";
 import { Dictionary } from "@/lib/dictionary";
+import { getSettingsPathForSection, getSettingsSectionFromPathname } from "./settings-route";
 
 const AISettingsCard = dynamic(() => import("./AISettingsCard"), { ssr: false });
 const SecurityIdentitySection = dynamic(() => import("./SecurityIdentitySection"), { ssr: false });
@@ -93,9 +95,12 @@ interface SettingsContainerProps {
 }
 
 export default function SettingsContainer({ user, profile, aiDefaults, initialSection, dict }: SettingsContainerProps) {
+  const pathname = usePathname();
+  const router = useRouter();
   const [active, setActive] = useState<SectionId>(() => {
-    if (initialSection && ALL_ITEMS.some((item) => item.id === initialSection)) {
-      return initialSection;
+    const sectionFromPath = getSettingsSectionFromPathname(pathname, initialSection || "engine");
+    if (sectionFromPath && ALL_ITEMS.some((item) => item.id === sectionFromPath)) {
+      return sectionFromPath;
     }
     if (typeof window !== "undefined") {
       try {
@@ -107,7 +112,7 @@ export default function SettingsContainer({ user, profile, aiDefaults, initialSe
         // Ignore storage access errors.
       }
     }
-    return initialSection || "engine";
+    return sectionFromPath || "engine";
   });
 
   const setActiveSection = (next: SectionId) => {
@@ -116,6 +121,10 @@ export default function SettingsContainer({ user, profile, aiDefaults, initialSe
       window.localStorage.setItem(ACTIVE_SECTION_STORAGE_KEY, next);
     } catch {
       // Ignore storage access errors.
+    }
+    const targetPath = getSettingsPathForSection(next);
+    if (targetPath && pathname !== targetPath) {
+      router.push(targetPath);
     }
   };
 

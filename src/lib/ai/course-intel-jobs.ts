@@ -34,11 +34,13 @@ export async function startCourseIntelJob(input: {
   userId: string;
   courseId: number;
   university: string;
+  sourceMode?: "fresh" | "existing" | "auto";
 }): Promise<number | null> {
   const supabase = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   const now = new Date().toISOString();
   const meta = {
     course_id: input.courseId,
+    source_mode: input.sourceMode || "auto",
     progress: 0,
     activity: [
       {

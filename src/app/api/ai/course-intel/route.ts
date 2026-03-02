@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/lib/supabase/server";
-import { runCourseIntel } from "@/lib/ai/course-intel";
+import { runCourseIntel, type CourseIntelSourceMode } from "@/lib/ai/course-intel";
 import { getCourseIntelErrorStatus } from "@/lib/ai/course-intel-errors";
 
 export const runtime = "nodejs";
@@ -9,11 +9,13 @@ export async function POST(request: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { courseId } = await request.json();
+  const { courseId, sourceMode } = await request.json();
   if (!courseId) return NextResponse.json({ error: "courseId required" }, { status: 400 });
+  const normalizedSourceMode: CourseIntelSourceMode =
+    sourceMode === "fresh" || sourceMode === "existing" || sourceMode === "auto" ? sourceMode : "auto";
 
   try {
-    const result = await runCourseIntel(user.id, Number(courseId));
+    const result = await runCourseIntel(user.id, Number(courseId), { sourceMode: normalizedSourceMode });
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
     const rawMessage = err instanceof Error ? err.message : "Course intel failed";

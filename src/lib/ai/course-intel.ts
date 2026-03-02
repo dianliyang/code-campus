@@ -6,6 +6,16 @@ import { resolveModelForProvider } from "@/lib/ai/models";
 import { parseLenientJson } from "@/lib/ai/parse-json";
 import { logAiUsage } from "@/lib/ai/log-usage";
 import type { Json } from "@/lib/supabase/database.types";
+import {
+  type PlanSeedTask,
+  buildAssignmentsFromDailyPlan,
+  buildCourseSchedulesFromDailyPlan,
+  buildFallbackDailyPlan,
+  buildPlanSeedTasks,
+  parseLooseDailyPlanText,
+  sanitizeDailyPlan,
+  toIsoDateUtc,
+} from "@/lib/ai/course-intel-plan";
 
 const perplexity = createOpenAI({
   apiKey: process.env.PERPLEXITY_API_KEY || "",
@@ -20,6 +30,7 @@ type AssignmentKind = "assignment" | "lab" | "exam" | "project" | "quiz" | "othe
 type AssignmentRow = {
   course_id: number;
   syllabus_id: number | null;
+  course_schedule_id: number | null;
   kind: AssignmentKind;
   label: string;
   due_on: string | null;
@@ -50,6 +61,8 @@ type DeterministicSignals = {
   gradingSignals: GradingSignal[];
   extraResources: string[];
 };
+
+export type CourseIntelSourceMode = "fresh" | "existing" | "auto";
 
 type CacheEntry = {
   expiresAt: number;
@@ -1278,6 +1291,7 @@ function extractAssignmentsFromSchedule(
         rows.push({
           course_id: courseId,
           syllabus_id: syllabusId,
+          course_schedule_id: null,
           kind: bucket.kind,
           label,
           due_on: normalizeDate(rec.due_date),
@@ -1313,6 +1327,7 @@ function extractHeuristicAssignmentsFromSchedule(
       rows.push({
         course_id: courseId,
         syllabus_id: syllabusId,
+        course_schedule_id: null,
         kind,
         label,
         due_on: rowDate,
@@ -1358,6 +1373,7 @@ function extractTopLevelAssignments(
     rows.push({
       course_id: courseId,
       syllabus_id: syllabusId,
+      course_schedule_id: null,
       kind: toKind(typeof rec.kind === "string" ? rec.kind : "other"),
       label,
       due_on: normalizeDate(rec.due_on ?? rec.due_date),
@@ -1384,8 +1400,8 @@ function dedupeAssignments(rows: AssignmentRow[]): AssignmentRow[] {
     }
 
     // Prefer the row with a concrete due date and URL/details richness.
-    const existingScore = (existing.due_on ? 2 : 0) + (existing.url ? 1 : 0) + (existing.description ? 1 : 0);
-    const currentScore = (row.due_on ? 2 : 0) + (row.url ? 1 : 0) + (row.description ? 1 : 0);
+    const existingScore = (existing.due_on ? 2 : 0) + (existing.url ? 1 : 0) + (existing.description ? 1 : 0) + (existing.course_schedule_id ? 1 : 0);
+    const currentScore = (row.due_on ? 2 : 0) + (row.url ? 1 : 0) + (row.description ? 1 : 0) + (row.course_schedule_id ? 1 : 0);
     if (currentScore > existingScore) {
       canonical.set(baseKey, row);
     }
@@ -1438,6 +1454,67 @@ function summarizeGeminiApiError(status: number, rawBody: string, fallbackModel?
 
   const firstLine = msg.split("\n")[0].replace(/\s+/g, " ").trim();
   return `Gemini API error (${status}): ${firstLine || "request failed"}`;
+}
+
+async function generateDailyPlanWithModel(params: {
+  provider: "perplexity" | "openai" | "gemini";
+  modelName: string;
+  prompt: string;
+}): Promise<string> {
+  const { provider, modelName, prompt } = params;
+  if (provider === "gemini") {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY || "")}`;
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 8000 },
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(summarizeGeminiApiError(res.status, body, modelName));
+    }
+    const json = (await res.json()) as Record<string, unknown>;
+    const candidates = Array.isArray(json.candidates) ? (json.candidates as Array<Record<string, unknown>>) : [];
+    const first = candidates[0] && typeof candidates[0] === "object" ? candidates[0] : {};
+    const content = (first.content && typeof first.content === "object") ? (first.content as Record<string, unknown>) : {};
+    const parts = Array.isArray(content.parts) ? (content.parts as Array<Record<string, unknown>>) : [];
+    return parts.map((p) => (typeof p.text === "string" ? p.text : "")).join("");
+  }
+  const out = await generateText({
+    model: provider === "openai" ? openai.chat(modelName) : perplexity.chat(modelName),
+    prompt,
+    maxOutputTokens: 8000,
+  });
+  return out.text || "";
+}
+
+function buildPracticalPlanPrompt(input: {
+  courseCode: string;
+  title: string;
+  todayIso: string;
+  tasks: Array<{ kind: string; title: string; due_on: string | null; source_sequence: string | null; url: string | null }>;
+}) {
+  return [
+    "You are a practical course planner.",
+    `Course: ${input.courseCode} ${input.title}`,
+    `Start planning from: ${input.todayIso} (today).`,
+    "Use only the provided tasks. Build a realistic day-by-day plan.",
+    "Hard rules:",
+    `1) Do not generate any day before ${input.todayIso}.`,
+    "2) Balance workload and put deadlines first.",
+    "3) Keep each day concise (max 4 tasks).",
+    "4) Keep important tasks only (no noisy filler).",
+    "Preferred output is JSON using this schema:",
+    '{"days":[{"date":"YYYY-MM-DD","focus":"...","tasks":[{"title":"...","kind":"reading|assignment|project|lab|exercise|quiz|exam","minutes":60}]}]}',
+    "If you cannot produce strict JSON, provide clean plain text in this format:",
+    "YYYY-MM-DD: Focus",
+    "- task line",
+    `Tasks: ${JSON.stringify(input.tasks)}`,
+  ].join("\n");
 }
 
 async function fetchBraveSnippetForUrl(
@@ -1664,6 +1741,7 @@ export async function runCourseIntel(
   courseId: number,
   options?: {
     fastMode?: boolean;
+    sourceMode?: CourseIntelSourceMode;
     onProgress?: (event: {
       stage: string;
       message: string;
@@ -1738,6 +1816,269 @@ export async function runCourseIntel(
   const modelName = await resolveModelForProvider(provider, String(profile?.ai_default_model || "").trim());
   if (!modelName) {
     throw new Error(`AI service not configured: no active model for provider ${provider}`);
+  }
+
+  const sourceModeRequested: CourseIntelSourceMode = options?.sourceMode || "auto";
+  const { data: existingSyllabus } = await supabase
+    .from("course_syllabi")
+    .select("id, source_url, raw_text, content, schedule")
+    .eq("course_id", courseId)
+    .maybeSingle();
+  const { data: existingAssignmentsRows } = await supabase
+    .from("course_assignments")
+    .select("kind, label, due_on, url, description, source_sequence, source_row_date, metadata")
+    .eq("course_id", courseId)
+    .order("due_on", { ascending: true })
+    .limit(500);
+
+  const existingScheduleRows = Array.isArray(existingSyllabus?.schedule) ? (existingSyllabus.schedule as Array<Record<string, unknown>>) : [];
+  const existingAssignments = Array.isArray(existingAssignmentsRows) ? existingAssignmentsRows : [];
+  const hasExistingData = existingScheduleRows.length > 0 || existingAssignments.length > 0;
+  const sourceModeEffective: CourseIntelSourceMode =
+    sourceModeRequested === "auto" ? (hasExistingData ? "existing" : "fresh") : sourceModeRequested;
+
+  if (sourceModeEffective === "existing" && !hasExistingData) {
+    throw new Error("No existing scraper data available for this course. Use fresh mode.");
+  }
+
+  await emitProgress(
+    "mode",
+    sourceModeEffective === "existing" ? "Using existing scraper data." : "Running fresh scrape + AI extraction.",
+    12,
+    { sourceModeRequested, sourceModeEffective, hasExistingData }
+  );
+
+  if (sourceModeEffective === "existing") {
+    const nowIso = new Date().toISOString();
+    const existingParsedContent =
+      existingSyllabus?.content && typeof existingSyllabus.content === "object"
+        ? (existingSyllabus.content as Record<string, unknown>)
+        : {};
+    const existingSourceUrl = typeof existingSyllabus?.source_url === "string" ? existingSyllabus.source_url : null;
+    const existingRawText = typeof existingSyllabus?.raw_text === "string" ? existingSyllabus.raw_text : "";
+
+    const assignmentRowsExisting: AssignmentRow[] = existingAssignments.map((row: Record<string, unknown>) => ({
+      course_id: courseId,
+      syllabus_id: existingSyllabus?.id ? Number(existingSyllabus.id) : null,
+      course_schedule_id: null,
+      kind: toKind(typeof row.kind === "string" ? row.kind : "other"),
+      label: typeof row.label === "string" ? row.label : "",
+      due_on: normalizeDate(row.due_on),
+      url: typeof row.url === "string" ? row.url : null,
+      description: typeof row.description === "string" ? row.description : null,
+      source_sequence: typeof row.source_sequence === "string" ? row.source_sequence : null,
+      source_row_date: normalizeDate(row.source_row_date),
+      metadata: (row.metadata && typeof row.metadata === "object" ? row.metadata : {}) as Json,
+      retrieved_at: nowIso,
+      updated_at: nowIso,
+    })).filter((row) => row.label.trim().length > 0);
+
+    const seedTasksFromSchedule = buildPlanSeedTasks(existingScheduleRows);
+    const seedTasksFromAssignments: PlanSeedTask[] = assignmentRowsExisting.map((row) => ({
+      kind: row.kind === "other" ? "task" : row.kind,
+      title: row.label,
+      due_on: row.due_on,
+      source_sequence: row.source_sequence,
+      url: row.url,
+      description: row.description,
+    }));
+    const seedTaskKey = new Set<string>();
+    const seedTasks = [...seedTasksFromSchedule, ...seedTasksFromAssignments].filter((task) => {
+      const key = `${task.kind}|${task.title.toLowerCase()}|${task.due_on || ""}`;
+      if (!task.title || seedTaskKey.has(key)) return false;
+      seedTaskKey.add(key);
+      return true;
+    });
+    const todayIso = toIsoDateUtc(new Date());
+    await emitProgress("planning", "Generating practical plan from existing data.", 55, {
+      seedTasks: seedTasks.length,
+      existingScheduleRows: existingScheduleRows.length,
+      existingAssignments: assignmentRowsExisting.length,
+    });
+
+    let practicalPlan = buildFallbackDailyPlan(seedTasks, todayIso, 21);
+    if (seedTasks.length > 0) {
+      try {
+        const planPrompt = buildPracticalPlanPrompt({
+          courseCode: String(course.course_code || ""),
+          title: String(course.title || ""),
+          todayIso,
+          tasks: seedTasks.slice(0, 80).map((task) => ({
+            kind: task.kind,
+            title: task.title,
+            due_on: task.due_on,
+            source_sequence: task.source_sequence,
+            url: task.url,
+          })),
+        });
+        const rawPlan = await generateDailyPlanWithModel({ provider, modelName, prompt: planPrompt });
+        const parsedPlan = parseLenientJson(rawPlan);
+        const sanitized = sanitizeDailyPlan(parsedPlan, todayIso);
+        const looseParsed = sanitized.days.length > 0 ? sanitized : parseLooseDailyPlanText(rawPlan, todayIso);
+        if (looseParsed.days.length > 0) practicalPlan = looseParsed;
+      } catch {
+        // Keep fallback plan.
+      }
+    }
+
+    const mergedContent = {
+      ...existingParsedContent,
+      course_intel: {
+        generated_at: new Date().toISOString(),
+        source_mode: sourceModeEffective,
+        curated_tasks: seedTasks.slice(0, 200),
+        curated_task_counts: {
+          total: seedTasks.length,
+          readings: seedTasks.filter((task) => task.kind === "reading").length,
+          assignments: seedTasks.filter((task) => task.kind === "assignment").length,
+          projects: seedTasks.filter((task) => task.kind === "project").length,
+          labs: seedTasks.filter((task) => task.kind === "lab").length,
+          exercises: seedTasks.filter((task) => task.kind === "exercise").length,
+          quizzes: seedTasks.filter((task) => task.kind === "quiz").length,
+          exams: seedTasks.filter((task) => task.kind === "exam").length,
+        },
+        practical_plan: practicalPlan,
+      },
+    };
+
+    const finalResources = dedupeResourcesByDomain(
+      [...(Array.isArray(course.resources) ? course.resources : [])].filter((u) => typeof u === "string")
+    );
+    const admin = createAdminClient();
+    if (finalResources.length > 0) {
+      const { error: courseUpdateError } = await admin.from("courses").update({ resources: finalResources }).eq("id", courseId);
+      if (courseUpdateError) throw new Error(courseUpdateError.message);
+    }
+
+    const { data: syllabusUpserted, error: syllabusError } = await admin
+      .from("course_syllabi")
+      .upsert(
+        {
+          course_id: courseId,
+          source_url: existingSourceUrl,
+          raw_text: existingRawText,
+          content: mergedContent as Json,
+          schedule: existingScheduleRows as Json,
+          retrieved_at: nowIso,
+          updated_at: nowIso,
+        },
+        { onConflict: "course_id" }
+      )
+      .select("id")
+      .maybeSingle();
+    if (syllabusError) throw new Error(syllabusError.message);
+    const syllabusId = syllabusUpserted?.id ? Number(syllabusUpserted.id) : (existingSyllabus?.id ? Number(existingSyllabus.id) : null);
+
+    const scheduleRowsFromPlan = buildCourseSchedulesFromDailyPlan({
+      courseId,
+      syllabusId,
+      plan: practicalPlan,
+      nowIso,
+    });
+    const adminAny = admin as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    let scheduleRowsPersisted = 0;
+    const scheduleBinding = new Map<string, number>();
+    if (scheduleRowsFromPlan.length > 0) {
+      const { error: deleteSchedulesError } = await adminAny
+        .from("course_schedules")
+        .delete()
+        .eq("course_id", courseId)
+        .eq("source", "ai_course_intel");
+      if (deleteSchedulesError) throw new Error(deleteSchedulesError.message);
+      const { data: insertedSchedules, error: insertSchedulesError } = await adminAny
+        .from("course_schedules")
+        .insert(scheduleRowsFromPlan)
+        .select("id, schedule_date, task_title, task_kind");
+      if (insertSchedulesError) throw new Error(insertSchedulesError.message);
+      const inserted = Array.isArray(insertedSchedules) ? insertedSchedules : [];
+      scheduleRowsPersisted = inserted.length;
+      for (const row of inserted) {
+        const date = typeof row.schedule_date === "string" ? row.schedule_date : "";
+        const title = typeof row.task_title === "string" ? row.task_title.trim().toLowerCase() : "";
+        const kind = typeof row.task_kind === "string" ? row.task_kind.trim().toLowerCase() : "";
+        const id = Number(row.id || 0);
+        if (!date || !title || !id) continue;
+        scheduleBinding.set(`${date}|${title}|${kind}`, id);
+      }
+    }
+
+    const aiAssignments = buildAssignmentsFromDailyPlan({
+      courseId,
+      syllabusId,
+      plan: practicalPlan,
+      nowIso,
+    }).map((row) => {
+      const key = `${row.due_on || ""}|${row.label.trim().toLowerCase()}|${String(row.kind || "").toLowerCase()}`;
+      const scheduleId = scheduleBinding.get(key);
+      return {
+        ...row,
+        course_schedule_id: scheduleId || null,
+        metadata: row.metadata as Json,
+      } as AssignmentRow;
+    });
+
+    const assignmentRows = dedupeAssignments([...assignmentRowsExisting, ...aiAssignments]);
+    let assignmentsPersisted = 0;
+    let assignmentsPreserved = false;
+    if (assignmentRows.length > 0) {
+      const { error: deleteAssignmentsError } = await admin.from("course_assignments").delete().eq("course_id", courseId);
+      if (deleteAssignmentsError) throw new Error(deleteAssignmentsError.message);
+      const { error: insertAssignmentsError } = await admin.from("course_assignments").insert(assignmentRows);
+      if (insertAssignmentsError) throw new Error(insertAssignmentsError.message);
+      assignmentsPersisted = assignmentRows.length;
+    } else {
+      assignmentsPreserved = true;
+    }
+
+    mark("db_persist_done");
+    const totalMs = Date.now() - t0;
+    await emitProgress("done", "AI sync completed from existing data.", 100, {
+      scheduleRowsPersisted,
+      assignmentsPersisted,
+      sourceModeEffective,
+      totalMs,
+    });
+
+    await logAiUsage({
+      userId,
+      provider,
+      model: modelName,
+      feature: "course-intel",
+      tokensInput: 0,
+      tokensOutput: 0,
+      prompt: `course-intel-existing-mode:${courseId}`,
+      responseText: "",
+      requestPayload: { courseId, courseCode: course.course_code, university: course.university, sourceMode: sourceModeEffective },
+      responsePayload: {
+        resourcesCount: finalResources.length,
+        scheduleEntries: existingScheduleRows.length,
+        scheduleRowsPersisted,
+        assignmentsCount: assignmentRows.length,
+        curatedTasks: seedTasks.length,
+        practicalPlanDays: practicalPlan.days.length,
+        assignmentsPersisted,
+        assignmentsPreserved,
+        sourceModeEffective,
+        fastMode,
+        timings,
+        totalMs,
+      },
+    });
+
+    return {
+      resources: finalResources,
+      scheduleEntries: existingScheduleRows.length,
+      scheduleRowsPersisted,
+      assignmentsCount: assignmentRows.length,
+      curatedTasks: seedTasks.length,
+      practicalPlanDays: practicalPlan.days.length,
+      assignmentsPersisted,
+      assignmentsPreserved,
+      sourceMode: sourceModeEffective,
+      fastMode,
+      timings,
+      totalMs,
+    };
   }
 
   const knownUrls = [course.url, ...(Array.isArray(course.resources) ? course.resources : [])]
@@ -1985,12 +2326,62 @@ export async function runCourseIntel(
   const parsedResources = normalizeResources(parsed.resources);
   const sourceUrl = typeof parsed.source_url === "string" ? parsed.source_url : rawSourceUrl;
   const parsedContent = (parsed.content && typeof parsed.content === "object" ? parsed.content : {}) as Json;
-  const content = mergeGradingSignals(parsedContent, gradingSignals);
+  const content = mergeGradingSignals(parsedContent, gradingSignals) as Record<string, unknown>;
   const recoveredScheduleRows = extractScheduleRowsFromRawText(text);
   const scheduleArray = extraction.scheduleArray.length > 0 ? extraction.scheduleArray : recoveredScheduleRows;
   const mergedWithWeekSignals = mergeWeekSignalsIntoSchedule(scheduleArray, weekSignals);
   const mergedScheduleArray = mergeDeterministicScheduleRows(mergedWithWeekSignals, deterministicRows);
   const schedule = mergedScheduleArray as Json;
+  const seedTasks = buildPlanSeedTasks(mergedScheduleArray);
+  const todayIso = toIsoDateUtc(new Date());
+  await emitProgress("planning", "Curated learning tasks prepared.", 76, {
+    curatedTasks: seedTasks.length,
+  });
+
+  let practicalPlan = buildFallbackDailyPlan(seedTasks, todayIso, 21);
+  if (seedTasks.length > 0) {
+    try {
+      const planPrompt = buildPracticalPlanPrompt({
+        courseCode: String(course.course_code || ""),
+        title: String(course.title || ""),
+        todayIso,
+        tasks: seedTasks.slice(0, 80).map((task) => ({
+          kind: task.kind,
+          title: task.title,
+          due_on: task.due_on,
+          source_sequence: task.source_sequence,
+          url: task.url,
+        })),
+      });
+      const rawPlan = await generateDailyPlanWithModel({ provider, modelName, prompt: planPrompt });
+      const parsedPlan = parseLenientJson(rawPlan);
+      const sanitized = sanitizeDailyPlan(parsedPlan, todayIso);
+      const looseParsed = sanitized.days.length > 0 ? sanitized : parseLooseDailyPlanText(rawPlan, todayIso);
+      const finalPlan = looseParsed.days.length > 0 ? looseParsed : sanitized;
+      if (finalPlan.days.length > 0) practicalPlan = finalPlan;
+    } catch {
+      // Keep fallback plan if AI planning fails.
+    }
+  }
+  await emitProgress("planning", "Daily practical plan generated.", 80, {
+    days: practicalPlan.days.length,
+  });
+
+  content.course_intel = {
+    generated_at: new Date().toISOString(),
+    curated_tasks: seedTasks.slice(0, 200),
+    curated_task_counts: {
+      total: seedTasks.length,
+      readings: seedTasks.filter((task) => task.kind === "reading").length,
+      assignments: seedTasks.filter((task) => task.kind === "assignment").length,
+      projects: seedTasks.filter((task) => task.kind === "project").length,
+      labs: seedTasks.filter((task) => task.kind === "lab").length,
+      exercises: seedTasks.filter((task) => task.kind === "exercise").length,
+      quizzes: seedTasks.filter((task) => task.kind === "quiz").length,
+      exams: seedTasks.filter((task) => task.kind === "exam").length,
+    },
+    practical_plan: practicalPlan,
+  };
   const rawClaimsSource = /"source_url"\s*:/i.test(text);
   // Prefer graceful degradation: recover rows from raw text if top-level JSON is truncated.
   // Keep hard failure only when source_url is malformed and cannot be recovered.
@@ -2036,7 +2427,7 @@ export async function runCourseIntel(
         course_id: courseId,
         source_url: sourceUrl,
         raw_text: text,
-        content,
+        content: content as Json,
         schedule,
         retrieved_at: nowIso,
         updated_at: nowIso,
@@ -2057,10 +2448,64 @@ export async function runCourseIntel(
     if (syllabusFetchError) throw new Error(syllabusFetchError.message);
     syllabusId = syllabusFetched?.id ? Number(syllabusFetched.id) : null;
   }
+  const scheduleRowsFromPlan = buildCourseSchedulesFromDailyPlan({
+    courseId,
+    syllabusId,
+    plan: practicalPlan,
+    nowIso,
+  });
+  const adminAny = admin as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  let scheduleRowsPersisted = 0;
+  const scheduleBinding = new Map<string, number>();
+  if (scheduleRowsFromPlan.length > 0) {
+    const { error: deleteSchedulesError } = await adminAny
+      .from("course_schedules")
+      .delete()
+      .eq("course_id", courseId)
+      .eq("source", "ai_course_intel");
+    if (deleteSchedulesError) throw new Error(deleteSchedulesError.message);
+
+    const { data: insertedSchedules, error: insertSchedulesError } = await adminAny
+      .from("course_schedules")
+      .insert(scheduleRowsFromPlan)
+      .select("id, schedule_date, task_title, task_kind");
+    if (insertSchedulesError) throw new Error(insertSchedulesError.message);
+    const inserted = Array.isArray(insertedSchedules) ? insertedSchedules : [];
+    scheduleRowsPersisted = inserted.length;
+    for (const row of inserted) {
+      const date = typeof row.schedule_date === "string" ? row.schedule_date : "";
+      const title = typeof row.task_title === "string" ? row.task_title.trim().toLowerCase() : "";
+      const kind = typeof row.task_kind === "string" ? row.task_kind.trim().toLowerCase() : "";
+      const id = Number(row.id || 0);
+      if (!date || !title || !id) continue;
+      scheduleBinding.set(`${date}|${title}|${kind}`, id);
+    }
+  }
+
   const assignmentsFromSchedule = extractAssignmentsFromSchedule(courseId, syllabusId, mergedScheduleArray, nowIso);
   const heuristicAssignments = extractHeuristicAssignmentsFromSchedule(courseId, syllabusId, mergedScheduleArray, nowIso);
   const topLevelAssignments = extractTopLevelAssignments(courseId, syllabusId, parsed.assignments, nowIso);
-  const assignmentRows = dedupeAssignments([...assignmentsFromSchedule, ...heuristicAssignments, ...topLevelAssignments]);
+  const aiAssignments = buildAssignmentsFromDailyPlan({
+    courseId,
+    syllabusId,
+    plan: practicalPlan,
+    nowIso,
+  }).map((row) => {
+    const key = `${row.due_on || ""}|${row.label.trim().toLowerCase()}|${String(row.kind || "").toLowerCase()}`;
+    const scheduleId = scheduleBinding.get(key);
+    return {
+      ...row,
+      course_schedule_id: scheduleId || null,
+      metadata: row.metadata as Json,
+    } as AssignmentRow;
+  });
+
+  const assignmentRows = dedupeAssignments([
+    ...assignmentsFromSchedule,
+    ...heuristicAssignments,
+    ...topLevelAssignments,
+    ...aiAssignments,
+  ]);
 
   let assignmentsPersisted = 0;
   let assignmentsPreserved = false;
@@ -2089,6 +2534,7 @@ export async function runCourseIntel(
   await emitProgress("persist", "Persistence complete.", 95, {
     assignmentsPersisted,
     assignmentsPreserved,
+    scheduleRowsPersisted,
   });
 
   await logAiUsage({
@@ -2105,8 +2551,12 @@ export async function runCourseIntel(
       resourcesCount: finalResources.length,
       scheduleEntries: mergedScheduleArray.length,
       assignmentsCount: assignmentRows.length,
+      scheduleRowsPersisted,
+      curatedTasks: seedTasks.length,
+      practicalPlanDays: practicalPlan.days.length,
       assignmentsPersisted,
       assignmentsPreserved,
+      sourceModeEffective,
       fastMode,
       timings,
       totalMs,
@@ -2120,9 +2570,13 @@ export async function runCourseIntel(
   return {
     resources: finalResources,
     scheduleEntries: mergedScheduleArray.length,
+    scheduleRowsPersisted,
     assignmentsCount: assignmentRows.length,
+    curatedTasks: seedTasks.length,
+    practicalPlanDays: practicalPlan.days.length,
     assignmentsPersisted,
     assignmentsPreserved,
+    sourceMode: sourceModeEffective,
     fastMode,
     timings,
     totalMs,

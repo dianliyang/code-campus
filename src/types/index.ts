@@ -39,6 +39,11 @@ export interface Course {
   assignmentsCount?: number;
   hasSyllabus?: boolean;
   syllabusScheduleEntries?: number;
+  aiPlanSummary?: {
+    nextDate: string | null;
+    nextFocus: string | null;
+    days: number;
+  };
 }
 
 export interface University {

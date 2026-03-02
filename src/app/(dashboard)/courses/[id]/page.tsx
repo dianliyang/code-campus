@@ -100,6 +100,13 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
     .order("due_on", { ascending: true, nullsFirst: false })
     .order("id", { ascending: true });
 
+  const courseSchedulesPromise = (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    .from("course_schedules")
+    .select("schedule_date, task_title, task_kind, focus, duration_minutes")
+    .eq("course_id", Number(id))
+    .order("schedule_date", { ascending: true })
+    .order("id", { ascending: true });
+
   const [
     { data, error },
     { data: enrollment },
@@ -108,6 +115,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
     { data: studyPlanRows },
     { data: syllabusData },
     { data: assignmentRows },
+    { data: courseScheduleRows },
   ] = await Promise.all([
     coursePromise,
     enrollmentPromise,
@@ -116,6 +124,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
     studyPlansPromise,
     syllabusPromise,
     assignmentsPromise,
+    courseSchedulesPromise,
   ]);
 
   if (error || !data) {
@@ -182,6 +191,19 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
         due_on: item.due_on,
         url: item.url,
         description: item.description,
+      }))}
+      scheduleItems={(courseScheduleRows || []).map((row: {
+        schedule_date: string;
+        task_title: string | null;
+        task_kind: string | null;
+        focus: string | null;
+        duration_minutes: number | null;
+      }) => ({
+        date: row.schedule_date,
+        title: row.task_title,
+        kind: row.task_kind,
+        focus: row.focus,
+        durationMinutes: row.duration_minutes,
       }))}
     />
   );

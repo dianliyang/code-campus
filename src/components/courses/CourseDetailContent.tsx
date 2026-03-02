@@ -10,7 +10,6 @@ import { CalendarDays, Check, Clock, Globe, Info, Loader2, Minus, PenSquare, Plu
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
-import CourseSyllabusTable, { type SyllabusEntry, type SyllabusContent } from "@/components/courses/CourseSyllabusTable";
 
 interface CourseDetailContentProps {
   course: Course;
@@ -34,11 +33,18 @@ interface CourseDetailContentProps {
     url: string | null;
     description: string | null;
   }>;
+  scheduleItems?: Array<{
+    date: string;
+    title: string | null;
+    kind: string | null;
+    focus: string | null;
+    durationMinutes: number | null;
+  }>;
 }
 
 type PlanCalendarEvent = {
   label: string;
-  timeLabel: string;
+  meta: string;
 };
 
 function parseIsoDate(value: string): Date | null {
@@ -68,14 +74,11 @@ export default function CourseDetailContent({
   availableSemesters,
   studyPlans,
   projectSeminarRef = null,
-  syllabus = null,
+  scheduleItems = [],
 }: CourseDetailContentProps) {
   const [enrolled, setEnrolled] = useState(isEnrolled);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [syllabusData, setSyllabusData] = useState(syllabus);
-  const [syllabusClearSignal, setSyllabusClearSignal] = useState(0);
-  const [isClearingSyllabus, setIsClearingSyllabus] = useState(false);
   const [isGeneratingPlans, setIsGeneratingPlans] = useState(false);
   const [isConfirmingPlans, setIsConfirmingPlans] = useState(false);
   const [editablePlans, setEditablePlans] = useState<EditableStudyPlan[]>(studyPlans);
@@ -93,6 +96,7 @@ export default function CourseDetailContent({
   const [isAddingUrl, setIsAddingUrl] = useState(false);
   const [removingUrlIndex, setRemovingUrlIndex] = useState<number | null>(null);
   const [showAllResources, setShowAllResources] = useState(false);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
   const router = useRouter();
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const hasStudyPlans = editablePlans.length > 0;
@@ -146,30 +150,23 @@ export default function CourseDetailContent({
     setShowAllResources(false);
   }, [course.resources]);
 
-  useEffect(() => {
-    setSyllabusData(syllabus);
-  }, [syllabus]);
-
   const studyPlanCalendar = useMemo(() => {
-    const validPlans = editablePlans
-      .map((plan) => {
-        const start = parseIsoDate(plan.startDate);
-        const end = parseIsoDate(plan.endDate);
-        if (!start || !end || start > end) return null;
-        const days = Array.isArray(plan.daysOfWeek)
-          ? plan.daysOfWeek.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
-          : [];
-        return {
-          start,
-          end,
-          days,
-          label: (plan.kind || "Study Session").trim() || "Study Session",
-          timeLabel: `${plan.startTime.slice(0, 5)}-${plan.endTime.slice(0, 5)}`,
-        };
+    const rows = scheduleItems
+      .map((item) => {
+        const parsedDate = parseIsoDate(item.date);
+        if (!parsedDate) return null;
+        const dateIso = toIsoDateUtc(parsedDate);
+        const label = String(item.title || item.focus || item.kind || "Scheduled Task").trim();
+        const duration = typeof item.durationMinutes === "number" && Number.isFinite(item.durationMinutes)
+          ? `${Math.max(1, Math.round(item.durationMinutes))}m`
+          : "";
+        const kind = String(item.kind || "").trim();
+        const meta = [kind, duration].filter(Boolean).join(" · ") || "Scheduled";
+        return { dateIso, label, meta };
       })
-      .filter((plan): plan is { start: Date; end: Date; days: number[]; label: string; timeLabel: string } => plan !== null);
+      .filter((row): row is { dateIso: string; label: string; meta: string } => row !== null);
 
-    if (validPlans.length === 0) {
+    if (rows.length === 0) {
       return {
         range: null as null | { startIso: string; endIso: string },
         months: [] as Array<{
@@ -181,21 +178,17 @@ export default function CourseDetailContent({
       };
     }
 
-    const rangeStart = validPlans.reduce((min, plan) => (plan.start < min ? plan.start : min), validPlans[0].start);
-    const rangeEnd = validPlans.reduce((max, plan) => (plan.end > max ? plan.end : max), validPlans[0].end);
+    const sortedDates = rows.map((row) => row.dateIso).sort();
+    const rangeStart = parseIsoDate(sortedDates[0])!;
+    const rangeEnd = parseIsoDate(sortedDates[sortedDates.length - 1])!;
     const rangeStartIso = toIsoDateUtc(rangeStart);
     const rangeEndIso = toIsoDateUtc(rangeEnd);
 
     const eventsByDate = new Map<string, PlanCalendarEvent[]>();
-    for (const plan of validPlans) {
-      const daySet = new Set<number>(plan.days);
-      for (let cursor = new Date(plan.start.getTime()); cursor <= plan.end; cursor = addDaysUtc(cursor, 1)) {
-        if (!daySet.has(cursor.getUTCDay())) continue;
-        const iso = toIsoDateUtc(cursor);
-        const list = eventsByDate.get(iso) || [];
-        list.push({ label: plan.label, timeLabel: plan.timeLabel });
-        eventsByDate.set(iso, list);
-      }
+    for (const row of rows) {
+      const list = eventsByDate.get(row.dateIso) || [];
+      list.push({ label: row.label, meta: row.meta });
+      eventsByDate.set(row.dateIso, list);
     }
 
     const months: Array<{
@@ -236,7 +229,24 @@ export default function CourseDetailContent({
       months,
       eventsByDate,
     };
-  }, [editablePlans]);
+  }, [scheduleItems]);
+
+  useEffect(() => {
+    if (!studyPlanCalendar.range) {
+      setSelectedCalendarDate(null);
+      return;
+    }
+    const current = selectedCalendarDate;
+    if (
+      current &&
+      current >= studyPlanCalendar.range.startIso &&
+      current <= studyPlanCalendar.range.endIso
+    ) {
+      return;
+    }
+    const firstEventDate = Array.from(studyPlanCalendar.eventsByDate.keys()).sort()[0] || null;
+    setSelectedCalendarDate(firstEventDate || studyPlanCalendar.range.startIso);
+  }, [studyPlanCalendar, selectedCalendarDate]);
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);
@@ -297,44 +307,6 @@ export default function CourseDetailContent({
       console.error(error);
     } finally {
       setIsEnrolling(false);
-    }
-  };
-
-  const handleClearSyllabus = async () => {
-    if (!syllabusData || isClearingSyllabus) return;
-    setIsClearingSyllabus(true);
-    setSyllabusClearSignal((v) => v + 1);
-    try {
-      const res = await fetch("/api/courses/syllabus/clear", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId: course.id }),
-      });
-      if (!res.ok) {
-        let message = "Failed to clear syllabus.";
-        try {
-          const payload = await res.json();
-          if (typeof payload?.error === "string" && payload.error.trim()) {
-            message = payload.error.trim();
-          }
-        } catch {
-          // Ignore parse failures and use default message.
-        }
-        throw new Error(message);
-      }
-      const payload = await res.json();
-      const nextSchedule = Array.isArray(payload?.schedule) ? payload.schedule : [];
-      setSyllabusData((prev) => (
-        prev
-          ? { ...prev, schedule: nextSchedule, retrieved_at: new Date().toISOString() }
-          : prev
-      ));
-      startTransition(() => router.refresh());
-    } catch (error) {
-      console.error(error);
-      alert(error instanceof Error ? error.message : "Failed to clear syllabus.");
-    } finally {
-      setIsClearingSyllabus(false);
     }
   };
 
@@ -746,35 +718,6 @@ export default function CourseDetailContent({
           )}
 
           <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <h2 className="text-base font-semibold text-[#1f1f1f]">Syllabus</h2>
-              {syllabusData && (
-                <button
-                  type="button"
-                  onClick={handleClearSyllabus}
-                  disabled={isClearingSyllabus}
-                  className="h-7 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[12px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
-                >
-                  {isClearingSyllabus ? "Clearing..." : "Clear"}
-                </button>
-              )}
-            </div>
-            {syllabusData ? (
-              <CourseSyllabusTable
-                schedule={(syllabusData.schedule as SyllabusEntry[]) || []}
-                content={(syllabusData.content as SyllabusContent) || {}}
-                sourceUrl={syllabusData.source_url}
-                clearSignal={syllabusClearSignal}
-              />
-            ) : (
-              <p className="text-sm text-[#888]">
-                No syllabus retrieved yet. Use the{" "}
-                <span className="font-medium text-[#444]">AI Sync</span> button in the header.
-              </p>
-            )}
-          </section>
-
-          <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h2 className="text-base font-semibold text-[#1f1f1f] flex items-center gap-2">
                 <CalendarDays className="w-4 h-4 text-[#777]" />
@@ -787,62 +730,95 @@ export default function CourseDetailContent({
               )}
             </div>
             {studyPlanCalendar.range ? (
-              <div className="space-y-4">
-                {studyPlanCalendar.months.map((month) => (
-                  <div key={month.key} className="rounded-md border border-[#e7e7e7] bg-white p-2.5">
-                    <p className="text-sm font-semibold text-[#2a2a2a] mb-2">{month.label}</p>
-                    <div className="grid grid-cols-7 gap-1 mb-1">
-                      {dayLabels.map((day) => (
-                        <div key={`${month.key}-${day}`} className="text-[10px] text-[#8a8a8a] font-medium text-center py-1">
-                          {day}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-7 gap-1">
-                      {month.cells.map((cell) => {
-                        const events = studyPlanCalendar.eventsByDate.get(cell.dateIso) || [];
-                        return (
-                          <div
-                            key={`${month.key}-${cell.dateIso}`}
-                            className={`min-h-[72px] rounded border p-1.5 ${
-                              !cell.inRange
-                                ? "border-transparent bg-[#fafafa] opacity-40"
-                                : cell.inMonth
-                                  ? "border-[#ececec] bg-white"
-                                  : "border-[#f0f0f0] bg-[#fcfcfc]"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-semibold text-[#666]">{cell.day}</span>
-                              {events.length > 0 && (
-                                <span className="text-[10px] rounded bg-[#eaf1ff] px-1 py-0.5 text-[#486ca8]">
-                                  {events.length}
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-1 space-y-1">
-                              {events.slice(0, 2).map((event, idx) => (
-                                <p
-                                  key={`${cell.dateIso}-${event.label}-${idx}`}
-                                  className="text-[10px] leading-tight rounded bg-[#f3f6fb] px-1 py-0.5 text-[#465979] truncate"
-                                  title={`${event.timeLabel} ${event.label}`}
-                                >
-                                  {event.timeLabel} {event.label}
-                                </p>
-                              ))}
-                              {events.length > 2 && (
-                                <p className="text-[10px] text-[#7a7a7a]">+{events.length - 2} more</p>
-                              )}
-                            </div>
+              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-3">
+                <div className="space-y-4">
+                  {studyPlanCalendar.months.map((month) => (
+                    <div key={month.key} className="rounded-md border border-[#e7e7e7] bg-white p-2.5">
+                      <p className="text-sm font-semibold text-[#2a2a2a] mb-2">{month.label}</p>
+                      <div className="grid grid-cols-7 gap-1 mb-1">
+                        {dayLabels.map((day) => (
+                          <div key={`${month.key}-${day}`} className="text-[10px] text-[#8a8a8a] font-medium text-center py-1">
+                            {day}
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-7 gap-1">
+                        {month.cells.map((cell) => {
+                          const events = studyPlanCalendar.eventsByDate.get(cell.dateIso) || [];
+                          const isSelected = selectedCalendarDate === cell.dateIso;
+                          const canSelect = cell.inRange;
+                          return (
+                            <button
+                              type="button"
+                              key={`${month.key}-${cell.dateIso}`}
+                              onClick={() => {
+                                if (canSelect) setSelectedCalendarDate(cell.dateIso);
+                              }}
+                              disabled={!canSelect}
+                              className={`min-h-[72px] rounded border p-1.5 text-left ${
+                                !cell.inRange
+                                  ? "border-transparent bg-[#fafafa] opacity-40"
+                                  : isSelected
+                                    ? "border-[#93add8] bg-[#eef4ff]"
+                                    : cell.inMonth
+                                      ? "border-[#ececec] bg-white"
+                                      : "border-[#f0f0f0] bg-[#fcfcfc]"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-semibold text-[#666]">{cell.day}</span>
+                                {events.length > 0 && (
+                                  <span className="text-[10px] rounded bg-[#eaf1ff] px-1 py-0.5 text-[#486ca8]">
+                                    {events.length}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-1 space-y-1">
+                                {events.slice(0, 2).map((event, idx) => (
+                                  <p
+                                    key={`${cell.dateIso}-${event.label}-${idx}`}
+                                    className="text-[10px] leading-tight rounded bg-[#f3f6fb] px-1 py-0.5 text-[#465979] truncate"
+                                    title={`${event.meta} ${event.label}`}
+                                  >
+                                    {event.label}
+                                  </p>
+                                ))}
+                                {events.length > 2 && (
+                                  <p className="text-[10px] text-[#7a7a7a]">+{events.length - 2} more</p>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <aside className="rounded-md border border-[#e7e7e7] bg-white p-3 h-fit xl:sticky xl:top-3">
+                  <h3 className="text-sm font-semibold text-[#2a2a2a]">Day Details</h3>
+                  <p className="text-xs text-[#777] mt-1">
+                    {selectedCalendarDate || "Select a day"}
+                  </p>
+                  {selectedCalendarDate ? (
+                    (studyPlanCalendar.eventsByDate.get(selectedCalendarDate) || []).length > 0 ? (
+                      <ul className="mt-3 space-y-2">
+                        {(studyPlanCalendar.eventsByDate.get(selectedCalendarDate) || []).map((event, idx) => (
+                          <li key={`${selectedCalendarDate}-${event.label}-${idx}`} className="rounded border border-[#ececec] bg-[#fafafa] p-2">
+                            <p className="text-[11px] font-medium text-[#2f2f2f]">{event.label}</p>
+                            <p className="text-[11px] text-[#666] mt-0.5">{event.meta}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-[#8a8a8a] mt-3">No scheduled events on this day.</p>
+                    )
+                  ) : (
+                    <p className="text-xs text-[#8a8a8a] mt-3">Pick a date to view events.</p>
+                  )}
+                </aside>
               </div>
             ) : (
-              <p className="text-sm text-[#9a9a9a]">No study plan range found yet. Add or generate a schedule first.</p>
+              <p className="text-sm text-[#9a9a9a]">No schedule range found yet.</p>
             )}
           </section>
 

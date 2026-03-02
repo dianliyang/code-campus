@@ -19,13 +19,15 @@ export default async function WorkoutsPage({ searchParams }: PageProps) {
   const dict = await getDictionary(lang);
 
   return (
-    <div className="space-y-4">
+    <div className="h-[calc(100vh-96px)] min-h-[680px] flex flex-col gap-3">
       <Suspense fallback={null}>
         <SidebarData dict={dict.dashboard.workouts} />
       </Suspense>
-      <Suspense fallback={<WorkoutListSkeleton />}>
-        <WorkoutListData params={params} dict={dict.dashboard.workouts} />
-      </Suspense>
+      <div className="flex-1 min-h-0">
+        <Suspense fallback={<WorkoutListSkeleton />}>
+          <WorkoutListData params={params} dict={dict.dashboard.workouts} />
+        </Suspense>
+      </div>
     </div>
   );
 }

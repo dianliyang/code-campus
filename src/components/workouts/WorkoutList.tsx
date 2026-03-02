@@ -61,7 +61,7 @@ export default function WorkoutList({
     || null;
 
   return (
-    <main className="flex-grow space-y-3 min-w-0">
+    <main className="h-full flex flex-col space-y-3 min-w-0">
       <WorkoutListHeader
         totalItems={totalItems}
         viewMode={effectiveViewMode}
@@ -70,7 +70,7 @@ export default function WorkoutList({
         lastUpdated={lastUpdated}
       />
 
-      <div className={`bg-[#fcfcfc] rounded-lg border border-[#e5e5e5] ${effectiveViewMode === "grid" ? "overflow-visible p-3" : "overflow-hidden"}`}>
+      <div className={`flex-1 min-h-0 bg-[#fcfcfc] rounded-lg border border-[#e5e5e5] ${effectiveViewMode === "grid" ? "overflow-auto p-3" : "overflow-hidden"}`}>
         {effectiveViewMode === "list" ? (
           <>
             <div className="hidden md:grid md:grid-cols-[320px_minmax(0,1fr)] min-h-[480px]">

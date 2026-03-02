@@ -1721,7 +1721,7 @@ export async function runCourseIntel(
     .filter(Boolean) as string[];
 
   // Optimization: if we already have enough known URLs, skip Brave discovery to reduce latency.
-  const shouldRunWebDiscovery = webSearchEnabled && knownUrls.length < 2;
+  const shouldRunWebDiscovery = webSearchEnabled && (knownUrls.length < 4 || !fastMode);
   const discoveredUrls = shouldRunWebDiscovery
     ? await discoverCourseUrlsWithBrave(
       String(course.course_code || ""),
@@ -1961,7 +1961,8 @@ export async function runCourseIntel(
   // Prefer graceful degradation: recover rows from raw text if top-level JSON is truncated.
   // Keep hard failure only when source_url is malformed and cannot be recovered.
   if (rawClaimsSource && !sourceUrl) {
-    throw new Error("AI returned malformed/truncated source_url JSON");
+    // Graceful degradation: keep parsing/persisting schedule/resources even if source_url is malformed.
+    // This avoids hard-failing the whole sync on a partial/truncated source_url field.
   }
   const scheduleResources = extractResourcesFromSchedule(mergedScheduleArray);
   const mergedResourceCandidates = dedupeResourcesByDomain([

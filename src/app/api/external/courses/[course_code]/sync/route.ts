@@ -10,10 +10,39 @@ function isAuthorized(request: NextRequest): boolean {
   return authHeader === internalKey;
 }
 
+function isLikelyPrivateUrl(url: string): boolean {
+  const u = url.toLowerCase();
+  return /canvas\.|blackboard|moodle|piazza|edstem|gradescope|coursera|udemy|auth|login|sso|shibboleth/.test(u);
+}
+
+function shouldSkipAsPrivate(course: Record<string, unknown>): { skip: boolean; reason: string | null } {
+  const details = (course.details && typeof course.details === 'object') ? (course.details as Record<string, unknown>) : {};
+  if (details.ai_sync_private === true) {
+    return { skip: true, reason: 'tagged_private' };
+  }
+
+  const urls: string[] = [];
+  if (typeof course.url === 'string' && course.url.trim()) urls.push(course.url.trim());
+  if (Array.isArray(course.resources)) {
+    for (const r of course.resources) if (typeof r === 'string' && r.trim()) urls.push(r.trim());
+  }
+
+  if (urls.length === 0) {
+    return { skip: true, reason: 'no_public_source_urls' };
+  }
+
+  const privateCount = urls.filter(isLikelyPrivateUrl).length;
+  if (privateCount === urls.length) {
+    return { skip: true, reason: 'all_sources_require_auth_or_private' };
+  }
+
+  return { skip: false, reason: null };
+}
+
 async function resolveCourse(supabase: ReturnType<typeof createAdminClient>, courseCode: string) {
   const { data: courseRow, error: courseError } = await supabase
     .from('courses')
-    .select('id, course_code, title, university, is_hidden')
+    .select('id, course_code, title, university, is_hidden, url, resources, details')
     .eq('course_code', courseCode)
     .maybeSingle();
 
@@ -49,12 +78,43 @@ export async function POST(
       ? body.userId.trim()
       : null;
     const fastMode = typeof body?.fastMode === 'boolean' ? body.fastMode : true;
+    const force = body?.force === true;
 
     const supabase = createAdminClient();
     const courseRow = await resolveCourse(supabase, courseCode);
 
     if (!courseRow) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+    }
+
+    const skipDecision = shouldSkipAsPrivate(courseRow as unknown as Record<string, unknown>);
+    if (!force && skipDecision.skip) {
+      const details = (courseRow.details && typeof courseRow.details === 'object')
+        ? (courseRow.details as Record<string, unknown>)
+        : {};
+      const nextDetails = {
+        ...details,
+        ai_sync_private: true,
+        ai_sync_skip: true,
+        ai_sync_skip_reason: skipDecision.reason,
+        ai_sync_skip_updated_at: new Date().toISOString(),
+      };
+      await supabase
+        .from('courses')
+        .update({ details: nextDetails })
+        .eq('id', courseRow.id);
+
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        reason: skipDecision.reason,
+        course: {
+          id: courseRow.id,
+          code: courseRow.course_code,
+          title: courseRow.title,
+          university: courseRow.university,
+        },
+      });
     }
 
     let userId = requestedUserId;
@@ -143,6 +203,7 @@ export async function GET(
         title,
         university,
         resources,
+        details,
         course_syllabi(source_url, retrieved_at, updated_at),
         course_assignments(id, kind, label, due_on, updated_at)
       `)
@@ -162,6 +223,10 @@ export async function GET(
       : null;
     const assignments = Array.isArray(course.course_assignments) ? course.course_assignments : [];
 
+    const details = (course.details && typeof course.details === 'object')
+      ? (course.details as Record<string, unknown>)
+      : {};
+
     return NextResponse.json({
       success: true,
       course: {
@@ -169,6 +234,12 @@ export async function GET(
         code: course.course_code,
         title: course.title,
         university: course.university,
+      },
+      syncPolicy: {
+        private: details.ai_sync_private === true,
+        skip: details.ai_sync_skip === true,
+        reason: typeof details.ai_sync_skip_reason === 'string' ? details.ai_sync_skip_reason : null,
+        updatedAt: typeof details.ai_sync_skip_updated_at === 'string' ? details.ai_sync_skip_updated_at : null,
       },
       resourcesCount: Array.isArray(course.resources) ? course.resources.length : 0,
       syllabus: syllabus

@@ -7,6 +7,7 @@ export type CourseIntelJobItem = {
   id: number;
   status: string;
   error?: string | null;
+  sourceMode?: "auto" | "existing" | "fresh";
   university?: string | null;
   created_at?: string | null;
   started_at?: string | null;
@@ -14,6 +15,7 @@ export type CourseIntelJobItem = {
   meta?: {
     course_id?: number;
     progress?: number;
+    source_mode?: "auto" | "existing" | "fresh";
     activity?: Array<{ ts: string; stage: string; message: string; progress?: number }>;
     [key: string]: unknown;
   } | null;

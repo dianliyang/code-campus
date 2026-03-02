@@ -20,6 +20,9 @@ import {
   Sparkles,
 } from "lucide-react";
 
+type AiSyncSourceMode = "auto" | "existing" | "fresh";
+const AI_SYNC_MODE_STORAGE_KEY = "cc:ai-sync-source-mode";
+
 interface ActiveCourseTrackProps {
   course: Course;
   initialProgress: number;
@@ -51,6 +54,15 @@ export default function ActiveCourseTrack({
   const [gpa, setGpa] = useState("");
   const [isAiUpdating, setIsAiUpdating] = useState(false);
   const [aiStatus, setAiStatus] = useState<"idle" | "success" | "error">("idle");
+  const [aiSourceMode, setAiSourceMode] = useState<AiSyncSourceMode>(() => {
+    if (typeof window === "undefined") return "auto";
+    try {
+      const saved = window.localStorage.getItem(AI_SYNC_MODE_STORAGE_KEY);
+      return saved === "fresh" || saved === "existing" || saved === "auto" ? saved : "auto";
+    } catch {
+      return "auto";
+    }
+  });
   const { showToast } = useAppToast();
 
   const detailHref = `/courses/${course.id}`;
@@ -139,11 +151,11 @@ export default function ActiveCourseTrack({
       const res = await fetch("/api/ai/course-intel/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId: course.id }),
+        body: JSON.stringify({ courseId: course.id, sourceMode: aiSourceMode }),
       });
       if (res.ok || res.status === 202) {
         setAiStatus("success");
-        showToast({ type: "success", message: "AI sync started in background." });
+        showToast({ type: "success", message: `AI sync started in background (${aiSourceMode}).` });
       } else {
         setAiStatus("error");
         let message = "AI sync failed.";
@@ -374,6 +386,26 @@ export default function ActiveCourseTrack({
         </div>
 
         <div className="flex items-center gap-1.5 flex-1 justify-end">
+          <select
+            value={aiSourceMode}
+            onChange={(e) => {
+              const next = e.target.value as AiSyncSourceMode;
+              setAiSourceMode(next);
+              try {
+                window.localStorage.setItem(AI_SYNC_MODE_STORAGE_KEY, next);
+              } catch {
+                // Ignore localStorage errors.
+              }
+            }}
+            className="h-7 rounded-md border border-[#d3d3d3] bg-white px-1.5 text-[10px] text-[#555] outline-none hover:bg-[#f8f8f8]"
+            title="AI Sync mode"
+            aria-label="AI Sync mode"
+          >
+            <option value="auto">Auto</option>
+            <option value="existing">Existing</option>
+            <option value="fresh">Fresh</option>
+          </select>
+
           <Link
             href={detailHref}
             className="w-7 h-7 rounded-md flex items-center justify-center transition-all border bg-white text-[#666] border-[#d3d3d3] hover:bg-[#f0f0f0] hover:text-[#1f1f1f]"

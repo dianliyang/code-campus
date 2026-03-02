@@ -13,6 +13,12 @@ import {
 
 export const runtime = "nodejs";
 
+function deriveSourceMode(item: Record<string, unknown> | null | undefined): CourseIntelSourceMode | null {
+  const meta = item?.meta && typeof item.meta === "object" ? (item.meta as Record<string, unknown>) : {};
+  const mode = typeof meta.source_mode === "string" ? meta.source_mode : typeof meta.sourceMode === "string" ? meta.sourceMode : null;
+  return mode === "fresh" || mode === "existing" || mode === "auto" ? mode : null;
+}
+
 async function executeCourseIntelJob(params: {
   jobId: number;
   userId: string;
@@ -90,14 +96,14 @@ export async function GET(request: NextRequest) {
       row.status === "queued" || row.status === "running"
     );
     return NextResponse.json({
-      items,
-      active,
+      items: items.map((row: Record<string, unknown>) => ({ ...row, sourceMode: deriveSourceMode(row) || "auto" })),
+      active: active.map((row: Record<string, unknown>) => ({ ...row, sourceMode: deriveSourceMode(row) || "auto" })),
       hasActive: active.length > 0,
     });
   }
 
   const job = await getLatestCourseIntelJob(user.id, courseId);
-  return NextResponse.json({ item: job });
+  return NextResponse.json({ item: job ? { ...job, sourceMode: deriveSourceMode(job) || "auto" } : null });
 }
 
 export async function POST(request: NextRequest) {
@@ -139,6 +145,7 @@ export async function POST(request: NextRequest) {
     item: {
       id: jobId,
       status: "queued",
+      sourceMode: normalizedSourceMode,
       meta: {
         course_id: numericCourseId,
         progress: 0,

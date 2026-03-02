@@ -11,6 +11,9 @@ import { trackAiUsage } from "@/lib/ai/usage";
 import { useAppToast } from "@/components/common/AppToastProvider";
 import { type CodeBreakdownItem } from "@/lib/course-code-breakdown";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+
+type AiSyncSourceMode = "auto" | "existing" | "fresh";
+const AI_SYNC_MODE_STORAGE_KEY = "cc:ai-sync-source-mode";
 interface CourseDetailHeaderProps {
   course: Course;
   isEditing?: boolean;
@@ -33,8 +36,10 @@ type CourseIntelJob = {
   id: number;
   status: string;
   error?: string | null;
+  sourceMode?: AiSyncSourceMode;
   meta?: {
     progress?: number;
+    source_mode?: AiSyncSourceMode;
     activity?: ActivityItem[];
     [key: string]: unknown;
   } | null;
@@ -66,6 +71,15 @@ export default function CourseDetailHeader({
   const [isDeleting, setIsDeleting] = useState(false);
   const [aiStatus, setAiStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [aiJob, setAiJob] = useState<CourseIntelJob | null>(null);
+  const [aiSourceMode, setAiSourceMode] = useState<AiSyncSourceMode>(() => {
+    if (typeof window === "undefined") return "auto";
+    try {
+      const saved = window.localStorage.getItem(AI_SYNC_MODE_STORAGE_KEY);
+      return saved === "fresh" || saved === "existing" || saved === "auto" ? saved : "auto";
+    } catch {
+      return "auto";
+    }
+  });
   const { showToast } = useAppToast();
   const handledJobStatusRef = useRef<string>("");
   const searchQuery = `${course.university || ""} ${course.courseCode || ""} ${course.title || ""}`.trim();
@@ -166,7 +180,7 @@ export default function CourseDetailHeader({
       const res = await fetch('/api/ai/course-intel/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId: course.id }),
+        body: JSON.stringify({ courseId: course.id, sourceMode: aiSourceMode }),
       });
       if (res.ok || res.status === 202) {
         try {
@@ -177,7 +191,7 @@ export default function CourseDetailHeader({
         } catch {
           // Ignore payload parse errors and rely on realtime/polling to pick up the job.
         }
-        showToast({ type: "success", message: "AI sync started in background." });
+        showToast({ type: "success", message: `AI sync started in background (${aiSourceMode}).` });
         await loadLatestJob();
       } else {
         setAiStatus('error');
@@ -279,6 +293,26 @@ export default function CourseDetailHeader({
 
         {/* Action buttons — always visible */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <select
+            value={aiSourceMode}
+            onChange={(e) => {
+              const next = e.target.value as AiSyncSourceMode;
+              setAiSourceMode(next);
+              try {
+                window.localStorage.setItem(AI_SYNC_MODE_STORAGE_KEY, next);
+              } catch {
+                // Ignore localStorage errors.
+              }
+            }}
+            className="h-7 rounded-md border border-[#d3d3d3] bg-white px-1.5 text-[10px] text-[#555] outline-none hover:bg-[#f8f8f8]"
+            title="AI Sync mode"
+            aria-label="AI Sync mode"
+          >
+            <option value="auto">Auto</option>
+            <option value="existing">Existing</option>
+            <option value="fresh">Fresh</option>
+          </select>
+
           {/* Enroll / Unenroll */}
           <button
             type="button"
@@ -381,7 +415,9 @@ export default function CourseDetailHeader({
         <div className="mt-3 rounded-md border border-[#e8e8e8] bg-white p-2.5">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-[#444]">AI Sync Activity</span>
-            <span className="text-[11px] text-[#777]">{progress !== null ? `${progress}%` : aiJob?.status || "running"}</span>
+            <span className="text-[11px] text-[#777]">
+              {(aiJob?.meta?.source_mode || aiJob?.sourceMode || aiSourceMode)} · {progress !== null ? `${progress}%` : aiJob?.status || "running"}
+            </span>
           </div>
           <div className="mt-2 max-h-24 overflow-y-auto space-y-1">
             {activity.slice(-6).map((item, idx) => (

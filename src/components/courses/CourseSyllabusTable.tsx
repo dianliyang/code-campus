@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Minus } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 // ---- types ----------------------------------------------------------------
 
@@ -45,6 +45,7 @@ interface CourseSyllabusTableProps {
   schedule: SyllabusEntry[];
   content: SyllabusContent;
   sourceUrl?: string | null;
+  clearSignal?: number;
 }
 
 // ---- helpers ---------------------------------------------------------------
@@ -124,22 +125,52 @@ export default function CourseSyllabusTable({
   schedule,
   content,
   sourceUrl,
+  clearSignal = 0,
 }: CourseSyllabusTableProps) {
   const normalizeForCompare = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
-  const getEntryKey = (entry: SyllabusEntry, idx: number) =>
-    `${idx}|${entry.sequence ?? ""}|${entry.date ?? ""}|${entry.date_end ?? ""}|${entry.title ?? ""}`;
   const [showAllGrading, setShowAllGrading] = useState(false);
   const [showAllObjectives, setShowAllObjectives] = useState(false);
   const [showAllPolicies, setShowAllPolicies] = useState(false);
-  const [deletedEntryKeys, setDeletedEntryKeys] = useState<Set<string>>(new Set());
+  const clearApplied = clearSignal > 0;
+
   const filteredSchedule = schedule.filter((e) => {
     const date = typeof e.date === "string" ? e.date.trim() : "";
     const dateEnd = typeof e.date_end === "string" ? e.date_end.trim() : "";
     return Boolean(date || dateEnd);
   });
-  const visibleSchedule = filteredSchedule
-    .map((entry, idx) => ({ entry, idx, key: getEntryKey(entry, idx) }))
-    .filter(({ key }) => !deletedEntryKeys.has(key));
+  const visibleSchedule = filteredSchedule.filter((entry) => {
+    if (!clearApplied) return true;
+
+    const title = typeof entry.title === "string" ? entry.title.trim() : "";
+    const topics = (entry.topics || [])
+      .filter((topic): topic is string => typeof topic === "string" && topic.trim().length > 0)
+      .map((topic) => topic.trim());
+    const cleanedTopics = title
+      ? topics.filter((topic) => normalizeForCompare(topic) !== normalizeForCompare(title))
+      : topics;
+    const description = typeof entry.description === "string" ? entry.description.trim() : "";
+    const instructor = typeof entry.instructor === "string" ? entry.instructor.trim() : "";
+    const materialsCount =
+      (entry.slides?.length ?? 0) +
+      (entry.videos?.length ?? 0) +
+      (entry.readings?.length ?? 0) +
+      (entry.modules?.length ?? 0);
+    const tasksCount =
+      (entry.assignments?.length ?? 0) +
+      (entry.labs?.length ?? 0) +
+      (entry.exams?.length ?? 0) +
+      (entry.projects?.length ?? 0);
+
+    const hasNonDateContent =
+      Boolean(instructor) ||
+      Boolean(title) ||
+      cleanedTopics.length > 0 ||
+      Boolean(description) ||
+      materialsCount > 0 ||
+      tasksCount > 0;
+
+    return hasNonDateContent;
+  });
 
   return (
     <div className="space-y-4">
@@ -160,12 +191,12 @@ export default function CourseSyllabusTable({
 
       {visibleSchedule.length > 0 && (
         <div className="space-y-2.5">
-          {visibleSchedule.map(({ entry, idx, key: entryKey }) => {
+          {visibleSchedule.map((entry, idx) => {
             const title = typeof entry.title === "string" ? entry.title.trim() : "";
             const topics = (entry.topics || [])
               .filter((topic): topic is string => typeof topic === "string" && topic.trim().length > 0)
               .map((topic) => topic.trim());
-            const topicsToShow = title
+            const topicsToShow = clearApplied && title
               ? topics.filter((topic) => normalizeForCompare(topic) !== normalizeForCompare(title))
               : topics;
             const description = typeof entry.description === "string" ? entry.description.trim() : "";
@@ -212,24 +243,7 @@ export default function CourseSyllabusTable({
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-medium text-[#888] whitespace-nowrap">#{entry.sequence ?? idx + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeletedEntryKeys((prev) => {
-                          const next = new Set(prev);
-                          next.add(entryKey);
-                          return next;
-                        });
-                      }}
-                      className="h-6 w-6 rounded-md border border-[#efcaca] bg-white text-red-600 hover:bg-red-50 inline-flex items-center justify-center"
-                      title="Delete syllabus item"
-                      aria-label="Delete syllabus item"
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <span className="text-[10px] font-medium text-[#888] whitespace-nowrap">#{entry.sequence ?? idx + 1}</span>
                 </div>
 
                 {hasMetaSections && (

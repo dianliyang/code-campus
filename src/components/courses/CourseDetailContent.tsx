@@ -60,6 +60,7 @@ export default function CourseDetailContent({
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [syllabusData, setSyllabusData] = useState(syllabus);
+  const [syllabusClearSignal, setSyllabusClearSignal] = useState(0);
   const [isGeneratingPlans, setIsGeneratingPlans] = useState(false);
   const [isConfirmingPlans, setIsConfirmingPlans] = useState(false);
   const [editablePlans, setEditablePlans] = useState<EditableStudyPlan[]>(studyPlans);
@@ -654,12 +655,24 @@ export default function CourseDetailContent({
           )}
 
           <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-            <h2 className="text-base font-semibold text-[#1f1f1f] mb-4">Syllabus</h2>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-[#1f1f1f]">Syllabus</h2>
+              {syllabusData && (
+                <button
+                  type="button"
+                  onClick={() => setSyllabusClearSignal((v) => v + 1)}
+                  className="h-7 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[12px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
             {syllabusData ? (
               <CourseSyllabusTable
                 schedule={(syllabusData.schedule as SyllabusEntry[]) || []}
                 content={(syllabusData.content as SyllabusContent) || {}}
                 sourceUrl={syllabusData.source_url}
+                clearSignal={syllabusClearSignal}
               />
             ) : (
               <p className="text-sm text-[#888]">

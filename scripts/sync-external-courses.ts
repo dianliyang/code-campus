@@ -58,11 +58,11 @@ async function main() {
 
   for (let i = 0; i < candidates.length; i += 1) {
     const code = String(candidates[i].code);
-    const status = await api<SyncStatus>(`/api/external/courses/${enc(code)}/sync`).catch(() => ({}));
+    const status: SyncStatus | null = await api<SyncStatus>(`/api/external/courses/${enc(code)}/sync`).catch(() => null);
 
     if (status?.syncPolicy?.skip || status?.syncPolicy?.private) {
       skipped += 1;
-      console.log(`[${i + 1}/${candidates.length}] ${code} | SKIP | ${status?.syncPolicy?.reason || 'private'}`);
+      console.log(`[${i + 1}/${candidates.length}] ${code} | SKIP | ${status.syncPolicy?.reason || 'private'}`);
       continue;
     }
 

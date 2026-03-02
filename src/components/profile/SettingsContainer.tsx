@@ -101,10 +101,13 @@ export default function SettingsContainer({ user, profile, aiDefaults }: Setting
     <div className="flex h-full gap-0">
 
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden sm:flex flex-col w-[200px] shrink-0 h-full overflow-y-auto border-r border-[#f0f0f0] pr-2 py-0.5">
+      <aside className="hidden sm:flex flex-col w-[220px] shrink-0 h-full overflow-y-auto border-r border-[#f0f0f0] pr-2 py-0.5">
+        <div className="px-3 py-2 mb-2 border-b border-[#efefef]">
+          <p className="text-[11px] font-semibold text-[#6d6d6d] uppercase tracking-wider">Settings</p>
+        </div>
         {NAV_GROUPS.map((group) => (
           <div key={group.label} className="mb-3">
-            <p className="px-3 mb-1 text-[10px] font-bold text-[#bbb] uppercase tracking-widest">
+            <p className="px-3 mb-1 text-[10px] font-bold text-[#9f9f9f] uppercase tracking-widest">
               {group.label}
             </p>
             {group.items.map(({ id, label, icon: Icon }) => (

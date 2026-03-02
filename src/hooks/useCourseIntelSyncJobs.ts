@@ -40,11 +40,9 @@ export function useCourseIntelSyncJobs() {
   };
 
   useEffect(() => {
-    void loadJobs();
-    const timer = window.setInterval(() => {
-      void loadJobs();
-    }, 12000);
-
+    const INITIAL_DELAY_MS = 6000;
+    const POLL_INTERVAL_MS = 12000;
+    let stream: EventSource | null = null;
     const supabase = createBrowserSupabaseClient();
     const channel = supabase
       .channel("course_intel_jobs:global")
@@ -56,9 +54,34 @@ export function useCourseIntelSyncJobs() {
         }
       )
       .subscribe();
+    const initialTimer = window.setTimeout(() => {
+      void loadJobs();
+      stream = new EventSource("/api/ai/course-intel/jobs/stream");
+      stream.addEventListener("jobs", (event) => {
+        try {
+          const payload = JSON.parse((event as MessageEvent).data || "{}");
+          if (Array.isArray(payload?.items)) {
+            setItems(payload.items as CourseIntelJobItem[]);
+          }
+        } catch {
+          // Ignore parse errors and keep polling fallback.
+        }
+      });
+      stream.onerror = () => {
+        if (stream) {
+          stream.close();
+          stream = null;
+        }
+      };
+    }, INITIAL_DELAY_MS);
+    const timer = window.setInterval(() => {
+      void loadJobs();
+    }, POLL_INTERVAL_MS);
 
     return () => {
+      window.clearTimeout(initialTimer);
       window.clearInterval(timer);
+      if (stream) stream.close();
       void supabase.removeChannel(channel);
     };
   }, []);

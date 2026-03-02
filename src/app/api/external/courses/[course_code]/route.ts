@@ -6,6 +6,104 @@ import {
 } from '@/lib/external-api';
 import { authorizeExternalRequest } from '@/lib/external-api-auth';
 
+async function fetchActiveCourseByCode(
+  supabase: ReturnType<typeof createAdminClient>,
+  courseCode: string
+) {
+  const { data, error } = await supabase
+    .from('courses')
+    .select(`
+      id,
+      university,
+      course_code,
+      title,
+      units,
+      credit,
+      description,
+      url,
+      details,
+      instructors,
+      prerequisites,
+      resources,
+      cross_listed_courses,
+      department,
+      corequisites,
+      level,
+      difficulty,
+      popularity,
+      workload,
+      subdomain,
+      resources,
+      category,
+      is_hidden,
+      latest_semester,
+      created_at,
+      course_fields(
+        fields(
+          name
+        )
+      ),
+      study_plans(
+        id,
+        uid,
+        course_id,
+        start_date,
+        end_date,
+        days_of_week,
+        start_time,
+        end_time,
+        location,
+        kind,
+        timezone,
+        created_at,
+        updated_at
+      ),
+      course_assignments(
+        id,
+        kind,
+        label,
+        due_on,
+        url,
+        description,
+        source_sequence,
+        source_row_date,
+        updated_at
+      ),
+      course_syllabi(
+        source_url,
+        content,
+        schedule,
+        retrieved_at,
+        updated_at
+      ),
+      user_courses!inner(
+        user_id,
+        status,
+        progress,
+        gpa,
+        score,
+        notes,
+        priority,
+        updated_at
+      )
+    `)
+    .neq('user_courses.status', 'hidden')
+    .eq('course_code', courseCode);
+
+  if (error) {
+    throw new Error(`DB:${error.message}`);
+  }
+
+  const activeData = (Array.isArray(data) ? data : data ? [data] : []).filter((c) => {
+    if (c.is_hidden === true) return false;
+    const uc = Array.isArray(c.user_courses) ? c.user_courses : [];
+    return uc.some((r) => r.status !== 'hidden');
+  });
+
+  if (!activeData.length) return null;
+  return activeData[0];
+}
+
 /**
  * External API for a single enrolled course by course_code.
  *
@@ -29,105 +127,11 @@ export async function GET(
 
   try {
     const supabase = createAdminClient();
-
-    const { data, error } = await supabase
-      .from('courses')
-      .select(`
-        id,
-        university,
-        course_code,
-        title,
-        units,
-        credit,
-        description,
-        url,
-        details,
-        instructors,
-        prerequisites,
-        resources,
-        cross_listed_courses,
-        department,
-        corequisites,
-        level,
-        difficulty,
-        popularity,
-        workload,
-        subdomain,
-        resources,
-        category,
-        is_hidden,
-        latest_semester,
-        created_at,
-        course_fields(
-          fields(
-            name
-          )
-        ),
-        study_plans(
-          id,
-          uid,
-          course_id,
-          start_date,
-          end_date,
-          days_of_week,
-          start_time,
-          end_time,
-          location,
-          kind,
-          timezone,
-          created_at,
-          updated_at
-        ),
-        course_assignments(
-          id,
-          kind,
-          label,
-          due_on,
-          url,
-          description,
-          source_sequence,
-          source_row_date,
-          updated_at
-        ),
-        course_syllabi(
-          source_url,
-          content,
-          schedule,
-          retrieved_at,
-          updated_at
-        ),
-        user_courses!inner(
-          status,
-          progress,
-          gpa,
-          score,
-          notes,
-          priority,
-          updated_at
-        )
-      `)
-      .neq('user_courses.status', 'hidden')
-      .eq('course_code', courseCode);
-
-    if (error) {
-      console.error('Supabase query error:', error);
-      return NextResponse.json(
-        { error: 'Database error', details: error.message },
-        { status: 500 }
-      );
-    }
-
-    const activeData = (Array.isArray(data) ? data : data ? [data] : []).filter((c) => {
-      if (c.is_hidden === true) return false;
-      const uc = Array.isArray(c.user_courses) ? c.user_courses : [];
-      return uc.some((r) => r.status !== 'hidden');
-    });
-
-    if (!activeData.length) {
+    const course = await fetchActiveCourseByCode(supabase, courseCode);
+    if (!course) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    const course = activeData[0];
     const cachingHeaders = buildCachingHeaders();
 
     return NextResponse.json(
@@ -135,11 +139,18 @@ export async function GET(
       { headers: cachingHeaders }
     );
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    if (message.startsWith('DB:')) {
+      return NextResponse.json(
+        { error: 'Database error', details: message.replace(/^DB:/, '') },
+        { status: 500 }
+      );
+    }
     console.error('API implementation error:', error);
     return NextResponse.json(
       {
         error: 'Internal Server Error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message,
       },
       { status: 500 }
     );

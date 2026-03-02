@@ -97,6 +97,10 @@ export default function CourseDetailHeader({
   }, [course.id]);
 
   useEffect(() => {
+    const POLL_INTERVAL_MS = 3500;
+    const interval = window.setInterval(() => {
+      void loadLatestJob();
+    }, POLL_INTERVAL_MS);
     const supabase = createBrowserSupabaseClient();
     const channel = supabase
       .channel(`course_intel_jobs:${course.id}`)
@@ -108,8 +112,24 @@ export default function CourseDetailHeader({
         }
       )
       .subscribe();
+    const stream = new EventSource(`/api/ai/course-intel/jobs/stream?courseId=${course.id}`);
+    stream.addEventListener("job", (event) => {
+      try {
+        const payload = JSON.parse((event as MessageEvent).data || "{}");
+        if (payload?.item && typeof payload.item === "object") {
+          setAiJob(payload.item as CourseIntelJob);
+        }
+      } catch {
+        // Ignore stream parse errors.
+      }
+    });
+    stream.onerror = () => {
+      stream.close();
+    };
 
     return () => {
+      window.clearInterval(interval);
+      stream.close();
       void supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

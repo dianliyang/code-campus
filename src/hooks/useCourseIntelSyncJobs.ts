@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
+const AI_SYNC_LOG_KEY_PREFIX = "cc:ai-sync-log:";
+
 export type CourseIntelJobItem = {
   id: number;
   status: string;
@@ -30,6 +32,78 @@ export type CourseIntelJobItem = {
   } | null;
 };
 
+type ActivityLogItem = {
+  ts: string;
+  stage: string;
+  message: string;
+  progress?: number;
+  details?: Record<string, unknown>;
+};
+
+function storageKeyForJob(jobId: number) {
+  return `${AI_SYNC_LOG_KEY_PREFIX}${jobId}`;
+}
+
+function readStoredActivity(jobId: number): ActivityLogItem[] {
+  if (typeof window === "undefined" || !jobId) return [];
+  try {
+    const raw = window.localStorage.getItem(storageKeyForJob(jobId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item): item is ActivityLogItem =>
+        item &&
+        typeof item === "object" &&
+        typeof item.ts === "string" &&
+        typeof item.stage === "string" &&
+        typeof item.message === "string"
+      )
+      .slice(-80);
+  } catch {
+    return [];
+  }
+}
+
+function persistActivity(jobId: number, activity: ActivityLogItem[]) {
+  if (typeof window === "undefined" || !jobId) return;
+  try {
+    window.localStorage.setItem(storageKeyForJob(jobId), JSON.stringify(activity.slice(-80)));
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
+function clearPersistedActivity(jobId: number) {
+  if (typeof window === "undefined" || !jobId) return;
+  try {
+    window.localStorage.removeItem(storageKeyForJob(jobId));
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
+function isTerminalJob(job: Partial<CourseIntelJobItem> | null | undefined) {
+  if (!job) return false;
+  const status = String(job.status || "");
+  const progress = Number(job.meta?.progress ?? 0);
+  return status === "completed" || status === "failed" || progress >= 100;
+}
+
+function mergeActivity(existing: ActivityLogItem[], incoming: ActivityLogItem[]) {
+  if (incoming.length === 0) return existing.slice(-80);
+  const merged = [...existing, ...incoming];
+  const deduped: ActivityLogItem[] = [];
+  const seen = new Set<string>();
+  for (const item of merged) {
+    const key = `${item.ts}|${item.stage}|${item.message}|${Number(item.progress ?? -1)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+  }
+  return deduped.slice(-80);
+}
+
 export function useCourseIntelSyncJobs() {
   const [items, setItems] = useState<CourseIntelJobItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -44,7 +118,28 @@ export function useCourseIntelSyncJobs() {
       if (!res.ok) return;
       const payload = await res.json();
       if (Array.isArray(payload?.items)) {
-        setItems(payload.items as CourseIntelJobItem[]);
+        setItems((prev) => {
+          const byId = new Map(prev.map((item) => [item.id, item]));
+          return (payload.items as CourseIntelJobItem[]).map((incoming) => {
+            const incomingId = Number(incoming.id || 0);
+            const previous = byId.get(incomingId);
+            const prevActivity = Array.isArray(previous?.meta?.activity) ? previous.meta.activity : [];
+            const stored = readStoredActivity(incomingId);
+            const nextActivity = mergeActivity(prevActivity as ActivityLogItem[], stored);
+            if (isTerminalJob(incoming)) {
+              clearPersistedActivity(incomingId);
+              return incoming;
+            }
+            if (nextActivity.length === 0) return incoming;
+            return {
+              ...incoming,
+              meta: {
+                ...(incoming.meta || {}),
+                activity: nextActivity,
+              },
+            };
+          });
+        });
       }
     } catch {
       // Ignore transient load errors.
@@ -83,14 +178,35 @@ export function useCourseIntelSyncJobs() {
           setItems((prev) => {
             const next = [...prev];
             const idx = next.findIndex((item) => item.id === row.id);
+            const prevItem = idx >= 0 ? next[idx] : null;
+            const rowMeta = row.meta && typeof row.meta === "object" ? (row.meta as Record<string, unknown>) : null;
+            const incomingActivity = Array.isArray(rowMeta?.activity)
+              ? (rowMeta?.activity as ActivityLogItem[])
+              : [];
+            const previousActivity = Array.isArray(prevItem?.meta?.activity)
+              ? (prevItem?.meta?.activity as ActivityLogItem[])
+              : [];
+            const storedActivity = readStoredActivity(Number(row.id));
+            const nextActivity = mergeActivity(mergeActivity(previousActivity, incomingActivity), storedActivity);
             const merged = {
-              ...(idx >= 0 ? next[idx] : {}),
+              ...(prevItem || {}),
               ...row,
               sourceMode:
                 typeof (row as { sourceMode?: unknown }).sourceMode === "string"
                   ? ((row as { sourceMode: "auto" | "existing" | "fresh" }).sourceMode)
                   : (idx >= 0 ? next[idx].sourceMode : "auto"),
+              meta: {
+                ...((prevItem?.meta && typeof prevItem.meta === "object") ? prevItem.meta : {}),
+                ...(rowMeta || {}),
+                ...(nextActivity.length > 0 ? { activity: nextActivity } : {}),
+              },
             } as CourseIntelJobItem;
+
+            if (isTerminalJob(merged)) {
+              clearPersistedActivity(Number(merged.id || 0));
+            } else if (nextActivity.length > 0) {
+              persistActivity(Number(merged.id || 0), nextActivity);
+            }
 
             if (idx >= 0) next[idx] = merged;
             else next.unshift(merged);

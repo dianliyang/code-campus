@@ -120,7 +120,7 @@ export default function LeftRail({ labels }: LeftRailProps) {
 
       <nav className="space-y-0.5">
         {commandNavItems.map((item) => {
-          const active = pathname === item.href || (item.href !== "/courses" && pathname.startsWith(item.href));
+          const active = pathname === item.href || pathname.startsWith(item.href);
           const title = labels[item.key as keyof typeof labels] || item.key;
           return (
             <RailItem

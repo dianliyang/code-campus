@@ -155,7 +155,7 @@ async function fetchWorkouts(
 
   if (error) {
     console.error("[Supabase] Fetch workouts error:", error);
-    return { items: [], total: 0, pages: 0 };
+    return { items: [], total: 0, categoryGroups: [], selectedCategory: "" };
   }
 
   const allItems = aggregateWorkoutsByName((data || []).map((row: any) => mapWorkoutFromRow(row))); // eslint-disable-line @typescript-eslint/no-explicit-any

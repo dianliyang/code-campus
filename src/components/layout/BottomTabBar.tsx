@@ -8,6 +8,7 @@ interface BottomTabBarProps {
   labels?: {
     courses?: string;
     studyPlan?: string;
+    studySchedule?: string;
     workouts?: string;
     profile?: string;
     settings?: string;

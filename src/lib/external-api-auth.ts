@@ -30,9 +30,12 @@ export async function authorizeExternalRequest(request: NextRequest): Promise<Au
   }
 
   const supabase = createAdminClient();
+  // user_api_keys may not yet be present in generated database types.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any;
   const keyHash = hashKey(authHeader);
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("user_api_keys")
     .select("id, is_active, requests_limit, requests_used")
     .eq("key_hash", keyHash)
@@ -55,7 +58,7 @@ export async function authorizeExternalRequest(request: NextRequest): Promise<Au
     return { ok: false, status: 429, error: "API key limit reached" };
   }
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await db
     .from("user_api_keys")
     .update({ requests_used: used + 1, last_used_at: new Date().toISOString() })
     .eq("id", data.id);

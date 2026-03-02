@@ -34,7 +34,7 @@ export default function NavLinks({
       { name: dict?.courses || "Courses", href: "/courses", icon: BookOpen },
       { name: dict?.roadmap || "Study Roadmap", href: "/study-plan", icon: MapPin },
       { name: dict?.workouts || "Workouts", href: "/workouts", icon: Dumbbell },
-      { name: dict?.profile || "Profile", href: "/profile", icon: UserCog },
+      { name: dict?.identity || "Identity", href: "/profile", icon: UserCog },
       { name: dict?.settings || "Settings", href: "/settings", icon: Settings }
     ];
   }, [mode, dict]);

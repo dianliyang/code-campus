@@ -54,7 +54,7 @@ export default async function DashboardLayout({
           courses: dict.navbar?.courses || "Courses",
           studyPlan: dict.navbar?.roadmap || "Roadmap",
           workouts: dict.navbar?.workouts || "Workouts",
-          profile: dict.navbar?.profile || "Profile",
+          profile: dict.navbar?.identity || "Identity",
           settings: dict.navbar?.settings || "Settings",
         }}
       />

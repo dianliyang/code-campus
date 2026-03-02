@@ -81,7 +81,7 @@ export default function CourseDetailHeader({
     }
   });
   const { showToast } = useAppToast();
-  const handledJobStatusRef = useRef<string>("");
+  const previousJobRef = useRef<{ id: number; status: string } | null>(null);
   const searchQuery = `${course.university || ""} ${course.courseCode || ""} ${course.title || ""}`.trim();
   const searchHref = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
 
@@ -110,10 +110,6 @@ export default function CourseDetailHeader({
   }, [course.id]);
 
   useEffect(() => {
-    const POLL_INTERVAL_MS = 3500;
-    const interval = window.setInterval(() => {
-      void loadLatestJob();
-    }, POLL_INTERVAL_MS);
     const supabase = createBrowserSupabaseClient();
     const channel = supabase
       .channel(`course_intel_jobs:${course.id}`)
@@ -125,46 +121,42 @@ export default function CourseDetailHeader({
         }
       )
       .subscribe();
-    const stream = new EventSource(`/api/ai/course-intel/jobs/stream?courseId=${course.id}`);
-    stream.addEventListener("job", (event) => {
-      try {
-        const payload = JSON.parse((event as MessageEvent).data || "{}");
-        if (payload?.item && typeof payload.item === "object") {
-          setAiJob(payload.item as CourseIntelJob);
-        }
-      } catch {
-        // Ignore stream parse errors.
-      }
-    });
-    stream.onerror = () => {
-      stream.close();
-    };
 
     return () => {
-      window.clearInterval(interval);
-      stream.close();
       void supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [course.id]);
 
   useEffect(() => {
-    if (!aiJob) return;
-    const key = `${aiJob.id}:${aiJob.status}`;
-    if (handledJobStatusRef.current === key) return;
+    if (!aiJob) {
+      previousJobRef.current = null;
+      return;
+    }
+
+    const previous = previousJobRef.current;
+    const fromActiveSameJob = Boolean(
+      previous &&
+      previous.id === aiJob.id &&
+      (previous.status === "queued" || previous.status === "running")
+    );
 
     if (aiJob.status === "completed") {
       setAiStatus("success");
-      showToast({ type: "success", message: "AI sync completed." });
-      trackAiUsage({ calls: 1, tokens: 1024 });
-      router.refresh();
+      if (fromActiveSameJob) {
+        showToast({ type: "success", message: "AI sync completed." });
+        trackAiUsage({ calls: 1, tokens: 1024 });
+        router.refresh();
+      }
     } else if (aiJob.status === "failed") {
       setAiStatus("error");
-      showToast({ type: "error", message: aiJob.error || "AI sync failed." });
+      if (fromActiveSameJob) {
+        showToast({ type: "error", message: aiJob.error || "AI sync failed." });
+      }
     } else {
       setAiStatus("idle");
     }
-    handledJobStatusRef.current = key;
+    previousJobRef.current = { id: aiJob.id, status: aiJob.status };
   }, [aiJob, router, showToast]);
 
   const handleAiUpdate = async () => {
@@ -183,7 +175,7 @@ export default function CourseDetailHeader({
             setAiJob(payload.item as CourseIntelJob);
           }
         } catch {
-          // Ignore payload parse errors and rely on realtime/polling to pick up the job.
+          // Ignore payload parse errors and rely on realtime/explicit refresh to pick up the job.
         }
         showToast({ type: "success", message: `AI sync started in background (${aiSourceMode}).` });
         await loadLatestJob();

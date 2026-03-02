@@ -3,6 +3,29 @@
 import { Loader2 } from "lucide-react";
 import { useCourseIntelSyncJobs } from "@/hooks/useCourseIntelSyncJobs";
 
+function formatStage(stage: string) {
+  const normalized = String(stage || "").trim().toLowerCase();
+  if (!normalized) return "event";
+  return normalized.replace(/[_-]+/g, " ");
+}
+
+function formatTs(value: string) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("en-US", { hour12: false });
+}
+
+function formatDetails(details: unknown): string {
+  if (!details || typeof details !== "object" || Array.isArray(details)) return "";
+  const entries = Object.entries(details as Record<string, unknown>)
+    .filter(([, v]) => typeof v === "string" || typeof v === "number" || typeof v === "boolean")
+    .slice(0, 3);
+  if (entries.length === 0) return "";
+  return entries
+    .map(([k, v]) => `${k}: ${String(v)}`)
+    .join(" | ");
+}
+
 export default function CourseIntelSyncWindow() {
   const { activeJobs, hasActive } = useCourseIntelSyncJobs();
 
@@ -32,13 +55,21 @@ export default function CourseIntelSyncWindow() {
                 <span className="text-[11px] text-[#777]">{progress}%</span>
               </div>
               <p className="mt-1 text-xs text-[#666]">{latestMessage || "Processing..."}</p>
-              {activity.length > 1 && (
-                <div className="mt-1 space-y-0.5">
-                  {activity.slice(-3).map((item, idx) => (
-                    <p key={`${item.ts}-${idx}`} className="text-[11px] text-[#7a7a7a]">
-                      {item.message}
-                    </p>
-                  ))}
+              {activity.length > 0 && (
+                <div className="mt-2 max-h-28 space-y-1 overflow-y-auto pr-1">
+                  {activity.slice(-6).map((item, idx) => {
+                    const line = formatDetails(item.details);
+                    return (
+                      <div key={`${item.ts}-${idx}`} className="rounded border border-[#efefef] bg-[#fafafa] px-1.5 py-1">
+                        <div className="flex items-center justify-between gap-2 text-[10px] text-[#666]">
+                          <span className="font-medium uppercase tracking-wide">{formatStage(item.stage)}</span>
+                          <span>{formatTs(item.ts)}{typeof item.progress === "number" ? ` · ${item.progress}%` : ""}</span>
+                        </div>
+                        <p className="text-[11px] text-[#4f4f4f]">{item.message || "Processing..."}</p>
+                        {line && <p className="text-[10px] text-[#7a7a7a]">{line}</p>}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               <div className="mt-2 h-1.5 rounded bg-[#efefef]">

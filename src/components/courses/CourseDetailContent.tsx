@@ -6,7 +6,7 @@ import { Course } from "@/types";
 import CourseDetailTopSection, { EditableStudyPlan } from "@/components/courses/CourseDetailTopSection";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
 import { confirmGeneratedStudyPlans, previewStudyPlansFromCourseSchedule, toggleCourseEnrollmentAction, updateCourseResources, type SchedulePlanPreview } from "@/actions/courses";
-import { Check, Clock, Globe, Info, Loader2, Minus, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
+import { CalendarDays, Check, Clock, Globe, Info, Loader2, Minus, PenSquare, Plus, Trash2, Users, WandSparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
@@ -36,14 +36,29 @@ interface CourseDetailContentProps {
   }>;
 }
 
-type AssignmentItem = {
-  id: number;
-  kind: string;
+type PlanCalendarEvent = {
   label: string;
-  due_on: string | null;
-  url: string | null;
-  description: string | null;
+  timeLabel: string;
 };
+
+function parseIsoDate(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function toIsoDateUtc(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function addDaysUtc(date: Date, days: number): Date {
+  const next = new Date(date.getTime());
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
 
 export default function CourseDetailContent({
   course,
@@ -54,7 +69,6 @@ export default function CourseDetailContent({
   studyPlans,
   projectSeminarRef = null,
   syllabus = null,
-  assignments = [],
 }: CourseDetailContentProps) {
   const [enrolled, setEnrolled] = useState(isEnrolled);
   const [isEnrolling, setIsEnrolling] = useState(false);
@@ -136,37 +150,93 @@ export default function CourseDetailContent({
     setSyllabusData(syllabus);
   }, [syllabus]);
 
-  const derivedAssignmentsFromSyllabus = useMemo<AssignmentItem[]>(() => {
-    const scheduleRows = Array.isArray(syllabusData?.schedule) ? (syllabusData?.schedule as Array<Record<string, unknown>>) : [];
-    const out: AssignmentItem[] = [];
-    let id = 0;
-    for (const row of scheduleRows) {
-      const rowDate = typeof row.date === "string" ? row.date : null;
-      const extract = (key: string, kind: string) => {
-        const arr = Array.isArray(row[key]) ? (row[key] as Array<Record<string, unknown>>) : [];
-        for (const item of arr) {
-          const label = typeof item.label === "string" ? item.label.trim() : "";
-          if (!label) continue;
-          id += 1;
-          out.push({
-            id,
-            kind,
-            label,
-            due_on: typeof item.due_date === "string" ? item.due_date : rowDate,
-            url: typeof item.url === "string" ? item.url : null,
-            description: typeof item.description === "string" ? item.description : null,
-          });
-        }
-      };
-      extract("assignments", "assignment");
-      extract("labs", "lab");
-      extract("exams", "exam");
-      extract("projects", "project");
-    }
-    return out;
-  }, [syllabusData?.schedule]);
+  const studyPlanCalendar = useMemo(() => {
+    const validPlans = editablePlans
+      .map((plan) => {
+        const start = parseIsoDate(plan.startDate);
+        const end = parseIsoDate(plan.endDate);
+        if (!start || !end || start > end) return null;
+        const days = Array.isArray(plan.daysOfWeek)
+          ? plan.daysOfWeek.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+          : [];
+        return {
+          start,
+          end,
+          days,
+          label: (plan.kind || "Study Session").trim() || "Study Session",
+          timeLabel: `${plan.startTime.slice(0, 5)}-${plan.endTime.slice(0, 5)}`,
+        };
+      })
+      .filter((plan): plan is { start: Date; end: Date; days: number[]; label: string; timeLabel: string } => plan !== null);
 
-  const shownAssignments = assignments.length > 0 ? assignments : derivedAssignmentsFromSyllabus;
+    if (validPlans.length === 0) {
+      return {
+        range: null as null | { startIso: string; endIso: string },
+        months: [] as Array<{
+          key: string;
+          label: string;
+          cells: Array<{ dateIso: string; day: number; inMonth: boolean; inRange: boolean }>;
+        }>,
+        eventsByDate: new Map<string, PlanCalendarEvent[]>(),
+      };
+    }
+
+    const rangeStart = validPlans.reduce((min, plan) => (plan.start < min ? plan.start : min), validPlans[0].start);
+    const rangeEnd = validPlans.reduce((max, plan) => (plan.end > max ? plan.end : max), validPlans[0].end);
+    const rangeStartIso = toIsoDateUtc(rangeStart);
+    const rangeEndIso = toIsoDateUtc(rangeEnd);
+
+    const eventsByDate = new Map<string, PlanCalendarEvent[]>();
+    for (const plan of validPlans) {
+      const daySet = new Set<number>(plan.days);
+      for (let cursor = new Date(plan.start.getTime()); cursor <= plan.end; cursor = addDaysUtc(cursor, 1)) {
+        if (!daySet.has(cursor.getUTCDay())) continue;
+        const iso = toIsoDateUtc(cursor);
+        const list = eventsByDate.get(iso) || [];
+        list.push({ label: plan.label, timeLabel: plan.timeLabel });
+        eventsByDate.set(iso, list);
+      }
+    }
+
+    const months: Array<{
+      key: string;
+      label: string;
+      cells: Array<{ dateIso: string; day: number; inMonth: boolean; inRange: boolean }>;
+    }> = [];
+    for (
+      let cursor = new Date(Date.UTC(rangeStart.getUTCFullYear(), rangeStart.getUTCMonth(), 1));
+      cursor <= new Date(Date.UTC(rangeEnd.getUTCFullYear(), rangeEnd.getUTCMonth(), 1));
+      cursor = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 1))
+    ) {
+      const monthStart = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), 1));
+      const monthEnd = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 0));
+      const gridStart = addDaysUtc(monthStart, -monthStart.getUTCDay());
+      const gridEnd = addDaysUtc(monthEnd, 6 - monthEnd.getUTCDay());
+      const cells: Array<{ dateIso: string; day: number; inMonth: boolean; inRange: boolean }> = [];
+
+      for (let d = new Date(gridStart.getTime()); d <= gridEnd; d = addDaysUtc(d, 1)) {
+        const dateIso = toIsoDateUtc(d);
+        cells.push({
+          dateIso,
+          day: d.getUTCDate(),
+          inMonth: d.getUTCMonth() === monthStart.getUTCMonth(),
+          inRange: dateIso >= rangeStartIso && dateIso <= rangeEndIso,
+        });
+      }
+
+      months.push({
+        key: `${monthStart.getUTCFullYear()}-${String(monthStart.getUTCMonth() + 1).padStart(2, "0")}`,
+        label: monthStart.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }),
+        cells,
+      });
+    }
+
+    return {
+      range: { startIso: rangeStartIso, endIso: rangeEndIso },
+      months,
+      eventsByDate,
+    };
+  }, [editablePlans]);
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);
@@ -705,28 +775,74 @@ export default function CourseDetailContent({
           </section>
 
           <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-            <h2 className="text-base font-semibold text-[#1f1f1f] mb-4">Assignments</h2>
-            {shownAssignments.length > 0 ? (
-              <ul className="space-y-2">
-                {shownAssignments.map((item: AssignmentItem) => (
-                  <li key={item.id} className="text-sm text-[#444] border border-[#ececec] rounded px-3 py-2 bg-white">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium">{item.label}</span>
-                      <span className="text-xs text-[#777] uppercase">{item.kind}</span>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-[#1f1f1f] flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-[#777]" />
+                Schedule Calendar
+              </h2>
+              {studyPlanCalendar.range && (
+                <span className="text-[11px] text-[#777]">
+                  {studyPlanCalendar.range.startIso} - {studyPlanCalendar.range.endIso}
+                </span>
+              )}
+            </div>
+            {studyPlanCalendar.range ? (
+              <div className="space-y-4">
+                {studyPlanCalendar.months.map((month) => (
+                  <div key={month.key} className="rounded-md border border-[#e7e7e7] bg-white p-2.5">
+                    <p className="text-sm font-semibold text-[#2a2a2a] mb-2">{month.label}</p>
+                    <div className="grid grid-cols-7 gap-1 mb-1">
+                      {dayLabels.map((day) => (
+                        <div key={`${month.key}-${day}`} className="text-[10px] text-[#8a8a8a] font-medium text-center py-1">
+                          {day}
+                        </div>
+                      ))}
                     </div>
-                    <div className="text-xs text-[#777] mt-1">
-                      {item.due_on ? `Due: ${item.due_on}` : "No due date"}
+                    <div className="grid grid-cols-7 gap-1">
+                      {month.cells.map((cell) => {
+                        const events = studyPlanCalendar.eventsByDate.get(cell.dateIso) || [];
+                        return (
+                          <div
+                            key={`${month.key}-${cell.dateIso}`}
+                            className={`min-h-[72px] rounded border p-1.5 ${
+                              !cell.inRange
+                                ? "border-transparent bg-[#fafafa] opacity-40"
+                                : cell.inMonth
+                                  ? "border-[#ececec] bg-white"
+                                  : "border-[#f0f0f0] bg-[#fcfcfc]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-semibold text-[#666]">{cell.day}</span>
+                              {events.length > 0 && (
+                                <span className="text-[10px] rounded bg-[#eaf1ff] px-1 py-0.5 text-[#486ca8]">
+                                  {events.length}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-1 space-y-1">
+                              {events.slice(0, 2).map((event, idx) => (
+                                <p
+                                  key={`${cell.dateIso}-${event.label}-${idx}`}
+                                  className="text-[10px] leading-tight rounded bg-[#f3f6fb] px-1 py-0.5 text-[#465979] truncate"
+                                  title={`${event.timeLabel} ${event.label}`}
+                                >
+                                  {event.timeLabel} {event.label}
+                                </p>
+                              ))}
+                              {events.length > 2 && (
+                                <p className="text-[10px] text-[#7a7a7a]">+{events.length - 2} more</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    {item.url && (
-                      <a href={item.url} target="_blank" rel="noreferrer" className="text-xs text-[#335b9a] hover:underline mt-1 inline-block">
-                        {item.url}
-                      </a>
-                    )}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : (
-              <p className="text-sm text-[#9a9a9a]">No assignments found yet.</p>
+              <p className="text-sm text-[#9a9a9a]">No study plan range found yet. Add or generate a schedule first.</p>
             )}
           </section>
 

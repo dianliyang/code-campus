@@ -135,7 +135,7 @@ export default function LeftRail({ labels, collapsed = false, onToggle }: LeftRa
             className="h-[18px] w-[18px]"
           />
           {!collapsed && (
-            <span className="text-[24px] tracking-tight font-semibold text-[#2b2b2b]">Codecampus</span>
+            <span className="text-[24px] tracking-tight font-semibold text-[#2b2b2b]">CodeCampus</span>
           )}
         </Link>
       </div>

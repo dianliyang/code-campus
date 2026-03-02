@@ -1662,10 +1662,31 @@ async function discoverImportantCourseLinks(seedUrls: string[], timeoutMs = 9000
 export async function runCourseIntel(
   userId: string,
   courseId: number,
-  options?: { fastMode?: boolean }
+  options?: {
+    fastMode?: boolean;
+    onProgress?: (event: {
+      stage: string;
+      message: string;
+      progress?: number;
+      details?: Record<string, unknown>;
+    }) => void | Promise<void>;
+  }
 ) {
   const supabase = createAdminClient();
   const fastMode = Boolean(options?.fastMode);
+  const emitProgress = async (
+    stage: string,
+    message: string,
+    progress?: number,
+    details?: Record<string, unknown>
+  ) => {
+    if (!options?.onProgress) return;
+    try {
+      await options.onProgress({ stage, message, progress, details });
+    } catch {
+      // Ignore observer errors so sync execution is never blocked by progress listeners.
+    }
+  };
   const t0 = Date.now();
   const timings: Record<string, number> = {};
   const mark = (name: string) => {
@@ -1678,6 +1699,7 @@ export async function runCourseIntel(
     .single();
   if (!course) throw new Error("Course not found");
   mark("loaded_course");
+  await emitProgress("load", "Loaded course record.", 5);
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -1692,6 +1714,7 @@ export async function runCourseIntel(
     ].filter(Boolean).join("\n\n");
   if (!template) throw new Error("Course intel prompt template not configured");
   mark("loaded_profile");
+  await emitProgress("profile", "Loaded profile and prompt settings.", 10);
 
   const providerRaw = String(profile?.ai_provider || "").trim();
   const preferredProvider =
@@ -1719,6 +1742,9 @@ export async function runCourseIntel(
 
   const knownUrls = [course.url, ...(Array.isArray(course.resources) ? course.resources : [])]
     .filter(Boolean) as string[];
+  await emitProgress("discovery", "Collecting source URLs and deterministic signals.", 18, {
+    knownUrls: knownUrls.length,
+  });
 
   // Optimization: if we already have enough known URLs, skip Brave discovery to reduce latency.
   const shouldRunWebDiscovery = webSearchEnabled && (knownUrls.length < 4 || !fastMode);
@@ -1762,6 +1788,10 @@ export async function runCourseIntel(
     .filter((r): r is PromiseFulfilledResult<DeterministicSignals> => r.status === "fulfilled")
     .map((r) => r.value);
   mark("collected_context_signals");
+  await emitProgress("discovery", "Context collection complete.", 35, {
+    contextUrls: contextUrls.length,
+    analysisUrls: analysisContextUrls.length,
+  });
   const deterministicRows = deterministicSignals.flatMap((s) => s.scheduleRows);
   const deterministicGradings = deterministicSignals.flatMap((s) => s.gradingSignals);
   const deterministicResources = deterministicSignals.flatMap((s) => s.extraResources);
@@ -1898,6 +1928,9 @@ export async function runCourseIntel(
   };
 
   const firstAttempt = await runExtraction(fastMode ? 9000 : 14000);
+  await emitProgress("ai", "AI extraction pass finished.", 60, {
+    scheduleRows: firstAttempt.scheduleArray.length,
+  });
   let extraction = firstAttempt;
 
   // Retry once when the model likely returned a partial syllabus.
@@ -1937,6 +1970,7 @@ export async function runCourseIntel(
     }
   }
   mark("ai_extraction_done");
+  await emitProgress("ai", "AI extraction and recovery complete.", 72);
 
   const text = extraction.text;
   const parsed = extraction.parsed;
@@ -1983,6 +2017,9 @@ export async function runCourseIntel(
 
   const admin = createAdminClient();
   const nowIso = new Date().toISOString();
+  await emitProgress("persist", "Persisting resources, syllabus and assignments.", 82, {
+    resources: finalResources.length,
+  });
 
   if (finalResources.length > 0) {
     const { error: courseUpdateError } = await admin
@@ -2049,6 +2086,10 @@ export async function runCourseIntel(
 
   mark("db_persist_done");
   const totalMs = Date.now() - t0;
+  await emitProgress("persist", "Persistence complete.", 95, {
+    assignmentsPersisted,
+    assignmentsPreserved,
+  });
 
   await logAiUsage({
     userId,
@@ -2070,6 +2111,10 @@ export async function runCourseIntel(
       timings,
       totalMs,
     },
+  });
+  await emitProgress("done", "AI sync completed.", 100, {
+    totalMs,
+    scheduleEntries: mergedScheduleArray.length,
   });
 
   return {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, Plus, X } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
 import { useAppToast } from "@/components/common/AppToastProvider";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 interface CourseDetailHeaderProps {
   course: Course;
   isEditing?: boolean;
@@ -18,6 +19,24 @@ interface CourseDetailHeaderProps {
   isEnrolling?: boolean;
   onToggleEnroll?: () => void;
 }
+
+type ActivityItem = {
+  ts: string;
+  stage: string;
+  message: string;
+  progress?: number;
+};
+
+type CourseIntelJob = {
+  id: number;
+  status: string;
+  error?: string | null;
+  meta?: {
+    progress?: number;
+    activity?: ActivityItem[];
+    [key: string]: unknown;
+  } | null;
+};
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -42,13 +61,75 @@ export default function CourseDetailHeader({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isAiUpdating, setIsAiUpdating] = useState(false);
   const [aiStatus, setAiStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [aiJob, setAiJob] = useState<CourseIntelJob | null>(null);
   const { showToast } = useAppToast();
+  const handledJobStatusRef = useRef<string>("");
   const searchQuery = `${course.university || ""} ${course.courseCode || ""} ${course.title || ""}`.trim();
   const searchHref = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
 
   const isAiSyncSkipped = course.details?.ai_sync_private === true || course.details?.ai_sync_skip === true;
+  const isAiUpdating = aiJob?.status === "queued" || aiJob?.status === "running";
+  const progress = typeof aiJob?.meta?.progress === "number" ? aiJob.meta.progress : null;
+  const activity = Array.isArray(aiJob?.meta?.activity) ? aiJob.meta.activity : [];
+
+  const loadLatestJob = async () => {
+    try {
+      const res = await fetch(`/api/ai/course-intel/jobs?courseId=${course.id}`, { cache: "no-store" });
+      if (!res.ok) return;
+      const payload = await res.json();
+      if (payload?.item && typeof payload.item === "object") {
+        setAiJob(payload.item as CourseIntelJob);
+      } else {
+        setAiJob(null);
+      }
+    } catch {
+      // Ignore background status fetch errors.
+    }
+  };
+
+  useEffect(() => {
+    void loadLatestJob();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course.id]);
+
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    const channel = supabase
+      .channel(`course_intel_jobs:${course.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "scraper_jobs" },
+        () => {
+          void loadLatestJob();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course.id]);
+
+  useEffect(() => {
+    if (!aiJob) return;
+    const key = `${aiJob.id}:${aiJob.status}`;
+    if (handledJobStatusRef.current === key) return;
+
+    if (aiJob.status === "completed") {
+      setAiStatus("success");
+      showToast({ type: "success", message: "AI sync completed." });
+      trackAiUsage({ calls: 1, tokens: 1024 });
+      router.refresh();
+    } else if (aiJob.status === "failed") {
+      setAiStatus("error");
+      showToast({ type: "error", message: aiJob.error || "AI sync failed." });
+    } else {
+      setAiStatus("idle");
+    }
+    handledJobStatusRef.current = key;
+  }, [aiJob, router, showToast]);
 
   const handleAiUpdate = async () => {
     if (isAiSyncSkipped) {
@@ -56,20 +137,17 @@ export default function CourseDetailHeader({
       showToast({ type: "error", message: `AI sync skipped for this course (${reason}).` });
       return;
     }
-
-    setIsAiUpdating(true);
+    if (isAiUpdating) return;
     setAiStatus('idle');
     try {
-      const res = await fetch('/api/ai/course-intel', {
+      const res = await fetch('/api/ai/course-intel/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ courseId: course.id }),
       });
-      if (res.ok) {
-        setAiStatus('success');
-        showToast({ type: "success", message: "AI sync completed." });
-        trackAiUsage({ calls: 1, tokens: 1024 });
-        router.refresh();
+      if (res.ok || res.status === 202) {
+        showToast({ type: "success", message: "AI sync started in background." });
+        await loadLatestJob();
       } else {
         setAiStatus('error');
         let errorMessage = "AI sync failed.";
@@ -85,9 +163,6 @@ export default function CourseDetailHeader({
     } catch {
       setAiStatus('error');
       showToast({ type: "error", message: "Network error while running AI sync." });
-    } finally {
-      setIsAiUpdating(false);
-      setTimeout(() => setAiStatus('idle'), 3000);
     }
   };
 
@@ -248,6 +323,22 @@ export default function CourseDetailHeader({
               {field}
             </span>
           ))}
+        </div>
+      )}
+
+      {(isAiUpdating || activity.length > 0) && (
+        <div className="mt-3 rounded-md border border-[#e8e8e8] bg-white p-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-[#444]">AI Sync Activity</span>
+            <span className="text-[11px] text-[#777]">{progress !== null ? `${progress}%` : aiJob?.status || "running"}</span>
+          </div>
+          <div className="mt-2 max-h-24 overflow-y-auto space-y-1">
+            {activity.slice(-6).map((item, idx) => (
+              <p key={`${item.ts}-${idx}`} className="text-[11px] text-[#666]">
+                {item.message}
+              </p>
+            ))}
+          </div>
         </div>
       )}
     </header>

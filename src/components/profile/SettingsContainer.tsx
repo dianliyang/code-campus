@@ -94,6 +94,9 @@ interface SettingsContainerProps {
 
 export default function SettingsContainer({ user, profile, aiDefaults, initialSection, dict }: SettingsContainerProps) {
   const [active, setActive] = useState<SectionId>(() => {
+    if (initialSection && ALL_ITEMS.some((item) => item.id === initialSection)) {
+      return initialSection;
+    }
     if (typeof window !== "undefined") {
       try {
         const saved = window.localStorage.getItem(ACTIVE_SECTION_STORAGE_KEY);

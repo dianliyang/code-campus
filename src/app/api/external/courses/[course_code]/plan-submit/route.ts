@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import type { Json } from "@/lib/supabase/database.types";
 import { createAdminClient } from "@/lib/supabase/server";
 import { authorizeExternalRequest } from "@/lib/external-api-auth";
@@ -42,6 +43,10 @@ function normalizeKind(input: unknown): string {
   const v = String(input || "").toLowerCase().trim();
   if (["assignment", "lab", "project", "quiz", "exam", "other"].includes(v)) return v;
   return "assignment";
+}
+
+function hashKey(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
 }
 
 function validatePlan(plan: unknown): plan is DailyPlan {
@@ -103,6 +108,36 @@ export async function POST(
     const adminAny = supabase as any; // eslint-disable-line @typescript-eslint/no-explicit-any
     const courseId = Number(courseRow.id);
     const nowIso = new Date().toISOString();
+    let effectiveUserId = normalizeString(body.userId);
+
+    if (!effectiveUserId) {
+      const reqApiKey = String(request.headers.get("x-api-key") || "").trim();
+      const internalApiKey = String(process.env.INTERNAL_API_KEY || "").trim();
+      if (reqApiKey && internalApiKey && reqApiKey !== internalApiKey) {
+        const keyHash = hashKey(reqApiKey);
+        const { data: keyRow } = await adminAny
+          .from("user_api_keys")
+          .select("user_id, is_active")
+          .eq("key_hash", keyHash)
+          .maybeSingle();
+        if (keyRow?.is_active === true && typeof keyRow.user_id === "string" && keyRow.user_id.trim()) {
+          effectiveUserId = keyRow.user_id.trim();
+        }
+      }
+    }
+
+    if (!effectiveUserId) {
+      const { data: enrolled } = await supabase
+        .from("user_courses")
+        .select("user_id, status")
+        .eq("course_id", courseId)
+        .neq("status", "hidden")
+        .limit(1)
+        .maybeSingle();
+      if (typeof enrolled?.user_id === "string" && enrolled.user_id.trim()) {
+        effectiveUserId = enrolled.user_id.trim();
+      }
+    }
 
     // Validate plan payload when present.
     if (body.plan && !validatePlan(body.plan)) {
@@ -153,9 +188,8 @@ export async function POST(
 
     // 2) study_plans update (single current plan row per course/user in this API)
     let studyPlanRows = 0;
-    const userId = normalizeString(body.userId);
     if (body.studyPlan) {
-      if (!userId) {
+      if (!effectiveUserId) {
         return NextResponse.json({ error: "userId is required when submitting studyPlan" }, { status: 400 });
       }
       const startDate = body.studyPlan.startDate;
@@ -168,20 +202,20 @@ export async function POST(
           .from("study_plans")
           .delete()
           .eq("course_id", courseId)
-          .eq("user_id", userId);
+          .eq("user_id", effectiveUserId);
         if (error) throw new Error(`DB:${error.message}`);
       }
       const insertRow = {
         course_id: courseId,
-        user_id: userId,
+        user_id: effectiveUserId,
         start_date: startDate,
         end_date: endDate,
         days_of_week: Array.isArray(body.studyPlan.daysOfWeek) ? body.studyPlan.daysOfWeek : [1, 2, 3, 4, 5],
-        start_time: normalizeString(body.studyPlan.startTime),
-        end_time: normalizeString(body.studyPlan.endTime),
+        start_time: normalizeString(body.studyPlan.startTime) || "19:00:00",
+        end_time: normalizeString(body.studyPlan.endTime) || "21:00:00",
         location: normalizeString(body.studyPlan.location),
-        kind: normalizeString(body.studyPlan.kind),
-        timezone: normalizeString(body.studyPlan.timezone),
+        kind: normalizeString(body.studyPlan.kind) || "generated",
+        timezone: normalizeString(body.studyPlan.timezone) || "UTC",
       };
       const { error } = await supabase.from("study_plans").insert(insertRow);
       if (error) throw new Error(`DB:${error.message}`);

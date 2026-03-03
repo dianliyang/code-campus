@@ -1679,7 +1679,7 @@ function diffDaysInclusive(startIso: string, endIso: string): number {
 function resolvePlanningWindow(
   rows: Array<Record<string, unknown>> | null | undefined,
   todayIso: string,
-  fallbackWindowDays = 21
+  fallbackWindowDays = 56
 ) {
   const normalized = Array.isArray(rows)
     ? rows
@@ -2081,6 +2081,42 @@ export async function runCourseIntel(
   const mark = (name: string) => {
     timings[name] = Date.now() - t0;
   };
+  const persistGeneratedStudyPlan = async (plan: DailyPlan) => {
+    const days = Array.isArray(plan.days) ? plan.days : [];
+    if (days.length === 0) return 0;
+    const dates = days.map((d) => d.date).filter((d): d is string => /^\d{4}-\d{2}-\d{2}$/.test(String(d)));
+    if (dates.length === 0) return 0;
+    const startDate = dates.reduce((min, d) => (d < min ? d : min), dates[0]);
+    const endDate = dates.reduce((max, d) => (d > max ? d : max), dates[0]);
+    const weekdaySet = new Set<number>();
+    for (const iso of dates) {
+      const date = new Date(`${iso}T00:00:00.000Z`);
+      const day = date.getUTCDay();
+      const mapped = day === 0 ? 7 : day;
+      weekdaySet.add(mapped);
+    }
+    const daysOfWeek = Array.from(weekdaySet.values()).sort((a, b) => a - b);
+    const admin = createAdminClient();
+    const { error: clearError } = await admin
+      .from("study_plans")
+      .delete()
+      .eq("user_id", userId)
+      .eq("course_id", courseId);
+    if (clearError) throw new Error(clearError.message);
+    const { error: insertError } = await admin
+      .from("study_plans")
+      .insert({
+        user_id: userId,
+        course_id: courseId,
+        start_date: startDate,
+        end_date: endDate,
+        days_of_week: daysOfWeek.length > 0 ? daysOfWeek : [1, 2, 3, 4, 5],
+        kind: "generated",
+        timezone: "UTC",
+      });
+    if (insertError) throw new Error(insertError.message);
+    return 1;
+  };
   const { data: course } = await supabase
     .from("courses")
     .select("id, course_code, university, title, url, resources, description, subdomain")
@@ -2207,7 +2243,7 @@ export async function runCourseIntel(
     { sourceModeRequested, sourceModeEffective, hasExistingData }
   );
   const todayIso = toIsoDateUtc(new Date());
-  const planningWindow = resolvePlanningWindow(userStudyPlanRows as Array<Record<string, unknown>> | null | undefined, todayIso, 21);
+  const planningWindow = resolvePlanningWindow(userStudyPlanRows as Array<Record<string, unknown>> | null | undefined, todayIso, 56);
   await emitProgress("planning_window", "Step 1/6 Planning window resolved.", 14, {
     startDate: planningWindow.startIso,
     endDate: planningWindow.endIso,
@@ -2560,6 +2596,7 @@ export async function runCourseIntel(
     } else {
       assignmentsPreserved = true;
     }
+    const studyPlanRowsPersisted = await persistGeneratedStudyPlan(practicalPlan);
 
     mark("db_persist_done");
     const totalMs = Date.now() - t0;
@@ -2590,6 +2627,7 @@ export async function runCourseIntel(
         practicalPlanDays: practicalPlan.days.length,
         assignmentsPersisted,
         assignmentsPreserved,
+        studyPlanRowsPersisted,
         sourceModeEffective,
         fastMode,
         timings,
@@ -2606,6 +2644,7 @@ export async function runCourseIntel(
       practicalPlanDays: practicalPlan.days.length,
       assignmentsPersisted,
       assignmentsPreserved,
+      studyPlanRowsPersisted,
       sourceMode: sourceModeEffective,
       fastMode,
       timings,
@@ -3159,6 +3198,7 @@ export async function runCourseIntel(
   } else {
     assignmentsPreserved = true;
   }
+  const studyPlanRowsPersisted = await persistGeneratedStudyPlan(practicalPlan);
 
   mark("db_persist_done");
   const totalMs = Date.now() - t0;
@@ -3188,6 +3228,7 @@ export async function runCourseIntel(
       practicalPlanDays: practicalPlan.days.length,
       assignmentsPersisted,
       assignmentsPreserved,
+      studyPlanRowsPersisted,
       sourceModeEffective,
       executionMode,
       fastMode,
@@ -3209,6 +3250,7 @@ export async function runCourseIntel(
     practicalPlanDays: practicalPlan.days.length,
     assignmentsPersisted,
     assignmentsPreserved,
+    studyPlanRowsPersisted,
     sourceMode: sourceModeEffective,
     executionMode,
     fastMode,

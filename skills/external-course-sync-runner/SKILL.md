@@ -51,4 +51,5 @@ npx tsx -r dotenv/config scripts/skill-sync-courses-bulk.ts \
 
 ## Notes
 - Use bulk mode to retrieve `/api/external/courses`, exclude universities containing `CAU`, then run deterministic sync per course.
+- Bulk mode submits `sourceMode: "fresh"` to force internet retrieval + new scraping before regeneration.
 - Prints progress stage-by-stage and final write summary.

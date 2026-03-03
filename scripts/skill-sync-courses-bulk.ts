@@ -103,6 +103,7 @@ async function main() {
       body: JSON.stringify({
         fastMode: false,
         executionMode: "deterministic",
+        sourceMode: "fresh",
       }),
     });
     if (syncResult.res.ok) {
@@ -122,4 +123,3 @@ main().catch((error) => {
   console.error(`[bulk-sync] error: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 });
-

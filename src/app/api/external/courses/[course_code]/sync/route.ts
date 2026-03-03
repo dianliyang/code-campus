@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { runCourseIntel, type CourseIntelExecutionMode } from '@/lib/ai/course-intel';
+import { runCourseIntel, type CourseIntelExecutionMode, type CourseIntelSourceMode } from '@/lib/ai/course-intel';
 import { getCourseIntelErrorStatus } from '@/lib/ai/course-intel-errors';
 import { authorizeExternalRequest } from '@/lib/external-api-auth';
 
@@ -53,6 +53,7 @@ async function resolveCourse(supabase: ReturnType<typeof createAdminClient>, cou
  *  - userId?: string
  *  - fastMode?: boolean (default true)
  *  - executionMode?: "service" | "local" | "deterministic" (default "service")
+ *  - sourceMode?: "fresh" | "existing" | "auto" (default "auto")
  */
 export async function POST(
   request: NextRequest,
@@ -74,6 +75,10 @@ export async function POST(
       ? body.userId.trim()
       : null;
     const fastMode = typeof body?.fastMode === 'boolean' ? body.fastMode : true;
+    const sourceMode: CourseIntelSourceMode =
+      body?.sourceMode === 'fresh' || body?.sourceMode === 'existing' || body?.sourceMode === 'auto'
+        ? body.sourceMode
+        : 'auto';
     const executionMode: CourseIntelExecutionMode =
       body?.executionMode === 'local' || body?.executionMode === 'service' || body?.executionMode === 'deterministic'
         ? body.executionMode
@@ -144,7 +149,7 @@ export async function POST(
       );
     }
 
-    const result = await runCourseIntel(userId, Number(courseRow.id), { fastMode, executionMode });
+    const result = await runCourseIntel(userId, Number(courseRow.id), { fastMode, executionMode, sourceMode });
 
     return NextResponse.json({
       success: true,

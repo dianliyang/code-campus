@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, getUser } from "@/lib/supabase/server";
-import { runCourseIntel, type CourseIntelSourceMode } from "@/lib/ai/course-intel";
+import { runCourseIntel, type CourseIntelExecutionMode, type CourseIntelSourceMode } from "@/lib/ai/course-intel";
 import { upstashDelete, upstashGetJson, upstashSetJson } from "@/lib/cache/upstash";
 import {
   appendCourseIntelJobActivity,
@@ -36,9 +36,11 @@ type CachedCourseIntelJob = {
   id: number;
   status: string;
   sourceMode: CourseIntelSourceMode;
+  executionMode: CourseIntelExecutionMode;
   meta: {
     course_id: number;
     source_mode: CourseIntelSourceMode;
+    execution_mode: CourseIntelExecutionMode;
     progress: number;
     activity: ActivityItem[];
     [key: string]: unknown;
@@ -180,16 +182,19 @@ async function executeCourseIntelJob(params: {
   userId: string;
   courseId: number;
   sourceMode: CourseIntelSourceMode;
+  executionMode: CourseIntelExecutionMode;
 }) {
-  const { jobId, userId, courseId, sourceMode } = params;
+  const { jobId, userId, courseId, sourceMode, executionMode } = params;
   const broadcaster = await createCourseIntelBroadcastEmitter(courseId, jobId);
   let cachedJob: CachedCourseIntelJob = {
     id: jobId,
     status: "queued",
     sourceMode,
+    executionMode,
     meta: {
       course_id: courseId,
       source_mode: sourceMode,
+      execution_mode: executionMode,
       progress: 0,
       activity: [],
     },
@@ -257,6 +262,7 @@ async function executeCourseIntelJob(params: {
     const result = await Promise.race([
       runCourseIntel(userId, courseId, {
         sourceMode,
+        executionMode,
         onProgress: async (event) => {
           if (timedOut) return;
           dispatchProgressEvent(event);
@@ -278,6 +284,7 @@ async function executeCourseIntelJob(params: {
         curatedTasks: result.curatedTasks,
         practicalPlanDays: result.practicalPlanDays,
         sourceMode: result.sourceMode,
+        executionMode: result.executionMode,
       },
     });
     cachedJob = {
@@ -312,6 +319,7 @@ async function executeCourseIntelJob(params: {
         curatedTasks: result.curatedTasks,
         practicalPlanDays: result.practicalPlanDays,
         sourceMode: result.sourceMode,
+        executionMode: result.executionMode,
       },
     });
     await completeCourseIntelJob(jobId, {
@@ -323,6 +331,7 @@ async function executeCourseIntelJob(params: {
       curatedTasks: result.curatedTasks,
       practicalPlanDays: result.practicalPlanDays,
       sourceMode: result.sourceMode,
+      executionMode: result.executionMode,
       totalMs: result.totalMs,
     });
   } catch (error) {
@@ -406,11 +415,15 @@ export async function POST(request: NextRequest) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { courseId, sourceMode } = await request.json();
+  const { courseId, sourceMode, executionMode } = await request.json();
   const numericCourseId = Number(courseId || 0);
   if (!numericCourseId) return NextResponse.json({ error: "courseId required" }, { status: 400 });
   const normalizedSourceMode: CourseIntelSourceMode =
     sourceMode === "fresh" || sourceMode === "existing" || sourceMode === "auto" ? sourceMode : "auto";
+  const normalizedExecutionMode: CourseIntelExecutionMode =
+    executionMode === "local" || executionMode === "service" || executionMode === "deterministic"
+      ? executionMode
+      : "service";
   const supabase = createAdminClient();
   const { data: course } = await supabase
     .from("courses")
@@ -423,6 +436,7 @@ export async function POST(request: NextRequest) {
     courseId: numericCourseId,
     university: String(course?.university || "course-intel"),
     sourceMode: normalizedSourceMode,
+    executionMode: normalizedExecutionMode,
   });
   if (!jobId) {
     return NextResponse.json({ error: "Failed to create AI sync job" }, { status: 500 });
@@ -433,16 +447,19 @@ export async function POST(request: NextRequest) {
     userId: user.id,
     courseId: numericCourseId,
     sourceMode: normalizedSourceMode,
+    executionMode: normalizedExecutionMode,
   });
 
   const queuedItem: CachedCourseIntelJob = {
     id: jobId,
     status: "queued",
     sourceMode: normalizedSourceMode,
+    executionMode: normalizedExecutionMode,
     meta: {
       course_id: numericCourseId,
       progress: 0,
       source_mode: normalizedSourceMode,
+      execution_mode: normalizedExecutionMode,
       activity: [{ ts: new Date().toISOString(), stage: "queued", message: "AI sync queued.", progress: 0 }],
     },
   };

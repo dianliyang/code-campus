@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { runCourseIntel } from '@/lib/ai/course-intel';
+import { runCourseIntel, type CourseIntelExecutionMode } from '@/lib/ai/course-intel';
 import { getCourseIntelErrorStatus } from '@/lib/ai/course-intel-errors';
 import { authorizeExternalRequest } from '@/lib/external-api-auth';
 
@@ -52,6 +52,7 @@ async function resolveCourse(supabase: ReturnType<typeof createAdminClient>, cou
  * Body:
  *  - userId?: string
  *  - fastMode?: boolean (default true)
+ *  - executionMode?: "service" | "local" | "deterministic" (default "service")
  */
 export async function POST(
   request: NextRequest,
@@ -73,6 +74,10 @@ export async function POST(
       ? body.userId.trim()
       : null;
     const fastMode = typeof body?.fastMode === 'boolean' ? body.fastMode : true;
+    const executionMode: CourseIntelExecutionMode =
+      body?.executionMode === 'local' || body?.executionMode === 'service' || body?.executionMode === 'deterministic'
+        ? body.executionMode
+        : 'service';
     const force = body?.force === true;
 
     const supabase = createAdminClient();
@@ -139,7 +144,7 @@ export async function POST(
       );
     }
 
-    const result = await runCourseIntel(userId, Number(courseRow.id), { fastMode });
+    const result = await runCourseIntel(userId, Number(courseRow.id), { fastMode, executionMode });
 
     return NextResponse.json({
       success: true,

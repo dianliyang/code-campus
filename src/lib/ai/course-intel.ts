@@ -27,6 +27,10 @@ const perplexity = createOpenAI({
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
 });
+const localOpenAICompatible = createOpenAI({
+  apiKey: process.env.LOCAL_LLM_API_KEY || "local",
+  baseURL: process.env.LOCAL_LLM_BASE_URL || "",
+});
 
 type AssignmentKind = "assignment" | "lab" | "exam" | "project" | "quiz" | "other";
 
@@ -66,6 +70,7 @@ type DeterministicSignals = {
 };
 
 export type CourseIntelSourceMode = "fresh" | "existing" | "auto";
+export type CourseIntelExecutionMode = "service" | "local" | "deterministic";
 
 type CacheEntry = {
   expiresAt: number;
@@ -1503,7 +1508,7 @@ function summarizeGeminiApiError(status: number, rawBody: string, fallbackModel?
 }
 
 async function generateDailyPlanWithModel(params: {
-  provider: "perplexity" | "openai" | "gemini";
+  provider: "perplexity" | "openai" | "gemini" | "local";
   modelName: string;
   prompt: string;
 }): Promise<string> {
@@ -1531,7 +1536,11 @@ async function generateDailyPlanWithModel(params: {
     return parts.map((p) => (typeof p.text === "string" ? p.text : "")).join("");
   }
   const out = await generateText({
-    model: provider === "openai" ? openai.chat(modelName) : perplexity.chat(modelName),
+    model: provider === "openai"
+      ? openai.chat(modelName)
+      : provider === "local"
+        ? localOpenAICompatible.chat(modelName)
+        : perplexity.chat(modelName),
     prompt,
     maxOutputTokens: 8000,
   });
@@ -1592,7 +1601,7 @@ function extractMetadataFromAny(input: unknown) {
 }
 
 async function generateCourseMetadataWithModel(params: {
-  provider: "perplexity" | "openai" | "gemini";
+  provider: "perplexity" | "openai" | "gemini" | "local";
   modelName: string;
   prompt: string;
 }): Promise<{ description: string | null; subdomain: string | null; topics: string[] }> {
@@ -2043,6 +2052,7 @@ export async function runCourseIntel(
   options?: {
     fastMode?: boolean;
     sourceMode?: CourseIntelSourceMode;
+    executionMode?: CourseIntelExecutionMode;
     onProgress?: (event: {
       stage: string;
       message: string;
@@ -2108,7 +2118,6 @@ export async function runCourseIntel(
       String(profile?.ai_course_update_prompt_template || "").trim(),
       String(profile?.ai_syllabus_prompt_template || "").trim(),
     ].filter(Boolean).join("\n\n");
-  if (!template) throw new Error("Course intel prompt template not configured");
   mark("loaded_profile");
   await emitProgress("profile", "Loaded profile and prompt settings.", 10);
 
@@ -2119,19 +2128,35 @@ export async function runCourseIntel(
       : providerRaw === "gemini"
           ? "gemini"
           : "perplexity";
-  const webSearchEnabled = Boolean(profile?.ai_web_search_enabled);
-  const provider = preferredProvider;
-  if (provider === "openai" && !process.env.OPENAI_API_KEY) {
+  const executionMode: CourseIntelExecutionMode =
+    options?.executionMode === "local"
+      ? "local"
+      : options?.executionMode === "deterministic"
+        ? "deterministic"
+        : "service";
+  const llmEnabled = executionMode !== "deterministic";
+  if (llmEnabled && !template) throw new Error("Course intel prompt template not configured");
+  const webSearchEnabled = executionMode === "deterministic" ? true : Boolean(profile?.ai_web_search_enabled);
+  const provider: "perplexity" | "openai" | "gemini" | "local" =
+    executionMode === "local" ? "local" : preferredProvider;
+  if (llmEnabled && provider === "openai" && !process.env.OPENAI_API_KEY) {
     throw new Error("AI service not configured: OPENAI_API_KEY missing");
   }
-  if (provider === "gemini" && !process.env.GEMINI_API_KEY) {
+  if (llmEnabled && provider === "gemini" && !process.env.GEMINI_API_KEY) {
     throw new Error("AI service not configured: GEMINI_API_KEY missing");
   }
-  if (provider === "perplexity" && !process.env.PERPLEXITY_API_KEY) {
+  if (llmEnabled && provider === "perplexity" && !process.env.PERPLEXITY_API_KEY) {
     throw new Error("AI service not configured: PERPLEXITY_API_KEY missing");
   }
+  if (executionMode === "local" && !process.env.LOCAL_LLM_BASE_URL) {
+    throw new Error("AI service not configured: LOCAL_LLM_BASE_URL missing");
+  }
 
-  const modelName = await resolveModelForProvider(provider, String(profile?.ai_default_model || "").trim());
+  const modelName = !llmEnabled
+    ? "deterministic-pipeline-v1"
+    : provider === "local"
+      ? String(process.env.LOCAL_LLM_MODEL || profile?.ai_default_model || "gpt-4o-mini").trim()
+      : await resolveModelForProvider(provider, String(profile?.ai_default_model || "").trim());
   if (!modelName) {
     throw new Error(`AI service not configured: no active model for provider ${provider}`);
   }
@@ -2207,7 +2232,7 @@ export async function runCourseIntel(
       (!hasSubdomain && !subdomain) ||
       (!hasTopics && topics.length === 0);
 
-    if (needsGeneration) {
+    if (needsGeneration && llmEnabled) {
       const taskPreview = input.taskHints.slice(0, 40).map((task) => ({
         kind: task.kind,
         title: task.title,
@@ -2367,7 +2392,7 @@ export async function runCourseIntel(
     await emitProgress("prioritize", "Step 5/6 Prioritized tasks and generated schedule draft.", 58, {
       prioritizedTasks: profiledTasks.length,
     });
-    if (seedTasks.length > 0) {
+    if (llmEnabled && seedTasks.length > 0) {
       try {
         const planPrompt = buildPracticalPlanPrompt({
           courseCode: String(course.course_code || ""),
@@ -2763,7 +2788,11 @@ export async function runCourseIntel(
       };
     } else {
       const out = await generateText({
-        model: provider === "openai" ? openai.chat(modelName) : perplexity.chat(modelName),
+        model: provider === "openai"
+          ? openai.chat(modelName)
+          : provider === "local"
+            ? localOpenAICompatible.chat(modelName)
+            : perplexity.chat(modelName),
         prompt: promptOverride || prompt,
         maxOutputTokens,
       });
@@ -2783,66 +2812,77 @@ export async function runCourseIntel(
     return { text, usage, parsed, scheduleArray };
   };
 
-  const firstAttempt = await runExtraction(fastMode ? 9000 : 14000);
-  await emitProgress("ai", "AI extraction pass finished.", 60, {
-    scheduleRows: firstAttempt.scheduleArray.length,
-  });
-  let extraction = firstAttempt;
-
-  // Retry once when the model likely returned a partial syllabus.
-  if (!fastMode && firstAttempt.scheduleArray.length <= 1) {
-    await emitProgress("ai", "AI output looked partial. Retrying with higher token budget.", 63, {
-      previousRows: firstAttempt.scheduleArray.length,
+  let text = "";
+  let parsed: Record<string, unknown> = {};
+  let usage = { inputTokens: 0, outputTokens: 0 };
+  let scheduleArray: Array<Record<string, unknown>> = [];
+  if (llmEnabled) {
+    const firstAttempt = await runExtraction(fastMode ? 9000 : 14000);
+    await emitProgress("ai", "AI extraction pass finished.", 60, {
+      scheduleRows: firstAttempt.scheduleArray.length,
     });
-    const retryAttempt = await runExtraction(22000);
-    if (retryAttempt.scheduleArray.length > firstAttempt.scheduleArray.length) {
-      extraction = retryAttempt;
+    let extraction = firstAttempt;
+
+    // Retry once when the model likely returned a partial syllabus.
+    if (!fastMode && firstAttempt.scheduleArray.length <= 1) {
+      await emitProgress("ai", "AI output looked partial. Retrying with higher token budget.", 63, {
+        previousRows: firstAttempt.scheduleArray.length,
+      });
+      const retryAttempt = await runExtraction(22000);
+      if (retryAttempt.scheduleArray.length > firstAttempt.scheduleArray.length) {
+        extraction = retryAttempt;
+      }
     }
-  }
 
-  const firstRecoveredRows = extractScheduleRowsFromRawText(extraction.text).length;
-  const firstParsedResources = normalizeResources((extraction.parsed as Record<string, unknown>).resources).length;
-  const firstParsedAssignments = extractTopLevelAssignments(courseId, null, (extraction.parsed as Record<string, unknown>).assignments, new Date().toISOString()).length;
-  const looksIncomplete =
-    extraction.scheduleArray.length <= 1 &&
-    firstRecoveredRows <= 1 &&
-    firstParsedResources <= 1 &&
-    firstParsedAssignments === 0;
-  if (!fastMode && looksIncomplete) {
-    await emitProgress("ai", "Running strict JSON recovery pass for incomplete extraction.", 66, {
-      recoveredRows: firstRecoveredRows,
-      parsedResources: firstParsedResources,
-      parsedAssignments: firstParsedAssignments,
-    });
-    const stricterPrompt = `${prompt}\n\nIMPORTANT: Return a COMPLETE result for the full course. Return ONLY one valid JSON object with all known schedule rows, resources, and assignments. No prose. No markdown.`;
-    const qualityRetry = await runExtraction(24000, stricterPrompt);
-    const qualityRetryRecovered = extractScheduleRowsFromRawText(qualityRetry.text).length;
-    const currentScore = extraction.scheduleArray.length + firstRecoveredRows;
-    const retryScore = qualityRetry.scheduleArray.length + qualityRetryRecovered;
-    if (retryScore > currentScore) extraction = qualityRetry;
-  }
-
-  // Recovery retry when model returns prose/refusal instead of JSON object.
-  const looksLikeNonJsonReply =
-    !/^\s*\{/.test((extraction.text || "").trim()) &&
-    (/I (can't|cannot|need to clarify)|I'?m Perplexity|search results provided|I appreciate your/i.test(extraction.text || ""));
-  if (looksLikeNonJsonReply) {
-    await emitProgress("ai", "Model returned non-JSON text. Forcing strict JSON retry.", 68);
-    const forcedJsonPrompt = `${prompt}\n\nIMPORTANT: Return ONLY a single valid JSON object. Do not include any prose, disclaimers, citations, markdown, or code fences.`;
-    const jsonRetry = await runExtraction(fastMode ? 10000 : 22000, forcedJsonPrompt);
-    if (jsonRetry.scheduleArray.length >= extraction.scheduleArray.length) {
-      extraction = jsonRetry;
+    const firstRecoveredRows = extractScheduleRowsFromRawText(extraction.text).length;
+    const firstParsedResources = normalizeResources((extraction.parsed as Record<string, unknown>).resources).length;
+    const firstParsedAssignments = extractTopLevelAssignments(courseId, null, (extraction.parsed as Record<string, unknown>).assignments, new Date().toISOString()).length;
+    const looksIncomplete =
+      extraction.scheduleArray.length <= 1 &&
+      firstRecoveredRows <= 1 &&
+      firstParsedResources <= 1 &&
+      firstParsedAssignments === 0;
+    if (!fastMode && looksIncomplete) {
+      await emitProgress("ai", "Running strict JSON recovery pass for incomplete extraction.", 66, {
+        recoveredRows: firstRecoveredRows,
+        parsedResources: firstParsedResources,
+        parsedAssignments: firstParsedAssignments,
+      });
+      const stricterPrompt = `${prompt}\n\nIMPORTANT: Return a COMPLETE result for the full course. Return ONLY one valid JSON object with all known schedule rows, resources, and assignments. No prose. No markdown.`;
+      const qualityRetry = await runExtraction(24000, stricterPrompt);
+      const qualityRetryRecovered = extractScheduleRowsFromRawText(qualityRetry.text).length;
+      const currentScore = extraction.scheduleArray.length + firstRecoveredRows;
+      const retryScore = qualityRetry.scheduleArray.length + qualityRetryRecovered;
+      if (retryScore > currentScore) extraction = qualityRetry;
     }
-  }
-  mark("ai_extraction_done");
-  await emitProgress("ai", "AI extraction and recovery complete.", 72);
 
-  const text = extraction.text;
-  const parsed = extraction.parsed;
-  const usage = {
-    inputTokens: Number(firstAttempt.usage.inputTokens || 0) + (extraction === firstAttempt ? 0 : Number(extraction.usage.inputTokens || 0)),
-    outputTokens: Number(firstAttempt.usage.outputTokens || 0) + (extraction === firstAttempt ? 0 : Number(extraction.usage.outputTokens || 0)),
-  };
+    // Recovery retry when model returns prose/refusal instead of JSON object.
+    const looksLikeNonJsonReply =
+      !/^\s*\{/.test((extraction.text || "").trim()) &&
+      (/I (can't|cannot|need to clarify)|I'?m Perplexity|search results provided|I appreciate your/i.test(extraction.text || ""));
+    if (looksLikeNonJsonReply) {
+      await emitProgress("ai", "Model returned non-JSON text. Forcing strict JSON retry.", 68);
+      const forcedJsonPrompt = `${prompt}\n\nIMPORTANT: Return ONLY a single valid JSON object. Do not include any prose, disclaimers, citations, markdown, or code fences.`;
+      const jsonRetry = await runExtraction(fastMode ? 10000 : 22000, forcedJsonPrompt);
+      if (jsonRetry.scheduleArray.length >= extraction.scheduleArray.length) {
+        extraction = jsonRetry;
+      }
+    }
+    mark("ai_extraction_done");
+    await emitProgress("ai", "AI extraction and recovery complete.", 72);
+
+    text = extraction.text;
+    parsed = extraction.parsed;
+    usage = {
+      inputTokens: Number(firstAttempt.usage.inputTokens || 0) + (extraction === firstAttempt ? 0 : Number(extraction.usage.inputTokens || 0)),
+      outputTokens: Number(firstAttempt.usage.outputTokens || 0) + (extraction === firstAttempt ? 0 : Number(extraction.usage.outputTokens || 0)),
+    };
+    const recoveredScheduleRows = extractScheduleRowsFromRawText(text);
+    scheduleArray = extraction.scheduleArray.length > 0 ? extraction.scheduleArray : recoveredScheduleRows;
+  } else {
+    mark("ai_extraction_done");
+    await emitProgress("ai", "Skipped model extraction in deterministic mode.", 72);
+  }
 
   const rawSourceUrl = extractSourceUrlFromRawText(text);
   const rawResources = extractResourcesFromRawText(text);
@@ -2851,8 +2891,6 @@ export async function runCourseIntel(
   const sourceUrl = typeof parsed.source_url === "string" ? parsed.source_url : rawSourceUrl;
   const parsedContent = (parsed.content && typeof parsed.content === "object" ? parsed.content : {}) as Json;
   const content = mergeGradingSignals(parsedContent, gradingSignals) as Record<string, unknown>;
-  const recoveredScheduleRows = extractScheduleRowsFromRawText(text);
-  const scheduleArray = extraction.scheduleArray.length > 0 ? extraction.scheduleArray : recoveredScheduleRows;
   const mergedWithWeekSignals = mergeWeekSignalsIntoSchedule(scheduleArray, weekSignals);
   const mergedScheduleArray = mergeDeterministicScheduleRows(mergedWithWeekSignals, deterministicRows);
   const schedule = mergedScheduleArray as Json;
@@ -2880,7 +2918,7 @@ export async function runCourseIntel(
   await emitProgress("prioritize", "Step 5/6 Prioritized tasks and generated schedule draft.", 78, {
     prioritizedTasks: profiledTasks.length,
   });
-  if (seedTasks.length > 0) {
+  if (llmEnabled && seedTasks.length > 0) {
     try {
       const planPrompt = buildPracticalPlanPrompt({
         courseCode: String(course.course_code || ""),
@@ -3151,6 +3189,7 @@ export async function runCourseIntel(
       assignmentsPersisted,
       assignmentsPreserved,
       sourceModeEffective,
+      executionMode,
       fastMode,
       timings,
       totalMs,
@@ -3171,6 +3210,7 @@ export async function runCourseIntel(
     assignmentsPersisted,
     assignmentsPreserved,
     sourceMode: sourceModeEffective,
+    executionMode,
     fastMode,
     timings,
     totalMs,

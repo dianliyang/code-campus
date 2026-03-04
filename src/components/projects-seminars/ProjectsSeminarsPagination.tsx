@@ -45,11 +45,11 @@ export default function ProjectsSeminarsPagination({
 
   return (
     <>
-      <div className="hidden md:flex items-center justify-between rounded-md border px-2 py-2">
+      <div className="hidden md:flex flex-nowrap items-center justify-between gap-2 rounded-md border px-2 py-2">
         <p className="text-xs text-muted-foreground">
           Page {page} of {Math.max(totalPages, 1)}
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-nowrap items-center gap-2">
           <Select
             value={String(perPage)}
             onValueChange={(value) => {
@@ -68,7 +68,7 @@ export default function ProjectsSeminarsPagination({
               <SelectItem value="48">48</SelectItem>
             </SelectContent>
           </Select>
-          <Pagination className="mx-0 w-auto">
+          <Pagination className="mx-0 w-auto shrink-0">
             <PaginationContent className="gap-0.5">
               <PaginationItem>
                 <PaginationPrevious href={createPageHref(Math.max(1, page - 1))} />

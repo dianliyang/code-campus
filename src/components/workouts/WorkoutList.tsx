@@ -306,65 +306,68 @@ export default function WorkoutList({
                 const expanded = expandedGridCategory === group.category;
 
                 return (
-                  <Button
-                    variant="outline"
-                    key={group.category}
-                    type="button"
-                    onClick={() => {
-                      setExpandedGridCategory(group.category);
-                      if (selectedCategory !== group.category) {
-                        setCategoryOnServer(group.category);
-                      }
-                    }}
-                    className="h-auto flex-col items-start"
-                  >
-                    <div className="flex w-full items-center justify-between gap-2">
-                      <p className="truncate font-medium">{group.category}</p>
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {group.count} choices
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Student: {priceRange}
-                    </p>
-                  </Button>
+                  <div key={group.category} className="space-y-2">
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={() => {
+                        setExpandedGridCategory(group.category);
+                        if (selectedCategory !== group.category) {
+                          setCategoryOnServer(group.category);
+                        }
+                      }}
+                      className={`h-auto w-full flex-col items-start ${
+                        expanded ? "border-black bg-muted/40" : ""
+                      }`}
+                    >
+                      <div className="flex w-full items-center justify-between gap-2">
+                        <p className="truncate font-medium">{group.category}</p>
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {group.count} choices
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Student: {priceRange}
+                      </p>
+                    </Button>
+                    {expanded && selectedCategory === group.category ? (
+                      <div className="rounded-sm border bg-muted/20 p-2">
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="text-sm font-medium">{selectedCategory} choices</p>
+                          {selectedActionHref ? (
+                            <Button variant="outline" asChild>
+                              <a
+                                href={selectedActionHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Open
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </Button>
+                          ) : null}
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                          {workouts.map((workout, idx) => (
+                            <WorkoutCard
+                              key={workout.id}
+                              workout={workout}
+                              viewMode={effectiveViewMode}
+                              dict={dict}
+                              rowIndex={idx}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
                 );
               })}
             </div>
 
-            {expandedGridCategory === selectedCategory ? (
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-medium">{selectedCategory} choices</p>
-                  {selectedActionHref ? (
-                    <Button variant="outline" asChild>
-                      <a
-                        href={selectedActionHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Open
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </Button>
-                  ) : null}
-                </div>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {workouts.map((workout, idx) => (
-                    <WorkoutCard
-                      key={workout.id}
-                      workout={workout}
-                      viewMode={effectiveViewMode}
-                      dict={dict}
-                      rowIndex={idx}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : null}
           </div>
         )}
 

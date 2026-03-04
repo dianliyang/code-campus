@@ -28,6 +28,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
   });
 
   return (
+    <div className="min-w-[760px]">
     <Table>
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) =>
@@ -64,6 +65,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
           </TableRow>
         }
       </TableBody>
-    </Table>);
+    </Table>
+    </div>);
 
 }

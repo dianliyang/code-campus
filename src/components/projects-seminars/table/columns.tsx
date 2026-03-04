@@ -3,15 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
-import { ExternalLink, Loader2, MoreHorizontalIcon } from "lucide-react";
+import { Check, ExternalLink, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { toggleProjectSeminarEnrollmentAction } from "@/actions/projects-seminars";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -23,7 +16,7 @@ export interface ProjectSeminarTableRow {
   university: string;
   category: string;
   department: string;
-  status: "Enrolled" | "Not Enrolled";
+  enrolled: boolean;
   credit: number | null;
   semesterLabel: string;
   url: string | null;
@@ -37,7 +30,7 @@ function ProjectSeminarRowActions({ row }: { row: ProjectSeminarTableRow }) {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await toggleProjectSeminarEnrollmentAction(row.id, row.status === "Enrolled");
+      await toggleProjectSeminarEnrollmentAction(row.id, row.enrolled);
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -48,30 +41,29 @@ function ProjectSeminarRowActions({ row }: { row: ProjectSeminarTableRow }) {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" disabled={isSubmitting}>
-          {isSubmitting ? <Loader2 className="animate-spin" /> : <MoreHorizontalIcon />}
-          <span className="sr-only">Open menu</span>
+    <div className="flex justify-end gap-1.5">
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={isSubmitting}
+        onClick={() => void handleToggleEnrollment()}
+        aria-label={row.enrolled ? "Unenroll" : "Enroll"}
+        title={row.enrolled ? "Unenroll" : "Enroll"}
+      >
+        {isSubmitting ? <Loader2 className="animate-spin" /> : row.enrolled ? <Check /> : <UserPlus />}
+      </Button>
+      {row.url ? (
+        <Button variant="outline" size="icon" asChild>
+          <a href={row.url} target="_blank" rel="noreferrer" aria-label="Open seminar" title="Open seminar">
+            <ExternalLink />
+          </a>
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={handleToggleEnrollment}>
-          {row.status === "Enrolled" ? "Unenroll" : "Enroll"}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {row.url ? (
-          <DropdownMenuItem asChild>
-            <a href={row.url} target="_blank" rel="noreferrer">
-              Open seminar
-              <ExternalLink className="ml-auto w-3 h-3" />
-            </a>
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem disabled>Open seminar</DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      ) : (
+        <Button variant="outline" size="icon" disabled aria-label="Open seminar unavailable" title="Open seminar unavailable">
+          <ExternalLink />
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -101,18 +93,6 @@ export const projectSeminarColumns: ColumnDef<ProjectSeminarTableRow>[] = [
     accessorKey: "department",
     header: "Department",
     cell: ({ row }) => <span className="text-[12px] text-[#555] truncate">{row.original.department}</span>,
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.original.status;
-      return (
-        <span className={`inline-flex border px-2 py-0.5 text-[11px] font-medium ${status === "Enrolled" ? "border-green-100 bg-green-50 text-green-700" : "border-[#e5e5e5] bg-[#f3f3f3] text-[#666]"}`}>
-          {status}
-        </span>
-      );
-    },
   },
   {
     accessorKey: "credit",

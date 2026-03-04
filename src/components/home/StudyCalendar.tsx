@@ -241,15 +241,15 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                       if (!open && selectedEventKey === event.key) setSelectedEventKey(null);
                     }}>
                         <PopoverTrigger asChild>
-                          <Item
-                        asChild
-                        size="sm"
-                        className="cursor-pointer px-0 py-2"
+                          <Button
+                        variant="ghost"
+                        className="h-auto w-full justify-start px-0 py-2 text-left hover:bg-transparent"
+                        type="button"
                         onClick={() => {
                           setWeekStart(startOfWeek(new Date(event.date)));
-                          setSelectedEventKey((prev) => prev === event.key ? null : event.key);
+                          setSelectedEventKey(event.key);
                         }}>
-                            <button type="button" className="w-full text-left">
+                            <Item size="sm" className="w-full px-0 py-0">
                               <ItemContent className="gap-0.5">
                                 <p className="text-[10px] text-[#64748b]">
                                   {event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}
@@ -261,8 +261,8 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                                   {event.courseCode} · {event.kind}
                                 </p>
                               </ItemContent>
-                            </button>
-                          </Item>
+                            </Item>
+                          </Button>
                         </PopoverTrigger>
                         <PopoverContent align="start" className="w-80">
                           <PopoverHeader>

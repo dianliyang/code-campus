@@ -8,6 +8,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
@@ -32,8 +39,6 @@ export default function ProjectsSeminarsToolbar({
   searchParams.get("semester")?.split(",").filter(Boolean) || [];
   const sort = searchParams.get("sort") || "title";
   const lastPushedQuery = useRef(searchParams.get("q") || "");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filtersRef = useRef<HTMLDivElement>(null);
 
   const pushWith = (patch: Record<string, string | string[] | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -81,17 +86,6 @@ export default function ProjectsSeminarsToolbar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  useEffect(() => {
-    const onPointerDown = (event: MouseEvent) => {
-      if (!filtersRef.current) return;
-      if (!filtersRef.current.contains(event.target as Node)) {
-        setFiltersOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, []);
-
   return (
     <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:justify-between">
       <Tabs value={view} onValueChange={(next) => pushWith({ view: next })}>
@@ -108,68 +102,53 @@ export default function ProjectsSeminarsToolbar({
       </Tabs>
 
       <div className="flex w-full flex-wrap md:w-auto md:flex-nowrap items-center gap-2">
-        <div className="relative" ref={filtersRef}>
-          <Button variant="outline"
-          type="button"
-          onClick={() => setFiltersOpen((prev) => !prev)}>
-
-            
-            <SlidersHorizontal />
-            Filters
-          </Button>
-          {filtersOpen ?
-          <div className="absolute right-0 z-40 mt-2 w-[320px] rounded-sm border bg-background p-3 shadow-xs">
-              <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7a7a]">
-                  Category
-                </p>
-                <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
-                  {categories.map((name) =>
-                <label
-                  key={name}
-                  className="flex items-center gap-2 text-[13px] text-[#444]">
-                  
-                      <Checkbox
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" type="button">
+              <SlidersHorizontal />
+              Filters
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[320px] p-3">
+            <DropdownMenuLabel className="px-0 text-[11px] uppercase tracking-wide text-[#7a7a7a]">
+              Category
+            </DropdownMenuLabel>
+            <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
+              {categories.map((name) => (
+                <label key={name} className="flex items-center gap-2 text-[13px] text-[#444]">
+                  <Checkbox
                     checked={selectedCategories.includes(name)}
                     onCheckedChange={() =>
-                    pushWith({
-                      category: toggleItem(selectedCategories, name)
-                    })
+                      pushWith({
+                        category: toggleItem(selectedCategories, name),
+                      })
                     }
-                     />
-                  
-                      <span>{name}</span>
-                    </label>
-                )}
-                </div>
-              </div>
-              <div className="mt-3 space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7a7a]">
-                  Semesters
-                </p>
-                <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
-                  {semesters.map((name) =>
-                <label
-                  key={name}
-                  className="flex items-center gap-2 text-[13px] text-[#444]">
-                  
-                      <Checkbox
+                  />
+                  <span>{name}</span>
+                </label>
+              ))}
+            </div>
+            <DropdownMenuSeparator className="my-2" />
+            <DropdownMenuLabel className="px-0 text-[11px] uppercase tracking-wide text-[#7a7a7a]">
+              Semesters
+            </DropdownMenuLabel>
+            <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
+              {semesters.map((name) => (
+                <label key={name} className="flex items-center gap-2 text-[13px] text-[#444]">
+                  <Checkbox
                     checked={selectedSemesters.includes(name)}
                     onCheckedChange={() =>
-                    pushWith({
-                      semester: toggleItem(selectedSemesters, name)
-                    })
+                      pushWith({
+                        semester: toggleItem(selectedSemesters, name),
+                      })
                     }
-                     />
-                  
-                      <span>{name}</span>
-                    </label>
-                )}
-                </div>
-              </div>
-            </div> :
-          null}
-        </div>
+                  />
+                  <span>{name}</span>
+                </label>
+              ))}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Select value={sort} onValueChange={(next) => pushWith({ sort: next })}>
           <SelectTrigger>
             <SelectValue />

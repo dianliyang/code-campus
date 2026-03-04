@@ -26,7 +26,7 @@ export default async function DashboardLayout({
             courses: dict.navbar?.courses || "Courses",
             projectsSeminars: dict.navbar?.projects_seminars || "Seminars",
             studyPlan: dict.navbar?.roadmap || "Roadmap",
-            smartPlanner: dict.navbar?.smart_planner || "Smart Planer",
+            smartPlanner: "Smart Assist",
             studySchedule: dict.navbar?.schedule || "Schedule",
             workouts: dict.navbar?.workouts || "Workouts",
             command: dict.navbar?.command || "Command",
@@ -34,7 +34,7 @@ export default async function DashboardLayout({
             profile: dict.navbar?.identity || "Identity", // Keep for compat if needed
             settings: dict.navbar?.settings || "Settings",
             settingsEngine: dict.navbar?.settings_engine || dict.navbar?.settings_intelligence || "Engine",
-            settingsUsage: dict.navbar?.settings_usage || "Usage",
+            settingsUsage: dict.navbar?.settings_usage || "Usage Statistic",
             settingsSecurity: dict.navbar?.settings_account || dict.navbar?.settings_security || "Account",
             settingsSystem: dict.navbar?.settings_system || "Synchronization",
             settingsApiControl: dict.navbar?.settings_api_control || "API Control",

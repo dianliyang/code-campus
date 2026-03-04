@@ -352,7 +352,7 @@ export default function CourseDetailHeader({
   return (
     <header
       data-course-title-header
-      className="sticky top-0 z-20 rounded-md bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      className="sticky top-0 z-20 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       
 
       {/* Single row: logo · info · actions */}
@@ -521,12 +521,9 @@ export default function CourseDetailHeader({
             </Link> :
         null}
           {course.fields.map((field) =>
-        <span
-          key={field}
-          className="text-xs font-medium bg-white text-[#666] px-2 py-0.5">
-          
+        <Badge key={field} variant="outline">
               {field}
-            </span>
+            </Badge>
         )}
         </div>
       }

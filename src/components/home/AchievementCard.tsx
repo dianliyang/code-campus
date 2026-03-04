@@ -88,13 +88,13 @@ export default function AchievementCard({ course }: AchievementCardProps) {
             
             </label>
             <div className="flex gap-2">
-              <Button variant="outline"
+              <Button variant="outline" size="sm"
             onClick={() => setShowEditModal(false)}>
 
               
                 Cancel
               </Button>
-              <Button variant="outline"
+              <Button variant="outline" size="sm"
             onClick={handleUpdate}
             disabled={isUpdating}>
 
@@ -143,14 +143,14 @@ export default function AchievementCard({ course }: AchievementCardProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
-          <Button variant="outline"
+          <Button variant="outline" size="icon-sm"
           onClick={() => setShowEditModal(true)}
 
           aria-label="Edit GPA">
             
             <PenSquare />
           </Button>
-          <Button variant="outline" size="icon"
+          <Button variant="outline" size="icon-sm"
           onClick={handleMarkIncomplete}
           disabled={isMarkingIncomplete}
 

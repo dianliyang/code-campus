@@ -573,6 +573,7 @@ export default function CourseDetailContent({
   visibleCalendarMonthIndex >= 0 ? visibleCalendarMonthIndex : 0;
   const visibleCalendarMonth =
   studyPlanCalendar.months[resolvedCalendarMonthIndex] || null;
+  const todayIso = toIsoDateUtc(new Date());
 
   const handleGeneratePlans = async () => {
     setIsGeneratingPlans(true);
@@ -977,7 +978,7 @@ export default function CourseDetailContent({
                                     </span>
                             }
                                 </div>
-                                <div className="flex items-center gap-1" aria-label="Study days">
+                                <div className="flex items-center gap-1 py-1" aria-label="Study days">
                                   {Array.from({ length: 7 }).map((_, dayIdx) =>
                             <span
                               key={`study-day-dot-${plan.id ?? idx}-${dayIdx}`}
@@ -1132,7 +1133,7 @@ export default function CourseDetailContent({
                                     </div>
                                   </div>
 
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                                     <div className="space-y-1">
                                       <label className="text-sm">Kind</label>
                                       <Input
@@ -1496,10 +1497,11 @@ export default function CourseDetailContent({
               }
             </div>
             {studyPlanCalendar.range ?
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-3">
+            <div className="rounded-sm border bg-background">
+                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px]">
+                  <div className="p-3 xl:border-r">
+                    {visibleCalendarMonth ?
                 <div>
-                  {visibleCalendarMonth ?
-                <div className="rounded-sm border bg-background p-3">
                       <div className="flex items-center justify-between mb-2">
                         <Button
                       variant="outline"
@@ -1567,6 +1569,7 @@ export default function CourseDetailContent({
                       [];
                       const isSelected =
                       selectedCalendarDate === cell.dateIso;
+                      const isToday = cell.dateIso === todayIso;
                       const canSelect = cell.inRange;
                       return (
                         <Button
@@ -1584,8 +1587,8 @@ export default function CourseDetailContent({
                             }
                           }}
                           disabled={!canSelect}
-                          className={`h-auto min-h-[76px] w-full flex-col items-start justify-start gap-1 p-1.5 text-left ${
-                            isSelected ? "border-black bg-muted" : ""
+                          className={`h-auto min-h-[76px] w-full flex-col items-start justify-start gap-1 overflow-hidden p-1.5 text-left ${
+                            isSelected ? "border-black bg-muted" : isToday ? "border-black/60" : ""
                           }`}>
 
 
@@ -1598,16 +1601,11 @@ export default function CourseDetailContent({
 
                           
                               <div className="flex items-center justify-between">
-                                <span className="font-semibold text-[#666]">
+                                <span className={`font-semibold ${isToday ? "text-[#111]" : "text-[#666]"}`}>
                                   {cell.day}
                                 </span>
-                                {events.length > 0 &&
-                            <Badge variant="outline" className="px-1 py-0.5 text-[10px]">
-                                    {events.length}
-                                  </Badge>
-                            }
                               </div>
-                              <div className="mt-1 space-y-1">
+                              <div className="mt-1 space-y-1 overflow-hidden">
                                 {events.slice(0, 2).map((event, idx) =>
                             <p
                               key={`${cell.dateIso}-${event.label}-${idx}`}
@@ -1617,11 +1615,6 @@ export default function CourseDetailContent({
                                     {event.label}
                                   </p>
                             )}
-                                {events.length > 2 &&
-                            <p className="text-[10px] text-muted-foreground">
-                                    +{events.length - 2} more
-                                  </p>
-                            }
                               </div>
                             </Button>);
 
@@ -1629,9 +1622,9 @@ export default function CourseDetailContent({
                       </div>
                     </div> :
                 null}
-                </div>
-                <div className="rounded-sm border bg-background p-3">
-                  <h3 className="text-sm font-semibold text-[#2a2a2a]">
+                  </div>
+                  <div className="p-3">
+                  <h3 className="text-base font-semibold text-[#1f1f1f]">
                     Day Details
                   </h3>
                   <p className="text-xs text-[#777] mt-1">
@@ -1673,7 +1666,8 @@ export default function CourseDetailContent({
                     </p>
                 }
                 </div>
-              </div> :
+              </div>
+            </div> :
 
             <p className="text-sm text-[#9a9a9a]">
                 No schedule range found yet.
@@ -1686,7 +1680,7 @@ export default function CourseDetailContent({
           <div className="space-y-5">
             <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-[#1f1f1f]">
+                  <h3 className="text-lg font-semibold text-[#1f1f1f]">
                     Resources
                   </h3>
                   <Button
@@ -1706,15 +1700,15 @@ export default function CourseDetailContent({
                       {visibleResources.map((url: string, i: number) =>
                     <li
                       key={`${url}-${i}`}
-                      className="flex items-start gap-2">
+                      className="flex items-center gap-2">
                       
                           <a
                         href={url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-sm font-medium text-[#335b9a] hover:underline flex items-start gap-2 break-all flex-1 min-w-0">
+                        className="text-sm font-medium text-[#335b9a] hover:underline flex items-center gap-2 break-all flex-1 min-w-0">
                         
-                            <Globe className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#778fb8]" />
+                            <Globe className="w-4 h-4 flex-shrink-0 text-[#778fb8]" />
                             {url}
                           </a>
                           <Button
@@ -1833,7 +1827,7 @@ export default function CourseDetailContent({
             </div>
 
             <div>
-                <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">
+                <h3 className="text-lg font-semibold text-[#1f1f1f] mb-4">
                   Course Facts
                 </h3>
                 <dl className="space-y-4 text-sm">

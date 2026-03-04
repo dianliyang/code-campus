@@ -96,7 +96,7 @@ const SECTION_META: Record<SectionId, {title: string;desc: string;}> = {
     desc: "Unified prompt for retrieval, description, topics/subdomain, and schedule generation."
   },
   usage: {
-    title: "Usage Statistics",
+    title: "Usage Statistic",
     desc: "AI call history, token usage, and cost breakdown."
   },
   identity: {

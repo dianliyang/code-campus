@@ -49,7 +49,7 @@ export default function RoadmapAchievementsSection({
         {availableSemesters.length > 0 &&
         <div className="relative ml-auto min-w-[180px]">
             <Select value={selectedSemester} onValueChange={setSelectedSemester}>
-              <SelectTrigger>
+              <SelectTrigger size="sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -171,7 +171,6 @@ export default async function ProjectsSeminarsPage({
       term?: string;
       year?: number;
     };
-    const status = enrollmentMap.get(item.id) ? "Enrolled" : "Not Enrolled";
     const department = (departmentMap.get(item.id) ||
       (item.details &&
         typeof item.details === "object" &&
@@ -188,7 +187,7 @@ export default async function ProjectsSeminarsPage({
       university: item.university || "",
       category: item.category || "",
       department,
-      status,
+      enrolled: Boolean(enrollmentMap.get(item.id)),
       credit: item.credit ?? null,
       semesterLabel:
         semester.term && semester.year
@@ -215,9 +214,11 @@ export default async function ProjectsSeminarsPage({
       />
       <Separator className="my-3" />
 
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-hidden">
         {view === "list" ? (
-          <ProjectsSeminarsDataTable rows={tableRows} />
+          <div className="h-full overflow-auto">
+            <ProjectsSeminarsDataTable rows={tableRows} />
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {(items || []).map((item) => {

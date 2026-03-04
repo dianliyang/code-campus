@@ -277,7 +277,7 @@ export default function ActiveCourseTrack({
           </div>
           <ItemActions
             data-no-card-nav="true"
-            className="flex items-center gap-2 p-2">
+            className="self-start items-start p-2">
             <ButtonGroup className="ml-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

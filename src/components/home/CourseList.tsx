@@ -444,13 +444,13 @@ export default function CourseList({
       ) : null}
 
       {effectiveViewMode === "list" ? (
-      <div className="hidden md:flex items-center justify-between rounded-md border px-2 py-2">
+      <div className="hidden md:flex flex-nowrap items-center justify-between gap-2 rounded-md border px-2 py-2">
         {totalPages > 1 ? (
           <p className="text-xs text-muted-foreground">
             Page {currentPage} of {Math.max(totalPages, 1)}
           </p>
         ) : <div />}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-nowrap items-center gap-2">
           <Select
             value={String(perPage)}
             onValueChange={(value) => {
@@ -467,7 +467,7 @@ export default function CourseList({
               <SelectItem value="48">48</SelectItem>
             </SelectContent>
           </Select>
-          <ButtonGroup>
+          <ButtonGroup className="shrink-0">
           <Pagination className="mx-0 w-auto">
             <PaginationContent className="gap-0.5">
               <PaginationItem>

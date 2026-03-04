@@ -277,9 +277,9 @@ export default function SettingsContainer({
         }
 
         {/* Section header */}
-        <div className="mb-3 shrink-0 flex items-start justify-between gap-3">
+        <div className={`mb-3 shrink-0 flex items-start justify-between gap-3 ${active === "identity" ? "py-2" : ""}`}>
           <div>
-            <h3 className="text-base font-semibold text-[#1f1f1f]">
+            <h3 className={active === "identity" ? "text-2xl font-semibold tracking-tight text-[#1f1f1f]" : "text-base font-semibold text-[#1f1f1f]"}>
               {meta.title}
             </h3>
             <p className="text-xs text-[#7a7a7a] mt-0.5">{meta.desc}</p>

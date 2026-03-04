@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { PenSquare, Save, RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 interface AchievementCardProps {
   course: Course & {gpa?: number;score?: number;attendance?: {attended: number;total: number;};};
@@ -69,7 +69,7 @@ export default function AchievementCard({ course }: AchievementCardProps) {
       {/* Edit Modal */}
       {showEditModal &&
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 backdrop-blur-sm animate-in fade-in duration-200">
-          <Card>
+          <div className="w-full max-w-sm rounded-sm border bg-background p-4">
             <div className="mb-4">
               <h3 className="text-sm font-semibold text-[#1f1f1f]">Update performance</h3>
               <p className="text-xs text-[#7a7a7a] mt-1 line-clamp-2">{course.title}</p>
@@ -103,12 +103,12 @@ export default function AchievementCard({ course }: AchievementCardProps) {
                 Save
               </Button>
             </div>
-          </Card>
+          </div>
         </div>
       }
 
       {/* Compact card row */}
-      <Card>
+      <div className="flex items-center gap-2 rounded-sm border p-2">
         <UniversityIcon
           name={course.university}
           size={20}
@@ -159,7 +159,7 @@ export default function AchievementCard({ course }: AchievementCardProps) {
             <RotateCcw />
           </Button>
         </div>
-      </Card>
+      </div>
     </>);
 
 }

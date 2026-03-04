@@ -12,8 +12,8 @@ import {
   hideCourseAction,
 } from "@/actions/courses";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface CourseCardProps {
   course: Course;
@@ -134,7 +134,7 @@ export default function CourseCard({
                   </Badge>
                 ) : null}
                 {primaryField ? (
-                  <Badge className="max-w-[130px] truncate bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">
+                  <Badge variant="outline" className="max-w-[130px] truncate">
                     {primaryField}
                   </Badge>
                 ) : null}
@@ -189,84 +189,85 @@ export default function CourseCard({
   }
 
   return (
-    <div>
-      <div className="flex items-center gap-3 min-w-0">
-        <UniversityIcon
-          name={course.university}
-          size={30}
-          className="bg-white"
-        />
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-slate-900 truncate">
-            {course.title}
-          </h2>
-          <p className="text-xs text-slate-500 truncate">
-            {course.courseCode} · {course.university}
-          </p>
+    <Card className="h-full">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <UniversityIcon
+              name={course.university}
+              size={30}
+              className="bg-white border border-[#dfdfdf]"
+            />
+            <div className="min-w-0 flex-1">
+              <Link href={detailHref} prefetch={false} className="block">
+                <h2 className="text-base font-semibold text-slate-900 whitespace-normal break-words leading-5 line-clamp-2">
+                  {course.title}
+                </h2>
+              </Link>
+              <p className="text-xs text-slate-500 truncate">
+                {course.courseCode} · {course.university}
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            className="shrink-0"
+            onClick={handleEnroll}
+            disabled={loading}
+            aria-label={isEnrolled ? "Unenroll course" : "Enroll course"}
+          >
+            {loading ? (
+              <Loader2 className="animate-spin" />
+            ) : isEnrolled ? (
+              <Check />
+            ) : (
+              <Plus />
+            )}
+          </Button>
         </div>
-      </div>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col pt-0">
+        <div className="mt-auto">
+          <div className="flex items-center gap-1.5">
+            {primaryField ? (
+              <Badge variant="outline">{primaryField}</Badge>
+            ) : null}
+            {formattedLevel ? (
+              <Badge variant="secondary">{formattedLevel}</Badge>
+            ) : null}
+          </div>
 
-      <div className="mt-3 flex items-center gap-1.5">
-        {primaryField ? (
-          <span className="inline-flex bg-[#efefef] px-2 py-0.5 text-[11px] font-medium text-[#666]">
-            {primaryField}
-          </span>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
+                Credit
+              </p>
+              <p className="text-[13px] font-medium text-[#3b3b3b]">
+                {credit ?? "-"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
+                Semester
+              </p>
+              <p className="text-[13px] font-medium text-[#3b3b3b]">
+                {latestSemester ?? "-"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {progress ? (
+          <div className="mt-2 h-1 bg-slate-100">
+            <div
+              className="h-full bg-slate-900"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         ) : null}
-        {formattedLevel ? (
-          <span className="inline-flex bg-[#efefef] px-2 py-0.5 text-[11px] font-medium text-[#666]">
-            {formattedLevel}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        <div className=" bg-white px-2 py-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
-            Credit
-          </p>
-          <p className="text-[13px] font-medium text-[#3b3b3b]">
-            {credit ?? "-"}
-          </p>
-        </div>
-        <div className=" bg-white px-2 py-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
-            Semester
-          </p>
-          <p className="text-[13px] font-medium text-[#3b3b3b]">
-            {latestSemester ?? "-"}
-          </p>
-        </div>
-      </div>
-      {progress ? (
-        <div className="mt-3 h-1 bg-slate-100">
-          <div
-            className="h-full bg-slate-900"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      ) : null}
-
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <Button variant="outline" asChild>
-          <Link href={detailHref} prefetch={false}>
-            View
-          </Link>
-        </Button>
-        <Button variant="outline" onClick={handleEnroll} disabled={loading}>
-          {loading ? (
-            <Loader2 className="animate-spin" />
-          ) : isEnrolled ? (
-            <>
-              <Check /> Enrolled
-            </>
-          ) : (
-            <>
-              <Plus /> Enroll
-            </>
-          )}
-        </Button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

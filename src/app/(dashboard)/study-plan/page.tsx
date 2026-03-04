@@ -243,24 +243,20 @@ async function StudyPlanContent({
   const inProgress = enrolledWithAttendance.filter((c) => c.status === 'in_progress');
   const inProgressProjectsSeminars = enrolledProjectsSeminars.filter((item) => item.status === 'in_progress');
   const completed = enrolledWithAttendance.filter((c) => c.status === 'completed' && !c.isHidden);
-  const activeCount = inProgress.length + inProgressProjectsSeminars.length;
 
   return (
     <div className="h-full w-full flex flex-col gap-2">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-[#1f1f1f]">
+      <div className="py-2">
+        <h1 className="text-2xl font-semibold tracking-tight text-[#1f1f1f]">
           {dict.navbar?.roadmap || "Roadmap"}
         </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Review your active focus and upcoming study schedule.
+        </p>
       </div>
       <CourseIntelSyncWindow />
 
       <section>
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-[#1f1f1f]">
-            {dict.dashboard.roadmap.phase_1_title}
-          </h3>
-          <Badge>{activeCount}</Badge>
-        </div>
         <div className="flex flex-col gap-2">
           {inProgress.length > 0 && inProgress.map((course) =>
           <ActiveCourseTrack

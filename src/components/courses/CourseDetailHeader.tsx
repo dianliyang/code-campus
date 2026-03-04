@@ -6,7 +6,7 @@ import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, Plus, X, ChevronDown } from "lucide-react";
+import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, Plus, X, ChevronDown, Check } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
 import { useAppToast } from "@/components/common/AppToastProvider";
 import { type CodeBreakdownItem } from "@/lib/course-code-breakdown";
@@ -17,13 +17,21 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
+  DropdownMenuShortcut,
   DropdownMenuSeparator,
   DropdownMenuTrigger } from
 "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { toast } from "sonner";
 
 type AiSyncSourceMode = "auto" | "existing" | "fresh";
 const AI_SYNC_MODE_STORAGE_KEY = "cc:ai-sync-source-mode";
@@ -36,6 +44,7 @@ interface CourseDetailHeaderProps {
   isEnrolling?: boolean;
   onToggleEnroll?: () => void;
   codeBreakdown?: CodeBreakdownItem[];
+  showActions?: boolean;
 }
 
 type ActivityItem = {
@@ -88,7 +97,8 @@ export default function CourseDetailHeader({
   enrolled = false,
   isEnrolling = false,
   onToggleEnroll,
-  codeBreakdown = []
+  codeBreakdown = [],
+  showActions = true
 }: CourseDetailHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -342,142 +352,169 @@ export default function CourseDetailHeader({
   return (
     <header
       data-course-title-header
-      className="sticky top-0 z-20 border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
+      className="sticky top-0 z-20 rounded-md bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       
 
       {/* Single row: logo · info · actions */}
-      <div className="flex items-center gap-2.5 sm:gap-3">
+      <div className="flex items-start gap-2.5 sm:gap-3">
 
         {/* University logo */}
         <UniversityIcon
           name={course.university}
           size={40}
-          className="flex-shrink-0 bg-white border border-[#e5e5e5]" />
+          className="flex-shrink-0 bg-white" />
         
 
         {/* Info — fills remaining space, truncates */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="text-[11px] font-medium text-[#555] bg-white px-2 py-0.5 border border-[#e5e5e5] truncate shrink min-w-0 max-w-[9rem] sm:max-w-none">
-              {course.university}
-            </span>
-            {course.isInternal &&
-            <span className="text-[11px] font-medium bg-[#efefef] text-[#333] px-2 py-0.5 border border-[#e1e1e1] shrink-0">
-                Internal
-              </span>
-            }
-            <div className="relative shrink-0 group">
-              <span className="text-[11px] text-[#999] cursor-help">{course.courseCode}</span>
-              {codeBreakdown.length > 0 &&
-              <Card>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#888] mb-1">Course Code Breakdown</p>
-                  <dl className="space-y-1.5 text-[11px]">
-                    {codeBreakdown.map((item, idx) =>
-                  <div key={`${item.label}-${idx}`} className="flex justify-between gap-3">
+          <h1 className="text-[17px] sm:text-[20px] font-semibold text-[#1f1f1f] tracking-tight leading-snug line-clamp-2 mb-0.5">
+            {course.title}
+          </h1>
+          <div className="flex items-center gap-1.5">
+            {codeBreakdown.length > 0 ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button type="button" className="inline-flex items-center gap-1.5 text-left">
+                    <span className="text-[11px] font-medium text-[#555] truncate">
+                      {course.university}
+                    </span>
+                    <Badge variant="secondary">{course.courseCode}</Badge>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start">
+                  <PopoverHeader>
+                    <PopoverTitle>Course Code Breakdown</PopoverTitle>
+                    <PopoverDescription>
+                      Structure and meaning of this course code.
+                    </PopoverDescription>
+                  </PopoverHeader>
+                  <dl className="mt-2 space-y-1.5 text-[11px]">
+                    {codeBreakdown.map((item, idx) => (
+                      <div key={`${item.label}-${idx}`} className="flex justify-between gap-3">
                         <dt className="text-[#666]">{item.label}</dt>
                         <dd className="text-right">
                           <p className="font-medium text-[#222]">{item.value}</p>
-                          {item.detail &&
-                      <p className="text-[10px] text-[#777]">{item.detail}</p>
-                      }
+                          {item.detail ? (
+                            <p className="text-[10px] text-[#777]">{item.detail}</p>
+                          ) : null}
                         </dd>
                       </div>
-                  )}
+                    ))}
                   </dl>
-                </Card>
-              }
-            </div>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <>
+                <span className="text-[11px] font-medium text-[#555] truncate">
+                  {course.university}
+                </span>
+                <Badge variant="secondary">{course.courseCode}</Badge>
+              </>
+            )}
+            {course.isInternal &&
+            <span className="text-[11px] font-medium text-[#333] px-1 shrink-0">
+                Internal
+              </span>
+            }
           </div>
-          <h1 className="text-[17px] sm:text-[19px] font-semibold text-[#1f1f1f] tracking-tight leading-snug truncate">
-            {course.title}
-          </h1>
         </div>
 
         {/* Action buttons — always visible */}
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" type="button">
-                {isAiUpdating ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                <span className="uppercase">{aiSourceMode}</span>
-                <ChevronDown />
+        {showActions ? <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 flex-wrap justify-end">
+          {isEditing ? (
+            <Button variant="outline" type="button" onClick={() => onToggleEdit?.()}>
+              Cancel
+            </Button>
+          ) : (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" type="button">
+                    {isAiUpdating ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                    <span className="uppercase">{aiSourceMode}</span>
+                    <ChevronDown />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>AI Sync Mode</DropdownMenuLabel>
+                    {(["auto", "existing", "fresh"] as AiSyncSourceMode[]).map((mode) => (
+                      <DropdownMenuItem
+                        key={mode}
+                        onClick={() => {
+                          setAiSourceMode(mode);
+                          try {
+                            window.localStorage.setItem(AI_SYNC_MODE_STORAGE_KEY, mode);
+                          } catch {
+                            // Ignore localStorage errors.
+                          }
+                        }}
+                      >
+                        {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                        {aiSourceMode === mode ? (
+                          <DropdownMenuShortcut>
+                            <Check className="size-4 text-foreground" />
+                          </DropdownMenuShortcut>
+                        ) : null}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={handleAiUpdate} disabled={isAiUpdating}>
+                      {isAiUpdating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      Run AI Sync
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Enroll / Unenroll */}
+              <Button variant="outline" size="sm" type="button" onClick={handleToggleEnroll} disabled={isEnrolling}>
+                {isEnrolling ? <Loader2 className="animate-spin" /> :
+                enrolled ?
+                <X /> :
+
+                <Plus />
+                }
+                <span>{enrolled ? "Unenroll" : "Enroll"}</span>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>AI Sync Mode</DropdownMenuLabel>
-                <DropdownMenuRadioGroup
-                  value={aiSourceMode}
-                  onValueChange={(next) => {
-                    const nextMode = next as AiSyncSourceMode;
-                    setAiSourceMode(nextMode);
-                    try {
-                      window.localStorage.setItem(AI_SYNC_MODE_STORAGE_KEY, nextMode);
-                    } catch {
 
+              {/* Google Search */}
+              <Button variant="outline" size="icon-sm"
+              type="button"
+              onClick={() => window.open(searchHref, "_blank", "noopener,noreferrer")}
+              title="Search on Google"
+              aria-label="Search on Google">
+                
+                <GoogleIcon />
+              </Button>
 
-                      // Ignore localStorage errors.
-                    }}}>
-                  
-                  <DropdownMenuRadioItem value="auto">Auto</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="existing">Existing</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="fresh">Fresh</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={handleAiUpdate} disabled={isAiUpdating}>
-                  {isAiUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                  Run AI Sync
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              {/* Edit */}
+              <Button variant="outline" size="icon-sm"
+              onClick={() => onToggleEdit?.()}
+              title="Edit Course Details"
+              aria-label="Edit Course Details">
+                
+                <PenSquare />
+              </Button>
 
-          {/* Enroll / Unenroll */}
-          <Button variant="outline" type="button" onClick={handleToggleEnroll} disabled={isEnrolling}>
-            {isEnrolling ? <Loader2 className="animate-spin" /> :
-            enrolled ?
-            <X /> :
-
-            <Plus />
-            }
-            <span>{enrolled ? "Unenroll" : "Enroll"}</span>
-          </Button>
-
-          {/* Google Search */}
-          <Button variant="outline" size="icon"
-          type="button"
-          onClick={() => window.open(searchHref, "_blank", "noopener,noreferrer")}
-          title="Search on Google"
-          aria-label="Search on Google">
-            
-            <GoogleIcon />
-          </Button>
-
-          {/* Edit */}
-          <Button variant="outline" size="icon"
-          onClick={() => onToggleEdit?.()}
-          title={isEditing ? "Cancel Editing" : "Edit Course Details"}
-          aria-label={isEditing ? "Cancel Editing" : "Edit Course Details"}>
-            
-            <PenSquare />
-          </Button>
-
-          {/* Delete */}
-          <Button variant="outline" size="icon" type="button" onClick={handleDelete} disabled={isDeleting} title="Delete Course" aria-label="Delete Course">
-            {isDeleting ? <Loader2 className="animate-spin" /> : <Trash2 />}
-          </Button>
-        </div>
+              {/* Delete */}
+              <Button variant="outline" size="icon-sm" type="button" onClick={handleDelete} disabled={isDeleting} title="Delete Course" aria-label="Delete Course">
+                {isDeleting ? <Loader2 className="animate-spin" /> : <Trash2 />}
+              </Button>
+            </>
+          )}
+        </div> : null}
       </div>
 
       {/* Field tags */}
       {(course.fields.length > 0 || projectSeminarRef) &&
-      <div className="flex flex-wrap gap-1.5 mt-3">
+      <div className="mt-3 flex flex-wrap gap-1.5">
           {projectSeminarRef ?
         <Link
           href={`/projects-seminars/${projectSeminarRef.id}`}
-          className="inline-flex items-center gap-1 text-xs font-medium bg-white text-[#3e3e3e] px-2 py-0.5 border border-[#dcdcdc] hover:bg-[#f7f7f7] transition-colors">
+          className="inline-flex items-center gap-1 text-xs font-medium bg-white text-[#3e3e3e] px-2 py-0.5 hover:bg-[#f7f7f7] transition-colors">
           
               View {projectSeminarRef.category}
               <ArrowUpRight className="h-3 w-3" />
@@ -486,7 +523,7 @@ export default function CourseDetailHeader({
           {course.fields.map((field) =>
         <span
           key={field}
-          className="text-xs font-medium bg-white text-[#666] px-2 py-0.5 border border-[#e5e5e5]">
+          className="text-xs font-medium bg-white text-[#666] px-2 py-0.5">
           
               {field}
             </span>
@@ -495,7 +532,7 @@ export default function CourseDetailHeader({
       }
 
       {isAiUpdating &&
-      <Card>
+      <div className="mt-2 rounded-sm bg-white p-2">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-[#444]">AI Sync Activity</span>
             <span className="text-[11px] text-[#777]">
@@ -503,13 +540,13 @@ export default function CourseDetailHeader({
             </span>
           </div>
           <div className="mt-2 max-h-24 overflow-y-auto space-y-1">
-            {activity.slice(-6).map((item, idx) =>
+          {activity.slice(-6).map((item, idx) =>
           <p key={`${item.ts}-${idx}`} className="text-[11px] text-[#666]">
                 {item.message}
               </p>
           )}
           </div>
-        </Card>
+        </div>
       }
     </header>);
 

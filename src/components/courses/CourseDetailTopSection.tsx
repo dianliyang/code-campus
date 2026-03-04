@@ -9,9 +9,23 @@ import { regenerateCourseDescription, updateCourseDescription, updateCourseFull 
 import { Loader2, Sparkles, X } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Toggle } from "@/components/ui/toggle";
+import {
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxList
+} from "@/components/ui/combobox";
 
 export interface EditableStudyPlan {
   id?: number;
@@ -93,18 +107,20 @@ export default function CourseDetailTopSection({
     workload: String(course.workload ?? 0),
     isHidden: course.isHidden || false,
     isInternal: course.isInternal || false,
-    detailsJson: JSON.stringify(course.details || {}, null, 2),
     instructorsText: (course.instructors || []).join(", "),
     topicsText: (course.fields || []).join(", "),
     semestersText: (course.semesters || []).join(", "),
     cauCategory: typeof course.details?.category === "string" ? course.details.category : ""
   });
   const [selectedTopics, setSelectedTopics] = useState<string[]>(course.fields || []);
-  const [topicInput, setTopicInput] = useState("");
 
   const allTopicOptions = useMemo(
     () => Array.from(new Set([...(availableTopics || []), ...(course.fields || [])])).sort(),
     [availableTopics, course.fields]
+  );
+  const availableTopicOptions = useMemo(
+    () => allTopicOptions.filter((topic) => !selectedTopics.includes(topic)),
+    [allTopicOptions, selectedTopics]
   );
 
   const semestersPlaceholder = useMemo(() => {
@@ -128,14 +144,6 @@ export default function CourseDetailTopSection({
     syncTopics(selectedTopics.filter((t) => t !== topic));
   };
 
-  const toggleTopic = (topic: string) => {
-    if (selectedTopics.includes(topic)) {
-      removeTopic(topic);
-    } else {
-      addTopic(topic);
-    }
-  };
-
   const handleToggleEdit = () => {
     onEditingChange(!isEditing);
   };
@@ -143,14 +151,9 @@ export default function CourseDetailTopSection({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      let parsedDetails: Record<string, unknown> = {};
-      try {
-        parsedDetails = formData.detailsJson.trim() ?
-        JSON.parse(formData.detailsJson) as Record<string, unknown> :
-        {};
-      } catch {
-        throw new Error("Invalid details JSON");
-      }
+      const parsedDetails: Record<string, unknown> = {
+        ...((course.details as Record<string, unknown> | undefined) || {})
+      };
 
       if (formData.cauCategory.trim()) {
         parsedDetails.category = formData.cauCategory.trim();
@@ -244,7 +247,7 @@ export default function CourseDetailTopSection({
   };
 
   return (
-    <>
+    <div>
       {showHeader &&
       <CourseDetailHeader
         course={course}
@@ -254,7 +257,8 @@ export default function CourseDetailTopSection({
 
       }
 
-      <Card>
+      <div>
+        {!isEditing ? (
         <div className="flex items-center justify-between gap-4 mb-3">
           <h2 className="text-base font-semibold text-[#1f1f1f]">About this Course</h2>
           {hasAiRegenerated ?
@@ -277,6 +281,7 @@ export default function CourseDetailTopSection({
             </Button>
           }
         </div>
+        ) : null}
         {!isEditing ?
         <>
             {generatedDescription &&
@@ -318,53 +323,127 @@ export default function CourseDetailTopSection({
             </div>
           </> :
 
-        <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Edit Course Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input value={formData.url} onChange={(e) => setFormData((p) => ({ ...p, url: e.target.value }))} placeholder="URL" />
-              <Input value={formData.units} onChange={(e) => setFormData((p) => ({ ...p, units: e.target.value }))} placeholder="Units" />
-              <Input value={formData.credit} onChange={(e) => setFormData((p) => ({ ...p, credit: e.target.value }))} placeholder="Credit" />
-              <Input value={formData.department} onChange={(e) => setFormData((p) => ({ ...p, department: e.target.value }))} placeholder="Department" />
-              <Input value={formData.level} onChange={(e) => setFormData((p) => ({ ...p, level: e.target.value }))} placeholder="Level" />
-              <Select
-              value={formData.cauCategory || EMPTY_CATEGORY_VALUE}
-              onValueChange={(next) =>
-              setFormData((p) => ({
-                ...p,
-                cauCategory: next === EMPTY_CATEGORY_VALUE ? "" : next
-              }))
-              }>
-              
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Categories</SelectLabel>
-                    <SelectItem value={EMPTY_CATEGORY_VALUE}>Category (none)</SelectItem>
-                    {Array.from(
-                    new Map(
-                      [
-                      ...CAU_CATEGORY_OPTIONS,
-                      ...(formData.cauCategory ?
-                      [{ value: formData.cauCategory, label: formData.cauCategory }] :
-                      [])].
-                      map((option) => [option.value, option])
-                    ).values()
-                  ).map((option) =>
-                  <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                  )}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <Input value={formData.corequisites} onChange={(e) => setFormData((p) => ({ ...p, corequisites: e.target.value }))} placeholder="Corequisites" />
-              <Input value={formData.prerequisites} onChange={(e) => setFormData((p) => ({ ...p, prerequisites: e.target.value }))} placeholder="Prerequisites" />
-              <Input value={formData.crossListedCourses} onChange={(e) => setFormData((p) => ({ ...p, crossListedCourses: e.target.value }))} placeholder="Cross-listed courses" />
-              <Input value={formData.workload} onChange={(e) => setFormData((p) => ({ ...p, workload: e.target.value }))} placeholder="Workload" />
-              <Input value={formData.difficulty} onChange={(e) => setFormData((p) => ({ ...p, difficulty: e.target.value }))} placeholder="Difficulty" />
-              <Input value={formData.popularity} onChange={(e) => setFormData((p) => ({ ...p, popularity: e.target.value }))} placeholder="Popularity" />
-              <Input value={formData.instructorsText} onChange={(e) => setFormData((p) => ({ ...p, instructorsText: e.target.value }))} placeholder="Instructors (comma-separated)" />
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">URL</label>
+                <Input value={formData.url} onChange={(e) => setFormData((p) => ({ ...p, url: e.target.value }))} placeholder="URL" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Units</label>
+                <Input value={formData.units} onChange={(e) => setFormData((p) => ({ ...p, units: e.target.value }))} placeholder="Units" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Credit</label>
+                <Input value={formData.credit} onChange={(e) => setFormData((p) => ({ ...p, credit: e.target.value }))} placeholder="Credit" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Department</label>
+                <Input value={formData.department} onChange={(e) => setFormData((p) => ({ ...p, department: e.target.value }))} placeholder="Department" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Level</label>
+                <Input value={formData.level} onChange={(e) => setFormData((p) => ({ ...p, level: e.target.value }))} placeholder="Level" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Category</label>
+                <Select
+                value={formData.cauCategory || EMPTY_CATEGORY_VALUE}
+                onValueChange={(next) =>
+                setFormData((p) => ({
+                  ...p,
+                  cauCategory: next === EMPTY_CATEGORY_VALUE ? "" : next
+                }))
+                }>
+                  
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Categories</SelectLabel>
+                      <SelectItem value={EMPTY_CATEGORY_VALUE}>Category (none)</SelectItem>
+                      {Array.from(
+                      new Map(
+                        [
+                        ...CAU_CATEGORY_OPTIONS,
+                        ...(formData.cauCategory ?
+                        [{ value: formData.cauCategory, label: formData.cauCategory }] :
+                        [])].
+                        map((option) => [option.value, option])
+                      ).values()
+                    ).map((option) =>
+                    <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                    )}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Corequisites</label>
+                <Input value={formData.corequisites} onChange={(e) => setFormData((p) => ({ ...p, corequisites: e.target.value }))} placeholder="Corequisites" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Prerequisites</label>
+                <Input value={formData.prerequisites} onChange={(e) => setFormData((p) => ({ ...p, prerequisites: e.target.value }))} placeholder="Prerequisites" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Cross-listed Courses</label>
+                <Input value={formData.crossListedCourses} onChange={(e) => setFormData((p) => ({ ...p, crossListedCourses: e.target.value }))} placeholder="Cross-listed courses" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Workload</label>
+                <Input value={formData.workload} onChange={(e) => setFormData((p) => ({ ...p, workload: e.target.value }))} placeholder="Workload" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Difficulty</label>
+                <Input value={formData.difficulty} onChange={(e) => setFormData((p) => ({ ...p, difficulty: e.target.value }))} placeholder="Difficulty" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Popularity</label>
+                <Input value={formData.popularity} onChange={(e) => setFormData((p) => ({ ...p, popularity: e.target.value }))} placeholder="Popularity" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Instructors</label>
+                <Input value={formData.instructorsText} onChange={(e) => setFormData((p) => ({ ...p, instructorsText: e.target.value }))} placeholder="Instructors (comma-separated)" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#666]">Visibility</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Toggle
+                    pressed={formData.isInternal}
+                    onPressedChange={(pressed) =>
+                      setFormData((p) => ({ ...p, isInternal: pressed }))
+                    }
+                    size="sm"
+                    variant="outline"
+                    className="w-full justify-center data-[state=on]:bg-black data-[state=on]:text-white data-[state=on]:border-black"
+                    aria-label="Toggle internal"
+                    title="Internal"
+                  >
+                    Internal
+                  </Toggle>
+                  <Toggle
+                    pressed={formData.isHidden}
+                    onPressedChange={(pressed) =>
+                      setFormData((p) => ({ ...p, isHidden: pressed }))
+                    }
+                    size="sm"
+                    variant="outline"
+                    className="w-full justify-center data-[state=on]:bg-black data-[state=on]:text-white data-[state=on]:border-black"
+                    aria-label="Toggle hidden"
+                    title="Hidden"
+                  >
+                    Hidden
+                  </Toggle>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -377,80 +456,63 @@ export default function CourseDetailTopSection({
             
             </div>
 
-            <Textarea
-            value={formData.description}
-            onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
-            rows={10}
-            className={textareaClass}
-            placeholder="Description" />
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-[#666]">Description</label>
+              <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+              rows={10}
+              className={textareaClass}
+              placeholder="Description" />
+            </div>
           
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-medium text-[#666]">Topics (course_fields)</label>
-                <div className="space-y-3">
-                  <div className="flex gap-2">
-                    <Input
-                    value={topicInput}
-                    onChange={(e) => setTopicInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === ",") {
-                        e.preventDefault();
-                        addTopic(topicInput);
-                        setTopicInput("");
-                      }
+                <label className="text-xs font-medium text-[#666]">Topics</label>
+                <div className="space-y-2">
+                  <Combobox
+                    items={[{ value: "Topics", items: availableTopicOptions }]}
+                    onValueChange={(next) => {
+                      if (next) addTopic(String(next));
                     }}
-                    placeholder="Type a topic and press Enter" />
-                  
-                    <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => {
-                      addTopic(topicInput);
-                      setTopicInput("");
-                    }}>
-
-                    
-                      Add
-                    </Button>
-                  </div>
+                  >
+                    <ComboboxInput placeholder="Search topics and select" />
+                    <ComboboxContent>
+                      <ComboboxEmpty>No topics found.</ComboboxEmpty>
+                      <ComboboxList>
+                        {(group) => (
+                          <ComboboxGroup key={group.value} items={group.items}>
+                            <ComboboxLabel>{group.value}</ComboboxLabel>
+                            <ComboboxCollection>
+                              {(item) => (
+                                <ComboboxItem key={item} value={item}>
+                                  {item}
+                                </ComboboxItem>
+                              )}
+                            </ComboboxCollection>
+                          </ComboboxGroup>
+                        )}
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
 
                   {selectedTopics.length > 0 &&
                 <div className="flex flex-wrap gap-2">
                       {selectedTopics.map((topic) =>
-                  <span key={topic} className="inline-flex items-center gap-1.5 bg-[#efefef] text-[#333] px-2 py-0.5 text-xs font-medium border border-[#e1e1e1]">
+                  <Badge key={topic} variant="secondary" className="inline-flex items-center gap-1.5">
                           {topic}
-                          <Button variant="outline" size="icon" type="button" onClick={() => removeTopic(topic)} title={`Remove ${topic}`}>
-                            <X />
-                          </Button>
-                        </span>
+                          <button type="button" onClick={() => removeTopic(topic)} title={`Remove ${topic}`} aria-label={`Remove ${topic}`} className="inline-flex items-center text-current/70 hover:text-current">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
                   )}
-                    </div>
-                }
-
-                  {allTopicOptions.length > 0 &&
-                <div className="flex flex-wrap gap-2">
-                      {allTopicOptions.map((topic) => {
-                    const active = selectedTopics.includes(topic);
-                    return (
-                      <Button variant="outline"
-                      key={topic}
-                      type="button"
-                      onClick={() => toggleTopic(topic)}>
-
-
-
-                        
-                            {topic}
-                          </Button>);
-
-                  })}
                     </div>
                 }
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-medium text-[#666]">Semesters (course_semesters)</label>
+                <label className="text-xs font-medium text-[#666]">Semesters</label>
                 <Input
                 value={formData.semestersText}
                 onChange={(e) => setFormData((p) => ({ ...p, semestersText: e.target.value }))}
@@ -459,36 +521,7 @@ export default function CourseDetailTopSection({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center gap-2 text-sm text-[#555]">
-                <Input
-                type="checkbox"
-                checked={formData.isInternal}
-                onChange={(e) => setFormData((p) => ({ ...p, isInternal: e.target.checked }))} />
-              
-                Internal
-              </label>
-              <label className="flex items-center gap-2 text-sm text-[#555]">
-                <Input
-                type="checkbox"
-                checked={formData.isHidden}
-                onChange={(e) => setFormData((p) => ({ ...p, isHidden: e.target.checked }))} />
-              
-                Hidden
-              </label>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-[#666]">Details JSON (courses.details)</label>
-              <Textarea
-              value={formData.detailsJson}
-              onChange={(e) => setFormData((p) => ({ ...p, detailsJson: e.target.value }))}
-              rows={12}
-              className={textareaClass} />
-            
-            </div>
-
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center justify-end gap-3 pt-1">
               <Button variant="outline"
             type="button"
             onClick={handleSave}
@@ -500,7 +533,7 @@ export default function CourseDetailTopSection({
               </Button>
               <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               onClick={handleToggleEdit}
               disabled={isSaving}>
 
@@ -508,9 +541,10 @@ export default function CourseDetailTopSection({
                 Cancel
               </Button>
             </div>
-          </div>
+          </CardContent>
+        </Card>
         }
-      </Card>
-    </>);
+      </div>
+    </div>);
 
 }

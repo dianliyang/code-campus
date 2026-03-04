@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import AchievementCard from "@/components/home/AchievementCard";
 import { useRoadmapStore } from "@/store/useRoadmapStore";
 import { Course } from "@/types";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type CompletedCourse = Course & {
   gpa?: number;
@@ -42,7 +42,7 @@ export default function RoadmapAchievementsSection({
   }, [completed, selectedSemester]);
 
   return (
-    <Card>
+    <div className="rounded-sm border p-4">
       <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h3 className="text-base font-semibold text-[#1f1f1f]">{title}</h3>
 
@@ -77,6 +77,6 @@ export default function RoadmapAchievementsSection({
         <p className="text-sm text-[#8a8a8a]">{emptyText}</p>
         }
       </div>
-    </Card>);
+    </div>);
 
 }

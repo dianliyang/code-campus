@@ -1,14 +1,28 @@
 "use client";
 
-import { ShieldCheck, Mail, Fingerprint, Trash2, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Fingerprint, Mail, ShieldCheck, Trash2 } from "lucide-react";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
 
 interface SecurityIdentitySectionProps {
   view: "identity" | "account";
   provider?: string;
+}
+
+function normalizeProvider(provider?: string): string {
+  const value = (provider || "").trim();
+  if (!value) return "Unknown";
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 export default function SecurityIdentitySection({
@@ -26,90 +40,92 @@ export default function SecurityIdentitySection({
         const res = await fetch("/api/user/delete", { method: "DELETE" });
         if (res.ok) {
           router.push("/login");
-        } else {
-          toast.error("Purge sequence failed. System error.", { position: "bottom-right" });
+          return;
         }
+        toast.error("Purge sequence failed. System error.", { position: "bottom-right" });
       } catch {
         toast.error("Fatal error during account deletion.", { position: "bottom-right" });
       }
     });
   };
 
-  return (
-    <div>
-      {/* Identity & Security view */}
-      {view === "identity" &&
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Active Identity */}
-          <Card>
-            <Card>
-              <Fingerprint className="w-4 h-4 text-[#777]" />
-              <span className="text-sm font-semibold">Active Identity</span>
-            </Card>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-[#777]">Provider</span>
-                <span className="text-sm font-medium text-[#222]">{provider || "Unknown"}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-[#777]">Status</span>
-                <div className="flex items-center gap-1.5 text-emerald-600 text-sm">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span className="font-medium">Verified</span>
-                </div>
-              </div>
+  if (view === "identity") {
+    return (
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Fingerprint className="h-4 w-4 text-muted-foreground" />
+              <CardTitle>Active Identity</CardTitle>
             </div>
-          </Card>
-
-          {/* Communication */}
-          <Card>
-            <Card>
-              <Mail className="w-4 h-4 text-[#777]" />
-              <span className="text-sm font-semibold">Communication</span>
-            </Card>
-
-            <div className="space-y-4">
-              <p className="text-xs text-[#666] leading-relaxed">
-                System notifications and security alerts are dispatched via your authentication provider&apos;s endpoint.
-              </p>
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-xs text-[#777]">Alerts</span>
-                <span className="text-xs font-medium text-emerald-700 px-2 py-0.5 bg-emerald-50 border border-emerald-100">Active</span>
-              </div>
+            <CardDescription>
+              Authentication and verification status for your account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Provider</span>
+              <span className="text-sm font-medium">{normalizeProvider(provider)}</span>
             </div>
-          </Card>
-        </div>
-      }
-
-      {/* Account / Danger Zone view */}
-      {view === "account" &&
-      <Card>
-          <Card>
-            <AlertTriangle className="w-4 h-4" />
-            <span className="text-sm font-semibold">Danger Zone</span>
-          </Card>
-
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h4 className="text-sm font-medium text-red-700">Delete Account</h4>
-              <p className="text-xs text-red-800/70 leading-relaxed max-w-xl">
-                This will permanently purge your profile, enrollment history, and scheduling data. This operation is irreversible.
-              </p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Status</span>
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600">
+                <ShieldCheck className="h-4 w-4" />
+                Verified
+              </span>
             </div>
-
-            <Button variant="outline"
-          onClick={handleDeleteAccount}
-          disabled={isPending}>
-
-            
-              <Trash2 />
-              Purge Account
-            </Button>
-          </div>
+          </CardContent>
         </Card>
-      }
-    </div>);
 
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <CardTitle>Communication</CardTitle>
+            </div>
+            <CardDescription>
+              Notification routing for security and account events.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              System notifications and security alerts are dispatched through your authentication
+              provider endpoint.
+            </p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Alerts</span>
+              <Badge variant="secondary">Active</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <CardTitle>Danger Zone</CardTitle>
+        </div>
+        <CardDescription>
+          Irreversible account operations.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <h4 className="text-sm font-medium text-destructive">Delete Account</h4>
+          <p className="max-w-xl text-sm text-muted-foreground">
+            This will permanently purge your profile, enrollment history, and scheduling data.
+            This operation is irreversible.
+          </p>
+        </div>
+        <Button variant="outline" onClick={handleDeleteAccount} disabled={isPending}>
+          <Trash2 />
+          Purge Account
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }

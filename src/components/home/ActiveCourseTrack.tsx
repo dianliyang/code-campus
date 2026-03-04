@@ -14,20 +14,34 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
+  DropdownMenuShortcut,
   DropdownMenuSeparator,
   DropdownMenuTrigger } from
 "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { Separator } from "@/components/ui/separator";
+import {
+  Item,
+  ItemActions,
+  ItemContent
+} from "@/components/ui/item";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 import {
   ExternalLink,
   CalendarCheck,
   CalendarPlus,
   Clock,
+  Check,
   Loader2,
   Sparkles,
   ChevronDown } from
@@ -141,17 +155,27 @@ export default function ActiveCourseTrack({
   const weekdaysShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const focusSegments = 20;
   const activeFocusSegments = Math.round(progress / 100 * focusSegments);
+  const scheduleSummary = useMemo(() => {
+    if (!localPlan) return null;
+    const dayIndexes = [...(localPlan.days_of_week || [])].sort((a, b) => a - b);
+    const dayText = dayIndexes.map((idx) => weekdaysShort[idx]).join(", ");
+    const start = new Date(`${localPlan.start_date}T00:00:00`);
+    const end = new Date(`${localPlan.end_date}T00:00:00`);
+    const diffMs = end.getTime() - start.getTime();
+    const totalDays = Number.isNaN(diffMs) ? null : Math.max(1, Math.floor(diffMs / 86400000) + 1);
+    const daysPerWeek = dayIndexes.length;
+    return {
+      dayText,
+      daysPerWeek,
+      totalDays
+    };
+  }, [localPlan, weekdaysShort]);
 
   return (
-    <div className="rounded-lg border">
-      <AddPlanModal
-        isOpen={showAddPlanModal}
-        onClose={() => setShowAddPlanModal(false)}
-        onSuccess={(saved) => setLocalPlan(saved)}
-        course={{ id: course.id, title: course.title }}
-        existingPlan={localPlan} />
-      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto]">
-        <div
+    <Item variant="outline" className="gap-0 overflow-hidden p-0">
+      <ItemContent className="p-0">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto]">
+          <div
           role="link"
           tabIndex={0}
           onClick={handleCardNavigation}
@@ -161,23 +185,23 @@ export default function ActiveCourseTrack({
               handleCardNavigation();
             }
           }}
-          className="cursor-pointer space-y-1 p-2"
+          className="cursor-pointer space-y-2 p-3"
         >
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto whitespace-nowrap">
+          <div className="flex min-w-0 items-start gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <UniversityIcon
                 name={course.university}
                 size={32}
                 className="shrink-0 bg-gray-50 border border-gray-100" />
 
               <div className="min-w-0">
-                <span className="text-[11px] text-[#777]">{course.university} · {course.courseCode}</span>
-                <h3 className="truncate text-base font-semibold tracking-tight text-[#1f1f1f]">
+                <span className="block truncate text-[11px] text-muted-foreground">{course.university} · {course.courseCode}</span>
+                <h3 className="truncate text-base font-semibold tracking-tight">
                   <Link href={detailHref}>{course.title}</Link>
                 </h3>
               </div>
             </div>
-            <div className="ml-auto flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+            <div className="ml-auto flex max-w-[60%] shrink-0 flex-wrap items-center justify-end gap-1.5">
               {course.aiPlanSummary?.days ?
               <Badge variant="secondary">
                   {course.aiPlanSummary.nextDate ?
@@ -187,127 +211,161 @@ export default function ActiveCourseTrack({
                 ` · ${course.aiPlanSummary.nextFocus}` :
                 ""}
                 </Badge> :
-              <Badge variant="secondary">AI Plan pending sync</Badge>}
+              null}
               {localPlan ?
               <>
-                  <Badge>{localPlan.days_of_week.map((d) => weekdaysShort[d]).join("/")}</Badge>
-                  <span className="inline-flex items-center gap-0.5 text-[11px] text-[#555] leading-none">
-                    <Clock className="h-3.5 w-3.5" />
-                    {localPlan.start_time.slice(0, 5)} - {localPlan.end_time.slice(0, 5)}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {new Date(localPlan.start_date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric"
-                  })}
-                    {" "}to{" "}
-                    {new Date(localPlan.end_date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric"
-                  })}
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="inline-flex items-center gap-2 text-[11px] text-muted-foreground leading-none">
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            {localPlan.start_time.slice(0, 5)} - {localPlan.end_time.slice(0, 5)}
+                          </span>
+                          <span>
+                            {new Date(localPlan.start_date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric"
+                          })}
+                            {" "}to{" "}
+                            {new Date(localPlan.end_date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric"
+                          })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1" aria-label="Study days">
+                          {Array.from({ length: 7 }).map((_, idx) =>
+                          <span
+                            key={`study-day-dot-${idx}`}
+                            className={`h-2 w-2 rounded-full ${
+                            localPlan.days_of_week.includes(idx) ? "bg-black" : "bg-muted"}`
+                            } />
+                          )}
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    {scheduleSummary ?
+                    <TooltipContent side="top" align="end">
+                        <p className="text-xs">
+                          {scheduleSummary.dayText || "No days"} · {scheduleSummary.daysPerWeek} day{scheduleSummary.daysPerWeek === 1 ? "" : "s"}/week
+                          {scheduleSummary.totalDays ? ` · ${scheduleSummary.totalDays} days total` : ""}
+                        </p>
+                      </TooltipContent> :
+                    null}
+                  </Tooltip>
                 </> :
               <p className="text-[11px] italic text-muted-foreground leading-none">No schedule defined</p>}
             </div>
           </div>
 
-          <div className="flex items-center gap-[2px]">
-            {Array.from({ length: focusSegments }).map((_, index) =>
-            <span
-              key={index}
-              className={`h-1 flex-1 transition-colors ${
-              index < activeFocusSegments ?
-              "bg-black" :
-              "bg-[#ececec]"}`
-              } />
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 items-center gap-1">
+              {Array.from({ length: focusSegments }).map((_, index) =>
+              <span
+                key={index}
+                className={`h-1 flex-1 transition-colors ${
+                index < activeFocusSegments ?
+                "bg-black" :
+                "bg-muted"}`
+                } />
 
-            )}
+              )}
+            </div>
+            <p className="w-9 text-right text-sm font-semibold tracking-tight">{progress}%</p>
           </div>
-        </div>
-        <div
-          data-no-card-nav="true"
-          className="flex items-center gap-2 border-t p-1 md:border-t-0">
-          <Separator orientation="vertical" className="h-5" />
-          <p className="text-sm font-semibold tracking-tight text-[#1f1f1f] w-8">{progress}%</p>
-          <Separator orientation="vertical" className="h-5" />
-          <ButtonGroup className="ml-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" type="button">
-                  {isAiUpdating ?
-                  <Loader2 className="animate-spin" /> :
-
-                  <Sparkles />
-                  }
-                  <span className="uppercase">{aiSourceMode}</span>
-                  <ChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>AI Sync Mode</DropdownMenuLabel>
-                  <DropdownMenuRadioGroup
-                    value={aiSourceMode}
-                    onValueChange={(next) => {
-                      const nextMode = next as AiSyncSourceMode;
-                      setAiSourceMode(nextMode);
-                      try {
-                        window.localStorage.setItem(
-                          AI_SYNC_MODE_STORAGE_KEY,
-                          nextMode
-                        );
-                      } catch {
-
-
-
-                        // Ignore localStorage errors.
-                      }}}>
-                    
-                    <DropdownMenuRadioItem value="auto">
-                      Auto
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="existing">
-                      Existing
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="fresh">
-                      Fresh
-                    </DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={handleAiSync} disabled={isAiUpdating}>
-                    
+          </div>
+          <ItemActions
+            data-no-card-nav="true"
+            className="flex items-center gap-2 p-2">
+            <ButtonGroup className="ml-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" type="button">
                     {isAiUpdating ?
-                    <Loader2 className="w-3 h-3 animate-spin" /> :
+                    <Loader2 className="animate-spin" /> :
 
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles />
                     }
-                    Run AI Sync
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <span className="uppercase">{aiSourceMode}</span>
+                    <ChevronDown />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>AI Sync Mode</DropdownMenuLabel>
+                    {(["auto", "existing", "fresh"] as AiSyncSourceMode[]).map((mode) =>
+                    <DropdownMenuItem
+                      key={mode}
+                      onClick={() => {
+                        setAiSourceMode(mode);
+                        try {
+                          window.localStorage.setItem(
+                            AI_SYNC_MODE_STORAGE_KEY,
+                            mode
+                          );
+                        } catch {
+                          // Ignore localStorage errors.
+                        }
+                      }}>
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                      {aiSourceMode === mode ?
+                      <DropdownMenuShortcut>
+                          <Check className="size-4 text-foreground" />
+                        </DropdownMenuShortcut> :
+                      null}
+                    </DropdownMenuItem>
+                    )}
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={handleAiSync} disabled={isAiUpdating}>
+                      
+                      {isAiUpdating ?
+                      <Loader2 className="w-3 h-3 animate-spin" /> :
 
-            <Button variant="outline" size="sm" asChild>
-              <Link
-                href={detailHref}
-                title="Open course"
-                aria-label="Open course">
-                
-                <ExternalLink />
-              </Link>
-            </Button>
+                      <Sparkles className="w-3 h-3" />
+                      }
+                      Run AI Sync
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAddPlanModal(true)}>
-              {localPlan ? <CalendarCheck /> : <CalendarPlus />}
-            </Button>
-          </ButtonGroup>
+              <Button variant="outline" size="sm" asChild>
+                <Link
+                  href={detailHref}
+                  title="Open course"
+                  aria-label="Open course">
+                  
+                  <ExternalLink />
+                </Link>
+              </Button>
+
+              <Popover open={showAddPlanModal} onOpenChange={setShowAddPlanModal}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button">
+                    {localPlan ? <CalendarCheck /> : <CalendarPlus />}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-auto p-0">
+                  <AddPlanModal
+                    mode="inline"
+                    isOpen={showAddPlanModal}
+                    onClose={() => setShowAddPlanModal(false)}
+                    onSuccess={(saved) => setLocalPlan(saved)}
+                    course={{ id: course.id, title: course.title }}
+                    existingPlan={localPlan}
+                  />
+                </PopoverContent>
+              </Popover>
+            </ButtonGroup>
+          </ItemActions>
         </div>
-      </div>
-    </div>);
+      </ItemContent>
+    </Item>);
 
 }

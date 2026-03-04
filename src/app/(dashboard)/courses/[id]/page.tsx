@@ -5,7 +5,8 @@ import { createClient, mapCourseFromRow, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { Course } from "@/types";
-import CourseDetailContent from "@/components/courses/CourseDetailContent";import { Card } from "@/components/ui/card";
+import CourseDetailContent from "@/components/courses/CourseDetailContent";
+import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -38,12 +39,12 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const dict = await getDictionary(lang);
 
   return (
-    <div className="space-y-3">
+    <div className="h-full min-h-0">
       <Suspense fallback={<CourseDetailSkeleton />}>
         <CourseDetailData id={id} dict={dict.dashboard} />
       </Suspense>
-    </div>);
-
+    </div>
+  );
 }
 
 async function CourseDetailData({ id, dict }: {id: string;dict: Dictionary['dashboard'];}) {
@@ -213,7 +214,7 @@ async function CourseDetailData({ id, dict }: {id: string;dict: Dictionary['dash
 function CourseDetailSkeleton() {
   return (
     <div className="animate-pulse space-y-4">
-      <Card>
+      <Card className="p-4">
         <div className="w-14 h-14 bg-gray-100"></div>
         <div className="space-y-2 flex-grow">
           <div className="h-4 bg-gray-100 w-1/4"></div>
@@ -222,11 +223,11 @@ function CourseDetailSkeleton() {
       </Card>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 space-y-4">
-          <Card></Card>
-          <Card></Card>
+          <Card className="h-64"></Card>
+          <Card className="h-64"></Card>
         </div>
-        <Card></Card>
+        <Card className="h-80"></Card>
       </div>
-    </div>);
-
+    </div>
+  );
 }

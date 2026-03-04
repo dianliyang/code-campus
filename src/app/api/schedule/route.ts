@@ -12,6 +12,7 @@ interface ScheduleRequest {
   daysOfWeek?: number[];
   startTime?: string;
   endTime?: string;
+  kind?: string;
   location?: string;
   timezone?: string;
   // For remove_plan
@@ -128,7 +129,7 @@ export async function POST(request: Request) {
 
     // Add a manual plan
     if (action === 'add_plan') {
-      const { courseId, startDate, endDate, daysOfWeek, startTime, endTime, location, timezone } = body;
+      const { courseId, startDate, endDate, daysOfWeek, startTime, endTime, kind, location, timezone } = body;
       
       if (!courseId || !startDate || !endDate || !daysOfWeek) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -144,6 +145,7 @@ export async function POST(request: Request) {
           days_of_week: daysOfWeek,
           start_time: startTime || '09:00:00',
           end_time: endTime || '11:00:00',
+          kind: kind || 'Study',
           location: location || 'Home',
           timezone: timezone || 'UTC',
         })
@@ -157,7 +159,7 @@ export async function POST(request: Request) {
 
     // Update a plan
     if (action === 'update_plan') {
-      const { planId, startDate, endDate, daysOfWeek, startTime, endTime, location, timezone } = body;
+      const { planId, startDate, endDate, daysOfWeek, startTime, endTime, kind, location, timezone } = body;
       
       if (!planId || !startDate || !endDate || !daysOfWeek) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -171,6 +173,7 @@ export async function POST(request: Request) {
           days_of_week: daysOfWeek,
           start_time: startTime,
           end_time: endTime,
+          kind: kind || 'Study',
           location: location,
           timezone: timezone || 'UTC',
           updated_at: new Date().toISOString()

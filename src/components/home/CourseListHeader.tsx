@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Dictionary } from "@/lib/dictionary";
 import {
+  ArrowUpDown,
   LayoutGrid,
   List,
   Plus,
@@ -13,27 +14,35 @@ import {
   X,
 } from "lucide-react";
 import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface CourseListHeaderProps {
   viewMode: "list" | "grid";
@@ -41,6 +50,8 @@ interface CourseListHeaderProps {
   dict: Dictionary["dashboard"]["courses"];
   filterUniversities: string[];
   filterSemesters: string[];
+  title?: string;
+  description?: string;
 }
 
 export default function CourseListHeader({
@@ -49,12 +60,15 @@ export default function CourseListHeader({
   dict,
   filterUniversities,
   filterSemesters,
+  title,
+  description,
 }: CourseListHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sortBy = searchParams.get("sort") || "title";
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const lastPushedQuery = useRef(searchParams.get("q") || "");
   const isComposing = useRef(false);
 
@@ -138,194 +152,303 @@ export default function CourseListHeader({
     });
   };
 
+  const activeFilterCount =
+    selectedUniversities.length +
+    selectedSemesters.length +
+    (showEnrolledOnly ? 1 : 0);
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
+    <div className="flex flex-col gap-2.5 md:flex-row md:items-start md:justify-between">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold tracking-tight text-[#1f1f1f]">
+          {title || "Courses"}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {description || "Explore the catalog and enroll in courses."}
+        </p>
+      </div>
+
+      <div className="flex w-full items-center justify-between gap-2 md:w-auto md:flex-row md:items-center md:justify-start md:gap-2">
         <Tabs
           value={viewMode}
           onValueChange={(value) => setViewMode(value as "list" | "grid")}
-          className="w-full md:w-auto"
+          className="hidden md:block md:w-auto"
         >
           <TabsList>
             <TabsTrigger value="list" aria-label="List view">
-              <List className="h-3.5 w-3.5" />
-              List
+              <List className="size-4 shrink-0" />
+              <span className="hidden xl:inline">List</span>
             </TabsTrigger>
             <TabsTrigger value="grid" aria-label="Grid view">
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Grid
+              <LayoutGrid className="size-4 shrink-0" />
+              <span className="hidden xl:inline">Grid</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
-        <div className="w-full md:w-auto space-y-2 md:space-y-0 md:flex md:items-center md:gap-2">
-          <div className="grid grid-cols-2 md:flex items-center gap-2 text-[13px] text-[#6a6a6a]">
-            <Button variant="outline" asChild>
-              <Link href="/settings/import">
-                <Plus />
-                New course
-              </Link>
-            </Button>
-            <Drawer
-              direction="right"
-              open={filtersOpen}
-              onOpenChange={setFiltersOpen}
-            >
-              <DrawerTrigger asChild>
-                <Button variant="outline" type="button">
-                  <SlidersHorizontal />
-                  Filter
-                </Button>
-              </DrawerTrigger>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>Filters</DrawerTitle>
-                  <DrawerDescription>Refine course results</DrawerDescription>
-                </DrawerHeader>
-                <div className="px-4 pb-2 space-y-4 overflow-y-auto">
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7a7a]">
-                      Universities
-                    </p>
-                    <div className="max-h-36 overflow-y-auto space-y-1">
-                      {filterUniversities.map((name) => (
-                        <label
-                          key={name}
-                          className="flex items-center gap-2 text-[13px] text-[#444]"
-                        >
-                          <Input
-                            type="checkbox"
-                            checked={selectedUniversities.includes(name)}
-                            onChange={() =>
-                              pushWith({
-                                universities: toggleItem(
-                                  selectedUniversities,
-                                  name,
-                                ),
-                              })
-                            }
-                          />
+        <div className="w-auto">
+          <ButtonGroup className="w-auto text-[13px] text-[#6a6a6a]">
+            <ButtonGroup>
+              <Button variant="outline" asChild>
+                <Link href="/settings/import" aria-label="New course" title="New course">
+                  <Plus className="size-4 shrink-0" />
+                  <span className="hidden xl:inline">New course</span>
+                </Link>
+              </Button>
+            </ButtonGroup>
 
-                          <span>{name}</span>
-                        </label>
-                      ))}
+            <ButtonGroup>
+              <Drawer direction="right" open={filtersOpen} onOpenChange={setFiltersOpen}>
+                <ButtonGroup className="group">
+                  <DrawerTrigger asChild>
+                    <Button variant="outline" type="button" aria-label="Filter" title="Filter">
+                      <SlidersHorizontal className="size-4 shrink-0" />
+                      <span className="hidden xl:inline">Filter</span>
+                      {activeFilterCount > 0 ? (
+                        <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">
+                          {activeFilterCount}
+                        </Badge>
+                      ) : null}
+                    </Button>
+                  </DrawerTrigger>
+                  {activeFilterCount > 0 ? (
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={clearFilters}
+                      title="Clear filters"
+                      aria-label="Clear filters"
+                    >
+                      <X />
+                    </Button>
+                  ) : null}
+                </ButtonGroup>
+                <DrawerContent>
+                  <DrawerHeader>
+                    <DrawerTitle>Filters</DrawerTitle>
+                    <DrawerDescription>Refine course results</DrawerDescription>
+                  </DrawerHeader>
+                  <div className="no-scrollbar overflow-y-auto px-4 pb-2">
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-foreground">
+                        Universities
+                      </p>
+                      <div className="max-h-40 space-y-1.5 overflow-y-auto">
+                        {filterUniversities.map((name) => (
+                          <label
+                            key={name}
+                            className="flex items-center gap-2.5 text-sm text-foreground"
+                          >
+                            <Checkbox
+                              checked={selectedUniversities.includes(name)}
+                              onCheckedChange={() =>
+                                pushWith({
+                                  universities: toggleItem(selectedUniversities, name),
+                                })
+                              }
+                            />
+
+                            <span>{name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-5 space-y-2">
+                      <p className="text-sm font-semibold text-foreground">
+                        Semesters
+                      </p>
+                      <div className="max-h-40 space-y-1.5 overflow-y-auto">
+                        {filterSemesters.map((name) => (
+                          <label
+                            key={name}
+                            className="flex items-center gap-2.5 text-sm text-foreground"
+                          >
+                            <Checkbox
+                              checked={selectedSemesters.includes(name)}
+                              onCheckedChange={() =>
+                                pushWith({
+                                  semesters: toggleItem(selectedSemesters, name),
+                                })
+                              }
+                            />
+
+                            <span>{name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-5 border-t pt-3">
+                      <label className="flex items-center gap-2.5 text-sm text-foreground">
+                        <Checkbox
+                          checked={showEnrolledOnly}
+                          onCheckedChange={(checked) =>
+                            pushWith({ enrolled: checked === true })
+                          }
+                        />
+
+                        <span>{dict?.sidebar_enrolled || "Enrolled Only"}</span>
+                      </label>
                     </div>
                   </div>
+                </DrawerContent>
+              </Drawer>
+            </ButtonGroup>
 
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7a7a]">
-                      Semesters
-                    </p>
-                    <div className="max-h-36 overflow-y-auto space-y-1">
-                      {filterSemesters.map((name) => (
-                        <label
-                          key={name}
-                          className="flex items-center gap-2 text-[13px] text-[#444]"
-                        >
-                          <Input
-                            type="checkbox"
-                            checked={selectedSemesters.includes(name)}
-                            onChange={() =>
-                              pushWith({
-                                semesters: toggleItem(selectedSemesters, name),
-                              })
-                            }
-                          />
-
-                          <span>{name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-[#efefef] pt-2">
-                    <label className="flex items-center gap-2 text-[13px] text-[#444]">
-                      <Input
-                        type="checkbox"
-                        checked={showEnrolledOnly}
-                        onChange={(e) =>
-                          pushWith({ enrolled: e.target.checked })
-                        }
-                      />
-
-                      <span>{dict?.sidebar_enrolled || "Enrolled Only"}</span>
-                    </label>
-                  </div>
-                </div>
-                <DrawerFooter>
+            <ButtonGroup>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={clearFilters}
+                    className="size-9 p-0 xl:hidden"
+                    aria-label="Sort"
+                    title="Sort"
                   >
-                    Clear
+                    <ArrowUpDown className="size-4 shrink-0" />
                   </Button>
-                  <DrawerClose asChild>
-                    <Button variant="outline" type="button">
-                      Done
-                    </Button>
-                  </DrawerClose>
-                </DrawerFooter>
-              </DrawerContent>
-            </Drawer>
-          </div>
-
-          <div className="grid grid-cols-1 md:flex items-center gap-2">
-            <Select value={sortBy} onValueChange={handleSortChange}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Sort</SelectLabel>
-                  <SelectItem value="title">
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleSortChange("title")}>
                     {dict?.sort_title || "Title (A-Z)"}
-                  </SelectItem>
-                  <SelectItem value="popularity">
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleSortChange("popularity")}
+                  >
                     {dict?.sort_popularity || "Popularity"}
-                  </SelectItem>
-                  <SelectItem value="newest">
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSortChange("newest")}>
                     {dict?.sort_newest || "Newest"}
-                  </SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div className="hidden xl:block">
+                <Select value={sortBy} onValueChange={handleSortChange}>
+                  <SelectTrigger className="w-[150px]">
+                    <ArrowUpDown className="size-4 shrink-0" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent align="end">
+                    <SelectItem value="title">
+                      {dict?.sort_title || "Title (A-Z)"}
+                    </SelectItem>
+                    <SelectItem value="popularity">
+                      {dict?.sort_popularity || "Popularity"}
+                    </SelectItem>
+                    <SelectItem value="newest">
+                      {dict?.sort_newest || "Newest"}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </ButtonGroup>
 
-            <div className="relative w-full md:min-w-[220px]">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9a9a9a]" />
-              <Input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onCompositionStart={() => {
-                  isComposing.current = true;
-                }}
-                onCompositionEnd={(e) => {
-                  isComposing.current = false;
-                  setQuery(e.currentTarget.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") commitSearch(query);
-                }}
-                placeholder="Search..."
-              />
+            <ButtonGroup className="xl:hidden">
+              <Button
+                variant="outline"
+                size="icon"
+                type="button"
+                className="size-9"
+                aria-label="Search courses"
+                title="Search courses"
+                onClick={() => setMobileSearchOpen((prev) => !prev)}
+              >
+                <Search className="size-4 shrink-0" />
+              </Button>
+            </ButtonGroup>
 
-              {query ? (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setQuery("");
-                    commitSearch("");
+            <ButtonGroup className="hidden xl:flex">
+              <InputGroup className="w-full md:w-[160px] lg:w-[220px]">
+                <InputGroupInput
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onCompositionStart={() => {
+                    isComposing.current = true;
                   }}
-                  aria-label="Clear search"
-                >
-                  <X />
-                </Button>
-              ) : null}
-            </div>
-          </div>
+                  onCompositionEnd={(e) => {
+                    isComposing.current = false;
+                    setQuery(e.currentTarget.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitSearch(query);
+                    if (e.key === "Escape" && query) {
+                      setQuery("");
+                      commitSearch("");
+                    }
+                  }}
+                  placeholder="Search courses..."
+                />
+                <InputGroupAddon>
+                  <Search />
+                </InputGroupAddon>
+                <InputGroupAddon align="inline-end">
+                  {query ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery("");
+                        commitSearch("");
+                      }}
+                      aria-label="Clear search"
+                      title="Clear search"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  ) : null}
+                </InputGroupAddon>
+              </InputGroup>
+            </ButtonGroup>
+          </ButtonGroup>
         </div>
       </div>
+      {mobileSearchOpen ? (
+        <div className="xl:hidden">
+          <InputGroup className="w-full">
+            <InputGroupInput
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onCompositionStart={() => {
+                isComposing.current = true;
+              }}
+              onCompositionEnd={(e) => {
+                isComposing.current = false;
+                setQuery(e.currentTarget.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitSearch(query);
+                if (e.key === "Escape" && query) {
+                  setQuery("");
+                  commitSearch("");
+                }
+              }}
+              placeholder="Search courses..."
+            />
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+            <InputGroupAddon align="inline-end">
+              <button
+                type="button"
+                onClick={() => {
+                  if (query) {
+                    setQuery("");
+                    commitSearch("");
+                  } else {
+                    setMobileSearchOpen(false);
+                  }
+                }}
+                aria-label={query ? "Clear search" : "Close search"}
+                title={query ? "Clear search" : "Close search"}
+              >
+                <X className="size-4" />
+              </button>
+            </InputGroupAddon>
+          </InputGroup>
+        </div>
+      ) : null}
     </div>
   );
 }

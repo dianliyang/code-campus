@@ -6,30 +6,12 @@ import { Dictionary } from "@/lib/dictionary";
 import CourseCard from "./CourseCard";
 import CourseListHeader from "./CourseListHeader";
 import { useAppToast } from "@/components/common/AppToastProvider";
+import { Check, Loader2, UserPlus } from "lucide-react";
 import {
-  EyeOff,
-  Loader2,
-  MoreHorizontalIcon,
-  Trash2,
-  WandSparkles,
-} from "lucide-react";
-import {
-  clearTopicsForCoursesAction,
-  generateTopicsForCoursesAction,
-  hideCoursesAction,
-  hideCourseAction,
   toggleCourseEnrollmentAction,
 } from "@/actions/courses";
-import { useSearchParams } from "next/navigation";
-import { trackAiUsage } from "@/lib/ai/usage";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -42,6 +24,7 @@ import {
 import UniversityIcon from "@/components/common/UniversityIcon";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Pagination,
   PaginationContent,
@@ -51,6 +34,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CourseListProps {
   initialCourses: Course[];
@@ -76,14 +66,14 @@ export default function CourseList({
   filterSemesters,
 }: CourseListProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [enrolledIds, setEnrolledIds] = useState<number[]>(initialEnrolledIds);
   const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [page, setPage] = useState(currentPage);
   const [isLoading, setIsLoading] = useState(false);
-  const [isGeneratingTopics, setIsGeneratingTopics] = useState(false);
-  const [isClearingTopics, setIsClearingTopics] = useState(false);
-  const [isHidingSelected, setIsHidingSelected] = useState(false);
+  const [isBulkEnrolling, setIsBulkEnrolling] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const { showToast } = useAppToast();
   const observerTarget = useRef<HTMLDivElement>(null);
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
@@ -103,6 +93,13 @@ export default function CourseList({
     setPage(currentPage);
     setSelectedCourseIds([]);
   }, [initialCourses, currentPage]);
+
+  useEffect(() => {
+    const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
   const visibleCourseIds = courses.map((course) => course.id);
   const selectedVisibleCount = visibleCourseIds.filter((id) =>
     selectedCourseIds.includes(id),
@@ -129,77 +126,25 @@ export default function CourseList({
     showToast({ message: "Course hidden successfully", type: "success" });
   };
 
-  const handleHideSelected = async () => {
-    if (selectedCourseIds.length < 1 || isHidingSelected) return;
-    setIsHidingSelected(true);
+  const handleBulkEnroll = async () => {
+    if (selectedCourseIds.length < 2 || isBulkEnrolling) return;
+    const idsToEnroll = selectedCourseIds.filter((id) => !enrolledIds.includes(id));
+    if (idsToEnroll.length === 0) return;
+    setIsBulkEnrolling(true);
     try {
-      const result = await hideCoursesAction(selectedCourseIds);
-      const hiddenSet = new Set(selectedCourseIds);
-      setCourses((prev) => prev.filter((c) => !hiddenSet.has(c.id)));
-      setSelectedCourseIds([]);
+      await Promise.all(idsToEnroll.map((id) => toggleCourseEnrollmentAction(id, false)));
+      await fetchEnrolled();
       showToast({
         type: "success",
-        message: `Hidden ${result.hidden} course(s).`,
+        message: `Enrolled ${idsToEnroll.length} course(s).`,
       });
-      // router.refresh();
     } catch (error) {
       showToast({
         type: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to hide selected courses.",
+        message: error instanceof Error ? error.message : "Bulk enroll failed.",
       });
     } finally {
-      setIsHidingSelected(false);
-    }
-  };
-
-  const handleGenerateTopicsForSelected = async () => {
-    if (selectedCourseIds.length < 2 || isGeneratingTopics) return;
-    setIsGeneratingTopics(true);
-    try {
-      const result = await generateTopicsForCoursesAction(selectedCourseIds);
-      showToast({
-        type: result.failed > 0 ? "error" : "success",
-        message:
-          result.failed > 0
-            ? `Topics generated for ${result.updated} course(s), ${result.failed} failed.`
-            : `Topics generated for ${result.updated} course(s).`,
-      });
-      if (result.updated > 0) {
-        trackAiUsage({ calls: result.updated, tokens: result.updated * 220 });
-      }
-      // router.refresh();
-    } catch (error) {
-      showToast({
-        type: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to generate topics.",
-      });
-    } finally {
-      setIsGeneratingTopics(false);
-    }
-  };
-
-  const handleClearTopicsForSelected = async () => {
-    if (selectedCourseIds.length < 1 || isClearingTopics) return;
-    setIsClearingTopics(true);
-    try {
-      const result = await clearTopicsForCoursesAction(selectedCourseIds);
-      showToast({
-        type: "success",
-        message: `Cleared topics for ${result.cleared} course(s).`,
-      });
-      // router.refresh();
-    } catch (error) {
-      showToast({
-        type: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to clear topics.",
-      });
-    } finally {
-      setIsClearingTopics(false);
+      setIsBulkEnrolling(false);
     }
   };
 
@@ -265,11 +210,17 @@ export default function CourseList({
     return () => observer.disconnect();
   }, [loadMore, isLoading, page, totalPages]);
 
-  const effectiveViewMode: "list" | "grid" = viewMode;
+  const effectiveViewMode: "list" | "grid" = isMobileViewport ? "grid" : viewMode;
   const refParams = searchParams.toString();
   const createPageHref = (nextPage: number) => {
     const next = new URLSearchParams(searchParams.toString());
     next.set("page", String(nextPage));
+    return `/courses?${next.toString()}`;
+  };
+  const createPerPageHref = (nextPerPage: number) => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("perPage", String(nextPerPage));
+    next.set("page", "1");
     return `/courses?${next.toString()}`;
   };
   const pageNumbers = Array.from(
@@ -293,21 +244,13 @@ export default function CourseList({
     });
   };
 
-  const runRowAction = async (
-    courseId: number,
-    action: "toggle-enroll" | "hide",
-  ) => {
+  const runRowEnrollAction = async (courseId: number) => {
     if (actionLoadingIds[courseId]) return;
+    if (enrolledIds.includes(courseId)) return;
     setActionLoadingIds((prev) => ({ ...prev, [courseId]: true }));
-    const isEnrolled = enrolledIds.includes(courseId);
     try {
-      if (action === "toggle-enroll") {
-        await toggleCourseEnrollmentAction(courseId, isEnrolled);
-        await fetchEnrolled();
-      } else {
-        await hideCourseAction(courseId);
-        handleHide(courseId);
-      }
+      await toggleCourseEnrollmentAction(courseId, false);
+      await fetchEnrolled();
     } catch (error) {
       showToast({
         type: "error",
@@ -330,60 +273,12 @@ export default function CourseList({
         dict={dict}
         filterUniversities={filterUniversities}
         filterSemesters={filterSemesters}
+        title="Courses"
+        description="Explore the catalog and enroll in courses."
       />
 
       {effectiveViewMode === "list" ? (
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="flex items-center justify-end gap-1.5 p-2 border-b border-[#e5e5e5]">
-            {selectedCourseIds.length >= 2 ? (
-              <Button
-                variant="outline"
-                type="button"
-                onClick={handleGenerateTopicsForSelected}
-                disabled={isGeneratingTopics}
-                title="Generate subdomains for selected courses"
-                aria-label="Generate subdomains for selected courses"
-              >
-                {isGeneratingTopics ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <WandSparkles />
-                )}
-              </Button>
-            ) : null}
-            {selectedCourseIds.length >= 1 ? (
-              <Button
-                variant="outline"
-                type="button"
-                onClick={handleClearTopicsForSelected}
-                disabled={isClearingTopics}
-                title="Clear subdomains for selected courses"
-                aria-label="Clear subdomains for selected courses"
-              >
-                {isClearingTopics ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <Trash2 />
-                )}
-              </Button>
-            ) : null}
-            {selectedCourseIds.length >= 1 ? (
-              <Button
-                variant="outline"
-                type="button"
-                onClick={handleHideSelected}
-                disabled={isHidingSelected}
-                title="Hide selected courses"
-                aria-label="Hide selected courses"
-              >
-                {isHidingSelected ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <EyeOff />
-                )}
-              </Button>
-            ) : null}
-          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -403,7 +298,28 @@ export default function CourseList({
                 <TableHead>Subdomain</TableHead>
                 <TableHead>Credit</TableHead>
                 <TableHead>Semester</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <span>Actions</span>
+                    {selectedCourseIds.length >= 2 ? (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="size-7"
+                        type="button"
+                        onClick={handleBulkEnroll}
+                        disabled={
+                          isBulkEnrolling ||
+                          selectedCourseIds.every((id) => enrolledIds.includes(id))
+                        }
+                        title="Enroll selected courses"
+                        aria-label="Enroll selected courses"
+                      >
+                        {isBulkEnrolling ? <Loader2 className="size-3.5 animate-spin" /> : <UserPlus className="size-3.5" />}
+                      </Button>
+                    ) : null}
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -428,77 +344,57 @@ export default function CourseList({
                       />
                     </TableCell>
                     <TableCell>
-                      <div className="min-w-0 flex items-start gap-3">
-                        <UniversityIcon
-                          name={course.university}
-                          size={26}
-                          className="bg-white border border-[#dfdfdf]"
-                        />
-                        <div className="min-w-0">
-                          <Link
-                            href={detailHref}
-                            prefetch={false}
-                            className="block"
-                          >
+                      <Link href={detailHref} prefetch={false} className="block">
+                        <div className="min-w-0 flex items-start gap-3">
+                          <UniversityIcon
+                            name={course.university}
+                            size={26}
+                            className="bg-white border border-[#dfdfdf]"
+                          />
+                          <div className="min-w-0">
                             <h2 className="text-[14px] md:text-[15px] font-medium text-[#2e2e2e] line-clamp-2 md:truncate hover:text-black transition-colors">
                               {course.title}
                             </h2>
                             <p className="text-xs text-[#7a7a7a] truncate">
                               {course.courseCode} · {course.university}
                             </p>
-                          </Link>
-                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
-                            {latestSemester ? (
-                              <Badge>{latestSemester}</Badge>
-                            ) : null}
-                            {course.credit != null ? (
-                              <Badge>{course.credit} cr</Badge>
-                            ) : null}
-                            {primaryField ? (
-                              <Badge>{primaryField}</Badge>
-                            ) : null}
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                              {latestSemester ? (
+                                <Badge>{latestSemester}</Badge>
+                              ) : null}
+                              {course.credit != null ? (
+                                <Badge>{course.credit} cr</Badge>
+                              ) : null}
+                              {primaryField ? (
+                                <Badge>{primaryField}</Badge>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     </TableCell>
                     <TableCell>{course.subdomain || "-"}</TableCell>
                     <TableCell>{course.credit ?? "-"}</TableCell>
                     <TableCell>{latestSemester ?? "-"}</TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={isRowLoading}
-                          >
-                            {isRowLoading ? (
-                              <Loader2 className="animate-spin" />
-                            ) : (
-                              <MoreHorizontalIcon />
-                            )}
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              void runRowAction(course.id, "toggle-enroll")
-                            }
-                          >
-                            {isEnrolled ? "Unenroll" : "Enroll"}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onSelect={() =>
-                              void runRowAction(course.id, "hide")
-                            }
-                          >
-                            Hide
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="size-7"
+                        type="button"
+                        disabled={isRowLoading || isEnrolled}
+                        onClick={() => void runRowEnrollAction(course.id)}
+                        title={isEnrolled ? "Enrolled" : "Enroll"}
+                        aria-label={isEnrolled ? "Enrolled" : "Enroll"}
+                      >
+                        {isRowLoading ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : isEnrolled ? (
+                          <Check className="size-3.5" />
+                        ) : (
+                          <UserPlus className="size-3.5" />
+                        )}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -507,7 +403,7 @@ export default function CourseList({
           </Table>
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 p-3">
+        <div className="min-h-0 flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 py-3">
           {courses.map((course, idx) => (
             <CourseCard
               key={course.id}
@@ -542,34 +438,61 @@ export default function CourseList({
         )}
       </div>
 
-      <div className="hidden md:block">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href={createPageHref(Math.max(1, currentPage - 1))}
-              />
-            </PaginationItem>
-            {pageNumbers.map((p, i) => (
-              <PaginationItem key={p}>
-                {i > 0 && p - pageNumbers[i - 1] > 1 ? (
-                  <PaginationEllipsis />
-                ) : null}
-                <PaginationLink
-                  href={createPageHref(p)}
-                  isActive={p === currentPage}
-                >
-                  {p}
-                </PaginationLink>
+      <div className="hidden md:flex items-center justify-between rounded-md border px-2 py-2">
+        <p className="text-xs text-muted-foreground">
+          Page {currentPage} of {Math.max(totalPages, 1)}
+        </p>
+        <div className="flex items-center gap-2">
+          <Select
+            value={String(perPage)}
+            onValueChange={(value) => {
+              const href = createPerPageHref(Number(value));
+              router.push(href, { scroll: false });
+            }}
+          >
+            <SelectTrigger id="select-rows-per-page">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="start">
+              <SelectItem value="12">12</SelectItem>
+              <SelectItem value="24">24</SelectItem>
+              <SelectItem value="48">48</SelectItem>
+            </SelectContent>
+          </Select>
+          <ButtonGroup>
+          <Pagination className="mx-0 w-auto">
+            <PaginationContent className="gap-0.5">
+              <PaginationItem>
+                <PaginationPrevious
+                  href={createPageHref(Math.max(1, currentPage - 1))}
+                  className="h-8 px-2"
+                />
               </PaginationItem>
-            ))}
-            <PaginationItem>
-              <PaginationNext
-                href={createPageHref(Math.min(totalPages, currentPage + 1))}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+              {pageNumbers.map((p, i) => (
+                <PaginationItem key={p}>
+                  {i > 0 && p - pageNumbers[i - 1] > 1 ? (
+                    <PaginationEllipsis />
+                  ) : null}
+                  <PaginationLink
+                    href={createPageHref(p)}
+                    isActive={p === currentPage}
+                    size="sm"
+                    className="h-8 min-w-8 px-2"
+                  >
+                    {p}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  href={createPageHref(Math.min(totalPages, currentPage + 1))}
+                  className="h-8 px-2"
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+          </ButtonGroup>
+        </div>
       </div>
     </main>
   );

@@ -16,8 +16,8 @@ import {
   type SchedulePlanPreview } from
 "@/actions/courses";
 import {
-  CalendarDays,
   CalendarPlus,
+  ChevronDownIcon,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -43,7 +43,29 @@ import { getUniversityUnitInfo } from "@/lib/university-units";
 import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Textarea } from "@/components/ui/textarea";import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput
+} from "@/components/ui/input-group";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxList,
+  ComboboxSeparator
+} from "@/components/ui/combobox";
+import { format, parseISO } from "date-fns";
+import { type DateRange } from "react-day-picker";
 
 interface CourseDetailContentProps {
   course: Course;
@@ -221,11 +243,6 @@ export default function CourseDetailContent({
   const [locatingPlanIndex, setLocatingPlanIndex] = useState<number | null>(
     null
   );
-  const [timeZoneQuery, setTimeZoneQuery] = useState("");
-  const [isTimeZoneMenuOpen, setIsTimeZoneMenuOpen] = useState(false);
-  const timeZoneBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
   const [planPreview, setPlanPreview] = useState<{
     originalSchedule: Array<{type: string;line: string;}>;
     generatedPlans: SchedulePlanPreview[];
@@ -277,11 +294,32 @@ export default function CourseDetailContent({
       return [currentTimeZone, "UTC"];
     }
   }, [currentTimeZone]);
-  const filteredTimeZoneOptions = useMemo(() => {
-    const query = timeZoneQuery.trim().toLowerCase();
-    if (!query) return timeZoneOptions;
-    return timeZoneOptions.filter((zone) => zone.toLowerCase().includes(query));
-  }, [timeZoneOptions, timeZoneQuery]);
+  const getTimeZoneGroups = (selected?: string) => {
+    const zones = [...timeZoneOptions];
+    const normalizedSelected = selected?.trim();
+    if (normalizedSelected && !zones.includes(normalizedSelected)) {
+      zones.unshift(normalizedSelected);
+    }
+    const groups = new Map<string, string[]>();
+    zones.forEach((zone) => {
+      let group = "Other";
+      if (zone.startsWith("America/")) group = "Americas";
+      else if (zone.startsWith("Europe/")) group = "Europe";
+      else if (
+        zone.startsWith("Asia/") ||
+        zone.startsWith("Pacific/") ||
+        zone.startsWith("Australia/")
+      ) group = "Asia/Pacific";
+      else if (zone.startsWith("Africa/")) group = "Africa";
+      const bucket = groups.get(group) || [];
+      bucket.push(zone);
+      groups.set(group, bucket);
+    });
+    const order = ["Americas", "Europe", "Asia/Pacific", "Africa", "Other"];
+    return order.
+    filter((key) => groups.has(key)).
+    map((key) => ({ value: key, items: groups.get(key) || [] }));
+  };
   const estimatedWorkload = unitInfo.estimate?.details || "-";
   const codeBreakdown = useMemo(
     () => getCourseCodeBreakdown(course.university, course.courseCode),
@@ -726,7 +764,6 @@ export default function CourseDetailContent({
       setEditablePlans((prev) =>
       prev.map((plan, i) => i === index ? normalizedTarget : plan)
       );
-      setTimeZoneQuery(normalizedTarget.timezone || "");
     }
     setEditingPlanIndex(index);
     setEditingPlanBackup(normalizedTarget);
@@ -741,8 +778,6 @@ export default function CourseDetailContent({
     }
     setEditingPlanIndex(null);
     setEditingPlanBackup(null);
-    setTimeZoneQuery("");
-    setIsTimeZoneMenuOpen(false);
   };
 
   const handleUseCurrentLocationForPlan = (index: number) => {
@@ -772,35 +807,95 @@ export default function CourseDetailContent({
     );
   };
 
+  const updateEditablePlan = (
+    index: number,
+    updater: (plan: EditableStudyPlan) => EditableStudyPlan
+  ) => {
+    setEditablePlans((prev) => prev.map((plan, i) => (i === index ? updater(plan) : plan)));
+  };
+
+  const toggleEditDay = (index: number, dayIdx: number) => {
+    updateEditablePlan(index, (plan) => {
+      const currentDays = plan.daysOfWeek || [];
+      const nextDays = currentDays.includes(dayIdx)
+        ? currentDays.filter((d) => d !== dayIdx)
+        : [...currentDays, dayIdx].sort((a, b) => a - b);
+      return { ...plan, daysOfWeek: nextDays };
+    });
+  };
+  const handleAddPlanSuccess = (plan: {
+    id: number;
+    start_date: string;
+    end_date: string;
+    days_of_week: number[];
+    start_time: string;
+    end_time: string;
+    location: string;
+    timezone?: string | null;
+  }) => {
+    setEditablePlans((prev) => {
+      const nextPlan: EditableStudyPlan = {
+        id: plan.id,
+        startDate: plan.start_date,
+        endDate: plan.end_date,
+        daysOfWeek: plan.days_of_week || [],
+        startTime: plan.start_time || "09:00:00",
+        endTime: plan.end_time || "10:00:00",
+        location: plan.location || "",
+        kind: "",
+        timezone: plan.timezone || "UTC"
+      };
+      const existingIndex = prev.findIndex((item) => item.id === plan.id);
+      const merged =
+        existingIndex >= 0
+          ? prev.map((item, idx) => (idx === existingIndex ? nextPlan : item))
+          : [...prev, nextPlan];
+      return merged.sort((a, b) => a.startDate.localeCompare(b.startDate));
+    });
+  };
+
   return (
-    <div className="space-y-4 pb-4">
-      <CourseDetailHeader
-        course={course}
-        isEditing={isEditing}
-        onToggleEdit={() => setIsEditing(!isEditing)}
-        projectSeminarRef={projectSeminarRef}
-        enrolled={enrolled}
-        isEnrolling={isEnrolling}
-        onToggleEnroll={handleEnrollToggle}
-        codeBreakdown={codeBreakdown} />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-8 space-y-4">
-          <CourseDetailTopSection
+    <div className="h-full min-h-0 overflow-hidden px-4">
+      <div className="grid h-full min-h-0 overflow-hidden grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-0 lg:divide-x lg:divide-[#F5F5F5]">
+        <div className="min-h-0 space-y-5 overflow-x-hidden overflow-y-auto lg:pr-5">
+          <CourseDetailHeader
             course={course}
-            descriptionEmptyText={descriptionEmptyText}
-            availableTopics={availableTopics}
-            availableSemesters={availableSemesters}
-            studyPlans={studyPlans}
             isEditing={isEditing}
-            onEditingChange={setIsEditing}
+            onToggleEdit={() => setIsEditing(!isEditing)}
             projectSeminarRef={projectSeminarRef}
-            showHeader={false} />
+            enrolled={enrolled}
+            isEnrolling={isEnrolling}
+            onToggleEnroll={handleEnrollToggle}
+            codeBreakdown={codeBreakdown} />
+
+          {!isEditing ? (
+            <section className="py-2">
+              <h2 className="mb-2 text-lg font-semibold text-[#1f1f1f]">Description</h2>
+              {course.description ? (
+                <div className="prose prose-sm prose-gray max-w-none prose-p:text-[#555] prose-p:leading-7">
+                  <p>{course.description}</p>
+                </div>
+              ) : (
+                <p className="text-gray-500 italic">{descriptionEmptyText}</p>
+              )}
+            </section>
+          ) : (
+            <CourseDetailTopSection
+              course={course}
+              descriptionEmptyText={descriptionEmptyText}
+              availableTopics={availableTopics}
+              availableSemesters={availableSemesters}
+              studyPlans={studyPlans}
+              isEditing={isEditing}
+              onEditingChange={setIsEditing}
+              projectSeminarRef={projectSeminarRef}
+              showHeader={false} />
+          )}
           
 
-          <section>
-            <Card>
-              <h2 className="text-base font-semibold text-[#1f1f1f] mb-3">
+          <section className="py-2">
+            <div>
+              <h2 className="text-lg font-semibold text-[#1f1f1f] mb-3">
                 Logistics
               </h2>
               <div className="grid grid-cols-1 gap-4">
@@ -811,19 +906,36 @@ export default function CourseDetailContent({
                       Weekly Schedule
                     </h3>
                     <div className="inline-flex items-center gap-1">
+                      <Popover open={showAddPlanModal} onOpenChange={setShowAddPlanModal}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon-sm"
+                            type="button"
+                            title="Add schedule"
+                            aria-label="Add schedule"
+                          >
+                            <CalendarPlus />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto border-0 bg-transparent p-0 shadow-none" align="end">
+                          <AddPlanModal
+                            mode="inline"
+                            isOpen={showAddPlanModal}
+                            onClose={() => setShowAddPlanModal(false)}
+                            onSuccess={handleAddPlanSuccess}
+                            course={{
+                              id: course.id,
+                              title: course.title,
+                              courseCode: course.courseCode,
+                              university: course.university
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <Button
                         variant="outline"
-                        size="icon"
-                        type="button"
-                        onClick={() => setShowAddPlanModal(true)}
-                        title="Add schedule"
-                        aria-label="Add schedule">
-                        
-                        <CalendarPlus />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
+                        size="icon-sm"
                         type="button"
                         onClick={handleGeneratePlans}
                         disabled={isGeneratingPlans}
@@ -840,41 +952,40 @@ export default function CourseDetailContent({
                   <div
                     className={
                     hasStudyPlans ?
-                    "grid grid-cols-1 md:grid-cols-2 gap-2" :
+                    "grid grid-cols-1 gap-3 md:grid-cols-2" :
                     "space-y-4"
                     }>
                     
                     {hasStudyPlans ?
                     editablePlans.map((plan, idx) =>
-                    <Card
-                      key={plan.id ?? idx}>
+                    <div
+                      key={plan.id ?? idx}
+                      className="rounded-sm border border-[#e9e9e9] bg-white p-3">
                       
                       
                           <div className="flex items-start justify-between gap-2">
                             {editingPlanIndex !== idx ?
-                        <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-[#111111] leading-snug">
-                                {(plan.daysOfWeek || []).length > 0 ?
-                          (plan.daysOfWeek || []).map((d) =>
-                          <Badge
-                            key={`day-chip-${plan.id ?? idx}-${d}`}>
-                            
-                                      {(dayLabels[d] || String(d)).slice(0, 3)}
-                                    </Badge>
-                          ) :
-
-                          <Badge className="h-5 items-center bg-[#f1f1f1] px-1.5 text-[10px] font-semibold text-[#666]">
-                                    No days
-                                  </Badge>
-                          }
-                                <span>
-                                  {plan.startTime.slice(0, 5)} -{" "}
-                                  {plan.endTime.slice(0, 5)}
-                                </span>
-                                {(plan.timezone || "").trim() &&
-                          <span className="text-[11px] font-normal text-[#7a7a7a]">
-                                    {plan.timezone}
+                        <div className="flex flex-col gap-1">
+                                <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-[#111111] leading-snug">
+                                  <span>
+                                    {plan.startTime.slice(0, 5)} -{" "}
+                                    {plan.endTime.slice(0, 5)}
                                   </span>
-                          }
+                                  {(plan.timezone || "").trim() &&
+                            <span className="text-[11px] font-normal text-[#7a7a7a]">
+                                      {plan.timezone}
+                                    </span>
+                            }
+                                </div>
+                                <div className="flex items-center gap-1" aria-label="Study days">
+                                  {Array.from({ length: 7 }).map((_, dayIdx) =>
+                            <span
+                              key={`study-day-dot-${plan.id ?? idx}-${dayIdx}`}
+                              className={`h-2 w-2 rounded-full ${
+                              (plan.daysOfWeek || []).includes(dayIdx) ? "bg-black" : "bg-muted"}`
+                              } />
+                            )}
+                                </div>
                               </div> :
 
                         <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -896,37 +1007,11 @@ export default function CourseDetailContent({
                               </div>
                         }
                             <div className="flex items-center gap-1">
-                              {editingPlanIndex === idx ?
+                              {editingPlanIndex === idx ? null :
                           <>
                                   <Button
                               variant="outline"
-                              size="icon"
-                              type="button"
-                              onClick={() => handleSaveSinglePlan(idx)}
-                              disabled={savingPlanIndex === idx}
-                              title="Confirm">
-                              
-                                    {savingPlanIndex === idx ?
-                              <Loader2 className="animate-spin" /> :
-
-                              <Check />
-                              }
-                                  </Button>
-                                  <Button
-                              variant="outline"
-                              size="icon"
-                              type="button"
-                              onClick={handleCancelEditPlan}
-                              title="Cancel">
-                              
-                                    <X />
-                                  </Button>
-                                </> :
-
-                          <>
-                                  <Button
-                              variant="outline"
-                              size="icon"
+                              size="icon-sm"
                               type="button"
                               onClick={() => handleStartEditPlan(idx)}
 
@@ -936,7 +1021,7 @@ export default function CourseDetailContent({
                                   </Button>
                                   <Button
                               variant="outline"
-                              size="icon"
+                              size="icon-sm"
                               type="button"
                               onClick={() => handleDeleteSinglePlan(idx)}
                               disabled={deletingPlanIndex === idx}
@@ -954,227 +1039,194 @@ export default function CourseDetailContent({
                             </div>
                           </div>
                           {editingPlanIndex === idx ?
-                      <div className="grid grid-cols-1 gap-2 mt-2">
-                              <div className="grid grid-cols-2 gap-2">
-                                <Input
-                            type="date"
-                            value={plan.startDate}
-                            onChange={(e) =>
-                            setEditablePlans((prev) =>
-                            prev.map((p, i) =>
-                            i === idx ?
-                            { ...p, startDate: e.target.value } :
-                            p
-                            )
-                            )
-                            }
-                            className="h-8 border border-[#d8d8d8] bg-white px-2.5 text-[13px] text-[#333]" />
-                          
-                                <Input
-                            type="date"
-                            value={plan.endDate}
-                            onChange={(e) =>
-                            setEditablePlans((prev) =>
-                            prev.map((p, i) =>
-                            i === idx ?
-                            { ...p, endDate: e.target.value } :
-                            p
-                            )
-                            )
-                            }
-                            className="h-8 border border-[#d8d8d8] bg-white px-2.5 text-[13px] text-[#333]" />
-                          
-                                <div className="col-span-2 grid grid-cols-7 gap-1">
-                                  {dayLabels.map((day, dayIdx) => {
-                              const selected = (
-                              plan.daysOfWeek || []).
-                              includes(dayIdx);
-                              return (
-                                <Toggle
-                                  key={`edit-day-${idx}-${day}`}
-                                  pressed={selected}
-                                  onPressedChange={() =>
-                                  setEditablePlans((prev) =>
-                                  prev.map((p, i) => {
-                                    if (i !== idx) return p;
-                                    const currentDays =
-                                    p.daysOfWeek || [];
-                                    const nextDays =
-                                    currentDays.includes(dayIdx) ?
-                                    currentDays.filter(
-                                      (d) => d !== dayIdx
-                                    ) :
-                                    [
-                                    ...currentDays,
-                                    dayIdx].
-                                    sort((a, b) => a - b);
-                                    return {
-                                      ...p,
-                                      daysOfWeek: nextDays
-                                    };
-                                  })
-                                  )
-                                  }
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 border-[#d8d8d8] text-[11px] font-semibold text-[#555] data-[state=on]:border-[#111111] data-[state=on]:bg-[#111111] data-[state=on]:text-white">
-                                  
+                      <div className="mt-3 rounded-sm border border-[#ededed] bg-[#fcfcfc] p-3">
+                              <p className="text-sm font-medium text-[#222] mb-3">Edit Schedule</p>
+                                <div className="space-y-3">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <div className="space-y-1 md:col-span-2">
+                                      <label className="text-sm">Date Range</label>
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <Button variant="outline" type="button" className="w-full justify-between font-normal">
+                                            {plan.startDate && plan.endDate ?
+                                            `${format(parseISO(plan.startDate), "LLL dd, y")} - ${format(parseISO(plan.endDate), "LLL dd, y")}` :
+                                            "Pick a date range"}
+                                            <ChevronDownIcon />
+                                          </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                          <Calendar
+                                            mode="range"
+                                            numberOfMonths={2}
+                                            selected={{
+                                              from: plan.startDate ? parseISO(plan.startDate) : undefined,
+                                              to: plan.endDate ? parseISO(plan.endDate) : undefined
+                                            } as DateRange}
+                                            onSelect={(range) => {
+                                              const from = range?.from;
+                                              const to = range?.to || range?.from;
+                                              if (!from) return;
+                                              updateEditablePlan(idx, (p) => ({
+                                                ...p,
+                                                startDate: format(from, "yyyy-MM-dd"),
+                                                endDate: format(to!, "yyyy-MM-dd")
+                                              }));
+                                            }}
+                                          />
+                                        </PopoverContent>
+                                      </Popover>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                      <label className="text-sm">Start Time</label>
+                                      <Input
+                                        type="time"
+                                        step="1"
+                                        value={plan.startTime.slice(0, 5)}
+                                        onChange={(e) =>
+                                        updateEditablePlan(idx, (p) => ({
+                                          ...p,
+                                          startTime: normalizeTime(e.target.value)
+                                        }))
+                                        }
+                                        className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-sm">End Time</label>
+                                      <Input
+                                        type="time"
+                                        step="1"
+                                        value={plan.endTime.slice(0, 5)}
+                                        onChange={(e) =>
+                                        updateEditablePlan(idx, (p) => ({
+                                          ...p,
+                                          endTime: normalizeTime(e.target.value)
+                                        }))
+                                        }
+                                        className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="text-sm">Days of Week</label>
+                                    <div className="grid grid-cols-7 gap-1">
+                                      {dayLabels.map((day, dayIdx) => {
+                                    const selected = (plan.daysOfWeek || []).includes(dayIdx);
+                                    return (
+                                      <Toggle
+                                        key={`edit-day-${idx}-${day}`}
+                                        pressed={selected}
+                                        onPressedChange={() => toggleEditDay(idx, dayIdx)}
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-[11px] font-semibold">
+                                        
                                         {day}
                                       </Toggle>);
 
-                            })}
-                                </div>
-                                <Input
-                            value={plan.kind || ""}
-                            onChange={(e) =>
-                            setEditablePlans((prev) =>
-                            prev.map((p, i) =>
-                            i === idx ?
-                            { ...p, kind: e.target.value } :
-                            p
-                            )
-                            )
-                            }
-                            className="h-8 border border-[#d8d8d8] bg-white px-2.5 text-[13px] text-[#333]"
-                            placeholder="Type" />
-                          
-                                <div className="relative">
-                                  <Input
-                              value={plan.location}
-                              onChange={(e) =>
-                              setEditablePlans((prev) =>
-                              prev.map((p, i) =>
-                              i === idx ?
-                              { ...p, location: e.target.value } :
-                              p
-                              )
-                              )
-                              }
-                              className="h-8 w-full border border-[#d8d8d8] bg-white pl-2.5 pr-8 text-[13px] text-[#333]"
-                              placeholder="Location" />
-                            
-                                  <Button
-                              variant="outline"
-                              size="icon"
-                              type="button"
-                              onClick={() =>
-                              handleUseCurrentLocationForPlan(idx)
-                              }
+                                  })}
+                                    </div>
+                                  </div>
 
-                              title="Use current location"
-                              aria-label="Use current location">
-                              
-                                    {locatingPlanIndex === idx ?
-                              <Loader2 className="animate-spin" /> :
-
-                              <LocateFixed />
-                              }
-                                  </Button>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                                    <div className="space-y-1">
+                                      <label className="text-sm">Kind</label>
+                                      <Input
+                                        value={plan.kind || ""}
+                                        onChange={(e) => updateEditablePlan(idx, (p) => ({ ...p, kind: e.target.value }))}
+                                        placeholder="Type"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-sm">Location</label>
+                                      <InputGroup>
+                                        <InputGroupInput
+                                          value={plan.location}
+                                          onChange={(e) =>
+                                          updateEditablePlan(idx, (p) => ({
+                                            ...p,
+                                            location: e.target.value
+                                          }))
+                                          }
+                                          placeholder="Location"
+                                        />
+                                        <InputGroupAddon align="inline-end">
+                                          <InputGroupButton
+                                            size="icon-xs"
+                                            type="button"
+                                            onClick={() => handleUseCurrentLocationForPlan(idx)}
+                                            title="Use current location"
+                                            aria-label="Use current location"
+                                          >
+                                            {locatingPlanIndex === idx ? <Loader2 className="animate-spin" /> : <LocateFixed />}
+                                          </InputGroupButton>
+                                        </InputGroupAddon>
+                                      </InputGroup>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-sm">Timezone</label>
+                                      {(() => {
+                                        const timeZoneGroups = getTimeZoneGroups(plan.timezone || currentTimeZone);
+                                        return (
+                                          <Combobox
+                                            items={timeZoneGroups}
+                                            value={plan.timezone || currentTimeZone}
+                                            onValueChange={(next) => {
+                                              updateEditablePlan(idx, (p) => ({
+                                                ...p,
+                                                timezone: String(next || currentTimeZone)
+                                              }));
+                                            }}
+                                          >
+                                            <ComboboxInput placeholder="Select timezone" />
+                                            <ComboboxContent>
+                                              <ComboboxEmpty>No timezones found.</ComboboxEmpty>
+                                              <ComboboxList>
+                                                {(group, groupIndex) => (
+                                                  <ComboboxGroup key={`${idx}-${group.value}`} items={group.items}>
+                                                    <ComboboxLabel>{group.value}</ComboboxLabel>
+                                                    <ComboboxCollection>
+                                                      {(item) => (
+                                                        <ComboboxItem key={`${idx}-${item}`} value={item}>
+                                                          {item}
+                                                        </ComboboxItem>
+                                                      )}
+                                                    </ComboboxCollection>
+                                                    {groupIndex < timeZoneGroups.length - 1 ? <ComboboxSeparator /> : null}
+                                                  </ComboboxGroup>
+                                                )}
+                                              </ComboboxList>
+                                            </ComboboxContent>
+                                          </Combobox>
+                                        );
+                                      })()}
+                                    </div>
+                                  </div>
                                 </div>
-                                <Input
-                            type="time"
-                            value={plan.startTime.slice(0, 5)}
-                            onChange={(e) =>
-                            setEditablePlans((prev) =>
-                            prev.map((p, i) =>
-                            i === idx ?
-                            {
-                              ...p,
-                              startTime: normalizeTime(
-                                e.target.value
-                              )
-                            } :
-                            p
-                            )
-                            )
-                            }
-                            className="h-8 border border-[#d8d8d8] bg-white px-2.5 text-[13px] text-[#333]" />
-                          
-                                <Input
-                            type="time"
-                            value={plan.endTime.slice(0, 5)}
-                            onChange={(e) =>
-                            setEditablePlans((prev) =>
-                            prev.map((p, i) =>
-                            i === idx ?
-                            {
-                              ...p,
-                              endTime: normalizeTime(
-                                e.target.value
-                              )
-                            } :
-                            p
-                            )
-                            )
-                            }
-                            className="h-8 border border-[#d8d8d8] bg-white px-2.5 text-[13px] text-[#333]" />
-                          
-                                <div className="col-span-2 relative">
-                                  <Input
-                              value={timeZoneQuery}
-                              onChange={(e) => {
-                                setTimeZoneQuery(e.target.value);
-                                setEditablePlans((prev) =>
-                                prev.map((p, i) =>
-                                i === idx ?
-                                { ...p, timezone: e.target.value } :
-                                p
-                                )
-                                );
-                                setIsTimeZoneMenuOpen(true);
-                              }}
-                              onFocus={() => setIsTimeZoneMenuOpen(true)}
-                              onBlur={() => {
-                                timeZoneBlurTimeoutRef.current =
-                                setTimeout(
-                                  () => setIsTimeZoneMenuOpen(false),
-                                  120
-                                );
-                              }}
-                              className="h-8 w-full border border-[#d8d8d8] bg-white px-2.5 text-[13px] text-[#333]"
-                              placeholder="Timezone (search and select)" />
-                            
-                                  {isTimeZoneMenuOpen &&
-                            filteredTimeZoneOptions.length > 0 &&
-                            <Card>
-                                        {filteredTimeZoneOptions.
-                              slice(0, 120).
-                              map((zone) =>
-                              <Button
-                                variant="outline"
-                                key={`tz-option-${idx}-${zone}`}
-                                type="button"
-                                onMouseDown={(e) =>
-                                e.preventDefault()
-                                }
-                                onClick={() => {
-                                  if (
-                                  timeZoneBlurTimeoutRef.current)
-                                  {
-                                    clearTimeout(
-                                      timeZoneBlurTimeoutRef.current
-                                    );
-                                    timeZoneBlurTimeoutRef.current =
-                                    null;
-                                  }
-                                  setTimeZoneQuery(zone);
-                                  setEditablePlans((prev) =>
-                                  prev.map((p, i) =>
-                                  i === idx ?
-                                  { ...p, timezone: zone } :
-                                  p
-                                  )
-                                  );
-                                  setIsTimeZoneMenuOpen(false);
-                                }}>
-
-                                
-                                              {zone}
-                                            </Button>
-                              )}
-                                      </Card>
-                            }
-                                </div>
+                              <div className="mt-3 flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  type="button"
+                                  onClick={() => handleSaveSinglePlan(idx)}
+                                  disabled={savingPlanIndex === idx}
+                                  title="Confirm">
+                                  
+                                  {savingPlanIndex === idx ? <Loader2 className="animate-spin" /> : <Check />}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  type="button"
+                                  onClick={handleCancelEditPlan}
+                                  title="Cancel">
+                                  
+                                  <X />
+                                </Button>
                               </div>
                             </div> :
 
@@ -1222,7 +1274,7 @@ export default function CourseDetailContent({
                               </div>
                             </div>
                       }
-                        </Card>
+                        </div>
                     ) :
                     course.details?.schedule &&
                     Object.keys(course.details.schedule).length > 0 ?
@@ -1263,7 +1315,7 @@ export default function CourseDetailContent({
                       {course.instructors.map((inst, idx) =>
                     <li
                       key={idx}
-                      className="flex items-center gap-3 border border-[#e7e7e7] bg-white px-2.5 py-2">
+                      className="flex items-center gap-3 bg-white px-2.5 py-2">
                       
                           <div className="w-8 h-8 bg-[#efefef] flex items-center justify-center text-[#666] text-xs font-medium">
                             {inst.charAt(0)}
@@ -1278,7 +1330,7 @@ export default function CourseDetailContent({
                 }
               </div>
               {planPreview &&
-              <Card>
+              <div className="bg-[#fcfcfc]">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
                     <h3 className="text-base font-semibold text-[#1f1f1f]">
                       Study Plan Preview
@@ -1288,7 +1340,7 @@ export default function CourseDetailContent({
                     </p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <Card>
+                    <div className="rounded-sm bg-white p-4">
                       <p className="text-xs font-medium text-[#666] mb-2">
                         Original Schedule
                       </p>
@@ -1300,8 +1352,8 @@ export default function CourseDetailContent({
                           </li>
                       )}
                       </ul>
-                    </Card>
-                    <Card>
+                    </div>
+                    <div className="rounded-sm bg-white p-4">
                       <p className="text-xs font-medium text-[#666] mb-2">
                         AI Generated Plans
                       </p>
@@ -1315,7 +1367,7 @@ export default function CourseDetailContent({
                         return (
                           <li
                             key={id}
-                            className=" border border-[#e5e5e5] bg-white px-2.5 py-2">
+                            className=" bg-white px-2.5 py-2">
                             
                               <label className="flex items-start gap-2 text-sm text-[#444]">
                                 <Input
@@ -1337,7 +1389,7 @@ export default function CourseDetailContent({
                                     {plan.endTime.slice(0, 5)}
                                   </span>
                                   <span className="block text-xs text-[#666]">
-                                    <Badge className="mr-1.5 inline-block max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap border-[#e1e1e1] bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] align-bottom">
+                                    <Badge className="mr-1.5 inline-block max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap bg-[#f3f3f3] px-2 py-0.5 text-[11px] font-medium text-[#444] align-bottom">
                                       {plan.kind || "Session"}
                                     </Badge>
                                     @ {plan.location}
@@ -1366,7 +1418,7 @@ export default function CourseDetailContent({
 
                       })}
                       </ul>
-                    </Card>
+                    </div>
                   </div>
                   <div className="mt-3 flex items-center gap-2">
                     <Button
@@ -1396,13 +1448,13 @@ export default function CourseDetailContent({
                       Discard
                     </Button>
                   </div>
-                </Card>
+                </div>
               }
-            </Card>
+            </div>
           </section>
 
           {(course.prerequisites || course.corequisites) &&
-          <Card>
+          <div className="bg-[#fcfcfc]">
               <h2 className="text-base font-semibold text-[#1f1f1f] mb-3">
                 Prerequisites
               </h2>
@@ -1428,13 +1480,12 @@ export default function CourseDetailContent({
                   </div>
               }
               </div>
-            </Card>
+            </div>
           }
 
-          <Card>
+          <div className="py-2">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h2 className="text-base font-semibold text-[#1f1f1f] flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-[#777]" />
+              <h2 className="text-lg font-semibold text-[#1f1f1f]">
                 Schedule Calendar
               </h2>
               {studyPlanCalendar.range &&
@@ -1448,7 +1499,7 @@ export default function CourseDetailContent({
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-3">
                 <div>
                   {visibleCalendarMonth ?
-                <Card>
+                <div className="rounded-sm bg-white p-4">
                       <div className="flex items-center justify-between mb-2">
                         <Button
                       variant="outline"
@@ -1573,10 +1624,10 @@ export default function CourseDetailContent({
 
                     })}
                       </div>
-                    </Card> :
+                    </div> :
                 null}
                 </div>
-                <Card>
+                <div className="rounded-sm bg-white p-4">
                   <h3 className="text-sm font-semibold text-[#2a2a2a]">
                     Day Details
                   </h3>
@@ -1597,7 +1648,7 @@ export default function CourseDetailContent({
                   map((event, idx) =>
                   <li
                     key={`${selectedCalendarDate}-${event.label}-${idx}`}
-                    className=" border border-[#ececec] bg-[#fafafa] p-2">
+                    className=" bg-[#fafafa] p-2">
                     
                             <p className="text-[11px] font-medium text-[#2f2f2f]">
                               {event.label}
@@ -1618,33 +1669,31 @@ export default function CourseDetailContent({
                       Pick a date to view events.
                     </p>
                 }
-                </Card>
+                </div>
               </div> :
 
             <p className="text-sm text-[#9a9a9a]">
                 No schedule range found yet.
               </p>
             }
-          </Card>
+          </div>
         </div>
 
-        <aside className="lg:col-span-4 space-y-4">
-          <div className="sticky top-0 space-y-4">
-            <>
-              <Card>
+        <aside className="min-h-0 space-y-5 overflow-x-hidden overflow-y-auto lg:pl-5">
+          <div className="space-y-5">
+            <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-[#1f1f1f]">
                     Resources
                   </h3>
                   <Button
-                    variant="outline"
-                    size="icon"
+                    variant="ghost"
+                    size="icon-sm"
                     type="button"
                     onClick={() => setShowAddUrl((v) => !v)}
                     disabled={isAddingUrl}
 
                     title="Add resource URL">
-                    
                     <Plus />
                   </Button>
                 </div>
@@ -1751,7 +1800,6 @@ export default function CourseDetailContent({
                       }}
                       placeholder={"https://...\nhttps://... (one per line)"}
                       rows={4}
-                      className="w-full border border-[#d8d8d8] bg-white px-2.5 py-1.5 text-[13px] text-[#333] outline-none focus:border-[#bcbcbc] resize-none"
                       autoFocus />
                     
                       <div className="flex justify-end gap-2">
@@ -1779,9 +1827,9 @@ export default function CourseDetailContent({
                     </div>
                   }
                 </div>
-              </Card>
+            </div>
 
-              <Card>
+            <div>
                 <h3 className="text-sm font-semibold text-[#1f1f1f] mb-4">
                   Course Facts
                 </h3>
@@ -1796,7 +1844,7 @@ export default function CourseDetailContent({
                     <dt className="text-[#666] flex-shrink-0 flex items-center gap-1.5 group cursor-help relative">
                       {unitInfo.label}
                       <Info className="w-3.5 h-3.5 text-[#999]" />
-                      <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden w-64 border border-[#dcdcdc] bg-white px-2 py-1.5 text-[11px] font-normal leading-relaxed text-[#555] shadow-sm group-hover:block">
+                      <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden w-64 bg-white px-2 py-1.5 text-[11px] font-normal leading-relaxed text-[#555] shadow-sm group-hover:block">
                         {unitInfo.help}
                       </span>
                     </dt>
@@ -1835,7 +1883,7 @@ export default function CourseDetailContent({
                       course.semesters.map((s, idx) =>
                       <Badge
                         key={idx}
-                        className="whitespace-nowrap border-[#e5e5e5] bg-white px-2 py-0.5 text-[11px]">
+                        className="whitespace-nowrap bg-white px-2 py-0.5 text-[11px]">
                         
                             {s}
                           </Badge>
@@ -1856,46 +1904,10 @@ export default function CourseDetailContent({
                     </div>
                   }
                 </dl>
-              </Card>
-            </>
+            </div>
           </div>
         </aside>
       </div>
-      <AddPlanModal
-        isOpen={showAddPlanModal}
-        onClose={() => setShowAddPlanModal(false)}
-        onSuccess={(plan) => {
-          setEditablePlans((prev) => {
-            const nextPlan: EditableStudyPlan = {
-              id: plan.id,
-              startDate: plan.start_date,
-              endDate: plan.end_date,
-              daysOfWeek: plan.days_of_week || [],
-              startTime: plan.start_time || "09:00:00",
-              endTime: plan.end_time || "10:00:00",
-              location: plan.location || "",
-              kind: "",
-              timezone: plan.timezone || "UTC"
-            };
-            const existingIndex = prev.findIndex((item) => item.id === plan.id);
-            const merged =
-            existingIndex >= 0 ?
-            prev.map((item, idx) =>
-            idx === existingIndex ? nextPlan : item
-            ) :
-            [...prev, nextPlan];
-            return merged.sort((a, b) =>
-            a.startDate.localeCompare(b.startDate)
-            );
-          });
-        }}
-        course={{
-          id: course.id,
-          title: course.title,
-          courseCode: course.courseCode,
-          university: course.university
-        }} />
-      
     </div>);
 
 }

@@ -4,7 +4,8 @@ import CourseList from "@/components/home/CourseList";
 import { Course } from "@/types";
 import { getUser, createClient, mapCourseFromRow, formatUniversityName } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
-import { getDictionary, Dictionary } from "@/lib/dictionary";import { Card } from "@/components/ui/card";
+import { getDictionary, Dictionary } from "@/lib/dictionary";
+import { Card } from "@/components/ui/card";
 
 interface PageProps {
   searchParams: Promise<{[key: string]: string | string[] | undefined;}>;

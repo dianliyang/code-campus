@@ -3,7 +3,9 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import { Badge } from "@/components/ui/badge";
 import RoadmapAchievementsSection from "@/components/home/RoadmapAchievementsSection";
-import { Course } from "@/types";import { Card } from "@/components/ui/card";
+import { Course } from "@/types";
+import CourseStatusChart from "@/components/profile/CourseStatusChart";
+import LearningProfileChart from "@/components/profile/LearningProfileChart";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +23,7 @@ export default async function ProfilePage() {
   user ?
   supabase.
   from("user_courses").
-  select("course_id, status, updated_at, courses!inner(subdomain)").
+  select("course_id, status, progress, updated_at, courses!inner(subdomain)").
   eq("user_id", user.id).
   neq("status", "hidden") :
   Promise.resolve({ data: null }),
@@ -110,25 +112,42 @@ export default async function ProfilePage() {
   )[0];
   const lastActiveDate = lastActiveData?.updated_at ? new Date(lastActiveData.updated_at) : null;
 
-  const fieldTotal = allFieldStats.reduce((acc, curr) => acc + curr.count, 0);
   const recentStatuses = Object.entries(statusCounts).
   sort((a, b) => b[1] - a[1]).
   slice(0, 4);
-
-  const learningProfileColors = [
-  "from-fuchsia-500 to-pink-500",
-  "from-cyan-500 to-blue-500",
-  "from-emerald-500 to-teal-500",
-  "from-amber-500 to-orange-500",
-  "from-violet-500 to-indigo-500",
-  "from-rose-500 to-red-500",
-  "from-lime-500 to-green-500",
-  "from-sky-500 to-cyan-500"];
-
+  const nowMs = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const recentUpdates30 = (enrolledData || []).filter((row) => {
+    if (!row.updated_at) return false;
+    const ts = new Date(row.updated_at).getTime();
+    return Number.isFinite(ts) && nowMs - ts <= 30 * dayMs;
+  }).length;
+  const inProgressRows = (enrolledData || []).filter((row) => row.status === "in_progress");
+  const inProgressCount = inProgressRows.length;
+  const stalledCount = inProgressRows.filter((row) => {
+    if (!row.updated_at) return true;
+    const ts = new Date(row.updated_at).getTime();
+    return !Number.isFinite(ts) || nowMs - ts > 14 * dayMs;
+  }).length;
+  const avgProgress = inProgressRows.length > 0 ?
+  Math.round(
+    inProgressRows.reduce((sum, row) => sum + Number(row.progress || 0), 0) /
+    inProgressRows.length
+  ) :
+  0;
+  const weeklyActivity = Array.from({ length: 6 }).map((_, idx) => {
+    const end = nowMs - (5 - idx) * 7 * dayMs;
+    const start = end - 7 * dayMs;
+    return (enrolledData || []).filter((row) => {
+      if (!row.updated_at) return false;
+      const ts = new Date(row.updated_at).getTime();
+      return Number.isFinite(ts) && ts >= start && ts < end;
+    }).length;
+  });
 
   return (
     <main className="w-full space-y-4">
-      <Card>
+      <div className="rounded-sm border p-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-14 w-14 bg-[#1f1f1f] text-white flex items-center justify-center text-2xl font-semibold">
@@ -154,64 +173,35 @@ export default async function ProfilePage() {
             <Badge variant="secondary">{dict.dashboard.profile.user_level}</Badge>
           </div>
         </div>
-      </Card>
+      </div>
 
-      <Card>
+      <div className="rounded-sm border p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
             <h2 className="text-base font-semibold text-[#1f1f1f]">Learning Profile</h2>
             <p className="text-xs text-[#7a7a7a] mt-1 mb-3">{dict.dashboard.profile.neural_map}</p>
-
-            {fieldTotal > 0 ?
-            <div className="space-y-2">
-                {allFieldStats.slice(0, 8).map((field, idx) => {
-                const pct = Math.max(3, Math.round(field.count / fieldTotal * 100));
-                const barColor = learningProfileColors[idx % learningProfileColors.length];
-                return (
-                  <Card key={field.name}>
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-[#2a2a2a] truncate">{field.name}</p>
-                        <p className="text-xs text-[#666]">
-                          {field.count} {dict.dashboard.profile.units}
-                        </p>
-                      </div>
-                      <div className="mt-2 h-2 bg-[#efefef] overflow-hidden">
-                        <div className={`h-full bg-gradient-to-r ${barColor}`} style={{ width: `${pct}%` }} />
-                      </div>
-                    </Card>);
-
-              })}
-              </div> :
-
-            <Card>
-                <p className="text-sm text-slate-500">{dict.dashboard.profile.no_data}</p>
-              </Card>
-            }
+            <LearningProfileChart
+              data={allFieldStats}
+              unitLabel={dict.dashboard.profile.units}
+              emptyText={dict.dashboard.profile.no_data}
+            />
           </div>
 
           <div>
             <h3 className="text-base font-semibold text-[#1f1f1f]">Course Status</h3>
             <p className="text-xs text-[#7a7a7a] mt-1 mb-3">Enrollment distribution</p>
-            <div className="space-y-2">
-              {recentStatuses.length > 0 ?
-              recentStatuses.map(([status, count]) =>
-              <Card
-                key={status}>
-                
-                
-                    <span className="text-sm text-[#333] capitalize">{status.replace(/_/g, " ")}</span>
-                    <span className="text-sm font-medium text-[#222]">{count}</span>
-                  </Card>
-              ) :
-
-              <Card>
-                  <p className="text-sm text-slate-500">{dict.dashboard.profile.no_data}</p>
-                </Card>
-              }
-            </div>
+            <CourseStatusChart
+              data={recentStatuses}
+              emptyText={dict.dashboard.profile.no_data}
+              recentUpdates30={recentUpdates30}
+              inProgressCount={inProgressCount}
+              stalledCount={stalledCount}
+              avgProgress={avgProgress}
+              weeklyActivity={weeklyActivity}
+            />
           </div>
         </div>
-      </Card>
+      </div>
 
       <RoadmapAchievementsSection
         availableSemesters={availableSemesters}

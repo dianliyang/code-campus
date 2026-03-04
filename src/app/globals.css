@@ -134,7 +134,7 @@
 
 @layer utilities {
   .font-brand {
-    font-family: "Snell Roundhand", "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
+    font-family: "MuseoModerno", sans-serif;
     letter-spacing: 0.01em;
   }
 }

@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/logo.svg",
+        source: "/flash.svg",
         headers: [
           {
             key: "Cache-Control",

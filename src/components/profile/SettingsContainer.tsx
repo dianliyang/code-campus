@@ -25,6 +25,9 @@ import { Separator } from "@/components/ui/separator";
 const AISettingsCard = dynamic(() => import("./AISettingsCard"), {
   ssr: false
 });
+const EngineSettingsPanel = dynamic(() => import("./EngineSettingsPanel"), {
+  ssr: false
+});
 const SecurityIdentitySection = dynamic(
   () => import("./SecurityIdentitySection"),
   { ssr: false }
@@ -294,7 +297,26 @@ export default function SettingsContainer({
 
         <Separator className="mb-3" />
 
-        {AI_SECTIONS.includes(active) ?
+        {active === "engine" ?
+        <div className="flex-1 min-h-0 flex flex-col">
+            <EngineSettingsPanel
+            initialProvider={profile?.ai_provider as string || "perplexity"}
+            initialModel={
+            profile?.ai_default_model as string ||
+            aiDefaults.modelCatalog.perplexity[0] ||
+            aiDefaults.modelCatalog.openai[0] ||
+            aiDefaults.modelCatalog.gemini[0] ||
+            ""
+            }
+            initialWebSearchEnabled={
+            profile?.ai_web_search_enabled as boolean | undefined ?? false
+            }
+            modelCatalog={aiDefaults.modelCatalog} />
+          
+          </div> :
+        null}
+
+        {AI_SECTIONS.includes(active) && active !== "engine" ?
         <div className="flex-1 min-h-0 flex flex-col">
             <AISettingsCard
             key={`${active}-${profile ? JSON.stringify(profile) : "default-ai"}`}

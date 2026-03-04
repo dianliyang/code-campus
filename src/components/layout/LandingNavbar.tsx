@@ -26,7 +26,7 @@ export default function LandingNavbar({ dict }: { dict: any }) {
             <div className="flex items-center">
               <Link href="/" className="group flex items-center gap-2 md:gap-3">
                 <Image
-                  src="/logo.svg"
+                  src="/flash.svg"
                   alt="Flash"
                   width={scrolled ? 28 : 36}
                   height={scrolled ? 28 : 36}

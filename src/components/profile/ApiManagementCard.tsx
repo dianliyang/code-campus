@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Copy, KeyRound, Loader2, Trash2, WandSparkles } from "lucide-react";
+import { CheckCircle2, Copy, Loader2, Trash2, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 type ApiKeyItem = {
   id: number;
@@ -15,7 +18,7 @@ type ApiKeyItem = {
   lastUsedAt: string | null;
 };
 
-type DraftById = Record<number, {name: string;requestsLimit: string;isActive: boolean;}>;
+type DraftById = Record<number, { requestsLimit: string; isActive: boolean }>;
 
 function toLimitValue(limit: number | null): string {
   return limit == null ? "" : String(limit);
@@ -49,9 +52,8 @@ export default function ApiManagementCard() {
       const nextDrafts: DraftById = {};
       for (const item of nextItems) {
         nextDrafts[item.id] = {
-          name: item.name || "API Key",
           requestsLimit: toLimitValue(item.requestsLimit),
-          isActive: Boolean(item.isActive)
+          isActive: Boolean(item.isActive),
         };
       }
       setDrafts(nextDrafts);
@@ -108,7 +110,7 @@ export default function ApiManagementCard() {
       const response = await fetch("/api/settings/api-key", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim(), requestsLimit: limit })
+        body: JSON.stringify({ name: newName.trim(), requestsLimit: limit }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.error || "Failed to generate key");
@@ -126,7 +128,7 @@ export default function ApiManagementCard() {
     }
   };
 
-  const persistRow = async (id: number, draftOverride?: {name: string;requestsLimit: string;isActive: boolean;}) => {
+  const persistRow = async (id: number, draftOverride?: { requestsLimit: string; isActive: boolean }) => {
     const draft = draftOverride ?? drafts[id];
     if (!draft) return;
 
@@ -137,11 +139,7 @@ export default function ApiManagementCard() {
       const response = await fetch("/api/settings/api-key", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          isActive: draft.isActive,
-          requestsLimit
-        })
+        body: JSON.stringify({ id, isActive: draft.isActive, requestsLimit }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.error || "Failed to save");
@@ -172,167 +170,156 @@ export default function ApiManagementCard() {
   };
 
   return (
-    <Card>
-      <Card>
-        <KeyRound className="w-4 h-4 text-[#777]" />
-        <span className="text-sm font-semibold">API Management</span>
-      </Card>
-
-      <div className="grid gap-2 sm:grid-cols-[1.3fr_1fr_auto] items-end">
+    <div className="space-y-4">
+      <section className="grid gap-3 rounded-sm border p-3 sm:grid-cols-[1.5fr_1fr_auto] sm:items-end">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-[#666] block">Key Name</label>
+          <label className="text-sm font-medium">Key Name</label>
           <Input
             value={newName}
             onChange={(e) => {
               setNewName(e.target.value);
               if (nameError && e.target.value.trim()) setNameError(false);
             }}
-            placeholder="Enter key name" />
-          
+            placeholder="Enter key name"
+          />
+          {nameError ? <p className="text-xs text-destructive">Name is required.</p> : null}
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-[#666] block">Request Limit (optional)</label>
+          <label className="text-sm font-medium">Request Limit</label>
           <Input
             value={newLimit}
             onChange={(e) => setNewLimit(e.target.value)}
             type="number"
             min={1}
-            placeholder="Unlimited" />
-          
+            placeholder="Unlimited"
+          />
         </div>
-        <Button variant="outline"
-        type="button"
-        onClick={generateKey}
-        disabled={isCreating}>
-
-          
+        <Button variant="outline" type="button" onClick={generateKey} disabled={isCreating}>
           {isCreating ? <Loader2 className="animate-spin" /> : <WandSparkles />}
           Generate Key
         </Button>
-      </div>
+      </section>
 
-      {latestKey ?
-      <div className="space-y-1">
-          <p className="text-[11px] text-[#777]">New key (shown once)</p>
-          <div className="flex items-center gap-2">
-            <Input
-            readOnly
-            value={latestKey} />
-
-          
-            <Button variant="outline"
-          type="button"
-          onClick={copyLatestKey}>
-
-            
+      {latestKey ? (
+        <section className="rounded-sm border p-3">
+          <p className="text-xs text-muted-foreground">New key (shown once)</p>
+          <div className="mt-2 flex items-center gap-2">
+            <Input readOnly value={latestKey} />
+            <Button variant="outline" type="button" onClick={copyLatestKey}>
               <Copy />
               Copy
             </Button>
           </div>
-        </div> :
-      null}
+        </section>
+      ) : null}
 
-      <Card>
-        <table className="w-full min-w-[760px] text-sm">
-          <thead className="bg-[#fafafa]">
-            <tr className="text-left text-[12px] text-[#666]">
-              <th className="px-3 py-2 font-medium">Name</th>
-              <th className="px-3 py-2 font-medium">API Key</th>
-              <th className="px-3 py-2 font-medium">Limit</th>
-              <th className="px-3 py-2 font-medium">Usage</th>
-              <th className="px-3 py-2 font-medium">Status</th>
-              <th className="px-3 py-2 font-medium">Last Used</th>
-              <th className="px-3 py-2 font-medium text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ?
-            <tr>
-                <td className="px-3 py-3 text-[#666]" colSpan={7}>Loading...</td>
-              </tr> :
-            !hasRows ?
-            <tr>
-                <td className="px-3 py-3 text-[#666]" colSpan={7}>No API keys yet.</td>
-              </tr> :
+      <Separator />
 
-            items.map((item) => {
-              const fallbackDraft = {
-                name: item.name,
-                requestsLimit: toLimitValue(item.requestsLimit),
-                isActive: item.isActive
-              };
-              const draft = drafts[item.id] || fallbackDraft;
-              const busy = workingId === item.id;
-              return (
-                <tr key={item.id} className="border-t border-[#f0f0f0]">
-                    <td className="px-3 py-2 text-[13px] text-[#444]">{item.name || "API Key"}</td>
-                    <td className="px-3 py-2 text-[13px] text-[#444]">{toMaskedKey(item.keyPrefix)}</td>
-                    <td className="px-3 py-2">
-                      <Input
-                      value={draft.requestsLimit}
-                      onChange={(e) =>
-                      setDrafts((prev) => {
-                        const current = prev[item.id] || fallbackDraft;
-                        return { ...prev, [item.id]: { ...current, requestsLimit: e.target.value } };
-                      })
-                      }
-                      onBlur={() => void persistRow(item.id)}
-                      type="number"
-                      min={1}
-                      disabled={busy}
-                      className="h-8 w-[110px] border border-[#d9d9d9] px-2.5 text-[13px] outline-none focus:border-[#bdbdbd]"
-                      placeholder="Unlimited" />
-                    
-                    </td>
-                    <td className="px-3 py-2 text-[13px] text-[#444]">
-                      {item.requestsUsed}{item.requestsLimit != null ? ` / ${item.requestsLimit}` : ""}
-                    </td>
-                    <td className="px-3 py-2">
-                      <label className="inline-flex items-center gap-1.5 text-[13px] text-[#444]">
+      <section className="rounded-sm border">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-sm">
+            <thead>
+              <tr className="border-b text-left text-xs text-muted-foreground">
+                <th className="px-3 py-2 font-medium">Name</th>
+                <th className="px-3 py-2 font-medium">API Key</th>
+                <th className="px-3 py-2 font-medium">Limit</th>
+                <th className="px-3 py-2 font-medium">Usage</th>
+                <th className="px-3 py-2 font-medium">Status</th>
+                <th className="px-3 py-2 font-medium">Last Used</th>
+                <th className="px-3 py-2 text-right font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td className="px-3 py-3 text-muted-foreground" colSpan={7}>
+                    Loading...
+                  </td>
+                </tr>
+              ) : !hasRows ? (
+                <tr>
+                  <td className="px-3 py-3 text-muted-foreground" colSpan={7}>
+                    No API keys yet.
+                  </td>
+                </tr>
+              ) : (
+                items.map((item) => {
+                  const fallbackDraft = {
+                    requestsLimit: toLimitValue(item.requestsLimit),
+                    isActive: item.isActive,
+                  };
+                  const draft = drafts[item.id] || fallbackDraft;
+                  const busy = workingId === item.id;
+                  return (
+                    <tr key={item.id} className="border-b last:border-b-0">
+                      <td className="px-3 py-2">{item.name || "API Key"}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{toMaskedKey(item.keyPrefix)}</td>
+                      <td className="px-3 py-2">
                         <Input
-                        type="checkbox"
-                        checked={draft.isActive}
-                        onChange={(e) => {
-                          const nextDraft = { ...draft, isActive: e.target.checked };
-                          setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
-                          void persistRow(item.id, nextDraft);
-                        }}
-                        disabled={busy} />
-                      
-                        {draft.isActive ? "Enabled" : "Disabled"}
-                      </label>
-                    </td>
-                    <td className="px-3 py-2 text-[12px] text-[#666]">
-                      {item.lastUsedAt ? new Date(item.lastUsedAt).toLocaleString() : "Never"}
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline"
-                      type="button"
-                      onClick={() => deleteRow(item.id)}
-                      disabled={busy}
-                      aria-label="Delete API key"
-                      title="Delete API key">
-
-                        
+                          value={draft.requestsLimit}
+                          onChange={(e) =>
+                            setDrafts((prev) => {
+                              const current = prev[item.id] || fallbackDraft;
+                              return { ...prev, [item.id]: { ...current, requestsLimit: e.target.value } };
+                            })
+                          }
+                          onBlur={() => void persistRow(item.id)}
+                          type="number"
+                          min={1}
+                          disabled={busy}
+                          placeholder="Unlimited"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {item.requestsUsed}
+                        {item.requestsLimit != null ? ` / ${item.requestsLimit}` : ""}
+                      </td>
+                      <td className="px-3 py-2">
+                        <label className="inline-flex items-center gap-2 text-sm">
+                          <Checkbox
+                            checked={draft.isActive}
+                            onCheckedChange={(checked) => {
+                              const nextDraft = { ...draft, isActive: checked === true };
+                              setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
+                              void persistRow(item.id, nextDraft);
+                            }}
+                            disabled={busy}
+                          />
+                          <Badge variant={draft.isActive ? "secondary" : "outline"}>
+                            {draft.isActive ? "Enabled" : "Disabled"}
+                          </Badge>
+                        </label>
+                      </td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
+                        {item.lastUsedAt ? new Date(item.lastUsedAt).toLocaleString() : "Never"}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <Button
+                          variant="outline"
+                          type="button"
+                          onClick={() => deleteRow(item.id)}
+                          disabled={busy}
+                          aria-label="Delete API key"
+                          title="Delete API key"
+                        >
                           <Trash2 />
                         </Button>
-                      </div>
-                    </td>
-                  </tr>);
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-            })
-            }
-          </tbody>
-        </table>
-      </Card>
-
-      {saved ?
-      <p className="text-xs text-emerald-700 inline-flex items-center gap-1.5">
-          <CheckCircle2 className="w-3.5 h-3.5" />
+      {saved ? (
+        <p className="inline-flex items-center gap-1.5 text-xs text-emerald-700">
+          <CheckCircle2 className="h-3.5 w-3.5" />
           {saved}
-        </p> :
-      null}
-    </Card>);
-
+        </p>
+      ) : null}
+    </div>
+  );
 }

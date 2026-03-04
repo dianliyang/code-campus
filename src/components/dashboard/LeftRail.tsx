@@ -132,7 +132,7 @@ export default function LeftRail({ labels }: LeftRailProps) {
     <Sidebar collapsible="icon">
       <SidebarHeader className="sticky top-0 z-10 bg-sidebar flex-row items-end justify-between">
         <Link href="/courses" className="flex h-7 items-end gap-2" title="Flash">
-          <Image src="/logo.svg" alt="Flash" width={18} height={18} />
+          <Image src="/flash.svg" alt="Flash" width={18} height={18} />
           {!collapsed && <span className="font-brand">Flash</span>}
         </Link>
         <SidebarTrigger className="self-end" />

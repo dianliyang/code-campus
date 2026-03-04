@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { BarChart2, Loader2 } from "lucide-react";import { Card } from "@/components/ui/card";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 type UsageStats = {
-  totals: {requests: number;tokens_input: number;tokens_output: number;cost_usd: number;};
-  byFeature: Record<string, {requests: number;cost_usd: number;}>;
-  byModel: Record<string, {requests: number;cost_usd: number;}>;
-  recentTotals: {requests: number;cost_usd: number;};
+  totals: { requests: number; tokens_input: number; tokens_output: number; cost_usd: number };
+  byFeature: Record<string, { requests: number; cost_usd: number }>;
+  byModel: Record<string, { requests: number; cost_usd: number }>;
+  recentTotals: { requests: number; cost_usd: number };
   recentResponses: Array<{
     id: number;
     feature: string;
@@ -19,8 +20,18 @@ type UsageStats = {
     cost_usd: number;
     created_at: string;
   }>;
-  daily: Record<string, {requests: number;cost_usd: number;}>;
+  daily: Record<string, { requests: number; cost_usd: number }>;
 };
+
+function StatBlock({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="rounded-sm border p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p>
+      {sub ? <p className="mt-1 text-xs text-muted-foreground">{sub}</p> : null}
+    </div>
+  );
+}
 
 export default function UsageStatisticsPanel() {
   const [stats, setStats] = useState<UsageStats | null>(null);
@@ -47,146 +58,165 @@ export default function UsageStatisticsPanel() {
     };
   }, []);
 
-  const featureRows = stats ?
-  Object.entries(stats.byFeature).sort((a, b) => Number(b[1].cost_usd || 0) - Number(a[1].cost_usd || 0)) :
-  [];
-  const modelRows = stats ?
-  Object.entries(stats.byModel).sort((a, b) => Number(b[1].cost_usd || 0) - Number(a[1].cost_usd || 0)) :
-  [];
-  const dailyRows = stats ? Object.entries(stats.daily) : [];
+  const featureRows = useMemo(
+    () =>
+      stats
+        ? Object.entries(stats.byFeature).sort(
+            (a, b) => Number(b[1].cost_usd || 0) - Number(a[1].cost_usd || 0),
+          )
+        : [],
+    [stats],
+  );
+
+  const modelRows = useMemo(
+    () =>
+      stats
+        ? Object.entries(stats.byModel).sort(
+            (a, b) => Number(b[1].cost_usd || 0) - Number(a[1].cost_usd || 0),
+          )
+        : [],
+    [stats],
+  );
+
+  const dailyRows = useMemo(() => (stats ? Object.entries(stats.daily) : []), [stats]);
   const maxDailyRequests = Math.max(1, ...dailyRows.map(([, row]) => Number(row.requests || 0)));
 
-  return (
-    <div className="h-full flex flex-col">
-      <div className="mb-3">
-        <h3 className="text-base font-semibold text-[#1f1f1f]">Usage Statistics</h3>
-        <p className="text-xs text-[#7a7a7a] mt-0.5">AI call history, token usage, and cost breakdown.</p>
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-4 w-4 animate-spin" />
       </div>
-      <Card>
-        <Card>
-          <BarChart2 className="w-4 h-4 text-[#777]" />
-          <span className="text-sm font-semibold">Usage Statistics</span>
-        </Card>
+    );
+  }
 
-        {loading ?
-        <div className="flex items-center justify-center py-10">
-            <Loader2 className="w-4 h-4 animate-spin text-[#999]" />
-          </div> :
-        !stats ?
-        <p className="text-sm text-[#666]">Failed to load usage statistics.</p> :
+  if (!stats) {
+    return <p className="text-sm text-muted-foreground">Failed to load usage statistics.</p>;
+  }
 
-        <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <Card>
-                <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Requests</p>
-                <p className="text-xl font-semibold text-[#111] mt-1">{stats.totals.requests.toLocaleString()}</p>
-                <p className="text-xs text-[#666] mt-1">{stats.recentTotals.requests.toLocaleString()} in last 7 days</p>
-              </Card>
-              <Card>
-                <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Input Tokens</p>
-                <p className="text-xl font-semibold text-[#111] mt-1">{stats.totals.tokens_input.toLocaleString()}</p>
-              </Card>
-              <Card>
-                <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Output Tokens</p>
-                <p className="text-xl font-semibold text-[#111] mt-1">{stats.totals.tokens_output.toLocaleString()}</p>
-              </Card>
-              <Card>
-                <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Total Cost (USD)</p>
-                <p className="text-xl font-semibold text-[#111] mt-1">${Number(stats.totals.cost_usd || 0).toFixed(4)}</p>
-                <p className="text-xs text-[#666] mt-1">${Number(stats.recentTotals.cost_usd || 0).toFixed(4)} in last 7 days</p>
-              </Card>
-            </div>
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatBlock
+          label="Requests"
+          value={stats.totals.requests.toLocaleString()}
+          sub={`${stats.recentTotals.requests.toLocaleString()} in last 7 days`}
+        />
+        <StatBlock label="Input Tokens" value={stats.totals.tokens_input.toLocaleString()} />
+        <StatBlock label="Output Tokens" value={stats.totals.tokens_output.toLocaleString()} />
+        <StatBlock
+          label="Total Cost (USD)"
+          value={`$${Number(stats.totals.cost_usd || 0).toFixed(4)}`}
+          sub={`$${Number(stats.recentTotals.cost_usd || 0).toFixed(4)} in last 7 days`}
+        />
+      </div>
 
-            {dailyRows.length > 0 &&
-          <Card>
-                <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide mb-2">Daily Activity (Last 7 Days)</p>
-                <div className="grid grid-cols-7 gap-2 items-end h-24">
-                  {dailyRows.map(([day, row]) =>
-              <div key={day} className="flex flex-col items-center gap-1">
-                      <div className="w-full h-16 flex items-end">
-                        <div
-                    className="w-full bg-[#3d3d3d]"
-                    style={{ height: `${Math.max(6, Math.round(Number(row.requests || 0) / maxDailyRequests * 100))}%` }}
-                    title={`${day}: ${row.requests} req`} />
-                  
-                      </div>
-                      <span className="text-[10px] text-[#666]">{day.slice(5)}</span>
-                    </div>
-              )}
+      <Separator />
+
+      <section className="space-y-2">
+        <h4 className="text-sm font-semibold">Daily Activity</h4>
+        <div className="rounded-sm border p-3">
+          {dailyRows.length > 0 ? (
+            <div className="grid h-28 grid-cols-7 items-end gap-2">
+              {dailyRows.map(([day, row]) => (
+                <div key={day} className="flex h-full flex-col items-center justify-end gap-1">
+                  <div className="flex h-20 w-full items-end">
+                    <div
+                      className="w-full bg-foreground"
+                      style={{
+                        height: `${Math.max(6, Math.round((Number(row.requests || 0) / maxDailyRequests) * 100))}%`,
+                      }}
+                      title={`${day}: ${row.requests} req`}
+                    />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">{day.slice(5)}</span>
                 </div>
-              </Card>
-          }
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <Card>
-                <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide mb-2">By Feature</p>
-                {featureRows.length > 0 ?
-              <ul className="space-y-1.5">
-                    {featureRows.slice(0, 8).map(([feature, row]) =>
-                <li key={feature} className="flex items-center justify-between text-xs">
-                        <span className="text-[#333] truncate pr-2">{feature}</span>
-                        <span className="text-[#666]">{row.requests} · ${Number(row.cost_usd || 0).toFixed(4)}</span>
-                      </li>
-                )}
-                  </ul> :
-
-              <p className="text-xs text-[#666]">No feature data.</p>
-              }
-              </Card>
-
-              <Card>
-                <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide mb-2">By Model</p>
-                {modelRows.length > 0 ?
-              <ul className="space-y-1.5">
-                    {modelRows.slice(0, 8).map(([model, row]) =>
-                <li key={model} className="flex items-center justify-between text-xs">
-                        <span className="text-[#333] truncate pr-2">{model}</span>
-                        <span className="text-[#666]">{row.requests} · ${Number(row.cost_usd || 0).toFixed(4)}</span>
-                      </li>
-                )}
-                  </ul> :
-
-              <p className="text-xs text-[#666]">No model data.</p>
-              }
-              </Card>
+              ))}
             </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No daily activity.</p>
+          )}
+        </div>
+      </section>
 
-            <Card>
-              <Card>
-                <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Recent AI Responses</p>
-              </Card>
-              {stats.recentResponses.length > 0 ?
-            <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead className="bg-white text-[#666]">
-                      <tr className="border-b border-[#efefef]">
-                        <th className="px-3 py-2 text-left font-semibold">Feature</th>
-                        <th className="px-3 py-2 text-left font-semibold">Provider / Model</th>
-                        <th className="px-3 py-2 text-right font-semibold">Tokens</th>
-                        <th className="px-3 py-2 text-right font-semibold">Cost</th>
-                        <th className="px-3 py-2 text-right font-semibold">Time</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {stats.recentResponses.map((item) =>
-                  <tr key={item.id} className="border-b border-[#f3f3f3] last:border-b-0">
-                          <td className="px-3 py-2 text-[#333]">{item.preset ? `${item.feature} · ${item.preset}` : item.feature}</td>
-                          <td className="px-3 py-2 text-[#666]">{item.provider || "-"} / {item.model || "-"}</td>
-                          <td className="px-3 py-2 text-right text-[#666]">{(item.tokens_input + item.tokens_output).toLocaleString()}</td>
-                          <td className="px-3 py-2 text-right text-[#333]">${Number(item.cost_usd || 0).toFixed(4)}</td>
-                          <td className="px-3 py-2 text-right text-[#777]">{new Date(item.created_at).toLocaleString()}</td>
-                        </tr>
-                  )}
-                    </tbody>
-                  </table>
-                </div> :
+      <Separator />
 
-            <p className="p-3 text-sm text-[#666]">No recent responses.</p>
-            }
-            </Card>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <section className="rounded-sm border p-3">
+          <h4 className="text-sm font-semibold">By Feature</h4>
+          <div className="mt-2 space-y-2">
+            {featureRows.length > 0 ? (
+              featureRows.slice(0, 10).map(([feature, row]) => (
+                <div key={feature} className="flex items-center justify-between text-xs">
+                  <span className="truncate pr-2">{feature}</span>
+                  <span className="text-muted-foreground">
+                    {row.requests} · ${Number(row.cost_usd || 0).toFixed(4)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No feature data.</p>
+            )}
           </div>
-        }
-      </Card>
-    </div>);
+        </section>
 
+        <section className="rounded-sm border p-3">
+          <h4 className="text-sm font-semibold">By Model</h4>
+          <div className="mt-2 space-y-2">
+            {modelRows.length > 0 ? (
+              modelRows.slice(0, 10).map(([model, row]) => (
+                <div key={model} className="flex items-center justify-between text-xs">
+                  <span className="truncate pr-2">{model}</span>
+                  <span className="text-muted-foreground">
+                    {row.requests} · ${Number(row.cost_usd || 0).toFixed(4)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No model data.</p>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <Separator />
+
+      <section className="rounded-sm border p-3">
+        <h4 className="text-sm font-semibold">Recent AI Responses</h4>
+        {stats.recentResponses.length > 0 ? (
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="px-2 py-2 font-medium">Feature</th>
+                  <th className="px-2 py-2 font-medium">Provider / Model</th>
+                  <th className="px-2 py-2 text-right font-medium">Tokens</th>
+                  <th className="px-2 py-2 text-right font-medium">Cost</th>
+                  <th className="px-2 py-2 text-right font-medium">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.recentResponses.map((item) => (
+                  <tr key={item.id} className="border-b last:border-b-0">
+                    <td className="px-2 py-2">{item.preset ? `${item.feature} · ${item.preset}` : item.feature}</td>
+                    <td className="px-2 py-2 text-muted-foreground">
+                      {item.provider || "-"} / {item.model || "-"}
+                    </td>
+                    <td className="px-2 py-2 text-right text-muted-foreground">
+                      {(item.tokens_input + item.tokens_output).toLocaleString()}
+                    </td>
+                    <td className="px-2 py-2 text-right">${Number(item.cost_usd || 0).toFixed(4)}</td>
+                    <td className="px-2 py-2 text-right text-muted-foreground">
+                      {new Date(item.created_at).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">No recent responses.</p>
+        )}
+      </section>
+    </div>
+  );
 }

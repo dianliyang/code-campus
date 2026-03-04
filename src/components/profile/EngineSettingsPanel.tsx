@@ -449,7 +449,7 @@ export default function EngineSettingsPanel({
               <div className="space-y-1 text-xs text-muted-foreground">
                 <div className="flex items-center justify-between gap-3">
                   <span>Provider</span>
-                  <span className="font-medium text-foreground">{provider}</span>
+                  <span className="font-medium text-foreground">{providerLabel(provider)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>Model</span>

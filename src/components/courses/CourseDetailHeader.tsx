@@ -6,7 +6,7 @@ import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, Plus, X, ChevronDown, Check } from "lucide-react";
+import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, Plus, X, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
 import { useAppToast } from "@/components/common/AppToastProvider";
 import { type CodeBreakdownItem } from "@/lib/course-code-breakdown";
@@ -107,6 +107,8 @@ export default function CourseDetailHeader({
   const [aiJob, setAiJob] = useState<CourseIntelJob | null>(null);
   const [liveActivity, setLiveActivity] = useState<ActivityItem[]>([]);
   const [aiSourceMode, setAiSourceMode] = useState<AiSyncSourceMode>("auto");
+  const [isAiMenuOpen, setIsAiMenuOpen] = useState(false);
+  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const { showToast } = useAppToast();
   const previousJobRef = useRef<{id: number;status: string;} | null>(null);
   const searchQuery = `${course.university || ""} ${course.courseCode || ""} ${course.title || ""}`.trim();
@@ -427,12 +429,12 @@ export default function CourseDetailHeader({
             </Button>
           ) : (
             <>
-              <DropdownMenu>
+              <DropdownMenu open={isAiMenuOpen} onOpenChange={setIsAiMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" type="button">
                     {isAiUpdating ? <Loader2 className="animate-spin" /> : <Sparkles />}
                     <span className="uppercase">{aiSourceMode}</span>
-                    <ChevronDown />
+                    {isAiMenuOpen ? <ChevronUp /> : <ChevronDown />}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -469,10 +471,10 @@ export default function CourseDetailHeader({
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <DropdownMenu>
+              <DropdownMenu open={isActionsMenuOpen} onOpenChange={setIsActionsMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon-sm" type="button" title="More actions" aria-label="More actions">
-                    <ChevronDown />
+                    {isActionsMenuOpen ? <ChevronUp /> : <ChevronDown />}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

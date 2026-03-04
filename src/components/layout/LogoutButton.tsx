@@ -1,7 +1,5 @@
 "use client";
 
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
 import { cn } from "@/lib/utils";
 import { LogOut, Power } from "lucide-react";
@@ -15,13 +13,8 @@ interface LogoutButtonProps {
 }
 
 export default function LogoutButton({ showLabel, dict, fullWidth, className }: LogoutButtonProps) {
-  const supabase = createBrowserSupabaseClient();
-  const router = useRouter();
-
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.refresh();
-    router.push("/login");
+    window.location.assign("/auth/signout");
   };
 
   if (showLabel) {

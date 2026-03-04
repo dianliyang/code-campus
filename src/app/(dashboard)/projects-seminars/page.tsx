@@ -4,19 +4,12 @@ import ProjectsSeminarsToolbar from "@/components/projects-seminars/ProjectsSemi
 import Link from "next/link";
 import ProjectSeminarEnrollButton from "@/components/projects-seminars/ProjectSeminarEnrollButton";
 import ProjectsSeminarsDataTable from "@/components/projects-seminars/table/projects-seminars-data-table";
+import ProjectsSeminarsPagination from "@/components/projects-seminars/ProjectsSeminarsPagination";
 import { ProjectSeminarTableRow } from "@/components/projects-seminars/table/columns";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
-import { Card } from "@/components/ui/card";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -113,25 +106,6 @@ export default async function ProjectsSeminarsPage({
 
   const total = count || 0;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
-  const baseParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value == null) return;
-    if (Array.isArray(value)) {
-      if (value[0]) baseParams.set(key, value[0]);
-    } else if (value) {
-      baseParams.set(key, value);
-    }
-  });
-  const createPageHref = (nextPage: number) => {
-    const next = new URLSearchParams(baseParams);
-    next.set("page", String(nextPage));
-    return `/projects-seminars?${next.toString()}`;
-  };
-  const pageNumbers = Array.from(
-    new Set([1, page - 1, page, page + 1, totalPages]),
-  )
-    .filter((p) => p >= 1 && p <= totalPages)
-    .sort((a, b) => a - b);
   const itemIds = (items || []).map((item) => item.id);
   const enrollmentMap = new Map<number, string>();
   const departmentMap = new Map<number, string>();
@@ -225,19 +199,28 @@ export default async function ProjectsSeminarsPage({
   });
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <ProjectsSeminarsToolbar
-          categories={uniqueCategories}
-          semesters={uniqueSemesters}
-        />
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Seminar & Project
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Explore projects and seminars with focused filters and fast enrollment.
+        </p>
       </div>
+      <Separator className="my-3" />
+      <ProjectsSeminarsToolbar
+        categories={uniqueCategories}
+        semesters={uniqueSemesters}
+      />
+      <Separator className="my-3" />
 
-      {view === "list" ? (
-        <ProjectsSeminarsDataTable rows={tableRows} />
-      ) : (
-        <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2 xl:grid-cols-3">
-          {(items || []).map((item) => {
+      <div className="min-h-0 flex-1">
+        {view === "list" ? (
+          <ProjectsSeminarsDataTable rows={tableRows} />
+        ) : (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {(items || []).map((item) => {
             const semester = (item.latest_semester || {}) as {
               term?: string;
               year?: number;
@@ -246,7 +229,7 @@ export default async function ProjectsSeminarsPage({
               ? "Enrolled"
               : "Not Enrolled";
             return (
-              <Card key={item.id} className="p-4">
+              <div key={item.id} className="rounded-sm border p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h3 className="line-clamp-2 text-sm font-semibold text-slate-900">
@@ -268,19 +251,20 @@ export default async function ProjectsSeminarsPage({
                       iconOnly
                     />
                     {item.url ? (
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex h-8 w-8 items-center justify-center border border-[#d6d6d6] bg-white text-[#4f4f4f] transition-colors hover:bg-[#f4f4f4]"
-                        aria-label="Open seminar"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                      <Button variant="outline" size="icon-sm" asChild>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Open seminar"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </Button>
                     ) : (
-                      <span className="inline-flex h-8 w-8 items-center justify-center bg-[#ececec] text-[#9a9a9a]">
+                      <Button variant="outline" size="icon-sm" disabled>
                         <ExternalLink className="h-3 w-3" />
-                      </span>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -328,49 +312,25 @@ export default async function ProjectsSeminarsPage({
                     </p>
                   </div>
                 </div>
-              </Card>
+              </div>
             );
-          })}
-        </div>
-      )}
+            })}
+          </div>
+        )}
 
-      {(items || []).length === 0 ? (
-        <div className="py-16 text-center">
-          <h3 className="text-sm font-semibold text-slate-900">
-            No seminars found
-          </h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Try adjusting your search or category filter.
-          </p>
-        </div>
-      ) : null}
-
-      <div>
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href={createPageHref(Math.max(1, page - 1))}
-              />
-            </PaginationItem>
-            {pageNumbers.map((p, i) => (
-              <PaginationItem key={p}>
-                {i > 0 && p - pageNumbers[i - 1] > 1 ? (
-                  <PaginationEllipsis />
-                ) : null}
-                <PaginationLink href={createPageHref(p)} isActive={p === page}>
-                  {p}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            <PaginationItem>
-              <PaginationNext
-                href={createPageHref(Math.min(totalPages, page + 1))}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+        {(items || []).length === 0 ? (
+          <div className="py-16 text-center">
+            <h3 className="text-sm font-semibold text-slate-900">
+              No No seminars or projects found
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Try adjusting your search or category filter.
+            </p>
+          </div>
+        ) : null}
       </div>
+      <Separator className="my-3" />
+      <ProjectsSeminarsPagination page={page} perPage={perPage} totalPages={totalPages} />
     </div>
   );
 }

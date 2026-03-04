@@ -1123,7 +1123,7 @@ export default function CourseDetailContent({
                                         onPressedChange={() => toggleEditDay(idx, dayIdx)}
                                         variant="outline"
                                         size="sm"
-                                        className="text-[11px] font-semibold">
+                                        className="text-[11px] font-semibold data-[state=on]:border-black data-[state=on]:bg-black data-[state=on]:text-white">
                                         
                                         {day}
                                       </Toggle>);
@@ -1499,11 +1499,11 @@ export default function CourseDetailContent({
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-3">
                 <div>
                   {visibleCalendarMonth ?
-                <div className="rounded-sm bg-white p-4">
+                <div className="rounded-sm border bg-background p-3">
                       <div className="flex items-center justify-between mb-2">
                         <Button
                       variant="outline"
-                      size="icon"
+                      size="icon-sm"
                       type="button"
                       onClick={() => {
                         if (resolvedCalendarMonthIndex <= 0) return;
@@ -1525,7 +1525,7 @@ export default function CourseDetailContent({
                         </p>
                         <Button
                       variant="outline"
-                      size="icon"
+                      size="icon-sm"
                       type="button"
                       onClick={() => {
                         if (
@@ -1583,7 +1583,10 @@ export default function CourseDetailContent({
                               setVisibleCalendarMonthKey(targetMonthKey);
                             }
                           }}
-                          disabled={!canSelect}>
+                          disabled={!canSelect}
+                          className={`h-auto min-h-[76px] w-full flex-col items-start justify-start gap-1 p-1.5 text-left ${
+                            isSelected ? "border-black bg-muted" : ""
+                          }`}>
 
 
 
@@ -1599,7 +1602,7 @@ export default function CourseDetailContent({
                                   {cell.day}
                                 </span>
                                 {events.length > 0 &&
-                            <Badge className="bg-[#eaf1ff] px-1 py-0.5 text-[#486ca8]">
+                            <Badge variant="outline" className="px-1 py-0.5 text-[10px]">
                                     {events.length}
                                   </Badge>
                             }
@@ -1608,14 +1611,14 @@ export default function CourseDetailContent({
                                 {events.slice(0, 2).map((event, idx) =>
                             <p
                               key={`${cell.dateIso}-${event.label}-${idx}`}
-                              className="leading-tight bg-[#f3f6fb] px-1 py-0.5 text-[#465979] truncate"
+                              className="leading-tight rounded-sm bg-muted px-1 py-0.5 text-[10px] text-foreground truncate"
                               title={`${event.meta} ${event.label}`}>
                               
                                     {event.label}
                                   </p>
                             )}
                                 {events.length > 2 &&
-                            <p className="text-[#7a7a7a]">
+                            <p className="text-[10px] text-muted-foreground">
                                     +{events.length - 2} more
                                   </p>
                             }
@@ -1627,7 +1630,7 @@ export default function CourseDetailContent({
                     </div> :
                 null}
                 </div>
-                <div className="rounded-sm bg-white p-4">
+                <div className="rounded-sm border bg-background p-3">
                   <h3 className="text-sm font-semibold text-[#2a2a2a]">
                     Day Details
                   </h3>
@@ -1715,8 +1718,8 @@ export default function CourseDetailContent({
                             {url}
                           </a>
                           <Button
-                        variant="outline"
-                        size="icon"
+                        variant="ghost"
+                        size="icon-sm"
                         type="button"
                         onClick={() => handleRemoveUrl(i)}
                         disabled={removingUrlIndex === i || isAddingUrl}

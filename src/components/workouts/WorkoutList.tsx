@@ -9,11 +9,11 @@ import { ChevronDown, ExternalLink } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 interface WorkoutListProps {
   initialWorkouts: Workout[];
   dict: Dictionary["dashboard"]["workouts"];
-  lastUpdated: string | null;
   categoryGroups: Array<{
     category: string;
     count: number;
@@ -55,7 +55,6 @@ function getStatusLabel(
 export default function WorkoutList({
   initialWorkouts,
   dict,
-  lastUpdated,
   categoryGroups,
   selectedCategory,
 }: WorkoutListProps) {
@@ -114,7 +113,6 @@ export default function WorkoutList({
         viewMode={effectiveViewMode}
         setViewMode={handleViewModeChange}
         dict={dict}
-        lastUpdated={lastUpdated}
       />
 
       <div className={`mt-3 min-h-0 flex-1 ${effectiveViewMode === "grid" ? "overflow-y-auto" : "overflow-hidden"}`}>
@@ -126,11 +124,11 @@ export default function WorkoutList({
                     <span className="text-sm font-medium">
                       {dict?.sidebar_categories || "Category"}
                     </span>
-                    <Badge>{categoryGroups.length}</Badge>
+                    <Badge variant="secondary">{categoryGroups.length}</Badge>
                   </div>
 
-                  <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
-                    {categoryGroups.map((group) => {
+                  <div className="min-h-0 flex-1 overflow-y-auto p-2">
+                    {categoryGroups.map((group, index) => {
                       const active = selectedCategory === group.category;
                       const priceRange =
                         group.minStudentPrice == null
@@ -140,23 +138,29 @@ export default function WorkoutList({
                             : `from €${formatPrice(group.minStudentPrice)}`;
 
                       return (
-                        <Button
-                          key={group.category}
-                          variant="outline"
-                          type="button"
-                          onClick={() => setCategoryOnServer(group.category)}
-                          className={`h-auto w-full items-start justify-between px-3 py-2 text-left ${active ? "bg-muted" : ""}`}
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">
-                              {group.category}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {priceRange}
-                            </p>
-                          </div>
-                          <Badge>{group.count}</Badge>
-                        </Button>
+                        <div key={group.category}>
+                          <Button
+                            variant="ghost"
+                            type="button"
+                            onClick={() => setCategoryOnServer(group.category)}
+                            className={`h-auto w-full items-start justify-between px-2 py-2 text-left ${active ? "bg-muted" : ""}`}
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium">
+                                {group.category}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {priceRange}
+                              </p>
+                            </div>
+                            <Badge variant={active ? "outline" : "secondary"}>
+                              {group.count}
+                            </Badge>
+                          </Button>
+                          {index < categoryGroups.length - 1 ? (
+                            <Separator className="my-1" />
+                          ) : null}
+                        </div>
                       );
                     })}
                   </div>
@@ -205,7 +209,11 @@ export default function WorkoutList({
                           return (
                             <div
                               key={w.id}
-                              className="grid gap-3 px-4 py-3 lg:grid-cols-[minmax(0,1fr)_220px_150px_auto] lg:items-center"
+                              className={`grid gap-3 px-4 py-3 lg:items-center ${
+                                selectedCategory === "Semester Fee"
+                                  ? "lg:grid-cols-[minmax(0,1fr)_220px_150px_auto]"
+                                  : "lg:grid-cols-[minmax(0,1fr)_220px_150px]"
+                              }`}
                             >
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-medium text-foreground">
@@ -232,36 +240,38 @@ export default function WorkoutList({
                                 </p>
                               </div>
 
-                              <div className="text-sm">
+                              <div className="text-sm lg:text-right">
                                 <p>Student: €{formatPrice(w.priceStudent)}</p>
                                 <p className="text-muted-foreground">
                                   Staff: €{formatPrice(w.priceStaff)}
                                 </p>
                               </div>
 
-                              <div className="flex justify-end">
-                                {bookingHref ? (
-                                  <Button variant="outline" size="icon" asChild>
-                                    <a
-                                      href={bookingHref}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      aria-label="Open booking"
+                              {selectedCategory === "Semester Fee" ? (
+                                <div className="flex justify-end">
+                                  {bookingHref ? (
+                                    <Button variant="outline" size="icon" asChild>
+                                      <a
+                                        href={bookingHref}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="Open booking"
+                                      >
+                                        <ExternalLink />
+                                      </a>
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      disabled
+                                      aria-label="Booking unavailable"
                                     >
                                       <ExternalLink />
-                                    </a>
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    disabled
-                                    aria-label="Booking unavailable"
-                                  >
-                                    <ExternalLink />
-                                  </Button>
-                                )}
-                              </div>
+                                    </Button>
+                                  )}
+                                </div>
+                              ) : null}
                             </div>
                           );
                         })}

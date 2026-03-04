@@ -25,6 +25,7 @@ import UniversityIcon from "@/components/common/UniversityIcon";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { Separator } from "@/components/ui/separator";
 import {
   Pagination,
   PaginationContent,
@@ -158,6 +159,7 @@ export default function CourseList({
       const enrolledOnly = searchParams.get("enrolled") === "true";
       const universities = searchParams.get("universities") || "";
       const levels = searchParams.get("levels") || "";
+      const semesters = searchParams.get("semesters") || "";
 
       const params = new URLSearchParams({
         page: String(page + 1),
@@ -167,6 +169,7 @@ export default function CourseList({
         enrolled: String(enrolledOnly),
         universities,
         levels,
+        semesters,
       });
 
       const response = await fetch(`/api/courses?${params.toString()}`);
@@ -190,13 +193,14 @@ export default function CourseList({
     }
   }, [page, totalPages, isLoading, searchParams, perPage]);
 
+  const effectiveViewMode: "list" | "grid" = isMobileViewport ? "grid" : viewMode;
+
   useEffect(() => {
-    if (page >= totalPages) return;
+    if (effectiveViewMode !== "grid" || page >= totalPages) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const isMobile = window.innerWidth < 768;
-        if (entries[0].isIntersecting && isMobile && !isLoading) {
+        if (entries[0].isIntersecting && !isLoading) {
           loadMore();
         }
       },
@@ -208,9 +212,7 @@ export default function CourseList({
     }
 
     return () => observer.disconnect();
-  }, [loadMore, isLoading, page, totalPages]);
-
-  const effectiveViewMode: "list" | "grid" = isMobileViewport ? "grid" : viewMode;
+  }, [effectiveViewMode, loadMore, isLoading, page, totalPages]);
   const refParams = searchParams.toString();
   const createPageHref = (nextPage: number) => {
     const next = new URLSearchParams(searchParams.toString());
@@ -276,6 +278,7 @@ export default function CourseList({
         title="Courses"
         description="Explore the catalog and enroll in courses."
       />
+      <Separator />
 
       {effectiveViewMode === "list" ? (
         <div className="min-h-0 flex-1 overflow-y-auto">
@@ -429,7 +432,8 @@ export default function CourseList({
         </div>
       )}
 
-      <div ref={observerTarget} className="md:hidden py-4 flex justify-center">
+      {effectiveViewMode === "grid" ? (
+      <div ref={observerTarget} className="py-4 flex justify-center">
         {isLoading && (
           <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
         )}
@@ -437,11 +441,15 @@ export default function CourseList({
           <span className="text-xs text-slate-400">End of catalog</span>
         )}
       </div>
+      ) : null}
 
+      {effectiveViewMode === "list" ? (
       <div className="hidden md:flex items-center justify-between rounded-md border px-2 py-2">
-        <p className="text-xs text-muted-foreground">
-          Page {currentPage} of {Math.max(totalPages, 1)}
-        </p>
+        {totalPages > 1 ? (
+          <p className="text-xs text-muted-foreground">
+            Page {currentPage} of {Math.max(totalPages, 1)}
+          </p>
+        ) : <div />}
         <div className="flex items-center gap-2">
           <Select
             value={String(perPage)}
@@ -494,6 +502,7 @@ export default function CourseList({
           </ButtonGroup>
         </div>
       </div>
+      ) : null}
     </main>
   );
 }

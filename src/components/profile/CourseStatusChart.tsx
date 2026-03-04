@@ -81,17 +81,17 @@ export default function CourseStatusChart({
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-sm border p-2">
+        <div className="h-16 rounded-sm border p-2 flex flex-col">
           <p className="text-[10px] text-muted-foreground uppercase">Updated 30d</p>
-          <p className="text-sm font-semibold">{recentUpdates30}</p>
+          <p className="mt-auto text-sm font-semibold">{recentUpdates30}</p>
         </div>
-        <div className="rounded-sm border p-2">
+        <div className="h-16 rounded-sm border p-2 flex flex-col">
           <p className="text-[10px] text-muted-foreground uppercase">In Progress</p>
-          <p className="text-sm font-semibold">{inProgressCount}</p>
+          <p className="mt-auto text-sm font-semibold">{inProgressCount}</p>
         </div>
-        <div className="rounded-sm border p-2">
+        <div className="h-16 rounded-sm border p-2 flex flex-col">
           <p className="text-[10px] text-muted-foreground uppercase">Avg Progress</p>
-          <p className="text-sm font-semibold">{avgProgress}%</p>
+          <p className="mt-auto text-sm font-semibold">{avgProgress}%</p>
         </div>
       </div>
 

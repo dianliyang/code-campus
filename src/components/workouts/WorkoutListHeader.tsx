@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   List,
   RefreshCw,
+  Search,
   SlidersHorizontal,
   X,
 } from "lucide-react";
@@ -22,20 +23,22 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 interface WorkoutListHeaderProps {
   viewMode: "list" | "grid";
   setViewMode: (mode: "list" | "grid") => void;
   dict: Dictionary["dashboard"]["workouts"];
-  lastUpdated: string | null;
 }
 
 export default function WorkoutListHeader({
   viewMode,
   setViewMode,
   dict,
-  lastUpdated,
 }: WorkoutListHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -45,15 +48,6 @@ export default function WorkoutListHeader({
   const { showToast } = useAppToast();
   const lastPushedQuery = useRef(searchParams.get("q") || "");
   const isComposing = useRef(false);
-
-  const formattedUpdate = lastUpdated
-    ? new Date(lastUpdated).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : null;
 
   const handleSortChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -190,44 +184,38 @@ export default function WorkoutListHeader({
               </SelectContent>
             </Select>
 
-            <div className="relative w-full md:min-w-[260px]">
-              <Input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onCompositionStart={() => {
-                  isComposing.current = true;
-                }}
-                onCompositionEnd={(e) => {
-                  isComposing.current = false;
-                  setQuery(e.currentTarget.value);
-                }}
-                placeholder="Search..."
-              />
-
-              {query ? (
-                <Button
-                  variant="outline"
-                  onClick={() => setQuery("")}
-                  aria-label="Clear search"
-                  size="icon"
-                  className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
-                >
-                  <X />
-                </Button>
-              ) : null}
+            <div className="w-full md:min-w-[280px]">
+              <InputGroup>
+                <InputGroupInput
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onCompositionStart={() => {
+                    isComposing.current = true;
+                  }}
+                  onCompositionEnd={(e) => {
+                    isComposing.current = false;
+                    setQuery(e.currentTarget.value);
+                  }}
+                  placeholder="Search workouts..."
+                />
+                <InputGroupAddon>
+                  <Search />
+                </InputGroupAddon>
+                <InputGroupAddon align="inline-end">
+                  {query ? (
+                    <button
+                      type="button"
+                      onClick={() => setQuery("")}
+                      aria-label="Clear search"
+                    >
+                      <X />
+                    </button>
+                  ) : null}
+                </InputGroupAddon>
+              </InputGroup>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-0">
-          {formattedUpdate && (
-            <span className="text-xs text-muted-foreground">
-              Updated {formattedUpdate}
-            </span>
-          )}
         </div>
       </div>
     </div>

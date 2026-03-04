@@ -42,12 +42,12 @@ export default function RoadmapAchievementsSection({
   }, [completed, selectedSemester]);
 
   return (
-    <div className="rounded-sm border p-4">
-      <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div>
+      <div className="mb-3 flex items-center gap-2">
         <h3 className="text-base font-semibold text-[#1f1f1f]">{title}</h3>
 
         {availableSemesters.length > 0 &&
-        <div className="relative min-w-[180px]">
+        <div className="relative ml-auto min-w-[180px]">
             <Select value={selectedSemester} onValueChange={setSelectedSemester}>
               <SelectTrigger>
                 <SelectValue />

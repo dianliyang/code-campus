@@ -12,19 +12,27 @@ type LearningProfileChartProps = {
 };
 
 const COLOR_PALETTE = [
-  "from-fuchsia-500 to-pink-500",
-  "from-cyan-500 to-blue-500",
-  "from-emerald-500 to-teal-500",
-  "from-amber-500 to-orange-500",
-  "from-violet-500 to-indigo-500",
-  "from-rose-500 to-red-500",
-  "from-lime-500 to-green-500",
-  "from-sky-500 to-cyan-500"
+  "#111111",
+  "#0ea5e9",
+  "#22c55e",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+  "#84cc16"
 ];
 
 function toShortLabel(label: string): string {
   if (label.length <= 16) return label;
   return `${label.slice(0, 13)}...`;
+}
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
 }
 
 export default function LearningProfileChart({
@@ -45,15 +53,10 @@ export default function LearningProfileChart({
 
   const maxCount = Math.max(...items.map((item) => item.count));
   const minCount = Math.min(...items.map((item) => item.count));
-  const sizeFor = (count: number) => {
-    if (maxCount === minCount) return 18;
+  const bubbleSizeFor = (count: number) => {
+    if (maxCount === minCount) return 64;
     const ratio = (count - minCount) / (maxCount - minCount);
-    return Math.round(13 + ratio * 20);
-  };
-  const weightFor = (count: number) => {
-    if (maxCount === minCount) return 600;
-    const ratio = (count - minCount) / (maxCount - minCount);
-    return Math.round(450 + ratio * 300);
+    return Math.round(34 + ratio * 76);
   };
   const dominant = items[0];
 
@@ -71,23 +74,29 @@ export default function LearningProfileChart({
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <div className="min-h-[210px] rounded-sm border bg-[#fcfcfc] p-3">
-          <div className="flex min-h-[180px] flex-wrap content-start items-start gap-x-3 gap-y-2">
+        <div className="relative min-h-[210px] rounded-sm border bg-[#fcfcfc] p-3">
+          <div className="relative h-[180px] w-full overflow-hidden rounded-sm">
             {items.map((item, idx) => {
+              const seed = hashString(item.name);
+              const x = 10 + (seed % 81);
+              const y = 8 + ((seed >> 7) % 77);
+              const size = bubbleSizeFor(item.count);
               const pct = Math.round((item.count / total) * 100);
               return (
-                <span
-                  key={`word-${item.name}`}
-                  className={`inline-flex select-none rounded-sm bg-gradient-to-r bg-clip-text text-transparent ${COLOR_PALETTE[idx % COLOR_PALETTE.length]}`}
+                <div
+                  key={`bubble-${item.name}`}
+                  className="absolute rounded-full"
                   style={{
-                    fontSize: `${sizeFor(item.count)}px`,
-                    fontWeight: weightFor(item.count),
-                    lineHeight: 1.1
+                    left: `${x}%`,
+                    top: `${y}%`,
+                    width: `${size}px`,
+                    height: `${size}px`,
+                    backgroundColor: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+                    opacity: 0.22 + (pct / 100) * 0.45,
+                    transform: "translate(-50%, -50%)",
                   }}
                   title={`${item.name}: ${item.count} ${unitLabel} (${pct}%)`}
-                >
-                  {item.name}
-                </span>
+                />
               );
             })}
           </div>
@@ -101,7 +110,8 @@ export default function LearningProfileChart({
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <span className="inline-flex min-w-0 items-center gap-2">
                     <span
-                      className={`h-2.5 w-2.5 shrink-0 rounded-full bg-gradient-to-br ${COLOR_PALETTE[idx % COLOR_PALETTE.length]}`}
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: COLOR_PALETTE[idx % COLOR_PALETTE.length] }}
                     />
                     <span className="truncate text-[#444]">{toShortLabel(item.name)}</span>
                   </span>
@@ -111,8 +121,11 @@ export default function LearningProfileChart({
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className={`h-full rounded-full bg-gradient-to-r ${COLOR_PALETTE[idx % COLOR_PALETTE.length]}`}
-                    style={{ width: `${Math.max(3, pct)}%` }}
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.max(3, pct)}%`,
+                      backgroundColor: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+                    }}
                   />
                 </div>
               </div>

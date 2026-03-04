@@ -5,26 +5,53 @@ import { createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { getWorkoutLastUpdateTime } from "@/actions/scrapers";
-import { aggregateWorkoutsByName } from "@/lib/workouts";import { Card } from "@/components/ui/card";
+import { aggregateWorkoutsByName } from "@/lib/workouts";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 interface PageProps {
   searchParams: Promise<{[key: string]: string | string[] | undefined;}>;
 }
 
 export default async function WorkoutsPage({ searchParams }: PageProps) {
-  const [lang, params] = await Promise.all([
+  const [lang, params, lastUpdated] = await Promise.all([
   getLanguage(),
-  searchParams]
+  searchParams,
+  getWorkoutLastUpdateTime()]
   );
   const dict = await getDictionary(lang);
+  const formattedUpdate = lastUpdated
+    ? new Date(lastUpdated).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
 
   return (
-    <div className="h-full flex flex-col gap-5">
+    <div className="h-full flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Workouts
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Browse classes by category, compare options, and book quickly.
+          </p>
+        </div>
+        {formattedUpdate ? (
+          <Badge variant="secondary" className="mt-1">
+            Updated {formattedUpdate}
+          </Badge>
+        ) : null}
+      </div>
+      <Separator />
       <Suspense fallback={null}>
         <SidebarData dict={dict.dashboard.workouts} />
       </Suspense>
       <div className="flex-1 min-h-0">
-        <Suspense fallback={<WorkoutListSkeleton />}>
+        <Suspense fallback={null}>
           <WorkoutListData params={params} dict={dict.dashboard.workouts} />
         </Suspense>
       </div>
@@ -86,16 +113,19 @@ async function WorkoutListData({ params, dict
   const status = (params.status as string || "").split(",").filter(Boolean);
   const selectedCategory = params.category as string || "";
 
-  const [dbWorkouts, lastUpdated] = await Promise.all([
-  fetchWorkouts(query, sort, categories, days, status, selectedCategory),
-  getWorkoutLastUpdateTime()]
+  const dbWorkouts = await fetchWorkouts(
+    query,
+    sort,
+    categories,
+    days,
+    status,
+    selectedCategory,
   );
 
   return (
     <WorkoutList
       initialWorkouts={dbWorkouts.items}
       dict={dict}
-      lastUpdated={lastUpdated}
       categoryGroups={dbWorkouts.categoryGroups}
       selectedCategory={dbWorkouts.selectedCategory} />);
 
@@ -196,34 +226,4 @@ selectedCategory: string)
   const items = activeCategory ? grouped.get(activeCategory) || [] : [];
 
   return { items, total: items.length, categoryGroups, selectedCategory: activeCategory };
-}
-
-function WorkoutListSkeleton() {
-  return (
-    <div className="space-y-4 animate-pulse">
-      <Card>
-        <div className="h-4 w-24 bg-[#f0f0f0]" />
-        <div className="flex gap-2">
-          <div className="h-7 w-16 bg-[#f0f0f0]" />
-          <div className="h-7 w-16 bg-[#f0f0f0]" />
-        </div>
-      </Card>
-      <Card>
-        {[0, 1, 2, 3, 4].map((i) =>
-        <div key={i} className={`flex items-center gap-4 px-4 py-3 ${i % 2 === 0 ? "bg-[#fcfcfc]" : "bg-[#f7f7f7]"} ${i > 0 ? "border-t border-[#f0f0f0]" : ""}`}>
-            <div className="flex-1 space-y-1.5">
-              <div className="h-4 w-1/2 bg-[#ebebeb]" />
-              <div className="h-3 w-1/4 bg-[#f2f2f2]" />
-            </div>
-            <div className="hidden md:block w-[15%]">
-              <div className="h-5 w-16 bg-[#f0f0f0]" />
-            </div>
-            <div className="w-[5%] flex justify-end">
-              <div className="h-8 w-8 bg-[#f0f0f0]" />
-            </div>
-          </div>
-        )}
-      </Card>
-    </div>);
-
 }

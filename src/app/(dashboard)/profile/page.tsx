@@ -115,7 +115,7 @@ export default async function ProfilePage() {
   const recentStatuses = Object.entries(statusCounts).
   sort((a, b) => b[1] - a[1]).
   slice(0, 4);
-  const nowMs = Date.now();
+  const nowMs = lastActiveDate?.getTime() || 0;
   const dayMs = 24 * 60 * 60 * 1000;
   const recentUpdates30 = (enrolledData || []).filter((row) => {
     if (!row.updated_at) return false;
@@ -147,7 +147,7 @@ export default async function ProfilePage() {
 
   return (
     <main className="w-full space-y-4">
-      <div className="rounded-sm border p-4">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-14 w-14 bg-[#1f1f1f] text-white flex items-center justify-center text-2xl font-semibold">
@@ -175,31 +175,29 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      <div className="rounded-sm border p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <h2 className="text-base font-semibold text-[#1f1f1f]">Learning Profile</h2>
-            <p className="text-xs text-[#7a7a7a] mt-1 mb-3">{dict.dashboard.profile.neural_map}</p>
-            <LearningProfileChart
-              data={allFieldStats}
-              unitLabel={dict.dashboard.profile.units}
-              emptyText={dict.dashboard.profile.no_data}
-            />
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <h2 className="text-base font-semibold text-[#1f1f1f]">Learning Profile</h2>
+          <p className="text-xs text-[#7a7a7a] mt-1 mb-3">{dict.dashboard.profile.neural_map}</p>
+          <LearningProfileChart
+            data={allFieldStats}
+            unitLabel={dict.dashboard.profile.units}
+            emptyText={dict.dashboard.profile.no_data}
+          />
+        </div>
 
-          <div>
-            <h3 className="text-base font-semibold text-[#1f1f1f]">Course Status</h3>
-            <p className="text-xs text-[#7a7a7a] mt-1 mb-3">Enrollment distribution</p>
-            <CourseStatusChart
-              data={recentStatuses}
-              emptyText={dict.dashboard.profile.no_data}
-              recentUpdates30={recentUpdates30}
-              inProgressCount={inProgressCount}
-              stalledCount={stalledCount}
-              avgProgress={avgProgress}
-              weeklyActivity={weeklyActivity}
-            />
-          </div>
+        <div>
+          <h3 className="text-base font-semibold text-[#1f1f1f]">Course Status</h3>
+          <p className="text-xs text-[#7a7a7a] mt-1 mb-3">Enrollment distribution</p>
+          <CourseStatusChart
+            data={recentStatuses}
+            emptyText={dict.dashboard.profile.no_data}
+            recentUpdates30={recentUpdates30}
+            inProgressCount={inProgressCount}
+            stalledCount={stalledCount}
+            avgProgress={avgProgress}
+            weeklyActivity={weeklyActivity}
+          />
         </div>
       </div>
 

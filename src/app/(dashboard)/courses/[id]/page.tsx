@@ -6,7 +6,6 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { Course } from "@/types";
 import CourseDetailContent from "@/components/courses/CourseDetailContent";
-import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +39,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   return (
     <div className="h-full min-h-0">
-      <Suspense fallback={<CourseDetailSkeleton />}>
+      <Suspense fallback={null}>
         <CourseDetailData id={id} dict={dict.dashboard} />
       </Suspense>
     </div>
@@ -209,25 +208,4 @@ async function CourseDetailData({ id, dict }: {id: string;dict: Dictionary['dash
       }))} />);
 
 
-}
-
-function CourseDetailSkeleton() {
-  return (
-    <div className="animate-pulse space-y-4">
-      <Card className="p-4">
-        <div className="w-14 h-14 bg-gray-100"></div>
-        <div className="space-y-2 flex-grow">
-          <div className="h-4 bg-gray-100 w-1/4"></div>
-          <div className="h-8 bg-gray-100 w-2/3"></div>
-        </div>
-      </Card>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-8 space-y-4">
-          <Card className="h-64"></Card>
-          <Card className="h-64"></Card>
-        </div>
-        <Card className="h-80"></Card>
-      </div>
-    </div>
-  );
 }

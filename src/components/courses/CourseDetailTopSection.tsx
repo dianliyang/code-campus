@@ -500,7 +500,7 @@ export default function CourseDetailTopSection({
                   {selectedTopics.length > 0 &&
                 <div className="flex flex-wrap gap-2">
                       {selectedTopics.map((topic) =>
-                  <Badge key={topic} variant="secondary" className="inline-flex items-center gap-1.5">
+                  <Badge key={topic} variant="outline" className="inline-flex items-center gap-1.5">
                           {topic}
                           <button type="button" onClick={() => removeTopic(topic)} title={`Remove ${topic}`} aria-label={`Remove ${topic}`} className="inline-flex items-center text-current/70 hover:text-current">
                             <X className="h-3 w-3" />

@@ -59,7 +59,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
 
         <TableRow>
             <TableCell colSpan={columns.length}>
-              No results.
+              {" "}
             </TableCell>
           </TableRow>
         }

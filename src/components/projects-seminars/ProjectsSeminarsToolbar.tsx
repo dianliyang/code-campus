@@ -6,7 +6,12 @@ import { LayoutGrid, List, Search, SlidersHorizontal } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 interface ProjectsSeminarsToolbarProps {
   categories: string[];
@@ -102,16 +107,7 @@ export default function ProjectsSeminarsToolbar({
         </TabsList>
       </Tabs>
 
-      <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9a9a9a]" />
-          <Input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search seminars..." />
-          
-        </div>
+      <div className="flex w-full flex-wrap md:w-auto md:flex-nowrap items-center gap-2">
         <div className="relative" ref={filtersRef}>
           <Button variant="outline"
           type="button"
@@ -122,7 +118,7 @@ export default function ProjectsSeminarsToolbar({
             Filters
           </Button>
           {filtersOpen ?
-          <Card>
+          <div className="absolute right-0 z-40 mt-2 w-[320px] rounded-sm border bg-background p-3 shadow-xs">
               <div className="space-y-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7a7a7a]">
                   Category
@@ -133,15 +129,14 @@ export default function ProjectsSeminarsToolbar({
                   key={name}
                   className="flex items-center gap-2 text-[13px] text-[#444]">
                   
-                      <Input
-                    type="checkbox"
+                      <Checkbox
                     checked={selectedCategories.includes(name)}
-                    onChange={() =>
+                    onCheckedChange={() =>
                     pushWith({
                       category: toggleItem(selectedCategories, name)
                     })
                     }
-                    className="h-3.5 w-3.5 border-[#cfcfcf] accent-[#2f2f2f]" />
+                     />
                   
                       <span>{name}</span>
                     </label>
@@ -158,22 +153,21 @@ export default function ProjectsSeminarsToolbar({
                   key={name}
                   className="flex items-center gap-2 text-[13px] text-[#444]">
                   
-                      <Input
-                    type="checkbox"
+                      <Checkbox
                     checked={selectedSemesters.includes(name)}
-                    onChange={() =>
+                    onCheckedChange={() =>
                     pushWith({
                       semester: toggleItem(selectedSemesters, name)
                     })
                     }
-                    className="h-3.5 w-3.5 border-[#cfcfcf] accent-[#2f2f2f]" />
+                     />
                   
                       <span>{name}</span>
                     </label>
                 )}
                 </div>
               </div>
-            </Card> :
+            </div> :
           null}
         </div>
         <Select value={sort} onValueChange={(next) => pushWith({ sort: next })}>
@@ -190,6 +184,19 @@ export default function ProjectsSeminarsToolbar({
             </SelectGroup>
           </SelectContent>
         </Select>
+        <div className="w-full md:w-[280px]">
+          <InputGroup>
+            <InputGroupInput
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search seminars..."
+            />
+            <InputGroupAddon align="inline-end">
+              <Search />
+            </InputGroupAddon>
+          </InputGroup>
+        </div>
       </div>
     </div>);
 

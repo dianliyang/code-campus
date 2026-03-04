@@ -6,6 +6,13 @@ import { Dictionary } from "@/lib/dictionary";
 import { ChevronLeft, ChevronRight, Clock3, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  Item,
+  ItemContent,
+  ItemGroup,
+  ItemSeparator,
+  ItemTitle,
+} from "@/components/ui/item";
+import {
   Popover,
   PopoverContent,
   PopoverDescription,
@@ -220,53 +227,59 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
       <div className="h-full lg:grid lg:grid-cols-[280px_1fr] xl:grid-cols-[300px_1fr] gap-0">
         <div className="flex h-full flex-col border-r border-[#f5f5f5] pr-2">
           <section className="min-h-0 rounded-lg p-2">
-            <h3 className="text-base font-semibold text-[#1f2937]">Today</h3>
-            <div className="mt-2 max-h-56 overflow-auto space-y-2 pr-1" data-testid="today-events-list">
+            <div className="flex h-12 items-center">
+              <h3 className="text-base font-semibold text-[#1f2937]">Today</h3>
+            </div>
+            <div className="max-h-56 overflow-auto pr-1" data-testid="today-events-list">
               {todayEvents.length > 0 ?
-              todayEvents.map((event) =>
-              <Popover
-                key={event.key}
-                open={selectedEventKey === event.key}
-                onOpenChange={(open) => {
-                  if (!open && selectedEventKey === event.key) setSelectedEventKey(null);
-                }}
-              >
-                  <PopoverTrigger asChild>
-                    <Button variant="outline"
-                    className={`h-auto w-full justify-start rounded-md px-2 py-1.5 text-left ${
-                    selectedEventKey === event.key ?
-                    "bg-[#111111] text-white hover:bg-[#111111] hover:text-white" :
-                    "bg-[#f8fafc] text-[#0f172a] hover:bg-[#eef2f7]"}`
-                    }
-                    type="button"
-                    onClick={() => {
-                      setWeekStart(startOfWeek(new Date(event.date)));
-                      setSelectedEventKey((prev) => prev === event.key ? null : event.key);
+              <ItemGroup>
+                  {todayEvents.map((event, idx) =>
+                <div key={event.key}>
+                      <Popover
+                    open={selectedEventKey === event.key}
+                    onOpenChange={(open) => {
+                      if (!open && selectedEventKey === event.key) setSelectedEventKey(null);
                     }}>
-                      <div className="w-full">
-                        <p className={`text-[10px] font-medium ${selectedEventKey === event.key ? "text-[#d1d5db]" : "text-[#64748b]"}`}>
-                          {event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}
-                        </p>
-                        <p className={`mt-0.5 truncate text-[12px] font-semibold ${selectedEventKey === event.key ? "text-white" : ""}`}>{event.title}</p>
-                        <p className={`mt-0.5 truncate text-[10px] ${selectedEventKey === event.key ? "text-[#e5e7eb]" : "text-[#475569]"}`}>
-                          {event.courseCode} · {event.kind}
-                        </p>
-                      </div>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-80">
-                    <PopoverHeader>
-                      <PopoverTitle>{event.title}</PopoverTitle>
-                      <PopoverDescription>{event.courseCode} · {event.kind}</PopoverDescription>
-                    </PopoverHeader>
-                    <div className="space-y-2 text-sm text-[#334155]">
-                      <p className="flex items-center gap-2"><Clock3 className="h-4 w-4" /> {event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}</p>
-                      <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location || "No location"}</p>
-                      <p className="text-xs text-[#64748b]">{event.university}</p>
+                        <PopoverTrigger asChild>
+                          <Item
+                        asChild
+                        size="sm"
+                        className="cursor-pointer px-0 py-2"
+                        onClick={() => {
+                          setWeekStart(startOfWeek(new Date(event.date)));
+                          setSelectedEventKey((prev) => prev === event.key ? null : event.key);
+                        }}>
+                            <button type="button" className="w-full text-left">
+                              <ItemContent className="gap-0.5">
+                                <p className="text-[10px] text-[#64748b]">
+                                  {event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}
+                                </p>
+                                <ItemTitle className="truncate text-[12px] font-semibold">
+                                  {event.title}
+                                </ItemTitle>
+                                <p className="truncate text-[10px] text-[#475569]">
+                                  {event.courseCode} · {event.kind}
+                                </p>
+                              </ItemContent>
+                            </button>
+                          </Item>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="w-80">
+                          <PopoverHeader>
+                            <PopoverTitle>{event.title}</PopoverTitle>
+                            <PopoverDescription>{event.courseCode} · {event.kind}</PopoverDescription>
+                          </PopoverHeader>
+                          <div className="space-y-2 text-sm text-[#334155]">
+                            <p className="flex items-center gap-2"><Clock3 className="h-4 w-4" /> {event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}</p>
+                            <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {event.location || "No location"}</p>
+                            <p className="text-xs text-[#64748b]">{event.university}</p>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                      {idx < todayEvents.length - 1 ? <ItemSeparator /> : null}
                     </div>
-                  </PopoverContent>
-                </Popover>
-              ) :
+                )}
+                </ItemGroup> :
 
               <p className="py-4 text-center text-xs text-[#64748b]">{dict.calendar_no_events}</p>
               }
@@ -332,8 +345,8 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                       isToday ?
                       " border border-[#111111] text-[#111111]" :
                       hasEvent ?
-                      " bg-[#f1f5f9] text-[#334155]" :
-                      " bg-[#f8fafc] text-[#334155]"}`
+                      " text-[#334155] font-semibold" :
+                      " text-[#334155]"}`
                       }>
                       
                       {day}
@@ -345,16 +358,15 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
           </div>
         </div>
 
-        <section className="mt-4 lg:mt-0 bg-transparent overflow-hidden h-full min-h-0 relative">
-          <div className="mb-2 flex items-center justify-between rounded-lg p-2">
+        <section className="mt-4 lg:mt-0 bg-transparent overflow-hidden h-full min-h-0 relative flex flex-col">
+          <div className="mb-2 flex h-12 items-center justify-between rounded-lg px-2">
             <div>
               <h2 className="text-base font-semibold text-[#0f172a]">{`Week ${weekNumber}`}</h2>
               <p className="text-xs text-[#64748b]">{weekLabel}</p>
             </div>
             <div className="flex items-center gap-1">
               <Button variant="outline"
-              size="icon"
-              className="h-7 w-7"
+              size="sm"
               type="button"
               onClick={() => setWeekStart(addDays(weekStart, -7))}
 
@@ -378,8 +390,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                 Today
               </Button>
               <Button variant="outline"
-              size="icon"
-              className="h-7 w-7"
+              size="sm"
               type="button"
               onClick={() => setWeekStart(addDays(weekStart, 7))}
 
@@ -390,7 +401,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
             </div>
           </div>
 
-          <div className="h-[calc(100%-61px)] overflow-y-auto overflow-x-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
             <div className="grid grid-cols-[56px_repeat(7,minmax(0,1fr))] w-full">
               <div className="border-r border-[#f5f5f5] bg-[#fafafa]">
                 <div className="h-10 sticky top-0 z-30 bg-[#f5f5f5]" />
@@ -429,7 +440,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                       <span
                         className={`text-xs font-semibold ${
                         isSelectedColumn || isTodayColumn ?
-                        "text-white bg-[#111111] h-5 min-w-5 px-1 inline-flex items-center justify-center" :
+                        "text-white bg-[#111111] h-6 w-6 rounded-full inline-flex items-center justify-center" :
                         "text-[#0f172a]"}`
                         }>
                         

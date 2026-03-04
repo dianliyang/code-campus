@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckSquare, Loader2, Sparkles } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";import { Card } from "@/components/ui/card";
 
 type PlannerResult = {
   track: string;
@@ -10,19 +13,19 @@ type PlannerResult = {
   roadmap: Array<{
     phase: string;
     goal: string;
-    courses: Array<{ id: number; title: string; course_code: string; university: string; why: string }>;
+    courses: Array<{id: number;title: string;course_code: string;university: string;why: string;}>;
   }>;
-  study_plan: Array<{ week: number; focus: string; tasks: string[] }>;
+  study_plan: Array<{week: number;focus: string;tasks: string[];}>;
 };
 
 const PRESETS = ["AI Infra", "ML Systems", "LLM Engineering", "Data Engineering", "Security Engineering"];
 
 const COOKING_FRAMES = [
-  { icon: "🍳", text: "Analyzing courses..." },
-  { icon: "📚", text: "Building your roadmap..." },
-  { icon: "⚡", text: "Optimizing schedule..." },
-  { icon: "✨", text: "Almost ready..." },
-];
+{ icon: "🍳", text: "Analyzing courses..." },
+{ icon: "📚", text: "Building your roadmap..." },
+{ icon: "⚡", text: "Optimizing schedule..." },
+{ icon: "✨", text: "Almost ready..." }];
+
 
 export default function AILearningPlanner() {
   const [preset, setPreset] = useState(PRESETS[0]);
@@ -48,7 +51,7 @@ export default function AILearningPlanner() {
   );
 
   const toggleCourse = (id: number) => {
-    setSelectedCourseIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
+    setSelectedCourseIds((prev) => prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]);
   };
 
   const applyRoadmap = async () => {
@@ -59,7 +62,7 @@ export default function AILearningPlanner() {
       const res = await fetch("/api/ai/planner/enroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selectedCourseIds, studyPlan: result.study_plan }),
+        body: JSON.stringify({ selectedCourseIds, studyPlan: result.study_plan })
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body?.error || "Failed to apply roadmap");
@@ -80,7 +83,7 @@ export default function AILearningPlanner() {
       const res = await fetch("/api/ai/planner", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preset }),
+        body: JSON.stringify({ preset })
       });
 
       const body = await res.json().catch(() => ({}));
@@ -102,7 +105,7 @@ export default function AILearningPlanner() {
   const frame = COOKING_FRAMES[cookingFrame];
 
   return (
-    <section className="rounded-sm border border-[#e5e5e5] bg-white p-4 space-y-3">
+    <Card>
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <h4 className="text-sm font-semibold text-[#222]">AI Learning Planner</h4>
@@ -110,113 +113,119 @@ export default function AILearningPlanner() {
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            value={preset}
-            onChange={(e) => setPreset(e.target.value)}
-            className="h-8 rounded-sm border border-[#d7d7d7] bg-white px-2.5 text-[13px] text-[#454545]"
-          >
-            {PRESETS.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-          <button
-            onClick={generate}
-            disabled={loading}
-            className="h-8 rounded-sm border border-[#d3d3d3] bg-white px-3 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] disabled:opacity-50 inline-flex items-center gap-1.5"
-          >
-            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+          <Select value={preset} onValueChange={setPreset}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Presets</SelectLabel>
+                {PRESETS.map((p) =>
+                <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                )}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <Button variant="outline"
+          onClick={generate}
+          disabled={loading}>
+
+            
+            {loading ? <Loader2 className="animate-spin" /> : <Sparkles />}
             Generate
-          </button>
+          </Button>
         </div>
       </div>
 
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
 
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-10 gap-3">
+      {loading ?
+      <div className="flex flex-col items-center justify-center py-10 gap-3">
           <span className="text-3xl">{frame.icon}</span>
           <p className="text-sm text-[#666]">{frame.text}</p>
-        </div>
-      ) : result ? (
-        <div className="space-y-3">
-          <div className="rounded-sm border border-[#ececec] p-3">
+        </div> :
+      result ?
+      <div className="space-y-3">
+          <Card>
             <div className="flex items-center justify-between gap-2 mb-2">
               <p className="text-xs font-semibold text-[#1f1f1f]">Courses to enroll</p>
-              <button
-                onClick={() => setSelectedCourseIds(allCourseIds)}
-                className="text-[11px] text-[#3b82f6] hover:underline"
-                type="button"
-              >
+              <Button variant="outline"
+            onClick={() => setSelectedCourseIds(allCourseIds)}
+
+            type="button">
+              
                 Select all
-              </button>
+              </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-40 overflow-auto pr-1">
               {allCourseIds.map((id) => {
-                const c = (result.roadmap || []).flatMap((p) => p.courses || []).find((x) => x.id === id);
-                if (!c) return null;
-                const checked = selectedCourseIds.includes(id);
-                return (
-                  <label key={id} className="flex items-start gap-2 text-xs text-[#444]">
-                    <input type="checkbox" checked={checked} onChange={() => toggleCourse(id)} className="mt-0.5" />
+              const c = (result.roadmap || []).flatMap((p) => p.courses || []).find((x) => x.id === id);
+              if (!c) return null;
+              const checked = selectedCourseIds.includes(id);
+              return (
+                <label key={id} className="flex items-start gap-2 text-xs text-[#444]">
+                    <Input type="checkbox" checked={checked} onChange={() => toggleCourse(id)} />
                     <span>{c.course_code} · {c.title}</span>
-                  </label>
-                );
-              })}
-            </div>
-            {enrolled ? (
-              <p className="mt-3 text-xs text-green-600 font-medium">
-                ✓ Enrolled {selectedCourseIds.length} course{selectedCourseIds.length !== 1 ? "s" : ""} + created study plans
-              </p>
-            ) : (
-              <button
-                onClick={applyRoadmap}
-                disabled={applying || selectedCourseIds.length === 0}
-                className="mt-3 h-8 rounded-sm border border-[#d3d3d3] bg-white px-3 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] disabled:opacity-50 inline-flex items-center gap-1.5"
-              >
-                {applying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckSquare className="w-3.5 h-3.5" />}
-                Enroll selected + create study plans
-              </button>
-            )}
-          </div>
+                  </label>);
 
-          <div className="rounded-sm border border-[#ececec] bg-[#fafafa] p-3">
+            })}
+            </div>
+            {enrolled ?
+          <p className="mt-3 text-xs text-green-600 font-medium">
+                ✓ Enrolled {selectedCourseIds.length} course{selectedCourseIds.length !== 1 ? "s" : ""} + created study plans
+              </p> :
+
+          <Button variant="outline"
+          onClick={applyRoadmap}
+          disabled={applying || selectedCourseIds.length === 0}>
+
+            
+                {applying ? <Loader2 className="animate-spin" /> : <CheckSquare />}
+                Enroll selected + create study plans
+              </Button>
+          }
+          </Card>
+
+          <Card>
             <p className="text-xs font-semibold text-[#1f1f1f]">{result.track}</p>
             <p className="text-xs text-[#666] mt-1">{result.overview}</p>
-          </div>
+          </Card>
 
           <div className="space-y-2">
-            {result.roadmap?.map((phase, idx) => (
-              <div key={`${phase.phase}-${idx}`} className="rounded-sm border border-[#ececec] p-3">
+            {result.roadmap?.map((phase, idx) =>
+          <Card key={`${phase.phase}-${idx}`}>
                 <p className="text-xs font-semibold text-[#1f1f1f]">{phase.phase}</p>
                 <p className="text-xs text-[#666] mt-1">{phase.goal}</p>
                 <ul className="mt-2 space-y-1">
-                  {phase.courses?.map((c) => (
-                    <li key={c.id} className="text-xs text-[#3b3b3b]">
+                  {phase.courses?.map((c) =>
+              <li key={c.id} className="text-xs text-[#3b3b3b]">
                       {c.course_code} · {c.title} ({c.university}) — {c.why}
                     </li>
-                  ))}
+              )}
                 </ul>
-              </div>
-            ))}
+              </Card>
+          )}
           </div>
 
-          <div className="rounded-sm border border-[#ececec] p-3">
+          <Card>
             <p className="text-xs font-semibold text-[#1f1f1f] mb-2">Weekly Study Plan</p>
             <div className="space-y-1.5 max-h-72 overflow-auto pr-1">
-              {result.study_plan?.map((w) => (
-                <div key={w.week} className="text-xs text-[#444]">
+              {result.study_plan?.map((w) =>
+            <div key={w.week} className="text-xs text-[#444]">
                   <span className="font-semibold">Week {w.week}:</span> {w.focus}
-                  {w.tasks?.length ? (
-                    <ul className="list-disc ml-4 mt-0.5 text-[#666]">
+                  {w.tasks?.length ?
+              <ul className="list-disc ml-4 mt-0.5 text-[#666]">
                       {w.tasks.map((t, i) => <li key={i}>{t}</li>)}
-                    </ul>
-                  ) : null}
+                    </ul> :
+              null}
                 </div>
-              ))}
+            )}
             </div>
-          </div>
-        </div>
-      ) : null}
-    </section>
-  );
+          </Card>
+        </div> :
+      null}
+    </Card>);
+
 }

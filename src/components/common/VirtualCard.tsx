@@ -17,7 +17,7 @@ export default function VirtualCard({
 }: VirtualCardProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [height, setHeight] = useState<number | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement >(null);
 
   useEffect(() => {
     const currentRef = containerRef.current;

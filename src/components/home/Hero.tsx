@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function Hero({ dict }: { dict?: any }) {
@@ -16,7 +18,7 @@ export default function Hero({ dict }: { dict?: any }) {
 
   // Track the last pushed query to avoid redundant navigations
   const lastPushedQuery = useRef(initialQuery);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement >(null);
 
   useEffect(() => {
     setMounted(true);
@@ -67,7 +69,7 @@ export default function Hero({ dict }: { dict?: any }) {
     executeSearch(tag);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement >) => {
     if (e.key === "Enter") {
       executeSearch(query);
     }
@@ -86,17 +88,17 @@ export default function Hero({ dict }: { dict?: any }) {
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
               <span className="text-slate-400 font-mono text-sm group-focus-within:text-brand-blue transition-colors">/</span>
             </div>
-            <input
+            <Input
               ref={inputRef}
               type="text"
               placeholder={dict?.search?.placeholder || "Search by course name, code, or university..."}
-              className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-20 py-3.5 text-base font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/5 transition-all"
+             
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
             />
             <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-              <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-slate-200 bg-slate-50 px-1.5 font-sans text-[9px] font-bold text-slate-400">
+              <kbd className="hidden sm:inline-flex h-5 items-center gap-1 border border-slate-200 bg-slate-50 px-1.5 font-sans text-[9px] font-bold text-slate-400">
                 <span className="text-xs">⌘</span> K
               </kbd>
             </div>
@@ -104,21 +106,13 @@ export default function Hero({ dict }: { dict?: any }) {
           
           <div className="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 flex-wrap">
             <span className="mr-1 opacity-60">{dict?.search?.popular || "Popular"}:</span>
-            {(pathname === "/workouts" 
+            {(pathname === "/workouts"
               ? ["Yoga", "Swimming", "Fitness", "Football"]
               : ["AI", "Systems", "Algorithms", "ML"]
             ).map((tag) => (
-              <button 
-                key={tag} 
-                className={`px-2.5 py-0.5 rounded-full border transition-all ${
-                  query === tag 
-                    ? 'bg-brand-blue text-white border-brand-blue' 
-                    : 'bg-white border-slate-200 hover:border-slate-400 text-slate-500 hover:text-slate-900'
-                }`}
-                onClick={() => handleSuggestion(tag)}
-              >
+              <Button variant="outline" key={tag} type="button" onClick={() => handleSuggestion(tag)}>
                 #{tag}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

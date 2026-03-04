@@ -16,7 +16,7 @@ export default function OfflinePage() {
           className="mx-auto mb-8"
         />
 
-        <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <div className="w-16 h-16 bg-gray-100 flex items-center justify-center mx-auto mb-6">
           <WifiOff className="w-8 h-8 text-gray-400" />
         </div>
 
@@ -28,7 +28,7 @@ export default function OfflinePage() {
           Please check your internet connection and try again.
         </p>
 
-        <Button onClick={() => window.location.reload()} size="lg">
+        <Button variant="outline" onClick={() => window.location.reload()} size="lg">
           Try Again
         </Button>
       </div>

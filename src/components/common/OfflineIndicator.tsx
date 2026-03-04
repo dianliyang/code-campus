@@ -40,7 +40,7 @@ async function getCounts(): Promise<{ pending: number; failed: number }> {
 }
 
 export default function OfflineIndicator() {
-  const [status, setStatus] = useState<Status>("online");
+  const [status, setStatus] = useState<Status >("online");
   const [count,  setCount]  = useState(0);
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function OfflineIndicator() {
 
   if (status === "online") return null;
 
-  const cfg: Record<Exclude<Status, "online">, { icon: React.ReactNode; label: string; cls: string }> = {
+  const cfg: Record<Exclude<Status, "online" >, { icon: React.ReactNode; label: string; cls: string }> = {
     offline: { icon: <Dot />,                                          label: "Offline",          cls: "bg-[#f0f0f0] text-[#666] border-[#e0e0e0]" },
     pending: { icon: <Dot />,                                          label: `${count} pending`, cls: "bg-amber-50 text-amber-700 border-amber-200" },
     syncing: { icon: <RefreshCw className="w-3 h-3 animate-spin" />,  label: "Syncing…",         cls: "bg-blue-50 text-blue-700 border-blue-200" },
@@ -95,7 +95,7 @@ export default function OfflineIndicator() {
   const { icon, label, cls } = cfg[status];
 
   return (
-    <div className={`fixed bottom-16 right-3 sm:bottom-3 z-50 flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-sm ${cls}`}>
+    <div className={`fixed bottom-16 right-3 sm:bottom-3 z-50 flex items-center gap-1.5 border px-2.5 py-1 text-xs font-medium shadow-sm ${cls}`}>
       {icon}
       <span>{label}</span>
     </div>

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   regenerateProjectSeminarDescription,
   updateProjectSeminarDescription,
@@ -60,7 +62,7 @@ export default function ProjectSeminarContentsPanel({
       setDisplayedContents(regenerated);
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : "Failed to regenerate description");
+      toast.error(error instanceof Error ? error.message : "Failed to regenerate description", { position: "bottom-right" });
     } finally {
       setIsGenerating(false);
     }
@@ -77,7 +79,7 @@ export default function ProjectSeminarContentsPanel({
       setGeneratedContents(null);
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : "Failed to apply description");
+      toast.error(error instanceof Error ? error.message : "Failed to apply description", { position: "bottom-right" });
     } finally {
       setIsApplying(false);
     }
@@ -93,41 +95,41 @@ export default function ProjectSeminarContentsPanel({
       <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-[#2a2a2a]">Contents</h2>
         {hasAiRegenerated && !generatedContents ? (
-          <span className="inline-flex h-7 items-center rounded-full border border-[#e1e1e1] bg-white px-2.5 text-[12px] font-medium text-[#666]">
+          <span className="inline-flex h-7 items-center border border-[#e1e1e1] bg-white px-2.5 text-[12px] font-medium text-[#666]">
             AI Regenerated
           </span>
         ) : (
-          <button
+          <Button variant="outline"
             type="button"
             onClick={handleGenerate}
             disabled={isGenerating || isApplying}
-            className="inline-flex h-7 items-center justify-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[12px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
+           
             title="AI Regenerate"
           >
-            {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {isGenerating ? <Loader2 className="animate-spin" /> : <Sparkles />}
             AI Regenerate
-          </button>
+          </Button>
         )}
       </div>
 
       {generatedContents ? (
         <div className="mb-2 flex items-center gap-2">
-          <button
+          <Button variant="outline"
             type="button"
             onClick={handleApply}
             disabled={isApplying}
-            className="inline-flex h-7 items-center justify-center rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[12px] font-medium text-[#333] hover:bg-[#f8f8f8] disabled:opacity-50"
+           
           >
-            {isApplying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Apply"}
-          </button>
-          <button
+            {isApplying ? <Loader2 className="animate-spin" /> : "Apply"}
+          </Button>
+          <Button variant="outline"
             type="button"
             onClick={handleCancel}
             disabled={isApplying}
-            className="inline-flex h-7 items-center justify-center rounded-md border border-[#e1e1e1] bg-white px-2.5 text-[12px] font-medium text-[#666] hover:bg-[#fafafa] disabled:opacity-50"
+           
           >
             Cancel
-          </button>
+          </Button>
         </div>
       ) : null}
 

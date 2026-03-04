@@ -1,29 +1,41 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
 import {
+  BarChart3,
+  BookOpen,
   CalendarDays,
+  CircleHelp,
   Dumbbell,
   FolderKanban,
+  KeyRound,
   LayoutDashboard,
   Library,
-  User,
-  CircleHelp,
-  Sparkles,
-  ShieldCheck,
-  Settings2,
-  Map,
-  BarChart3,
-  KeyRound,
-  BookOpen,
-  PanelLeftClose,
-  PanelLeftOpen,
   Loader2,
+  Map,
+  Settings2,
+  ShieldCheck,
+  Sparkles,
+  User,
 } from "lucide-react";
 import LogoutButton from "@/components/layout/LogoutButton";
 import { useCourseIntelSyncJobs } from "@/hooks/useCourseIntelSyncJobs";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
 interface LeftRailProps {
   labels: {
@@ -36,7 +48,7 @@ interface LeftRailProps {
     smartPlanner: string;
     studySchedule: string;
     workouts: string;
-    profile: string; // Keep for compat
+    profile: string;
     settings: string;
     settingsEngine: string;
     settingsUsage: string;
@@ -47,8 +59,6 @@ interface LeftRailProps {
     docs?: string;
     import: string;
   };
-  collapsed?: boolean;
-  onToggle?: () => void;
 }
 
 const commandNavItems = [
@@ -77,182 +87,125 @@ const docsNavItems = [
   { href: "/settings/api-reference", key: "settingsApiReference", icon: BookOpen },
 ] as const;
 
-function RailItem({
+function SidebarLinkItem({
   href,
   title,
   icon: Icon,
   active,
-  collapsed,
   trailingSpin = false,
 }: {
   href: string;
   title: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   active: boolean;
-  collapsed: boolean;
   trailingSpin?: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      prefetch={false}
-      title={collapsed ? title : undefined}
-      className={`flex items-center rounded-md leading-none transition-colors ${
-        collapsed ? "justify-center px-2 py-2" : "gap-2.5 px-2.5 py-2 text-[14px]"
-      } ${
-        active
-          ? "bg-[#e7e7e7] text-[#1f1f1f] font-medium"
-          : "text-[#767676] hover:text-[#2a2a2a] hover:bg-[#ededed]"
-      }`}
-    >
-      <Icon className="h-[15px] w-[15px]" strokeWidth={1.8} />
-      {!collapsed && <span className="flex-1">{title}</span>}
-      {!collapsed && trailingSpin && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#666]" />}
-    </Link>
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild isActive={active} tooltip={title}>
+        <Link href={href} prefetch={false}>
+          <Icon />
+          <span>{title}</span>
+          {trailingSpin ? <Loader2 className="ml-auto animate-spin" /> : null}
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }
 
-function GroupLabel({ text, collapsed }: { text: string; collapsed: boolean }) {
-  if (collapsed) return null;
-  return (
-    <div className="mb-0.5 px-2.5">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#919191]">
-        {text}
-      </span>
-    </div>
-  );
-}
-
-export default function LeftRail({ labels, collapsed = false, onToggle }: LeftRailProps) {
+export default function LeftRail({ labels }: LeftRailProps) {
   const pathname = usePathname();
   const { hasActive } = useCourseIntelSyncJobs();
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
 
   return (
-    <aside
-      className={`hidden lg:flex h-full shrink-0 bg-[#f5f5f5] flex-col py-4 overflow-y-auto transition-[width,padding] duration-200 ${
-        collapsed ? "lg:w-[72px] px-2" : "lg:w-[218px] px-3"
-      }`}
-    >
-      <div className={`mb-3 flex items-center ${collapsed ? "justify-center" : "justify-between gap-2"}`}>
-        <Link href="/courses" className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5 px-2"}`} title="CodeCampus">
-          <Image
-            src="/code-campus-logo-bw.svg"
-            alt="CodeCampus"
-            width={18}
-            height={18}
-            className="h-[18px] w-[18px]"
-          />
-          {!collapsed && (
-            <span className="text-[24px] tracking-tight font-semibold text-[#2b2b2b]">CodeCampus</span>
-          )}
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="sticky top-0 z-10 bg-sidebar flex-row items-end justify-between">
+        <Link href="/courses" className="flex h-7 items-end gap-2" title="CodeCampus">
+          <Image src="/code-campus-logo-bw.svg" alt="CodeCampus" width={18} height={18} />
+          {!collapsed && <span>CodeCampus</span>}
         </Link>
-      </div>
+        <SidebarTrigger className="self-end" />
+      </SidebarHeader>
 
-      <GroupLabel text={labels.command} collapsed={collapsed} />
-      <nav className="space-y-0.5">
-        {commandNavItems.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href);
-          const title = labels[item.key as keyof typeof labels] || item.key;
-          return (
-            <RailItem
-              key={item.href}
-              href={item.href}
-              title={title}
-              icon={item.icon}
-              active={active}
-              collapsed={collapsed}
-              trailingSpin={item.href === "/study-plan" && hasActive}
-            />
-          );
-        })}
-      </nav>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>{labels.command}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {commandNavItems.map((item) => {
+                const active = pathname === item.href || pathname.startsWith(item.href);
+                const title = labels[item.key as keyof typeof labels] || item.key;
+                return (
+                  <SidebarLinkItem
+                    key={item.href}
+                    href={item.href}
+                    title={title}
+                    icon={item.icon}
+                    active={active}
+                    trailingSpin={item.href === "/study-plan" && hasActive}
+                  />
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-      <div className={collapsed ? "mt-3" : "mt-4"} />
-      <GroupLabel text={labels.hub} collapsed={collapsed} />
-      <nav className="space-y-0.5">
-        {hubNavItems.map((item) => {
-          const active = pathname === item.href || (item.href === "/courses" && pathname.startsWith("/courses/"));
-          const title = labels[item.key as keyof typeof labels] || item.key;
-          return (
-            <RailItem
-              key={item.href}
-              href={item.href}
-              title={title}
-              icon={item.icon}
-              active={active}
-              collapsed={collapsed}
-            />
-          );
-        })}
-      </nav>
+        <SidebarGroup>
+          <SidebarGroupLabel>{labels.hub}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {hubNavItems.map((item) => {
+                const active = pathname === item.href || (item.href === "/courses" && pathname.startsWith("/courses/"));
+                const title = labels[item.key as keyof typeof labels] || item.key;
+                return <SidebarLinkItem key={item.href} href={item.href} title={title} icon={item.icon} active={active} />;
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-      <div className={collapsed ? "mt-3" : "mt-4"} />
-      <GroupLabel text={labels.settings} collapsed={collapsed} />
-      <nav className="space-y-0.5">
-        {settingsNavItems.map((item) => {
-          const active = pathname === item.href ||
-            (item.href === "/settings/engine" && (pathname === "/settings" || pathname === "/settings/intelligence"));
-          const title = labels[item.key as keyof typeof labels] || item.key;
-          return (
-            <RailItem
-              key={item.href}
-              href={item.href}
-              title={title}
-              icon={item.icon}
-              active={active}
-              collapsed={collapsed}
-            />
-          );
-        })}
-      </nav>
+        <SidebarGroup>
+          <SidebarGroupLabel>{labels.settings}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {settingsNavItems.map((item) => {
+                const active =
+                  pathname === item.href ||
+                  (item.href === "/settings/engine" && (pathname === "/settings" || pathname === "/settings/intelligence"));
+                const title = labels[item.key as keyof typeof labels] || item.key;
+                return <SidebarLinkItem key={item.href} href={item.href} title={title} icon={item.icon} active={active} />;
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-      <div className={collapsed ? "mt-3" : "mt-4"} />
-      <GroupLabel text={labels.docs || "Doc"} collapsed={collapsed} />
-      <nav className="space-y-0.5">
-        {docsNavItems.map((item) => {
-          const active = pathname === item.href;
-          const title = labels[item.key as keyof typeof labels] || item.key;
-          return (
-            <RailItem
-              key={item.href}
-              href={item.href}
-              title={title}
-              icon={item.icon}
-              active={active}
-              collapsed={collapsed}
-            />
-          );
-        })}
-      </nav>
+        <SidebarGroup>
+          <SidebarGroupLabel>{labels.docs || "Doc"}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {docsNavItems.map((item) => {
+                const title = labels[item.key as keyof typeof labels] || item.key;
+                return <SidebarLinkItem key={item.href} href={item.href} title={title} icon={item.icon} active={pathname === item.href} />;
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-      <div className="mt-auto space-y-0.5">
-        <div
-          className={`flex items-center rounded-md py-2 text-[14px] text-[#767676] ${
-            collapsed ? "justify-center px-2" : "gap-2.5 px-2.5"
-          }`}
-          title={collapsed ? "Help" : undefined}
-        >
-          <CircleHelp className="h-[15px] w-[15px]" strokeWidth={1.8} />
-          {!collapsed && <span>Help</span>}
-        </div>
+      <SidebarFooter className="sticky bottom-0 z-10 bg-sidebar">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Help">
+              <CircleHelp />
+              <span>Help</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
         <div>
-          <LogoutButton
-            showLabel={!collapsed}
-            className={`w-full flex items-center rounded-md py-2 text-[14px] text-[#767676] hover:text-red-600 hover:bg-red-50 transition-colors ${
-              collapsed ? "justify-center px-2" : "gap-2.5 px-2.5"
-            }`}
-          />
+          <LogoutButton showLabel={!collapsed} />
         </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          className="mt-2 h-8 w-full rounded-md border border-[#e5e5e5] bg-white text-[#666] hover:text-[#222] hover:bg-[#f7f7f7] flex items-center justify-center"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-        </button>
-      </div>
-    </aside>
+      </SidebarFooter>
+    </Sidebar>
   );
 }

@@ -49,7 +49,7 @@ export default function LandingNavbar({ dict }: { dict: any }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors rounded-full"
+                  className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
                 >
                   {item.name}
                 </Link>
@@ -58,18 +58,12 @@ export default function LandingNavbar({ dict }: { dict: any }) {
 
             {/* CTA */}
             <div className="flex items-center">
-              <Button
-                size="sm"
-                className={`rounded-full border border-black/15 bg-white text-slate-900 hover:bg-slate-900 hover:text-white transition-[padding,box-shadow,background-color,color] duration-300 ${
-                  scrolled ? "px-3 h-8 shadow-none" : "px-4 h-9 shadow-sm"
-                }`}
-                asChild
-              >
+              <Button variant="outline" asChild>
                 <Link href="/courses" className="group inline-flex items-center justify-center gap-1.5">
-                  <span className="whitespace-nowrap text-xs font-semibold tracking-wide uppercase">
+                  <span className="whitespace-nowrap font-semibold tracking-wide uppercase">
                     {ctaText}
                   </span>
-                  <ArrowRight className={`shrink-0 transition-transform duration-300 ${scrolled ? "w-3 h-3" : "w-3.5 h-3.5"} group-hover:translate-x-0.5`} />
+                  <ArrowRight className={`shrink-0 transition-transform duration-300 ${scrolled ? "w-3 h-3" : "w-3.5 h-3.5"} group-hover:translate-x-0.5`}  />
                 </Link>
               </Button>
             </div>

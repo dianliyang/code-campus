@@ -5,22 +5,22 @@ import { createClient, mapCourseFromRow, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { Course } from "@/types";
-import CourseDetailContent from "@/components/courses/CourseDetailContent";
+import CourseDetailContent from "@/components/courses/CourseDetailContent";import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{id: string;}>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("courses")
-    .select("title, course_code, university")
-    .eq("id", Number(id))
-    .single();
+  const { data } = await supabase.
+  from("courses").
+  select("title, course_code, university").
+  eq("id", Number(id)).
+  single();
 
   if (!data) {
     return { title: "Course Not Found" };
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = `${data.course_code}: ${data.title} - ${data.university}`;
   return {
     title,
-    openGraph: { title },
+    openGraph: { title }
   };
 }
 
@@ -42,113 +42,113 @@ export default async function CourseDetailPage({ params }: PageProps) {
       <Suspense fallback={<CourseDetailSkeleton />}>
         <CourseDetailData id={id} dict={dict.dashboard} />
       </Suspense>
-    </div>
-  );
+    </div>);
+
 }
 
-async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['dashboard'] }) {
+async function CourseDetailData({ id, dict }: {id: string;dict: Dictionary['dashboard'];}) {
   const [supabase, user] = await Promise.all([createClient(), getUser()]);
 
   // Parallelize course fetch and related data.
-  const coursePromise = supabase
-    .from("courses")
-    .select(
-      `
+  const coursePromise = supabase.
+  from("courses").
+  select(
+    `
       id, university, course_code, title, units, credit, url, description, details, instructors, prerequisites, resources, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, is_hidden, is_internal, created_at,
       fields:course_fields(fields(name)),
       semesters:course_semesters(semesters(term, year))
     `
-    )
-    .eq("id", Number(id))
-    .single();
+  ).
+  eq("id", Number(id)).
+  single();
 
-  const enrollmentPromise = user
-    ? supabase
-        .from("user_courses")
-        .select("progress")
-        .eq("user_id", user.id)
-        .eq("course_id", Number(id))
-        .single()
-    : Promise.resolve({ data: null });
+  const enrollmentPromise = user ?
+  supabase.
+  from("user_courses").
+  select("progress").
+  eq("user_id", user.id).
+  eq("course_id", Number(id)).
+  single() :
+  Promise.resolve({ data: null });
 
   const topicsPromise = supabase.from("fields").select("name").order("name", { ascending: true });
-  const semestersPromise = supabase
-    .from("semesters")
-    .select("term, year")
-    .order("year", { ascending: false })
-    .order("term", { ascending: true });
+  const semestersPromise = supabase.
+  from("semesters").
+  select("term, year").
+  order("year", { ascending: false }).
+  order("term", { ascending: true });
 
-  const studyPlansPromise = user
-    ? supabase
-        .from("study_plans")
-        .select("id, start_date, end_date, days_of_week, start_time, end_time, location, kind")
-        .eq("user_id", user.id)
-        .eq("course_id", Number(id))
-        .order("start_date", { ascending: true })
-    : Promise.resolve({ data: [] });
+  const studyPlansPromise = user ?
+  supabase.
+  from("study_plans").
+  select("id, start_date, end_date, days_of_week, start_time, end_time, location, kind, timezone").
+  eq("user_id", user.id).
+  eq("course_id", Number(id)).
+  order("start_date", { ascending: true }) :
+  Promise.resolve({ data: [] });
 
-  const syllabusPromise = supabase
-    .from('course_syllabi')
-    .select('source_url, content, schedule, retrieved_at')
-    .eq('course_id', Number(id))
-    .maybeSingle();
+  const syllabusPromise = supabase.
+  from('course_syllabi').
+  select('source_url, content, schedule, retrieved_at').
+  eq('course_id', Number(id)).
+  maybeSingle();
 
-  const assignmentsPromise = supabase
-    .from("course_assignments")
-    .select("id, kind, label, due_on, url, description")
-    .eq("course_id", Number(id))
-    .order("due_on", { ascending: true, nullsFirst: false })
-    .order("id", { ascending: true });
+  const assignmentsPromise = supabase.
+  from("course_assignments").
+  select("id, kind, label, due_on, url, description").
+  eq("course_id", Number(id)).
+  order("due_on", { ascending: true, nullsFirst: false }).
+  order("id", { ascending: true });
 
-  const courseSchedulesPromise = (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-    .from("course_schedules")
-    .select("schedule_date, task_title, task_kind, focus, duration_minutes")
-    .eq("course_id", Number(id))
-    .order("schedule_date", { ascending: true })
-    .order("id", { ascending: true });
+  const courseSchedulesPromise = (supabase as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  ).from("course_schedules").
+  select("schedule_date, task_title, task_kind, focus, duration_minutes").
+  eq("course_id", Number(id)).
+  order("schedule_date", { ascending: true }).
+  order("id", { ascending: true });
 
   const [
-    { data, error },
-    { data: enrollment },
-    { data: topicRows },
-    { data: semesterRows },
-    { data: studyPlanRows },
-    { data: syllabusData },
-    { data: assignmentRows },
-    { data: courseScheduleRows },
-  ] = await Promise.all([
-    coursePromise,
-    enrollmentPromise,
-    topicsPromise,
-    semestersPromise,
-    studyPlansPromise,
-    syllabusPromise,
-    assignmentsPromise,
-    courseSchedulesPromise,
-  ]);
+  { data, error },
+  { data: enrollment },
+  { data: topicRows },
+  { data: semesterRows },
+  { data: studyPlanRows },
+  { data: syllabusData },
+  { data: assignmentRows },
+  { data: courseScheduleRows }] =
+  await Promise.all([
+  coursePromise,
+  enrollmentPromise,
+  topicsPromise,
+  semestersPromise,
+  studyPlansPromise,
+  syllabusPromise,
+  assignmentsPromise,
+  courseSchedulesPromise]
+  );
 
   if (error || !data) {
     notFound();
   }
 
-  const { data: relatedProjectSeminar } = await supabase
-    .from("projects_seminars")
-    .select("id, category")
-    .eq("university", String(data.university))
-    .eq("course_code", String(data.course_code))
-    .maybeSingle();
+  const { data: relatedProjectSeminar } = await supabase.
+  from("projects_seminars").
+  select("id, category").
+  eq("university", String(data.university)).
+  eq("course_code", String(data.course_code)).
+  maybeSingle();
 
   const row = data as Record<string, unknown>;
   const course = mapCourseFromRow(row);
-  const fieldNames = (row.fields as { fields: { name: string } }[] | null)?.map((f) => f.fields.name) || [];
+  const fieldNames = (row.fields as {fields: {name: string;};}[] | null)?.map((f) => f.fields.name) || [];
   const semesterNames =
-    (row.semesters as { semesters: { term: string; year: number } }[] | null)?.map((s) => `${s.semesters.term} ${s.semesters.year}`) ||
-    [];
+  (row.semesters as {semesters: {term: string;year: number;};}[] | null)?.map((s) => `${s.semesters.term} ${s.semesters.year}`) ||
+  [];
 
   const fullCourse = {
     ...course,
     fields: fieldNames,
-    semesters: semesterNames,
+    semesters: semesterNames
   } as Course;
 
   const isEnrolled = !!enrollment;
@@ -163,6 +163,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
     endTime: p.end_time || "10:00:00",
     location: p.location || "",
     kind: p.kind || "",
+    timezone: p.timezone || "UTC"
   }));
 
   return (
@@ -174,15 +175,15 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
       availableSemesters={semesterNamesAll}
       studyPlans={editableStudyPlans}
       projectSeminarRef={
-        relatedProjectSeminar?.id
-          ? { id: relatedProjectSeminar.id, category: relatedProjectSeminar.category || "Project/Seminar" }
-          : null
+      relatedProjectSeminar?.id ?
+      { id: relatedProjectSeminar.id, category: relatedProjectSeminar.category || "Project/Seminar" } :
+      null
       }
       syllabus={syllabusData ? {
         source_url: syllabusData.source_url,
-        content: (syllabusData.content as Record<string, unknown>) ?? {},
-        schedule: (syllabusData.schedule as unknown[]) ?? [],
-        retrieved_at: syllabusData.retrieved_at,
+        content: syllabusData.content as Record<string, unknown> ?? {},
+        schedule: syllabusData.schedule as unknown[] ?? [],
+        retrieved_at: syllabusData.retrieved_at
       } : null}
       assignments={(assignmentRows || []).map((item) => ({
         id: item.id,
@@ -190,7 +191,7 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
         label: item.label,
         due_on: item.due_on,
         url: item.url,
-        description: item.description,
+        description: item.description
       }))}
       scheduleItems={(courseScheduleRows || []).map((row: {
         schedule_date: string;
@@ -203,29 +204,29 @@ async function CourseDetailData({ id, dict }: { id: string; dict: Dictionary['da
         title: row.task_title,
         kind: row.task_kind,
         focus: row.focus,
-        durationMinutes: row.duration_minutes,
-      }))}
-    />
-  );
+        durationMinutes: row.duration_minutes
+      }))} />);
+
+
 }
 
 function CourseDetailSkeleton() {
   return (
     <div className="animate-pulse space-y-4">
-      <div className="flex items-center gap-3 rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
-        <div className="w-14 h-14 bg-gray-100 rounded-xl"></div>
+      <Card>
+        <div className="w-14 h-14 bg-gray-100"></div>
         <div className="space-y-2 flex-grow">
-          <div className="h-4 bg-gray-100 rounded w-1/4"></div>
-          <div className="h-8 bg-gray-100 rounded w-2/3"></div>
+          <div className="h-4 bg-gray-100 w-1/4"></div>
+          <div className="h-8 bg-gray-100 w-2/3"></div>
         </div>
-      </div>
+      </Card>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 space-y-4">
-          <div className="h-40 bg-[#fcfcfc] border border-[#e5e5e5] rounded-lg"></div>
-          <div className="h-60 bg-[#fcfcfc] border border-[#e5e5e5] rounded-lg"></div>
+          <Card></Card>
+          <Card></Card>
         </div>
-        <div className="lg:col-span-4 h-80 bg-[#fcfcfc] border border-[#e5e5e5] rounded-lg"></div>
+        <Card></Card>
       </div>
-    </div>
-  );
+    </div>);
+
 }

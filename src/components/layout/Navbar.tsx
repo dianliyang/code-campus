@@ -4,9 +4,9 @@ import { getUser } from "@/lib/supabase/server";
 import LogoutButton from "./LogoutButton";
 import NavLinks from "./NavLinks";
 import { Dictionary } from "@/lib/dictionary";
-import { User } from "lucide-react";
+import { User } from "lucide-react";import { Card } from "@/components/ui/card";
 
-export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
+export default async function Navbar({ dict }: {dict: Dictionary['navbar'];}) {
   const user = await getUser();
 
   return (
@@ -23,8 +23,8 @@ export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
                   fill
                   priority
                   sizes="32px"
-                  className="object-contain"
-                />
+                  className="object-contain" />
+                
               </div>
               <span className="text-sm lg:text-base font-bold tracking-tight text-gray-900 leading-none">CodeCampus</span>
             </Link>
@@ -34,30 +34,30 @@ export default async function Navbar({ dict }: { dict: Dictionary['navbar'] }) {
           <div className="hidden lg:flex items-center gap-8">
             <NavLinks dict={dict} />
 
-            <div className="flex items-center pl-6 border-l border-slate-100 h-8">
+            <Card>
               <Link href="/profile" className="flex items-center gap-3 group">
                 <div className="flex flex-col items-end -space-y-0.5">
                   <span className="text-sm font-medium text-slate-900">
                     {user?.user_metadata?.full_name || user?.email?.split('@')[0] || dict?.guest_user || "Guest User"}
                   </span>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1 h-1 bg-brand-green rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
+                    <div className="w-1 h-1 bg-brand-green animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
                   </div>
                 </div>
-                <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white border border-slate-800 shadow-md group-hover:bg-brand-blue group-hover:border-brand-blue transition-all duration-300">
+                <div className="w-8 h-8 bg-slate-900 flex items-center justify-center text-white border border-slate-800 shadow-md group-hover:bg-brand-blue group-hover:border-brand-blue transition-all duration-300">
                   <User className="w-3 h-3" />
                 </div>
               </Link>
-              {user && (
-                <div className="ml-4">
+              {user &&
+              <div className="ml-4">
                   <LogoutButton />
                 </div>
-              )}
-            </div>
+              }
+            </Card>
           </div>
 
         </div>
       </div>
-    </nav>
-  );
+    </nav>);
+
 }

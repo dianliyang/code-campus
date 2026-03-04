@@ -3,6 +3,8 @@
 import { ShieldCheck, Mail, Fingerprint, Trash2, AlertTriangle } from "lucide-react";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";import { Card } from "@/components/ui/card";
 
 interface SecurityIdentitySectionProps {
   view: "identity" | "account";
@@ -11,24 +13,24 @@ interface SecurityIdentitySectionProps {
 
 export default function SecurityIdentitySection({
   view,
-  provider,
+  provider
 }: SecurityIdentitySectionProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const handleDeleteAccount = () => {
     if (!confirm("CRITICAL_OPERATION: Are you absolutely sure? All data will be permanently purged.")) return;
-    
+
     startTransition(async () => {
       try {
         const res = await fetch("/api/user/delete", { method: "DELETE" });
         if (res.ok) {
           router.push("/login");
         } else {
-          alert("Purge sequence failed. System error.");
+          toast.error("Purge sequence failed. System error.", { position: "bottom-right" });
         }
       } catch {
-        alert("Fatal error during account deletion.");
+        toast.error("Fatal error during account deletion.", { position: "bottom-right" });
       }
     });
   };
@@ -36,14 +38,14 @@ export default function SecurityIdentitySection({
   return (
     <div>
       {/* Identity & Security view */}
-      {view === "identity" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {view === "identity" &&
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Active Identity */}
-          <div className="bg-white border border-[#e5e5e5] rounded-md p-4 space-y-4">
-            <div className="flex items-center gap-2 text-[#222] mb-3 pb-3 border-b border-[#efefef]">
+          <Card>
+            <Card>
               <Fingerprint className="w-4 h-4 text-[#777]" />
               <span className="text-sm font-semibold">Active Identity</span>
-            </div>
+            </Card>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -59,14 +61,14 @@ export default function SecurityIdentitySection({
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Communication */}
-          <div className="bg-white border border-[#e5e5e5] rounded-md p-4 space-y-4">
-            <div className="flex items-center gap-2 text-[#222] mb-3 pb-3 border-b border-[#efefef]">
+          <Card>
+            <Card>
               <Mail className="w-4 h-4 text-[#777]" />
               <span className="text-sm font-semibold">Communication</span>
-            </div>
+            </Card>
 
             <div className="space-y-4">
               <p className="text-xs text-[#666] leading-relaxed">
@@ -74,20 +76,20 @@ export default function SecurityIdentitySection({
               </p>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-xs text-[#777]">Alerts</span>
-                <span className="text-xs font-medium text-emerald-700 px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-100">Active</span>
+                <span className="text-xs font-medium text-emerald-700 px-2 py-0.5 bg-emerald-50 border border-emerald-100">Active</span>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
-      )}
+      }
 
       {/* Account / Danger Zone view */}
-      {view === "account" && (
-        <div className="bg-red-50/30 border border-red-100 rounded-md p-4 space-y-4">
-          <div className="flex items-center gap-2 text-red-700 pb-3 border-b border-red-100">
+      {view === "account" &&
+      <Card>
+          <Card>
             <AlertTriangle className="w-4 h-4" />
             <span className="text-sm font-semibold">Danger Zone</span>
-          </div>
+          </Card>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
@@ -97,17 +99,17 @@ export default function SecurityIdentitySection({
               </p>
             </div>
 
-            <button
-              onClick={handleDeleteAccount}
-              disabled={isPending}
-              className="inline-flex items-center justify-center gap-2 h-8 rounded-md border border-red-300 bg-white px-3 text-[13px] font-medium text-red-700 hover:bg-red-50 transition-colors disabled:opacity-50 whitespace-nowrap"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
+            <Button variant="outline"
+          onClick={handleDeleteAccount}
+          disabled={isPending}>
+
+            
+              <Trash2 />
               Purge Account
-            </button>
+            </Button>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </Card>
+      }
+    </div>);
+
 }

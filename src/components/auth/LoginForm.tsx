@@ -5,9 +5,10 @@ import { useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
 import { Send, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";import { Card } from "@/components/ui/card";
 
 interface LoginFormProps {
-  onMagicLink: (formData: FormData) => Promise<{ success?: boolean; error?: string } | void>;
+  onMagicLink: (formData: FormData) => Promise<{success?: boolean;error?: string;} | void>;
   sent?: boolean;
   dict: Dictionary['dashboard']['login'];
 }
@@ -27,7 +28,7 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
     setServerError(null);
 
     const formData = new FormData(event.currentTarget);
-    
+
     try {
       const result = await onMagicLink(formData);
       if (result && result.success) {
@@ -39,17 +40,17 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
       console.error("Login submission error:", e);
       setServerError("An unexpected error occurred.");
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   }
 
   if (isSent) {
     return (
       <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="p-8 bg-gray-50 border border-gray-100 rounded-2xl">
-          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-green-600 mb-6 shadow-sm border border-gray-100">
+        <Card>
+          <Card>
             <Send className="w-5 h-5" />
-          </div>
+          </Card>
           <h2 className="text-xl font-bold text-gray-900 mb-2">
             {dict?.success_title || "Check your email"}
           </h2>
@@ -63,19 +64,19 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
                {dict?.spam_notice || "If you don't see the email, please check your spam folder."}
              </p>
           </div>
-        </div>
+        </Card>
 
         <div className="flex justify-center">
-          <button 
-            onClick={() => setIsSent(false)}
-            className="text-xs font-semibold text-gray-400 hover:text-gray-900 transition-colors cursor-pointer flex items-center gap-2"
-          >
-            <ArrowLeft className="w-3 h-3" />
+          <Button variant="outline"
+          onClick={() => setIsSent(false)}>
+
+            
+            <ArrowLeft />
             {dict?.wrong_email || "Use a different email"}
-          </button>
+          </Button>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -85,48 +86,48 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
         <p className="text-sm font-medium text-gray-500">{dict?.subtitle || "Connect to the CodeCampus node"}</p>
       </div>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-start gap-3">
+      {error &&
+      <Card>
           <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm font-semibold text-red-600 mb-1">{dict?.error_title || "Authentication Failure"}</p>
             <p className="text-xs text-red-700 font-medium leading-relaxed">
-              {error === "OAuthAccountNotLinked"
-                ? (dict?.error_oauth || "This email is linked to another provider.")
-                : error === "AccessDenied"
-                ? (dict?.error_denied || "Access denied. Your account may be restricted.")
-                : error === "Configuration"
-                ? (dict?.error_config || "System configuration error.")
-                : error === "Verification"
-                ? (dict?.error_verification || "The sign-in link is no longer valid.")
-                : `${dict?.error_default || "Error"}: ${error}.`}
+              {error === "OAuthAccountNotLinked" ?
+            dict?.error_oauth || "This email is linked to another provider." :
+            error === "AccessDenied" ?
+            dict?.error_denied || "Access denied. Your account may be restricted." :
+            error === "Configuration" ?
+            dict?.error_config || "System configuration error." :
+            error === "Verification" ?
+            dict?.error_verification || "The sign-in link is no longer valid." :
+            `${dict?.error_default || "Error"}: ${error}.`}
             </p>
           </div>
-        </div>
-      )}
+        </Card>
+      }
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
           <label className="block text-sm font-medium text-slate-600 ml-1">
             {dict?.email_label || "Email Address"}
           </label>
-          <input
+          <Input
             type="email"
             name="email"
             placeholder="name@example.com"
             defaultValue={searchParams.get("email") || ""}
-            className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-gray-900 focus:ring-0 outline-none transition-all"
-            required
-          />
+
+            required />
+          
         </div>
         
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full"
-          size="lg"
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (dict?.submit_send || "Send Magic Link")}
+        <Button variant="outline"
+        type="submit"
+        disabled={loading}
+
+        size="lg">
+          
+          {loading ? <Loader2 className="animate-spin" /> : dict?.submit_send || "Send Magic Link"}
         </Button>
       </form>
 
@@ -135,6 +136,6 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
           {dict?.footer || "Secure access via Supabase Auth"}
         </p>
       </div>
-    </div>
-  );
+    </div>);
+
 }

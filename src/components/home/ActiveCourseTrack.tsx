@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Course } from "@/types";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,13 +9,29 @@ import { Dictionary } from "@/lib/dictionary";
 import AddPlanModal from "./AddPlanModal";
 import { useAppToast } from "@/components/common/AppToastProvider";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger } from
+"@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Separator } from "@/components/ui/separator";
+import {
   ExternalLink,
   CalendarCheck,
   CalendarPlus,
   Clock,
   Loader2,
   Sparkles,
-} from "lucide-react";
+  ChevronDown } from
+"lucide-react";
 
 type AiSyncSourceMode = "auto" | "existing" | "fresh";
 const AI_SYNC_MODE_STORAGE_KEY = "cc:ai-sync-source-mode";
@@ -39,27 +55,33 @@ interface ActiveCourseTrackProps {
 export default function ActiveCourseTrack({
   course,
   initialProgress,
-  plan,
+  plan
 }: Omit<ActiveCourseTrackProps, "dict">) {
   const router = useRouter();
   const [showAddPlanModal, setShowAddPlanModal] = useState(false);
   const [localPlan, setLocalPlan] = useState(plan);
   const [isAiUpdating, setIsAiUpdating] = useState(false);
-  const [aiStatus, setAiStatus] = useState<"idle" | "success" | "error">("idle");
-  const [aiSourceMode, setAiSourceMode] = useState<AiSyncSourceMode>(() => {
-    if (typeof window === "undefined") return "auto";
-    try {
-      const saved = window.localStorage.getItem(AI_SYNC_MODE_STORAGE_KEY);
-      return saved === "fresh" || saved === "existing" || saved === "auto" ? saved : "auto";
-    } catch {
-      return "auto";
-    }
-  });
+  const [aiStatus, setAiStatus] = useState<"idle" | "success" | "error">(
+    "idle"
+  );
+  const [aiSourceMode, setAiSourceMode] = useState<AiSyncSourceMode>("auto");
   const { showToast } = useAppToast();
 
-  const detailHref = `/courses/${course.id}`;
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(AI_SYNC_MODE_STORAGE_KEY);
+      if (saved === "fresh" || saved === "existing" || saved === "auto") {
+        setAiSourceMode(saved);
+      }
+    } catch {
+
+
+
+      // Ignore localStorage errors.
+    }}, []);const detailHref = `/courses/${course.id}`;
   const progress = useMemo(() => {
-    if (!localPlan?.start_date || !localPlan?.end_date) return Math.max(0, Math.min(100, Math.round(initialProgress || 0)));
+    if (!localPlan?.start_date || !localPlan?.end_date)
+    return Math.max(0, Math.min(100, Math.round(initialProgress || 0)));
     const start = new Date(`${localPlan.start_date}T00:00:00`);
     const end = new Date(`${localPlan.end_date}T23:59:59`);
     const now = new Date();
@@ -68,17 +90,8 @@ export default function ActiveCourseTrack({
     if (now >= end) return 100;
     const total = Math.max(1, end.getTime() - start.getTime());
     const done = Math.max(0, now.getTime() - start.getTime());
-    return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+    return Math.max(0, Math.min(100, Math.round(done / total * 100)));
   }, [initialProgress, localPlan]);
-
-  const isNonNavigableTarget = (target: EventTarget | null) => {
-    if (!(target instanceof Element)) return false;
-    return Boolean(
-      target.closest(
-        'a,button,input,select,textarea,label,[role="button"],[data-no-card-nav="true"]',
-      ),
-    );
-  };
 
   const handleCardNavigation = () => {
     router.push(detailHref);
@@ -91,27 +104,34 @@ export default function ActiveCourseTrack({
       const res = await fetch("/api/ai/course-intel/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId: course.id, sourceMode: aiSourceMode }),
+        body: JSON.stringify({ courseId: course.id, sourceMode: aiSourceMode })
       });
       if (res.ok || res.status === 202) {
         setAiStatus("success");
-        showToast({ type: "success", message: `AI sync started in background (${aiSourceMode}).` });
+        showToast({
+          type: "success",
+          message: `AI sync started in background (${aiSourceMode}).`
+        });
         window.dispatchEvent(new Event("course-intel-job-started"));
       } else {
         setAiStatus("error");
         let message = "AI sync failed.";
         try {
           const payload = await res.json();
-          const candidate = typeof payload?.error === "string" ? payload.error.trim() : "";
+          const candidate =
+          typeof payload?.error === "string" ? payload.error.trim() : "";
           if (candidate) message = candidate;
         } catch {
+
+
+
           // Ignore parse error and use default message.
-        }
-        showToast({ type: "error", message });
-      }
-    } catch {
+        }showToast({ type: "error", message });}} catch {
       setAiStatus("error");
-      showToast({ type: "error", message: "Network error while running AI sync." });
+      showToast({
+        type: "error",
+        message: "Network error while running AI sync."
+      });
     } finally {
       setIsAiUpdating(false);
       setTimeout(() => setAiStatus("idle"), 3000);
@@ -120,187 +140,174 @@ export default function ActiveCourseTrack({
 
   const weekdaysShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const focusSegments = 20;
-  const activeFocusSegments = Math.round((progress / 100) * focusSegments);
+  const activeFocusSegments = Math.round(progress / 100 * focusSegments);
 
   return (
-    <div
-      role="link"
-      tabIndex={0}
-      onClick={(e) => {
-        if (isNonNavigableTarget(e.target)) return;
-        handleCardNavigation();
-      }}
-      onKeyDown={(e) => {
-        if (isNonNavigableTarget(e.target)) return;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleCardNavigation();
-        }
-      }}
-      className="bg-white border border-[#e5e5e5] rounded-sm p-3 grid grid-cols-1 md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_auto] gap-3 md:items-center cursor-pointer"
-    >
-      {/* Modals */}
+    <div className="rounded-lg border">
       <AddPlanModal
         isOpen={showAddPlanModal}
         onClose={() => setShowAddPlanModal(false)}
         onSuccess={(saved) => setLocalPlan(saved)}
         course={{ id: course.id, title: course.title }}
-        existingPlan={localPlan}
-      />
+        existingPlan={localPlan} />
+      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto]">
+        <div
+          role="link"
+          tabIndex={0}
+          onClick={handleCardNavigation}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleCardNavigation();
+            }
+          }}
+          className="cursor-pointer space-y-1 p-2"
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto whitespace-nowrap">
+              <UniversityIcon
+                name={course.university}
+                size={32}
+                className="shrink-0 bg-gray-50 border border-gray-100" />
 
-      {/* Top Section */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 min-w-0">
-          <UniversityIcon
-            name={course.university}
-            size={32}
-            className="flex-shrink-0 bg-gray-50 rounded-lg border border-gray-100"
-          />
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-[11px] font-medium text-[#4d4d4d] leading-none">
-                {course.university}
-              </span>
-              <span className="w-0.5 h-0.5 bg-gray-200 rounded-full"></span>
-              <span className="text-[11px] text-[#777]">
-                {course.courseCode}
-              </span>
+              <div className="min-w-0">
+                <span className="text-[11px] text-[#777]">{course.university} · {course.courseCode}</span>
+                <h3 className="truncate text-base font-semibold tracking-tight text-[#1f1f1f]">
+                  <Link href={detailHref}>{course.title}</Link>
+                </h3>
+              </div>
             </div>
-            <h3 className="text-base font-semibold text-[#1f1f1f] tracking-tight leading-tight line-clamp-1">
-              <Link href={detailHref}>{course.title}</Link>
-            </h3>
-            <div className="mt-1 flex items-center gap-1.5">
-              {course.aiPlanSummary?.days ? (
-                <span className="text-[10px] rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-medium text-emerald-800">
-                  {course.aiPlanSummary.nextDate ? `AI Plan ${course.aiPlanSummary.nextDate}` : "AI Plan Ready"}{course.aiPlanSummary.nextFocus ? ` · ${course.aiPlanSummary.nextFocus}` : ""}
-                </span>
-              ) : (
-                <span className="text-[10px] rounded border border-[#e3e3e3] bg-[#f8f8f8] px-1.5 py-0.5 font-medium text-[#666]">
-                  AI Plan pending sync
-                </span>
-              )}
+            <div className="ml-auto flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+              {course.aiPlanSummary?.days ?
+              <Badge variant="secondary">
+                  {course.aiPlanSummary.nextDate ?
+                `AI Plan ${course.aiPlanSummary.nextDate}` :
+                "AI Plan Ready"}
+                  {course.aiPlanSummary.nextFocus ?
+                ` · ${course.aiPlanSummary.nextFocus}` :
+                ""}
+                </Badge> :
+              <Badge variant="secondary">AI Plan pending sync</Badge>}
+              {localPlan ?
+              <>
+                  <Badge>{localPlan.days_of_week.map((d) => weekdaysShort[d]).join("/")}</Badge>
+                  <span className="inline-flex items-center gap-0.5 text-[11px] text-[#555] leading-none">
+                    <Clock className="h-3.5 w-3.5" />
+                    {localPlan.start_time.slice(0, 5)} - {localPlan.end_time.slice(0, 5)}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {new Date(localPlan.start_date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric"
+                  })}
+                    {" "}to{" "}
+                    {new Date(localPlan.end_date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric"
+                  })}
+                  </span>
+                </> :
+              <p className="text-[11px] italic text-muted-foreground leading-none">No schedule defined</p>}
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Logistics Section */}
-      <div className="space-y-2">
-        <div className="flex items-end justify-between">
-          <div className="flex flex-col">
-            <span className="text-[9px] font-bold text-[#c0c0c0] uppercase tracking-wider mb-0.5">
-              Logistics
-            </span>
-            {localPlan ? (
-              <div className="flex items-center gap-1 text-[10px] font-medium text-[#666]">
-                <Clock className="w-2.5 h-2.5" />
-                <span>
-                  {localPlan.days_of_week
-                    .map((d) => weekdaysShort[d].toUpperCase())
-                    .join("/")}{" "}
-                  • {localPlan.start_time.slice(0, 5)} •{" "}
-                  {new Date(localPlan.start_date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                  -
-                  {new Date(localPlan.end_date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-              </div>
-            ) : (
-              <div className="text-[10px] font-medium text-[#ababab] italic">
-                No schedule defined
-              </div>
+          <div className="flex items-center gap-[2px]">
+            {Array.from({ length: focusSegments }).map((_, index) =>
+            <span
+              key={index}
+              className={`h-1 flex-1 transition-colors ${
+              index < activeFocusSegments ?
+              "bg-black" :
+              "bg-[#ececec]"}`
+              } />
+
             )}
           </div>
-          <span className="text-lg font-semibold tracking-tight text-[#1f1f1f]">
-            {progress}%
-          </span>
         </div>
+        <div
+          data-no-card-nav="true"
+          className="flex items-center gap-2 border-t p-1 md:border-t-0">
+          <Separator orientation="vertical" className="h-5" />
+          <p className="text-sm font-semibold tracking-tight text-[#1f1f1f] w-8">{progress}%</p>
+          <Separator orientation="vertical" className="h-5" />
+          <ButtonGroup className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" type="button">
+                  {isAiUpdating ?
+                  <Loader2 className="animate-spin" /> :
 
-        <div className="relative h-3 flex items-center">
-          <div className="absolute inset-0 flex items-center gap-1">
-            {Array.from({ length: focusSegments }).map((_, index) => (
-              <span
-                key={index}
-                className={`h-2 flex-1 rounded-[2px] transition-colors ${
-                  index < activeFocusSegments
-                    ? "bg-brand-blue"
-                    : "bg-gray-100 border border-gray-100"
-                }`}
-              />
-            ))}
-          </div>
+                  <Sparkles />
+                  }
+                  <span className="uppercase">{aiSourceMode}</span>
+                  <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>AI Sync Mode</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={aiSourceMode}
+                    onValueChange={(next) => {
+                      const nextMode = next as AiSyncSourceMode;
+                      setAiSourceMode(nextMode);
+                      try {
+                        window.localStorage.setItem(
+                          AI_SYNC_MODE_STORAGE_KEY,
+                          nextMode
+                        );
+                      } catch {
+
+
+
+                        // Ignore localStorage errors.
+                      }}}>
+                    
+                    <DropdownMenuRadioItem value="auto">
+                      Auto
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="existing">
+                      Existing
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="fresh">
+                      Fresh
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={handleAiSync} disabled={isAiUpdating}>
+                    
+                    {isAiUpdating ?
+                    <Loader2 className="w-3 h-3 animate-spin" /> :
+
+                    <Sparkles className="w-3 h-3" />
+                    }
+                    Run AI Sync
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                href={detailHref}
+                title="Open course"
+                aria-label="Open course">
+                
+                <ExternalLink />
+              </Link>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAddPlanModal(true)}>
+              {localPlan ? <CalendarCheck /> : <CalendarPlus />}
+            </Button>
+          </ButtonGroup>
         </div>
       </div>
+    </div>);
 
-      {/* Actions */}
-      <div data-no-card-nav="true" className="flex items-center gap-2 pt-2 border-t border-[#f0f0f0] md:pt-0 md:border-t-0 md:pl-2 md:border-l md:border-[#f0f0f0]">
-        <div className="flex items-center gap-1.5 flex-1 justify-end">
-          <select
-            value={aiSourceMode}
-            onChange={(e) => {
-              const next = e.target.value as AiSyncSourceMode;
-              setAiSourceMode(next);
-              try {
-                window.localStorage.setItem(AI_SYNC_MODE_STORAGE_KEY, next);
-              } catch {
-                // Ignore localStorage errors.
-              }
-            }}
-            className="h-7 rounded-md border border-[#d3d3d3] bg-white px-1.5 text-[10px] text-[#555] outline-none hover:bg-[#f8f8f8]"
-            title="AI Sync mode"
-            aria-label="AI Sync mode"
-          >
-            <option value="auto">Auto</option>
-            <option value="existing">Existing</option>
-            <option value="fresh">Fresh</option>
-          </select>
-
-          <Link
-            href={detailHref}
-            className="w-7 h-7 rounded-md flex items-center justify-center transition-all border bg-white text-[#666] border-[#d3d3d3] hover:bg-[#f0f0f0] hover:text-[#1f1f1f]"
-            title="Open course"
-            aria-label="Open course"
-          >
-            <ExternalLink className="w-3 h-3" />
-          </Link>
-
-          <button
-            onClick={handleAiSync}
-            disabled={isAiUpdating}
-            className={`w-7 h-7 rounded-md flex items-center justify-center transition-all border disabled:opacity-50 ${
-              aiStatus === "success"
-                ? "bg-white text-emerald-600 border-emerald-300"
-                : aiStatus === "error"
-                  ? "bg-white text-rose-500 border-rose-300"
-                  : "bg-white text-[#666] border-[#d3d3d3] hover:bg-[#f0f0f0] hover:text-[#1f1f1f]"
-            }`}
-            title="AI Sync"
-            aria-label="AI Sync course intel"
-          >
-            {isAiUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-          </button>
-
-          <button
-            onClick={() => setShowAddPlanModal(true)}
-            className={`w-7 h-7 rounded-md flex items-center justify-center transition-all border ${
-              localPlan
-                ? "bg-white text-[#1f1f1f] border-[#d3d3d3] hover:bg-[#f5f5f5]"
-                : "bg-white text-[#666] border-[#d3d3d3] hover:bg-[#f0f0f0] hover:text-[#1f1f1f]"
-            }`}
-          >
-            {localPlan ? (
-              <CalendarCheck className="w-3 h-3" />
-            ) : (
-              <CalendarPlus className="w-3 h-3" />
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 }

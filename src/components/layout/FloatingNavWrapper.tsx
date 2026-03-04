@@ -24,8 +24,8 @@ export default function FloatingNavWrapper({
       <div
         className={`pointer-events-auto w-full transition-[transform,background-color,border-color,box-shadow,border-radius,backdrop-filter,padding] duration-300 ease-out ${
           scrolled
-            ? "max-w-5xl mt-3 rounded-2xl border border-black/10 bg-white/85 backdrop-blur-xl shadow-[0_10px_34px_rgba(0,0,0,0.08)] px-2 sm:px-4"
-            : `${initialClassName} rounded-none px-0`
+            ? "max-w-5xl mt-3 border border-black/10 bg-white/85 backdrop-blur-xl shadow-[0_10px_34px_rgba(0,0,0,0.08)] px-2 sm:px-4"
+            : `${initialClassName} px-0`
         }`}
       >
         {children(scrolled)}

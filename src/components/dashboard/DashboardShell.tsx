@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import LeftRail from "@/components/dashboard/LeftRail";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 const LEFT_RAIL_COLLAPSED_KEY = "cc:dashboard:left-rail-collapsed";
 
@@ -31,6 +33,10 @@ interface DashboardShellProps {
 }
 
 export default function DashboardShell({ labels, children }: DashboardShellProps) {
+  const pathname = usePathname();
+  const isScheduleRoute = pathname.startsWith("/study-schedule");
+  const isFlushScrollRoute = isScheduleRoute;
+
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -41,26 +47,33 @@ export default function DashboardShell({ labels, children }: DashboardShellProps
     }
   });
 
-  const handleToggle = () => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem(LEFT_RAIL_COLLAPSED_KEY, String(next));
-      } catch {
-        // Ignore localStorage errors.
-      }
-      return next;
-    });
-  };
-
   return (
-    <div className="h-full flex overflow-hidden">
-      <LeftRail labels={labels} collapsed={collapsed} onToggle={handleToggle} />
-      <section className="flex-1 min-w-0 h-full overflow-hidden p-1.5 sm:p-2">
-        <div id="dashboard-scroll" className="h-full rounded-md bg-[#fcfcfc] px-2 pt-[2.75rem] pb-0 sm:px-3 sm:pt-3 sm:pb-3 overflow-y-auto">
+    <SidebarProvider
+      className="h-svh min-h-0 overflow-hidden overscroll-none"
+      open={!collapsed}
+      onOpenChange={(open) => {
+        const nextCollapsed = !open;
+        setCollapsed(nextCollapsed);
+        try {
+          window.localStorage.setItem(LEFT_RAIL_COLLAPSED_KEY, String(nextCollapsed));
+        } catch {
+          // Ignore localStorage errors.
+        }
+      }}
+    >
+      <LeftRail labels={labels} />
+      <SidebarInset className="h-svh min-w-0 overflow-hidden overscroll-none">
+        <div
+          id="dashboard-scroll"
+          className={`h-full w-full ${
+            isFlushScrollRoute
+              ? "overflow-y-auto overflow-x-hidden overscroll-contain"
+              : "overflow-y-auto overflow-x-hidden overscroll-contain p-4"
+          }`}
+        >
           {children}
         </div>
-      </section>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

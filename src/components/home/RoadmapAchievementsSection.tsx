@@ -4,11 +4,12 @@ import { useEffect, useMemo } from "react";
 import AchievementCard from "@/components/home/AchievementCard";
 import { useRoadmapStore } from "@/store/useRoadmapStore";
 import { Course } from "@/types";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";import { Card } from "@/components/ui/card";
 
 type CompletedCourse = Course & {
   gpa?: number;
   score?: number;
-  attendance?: { attended: number; total: number };
+  attendance?: {attended: number;total: number;};
   updated_at: string;
 };
 
@@ -23,7 +24,7 @@ export default function RoadmapAchievementsSection({
   availableSemesters,
   completed,
   title,
-  emptyText,
+  emptyText
 }: RoadmapAchievementsSectionProps) {
   const selectedSemester = useRoadmapStore((s) => s.selectedSemester);
   const setSelectedSemester = useRoadmapStore((s) => s.setSelectedSemester);
@@ -41,37 +42,41 @@ export default function RoadmapAchievementsSection({
   }, [completed, selectedSemester]);
 
   return (
-    <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
+    <Card>
       <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h3 className="text-base font-semibold text-[#1f1f1f]">{title}</h3>
 
-        {availableSemesters.length > 0 && (
-          <div className="relative min-w-[180px]">
-            <select
-              value={selectedSemester}
-              onChange={(e) => setSelectedSemester(e.target.value)}
-              className="h-8 w-full appearance-none rounded-md border border-[#d3d3d3] bg-white px-3 text-[13px] text-[#3b3b3b] outline-none transition-colors hover:bg-[#f8f8f8] focus:border-[#c8c8c8]"
-            >
-              <option value="all">All Semesters</option>
-              {availableSemesters.map((sem) => (
-                <option key={sem} value={sem}>
-                  {sem}
-                </option>
-              ))}
-            </select>
+        {availableSemesters.length > 0 &&
+        <div className="relative min-w-[180px]">
+            <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Semesters</SelectLabel>
+                  <SelectItem value="all">All Semesters</SelectItem>
+                  {availableSemesters.map((sem) =>
+                <SelectItem key={sem} value={sem}>
+                      {sem}
+                    </SelectItem>
+                )}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-        )}
+        }
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-1.5">
-        {filteredAchievements.length > 0 ? (
-          filteredAchievements.map((course) => (
-            <AchievementCard key={course.id} course={course} completionDate={course.updated_at} />
-          ))
-        ) : (
-          <p className="text-sm text-[#8a8a8a]">{emptyText}</p>
-        )}
+        {filteredAchievements.length > 0 ?
+        filteredAchievements.map((course) =>
+        <AchievementCard key={course.id} course={course} completionDate={course.updated_at} />
+        ) :
+
+        <p className="text-sm text-[#8a8a8a]">{emptyText}</p>
+        }
       </div>
-    </section>
-  );
+    </Card>);
+
 }

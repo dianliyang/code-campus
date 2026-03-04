@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { externalApiOpenApiSpec } from "@/lib/external-api-openapi";
+import { externalApiOpenApiSpec } from "@/lib/external-api-openapi";import { Card } from "@/components/ui/card";
 
 type SwaggerWindow = Window & {
   SwaggerUIBundle?: (config: Record<string, unknown>) => unknown;
@@ -22,7 +22,7 @@ export default function ExternalApiSwagger() {
         deepLinking: true,
         defaultModelsExpandDepth: 2,
         docExpansion: "list",
-        displayRequestDuration: true,
+        displayRequestDuration: true
       });
     };
 
@@ -55,10 +55,10 @@ export default function ExternalApiSwagger() {
   }, [spec]);
 
   return (
-    <div className="h-full min-h-0 overflow-hidden rounded-md border border-[#e5e7eb] bg-white">
+    <Card>
       <div className="h-full overflow-auto p-2">
         <div ref={rootRef} className="swagger-ui-host" />
       </div>
-    </div>
-  );
+    </Card>);
+
 }

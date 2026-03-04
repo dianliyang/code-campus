@@ -2,15 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
   deactivateAiModelPricing,
   updateAiPreferences,
   updateAiPromptTemplates,
-  upsertAiModelPricing,
-} from "@/actions/profile";
+  upsertAiModelPricing } from
+"@/actions/profile";
 import { AI_PROVIDERS, type AIProvider } from "@/lib/ai/models-client";
 import { useAppToast } from "@/components/common/AppToastProvider";
-import { Save, Loader2, Cpu, BarChart2, Sparkles, Trash2, CheckCircle2, AlertTriangle, Plus } from "lucide-react";
+import { Save, Loader2, BarChart2, Sparkles, Trash2, CheckCircle2, AlertTriangle, Plus } from "lucide-react";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";import { Card } from "@/components/ui/card";
 
 type AISectionId = "engine" | "study-planner" | "course-intel" | "usage";
 
@@ -21,14 +26,14 @@ interface AISettingsCardProps {
   initialWebSearchEnabled: boolean;
   initialPlannerPromptTemplate: string;
   initialCourseIntelPromptTemplate: string;
-  modelCatalog: { perplexity: string[]; gemini: string[]; openai: string[]; vertex?: string[] };
+  modelCatalog: {perplexity: string[];gemini: string[];openai: string[];vertex?: string[];};
 }
 
 type UsageStats = {
-  totals: { requests: number; tokens_input: number; tokens_output: number; cost_usd: number };
-  byFeature: Record<string, { requests: number; cost_usd: number }>;
-  byModel: Record<string, { requests: number; cost_usd: number }>;
-  recentTotals: { requests: number; cost_usd: number };
+  totals: {requests: number;tokens_input: number;tokens_output: number;cost_usd: number;};
+  byFeature: Record<string, {requests: number;cost_usd: number;}>;
+  byModel: Record<string, {requests: number;cost_usd: number;}>;
+  recentTotals: {requests: number;cost_usd: number;};
   recentResponses: Array<{
     id: number;
     feature: string;
@@ -40,7 +45,7 @@ type UsageStats = {
     cost_usd: number;
     created_at: string;
   }>;
-  daily: Record<string, { requests: number; cost_usd: number }>;
+  daily: Record<string, {requests: number;cost_usd: number;}>;
 };
 
 type ProviderHealth = {
@@ -58,7 +63,7 @@ type ProviderHealth = {
 type AIHealthStats = {
   healthy: boolean;
   providers: ProviderHealth[];
-  active?: { provider: string | null; model: string | null };
+  active?: {provider: string | null;model: string | null;};
   checked_at: string;
 };
 
@@ -67,37 +72,37 @@ const AI_HEALTH_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function UsageBarChart({ daily }: { daily: Record<string, { requests: number; cost_usd: number }> }) {
+function UsageBarChart({ daily }: {daily: Record<string, {requests: number;cost_usd: number;}>;}) {
   const entries = Object.entries(daily);
   const max = Math.max(...entries.map(([, v]) => v.requests), 1);
   return (
-    <div className="rounded-md border border-[#f0f0f0] p-3">
+    <Card>
       <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest mb-3">Last 7 Days</p>
       <div className="flex items-end gap-1.5 h-16">
         {entries.map(([date, val]) => {
-          const pct = (val.requests / max) * 100;
+          const pct = val.requests / max * 100;
           const dayName = DAY_LABELS[new Date(date + "T12:00:00").getDay()];
           return (
             <div key={date} className="flex-1 flex flex-col items-center gap-1 group relative">
-              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-[#1f1f1f] text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-[#1f1f1f] text-white text-[10px] px-1.5 py-0.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                 {val.requests} req · ${val.cost_usd.toFixed(3)}
               </div>
               <div className="w-full flex items-end" style={{ height: "52px" }}>
                 <div
-                  className="w-full rounded-t-sm transition-all"
+                  className="w-full transition-all"
                   style={{
                     height: `${Math.max(pct, val.requests > 0 ? 6 : 2)}%`,
-                    backgroundColor: val.requests > 0 ? "#1f1f1f" : "#e5e5e5",
-                  }}
-                />
+                    backgroundColor: val.requests > 0 ? "#1f1f1f" : "#e5e5e5"
+                  }} />
+                
               </div>
               <span className="text-[9px] text-[#aaa]">{dayName}</span>
-            </div>
-          );
+            </div>);
+
         })}
       </div>
-    </div>
-  );
+    </Card>);
+
 }
 
 const FEATURE_LABELS: Record<string, string> = {
@@ -105,13 +110,13 @@ const FEATURE_LABELS: Record<string, string> = {
   topics: "Topics",
   "course-update": "Course Update",
   "learning-path": "Learning Path",
-  "schedule-parse": "Schedule Parse",
+  "schedule-parse": "Schedule Parse"
 };
 
 const PROVIDER_HINTS: Record<AIProvider, string> = {
   perplexity: "Best for grounded web retrieval",
   gemini: "Fast general-purpose generation",
-  openai: "Strong structured output quality",
+  openai: "Strong structured output quality"
 };
 
 export default function AISettingsCard({
@@ -121,7 +126,7 @@ export default function AISettingsCard({
   initialWebSearchEnabled,
   initialPlannerPromptTemplate,
   initialCourseIntelPromptTemplate,
-  modelCatalog,
+  modelCatalog
 }: AISettingsCardProps) {
   const router = useRouter();
   const perplexityModels = modelCatalog.perplexity;
@@ -133,7 +138,7 @@ export default function AISettingsCard({
     return "perplexity";
   };
   const modelsForProvider = useCallback((p: AIProvider) =>
-    p === "gemini" ? geminiModels : p === "openai" ? openaiModels : perplexityModels,
+  p === "gemini" ? geminiModels : p === "openai" ? openaiModels : perplexityModels,
   [geminiModels, openaiModels, perplexityModels]);
   const [provider, setProvider] = useState<AIProvider>(normalizeProvider(initialProvider));
   const [defaultModel, setDefaultModel] = useState(initialModel);
@@ -152,18 +157,18 @@ export default function AISettingsCard({
   const [healthStats, setHealthStats] = useState<AIHealthStats | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
   const totalCostUsd = Number(usageStats?.totals?.cost_usd || 0);
-  const sortedFeatureStats = usageStats
-    ? Object.entries(usageStats.byFeature).sort((a, b) => {
-        const costDiff = Number(b[1].cost_usd || 0) - Number(a[1].cost_usd || 0);
-        return costDiff !== 0 ? costDiff : b[1].requests - a[1].requests;
-      })
-    : [];
-  const sortedModelStats = usageStats
-    ? Object.entries(usageStats.byModel).sort((a, b) => {
-        const costDiff = Number(b[1].cost_usd || 0) - Number(a[1].cost_usd || 0);
-        return costDiff !== 0 ? costDiff : b[1].requests - a[1].requests;
-      })
-    : [];
+  const sortedFeatureStats = usageStats ?
+  Object.entries(usageStats.byFeature).sort((a, b) => {
+    const costDiff = Number(b[1].cost_usd || 0) - Number(a[1].cost_usd || 0);
+    return costDiff !== 0 ? costDiff : b[1].requests - a[1].requests;
+  }) :
+  [];
+  const sortedModelStats = usageStats ?
+  Object.entries(usageStats.byModel).sort((a, b) => {
+    const costDiff = Number(b[1].cost_usd || 0) - Number(a[1].cost_usd || 0);
+    return costDiff !== 0 ? costDiff : b[1].requests - a[1].requests;
+  }) :
+  [];
 
   const loadHealth = useCallback(async (force = false) => {
     setHealthLoading(true);
@@ -171,7 +176,7 @@ export default function AISettingsCard({
       if (!force && typeof window !== "undefined") {
         const raw = window.localStorage.getItem(AI_HEALTH_CACHE_KEY);
         if (raw) {
-          const parsed = JSON.parse(raw) as { cachedAt?: number; data?: AIHealthStats };
+          const parsed = JSON.parse(raw) as {cachedAt?: number;data?: AIHealthStats;};
           const cachedAt = Number(parsed?.cachedAt || 0);
           if (cachedAt > 0 && parsed?.data && Date.now() - cachedAt < AI_HEALTH_CACHE_TTL_MS) {
             setHealthStats(parsed.data);
@@ -188,7 +193,7 @@ export default function AISettingsCard({
           healthy: Boolean(d.healthy),
           providers: Array.isArray(d.providers) ? d.providers : [],
           active: d.active && typeof d.active === "object" ? d.active : undefined,
-          checked_at: typeof d.checked_at === "string" ? d.checked_at : new Date().toISOString(),
+          checked_at: typeof d.checked_at === "string" ? d.checked_at : new Date().toISOString()
         };
         setHealthStats(next);
         if (typeof window !== "undefined") {
@@ -196,12 +201,12 @@ export default function AISettingsCard({
         }
       }
     } catch {
-      // Ignore transient health load errors.
-    } finally {
-      setHealthLoading(false);
-    }
-  }, []);
 
+
+
+
+      // Ignore transient health load errors.
+    } finally {setHealthLoading(false);}}, []);
   useEffect(() => {
     const available = modelsForProvider(provider);
     if (available.length === 0) return;
@@ -213,18 +218,18 @@ export default function AISettingsCard({
   useEffect(() => {
     if (section !== "usage") return;
     setUsageLoading(true);
-    fetch("/api/ai/usage/stats", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d) => {
-        if (!d.error) {
-          setUsageStats({
-            ...d,
-            recentResponses: Array.isArray(d.recentResponses) ? d.recentResponses : [],
-          });
-        }
-      })
-      .catch(() => {})
-      .finally(() => setUsageLoading(false));
+    fetch("/api/ai/usage/stats", { cache: "no-store" }).
+    then((r) => r.json()).
+    then((d) => {
+      if (!d.error) {
+        setUsageStats({
+          ...d,
+          recentResponses: Array.isArray(d.recentResponses) ? d.recentResponses : []
+        });
+      }
+    }).
+    catch(() => {}).
+    finally(() => setUsageLoading(false));
   }, [section]);
 
   useEffect(() => {
@@ -232,7 +237,7 @@ export default function AISettingsCard({
     void loadHealth(false);
   }, [section, loadHealth]);
 
-  const saveProviderSettings = () => {
+  const saveProviderSettings = useCallback(() => {
     setIsSavingProvider(true);
     void (async () => {
       try {
@@ -245,7 +250,14 @@ export default function AISettingsCard({
         setIsSavingProvider(false);
       }
     })();
-  };
+  }, [provider, defaultModel, webSearchEnabled, router, showToast]);
+
+  useEffect(() => {
+    if (section !== "engine") return;
+    const handleSync = () => saveProviderSettings();
+    window.addEventListener("cc:sync-engine", handleSync);
+    return () => window.removeEventListener("cc:sync-engine", handleSync);
+  }, [section, saveProviderSettings]);
 
   const handleAddModelToCatalog = (modelName: string) => {
     setIsSavingCatalog(true);
@@ -255,7 +267,7 @@ export default function AISettingsCard({
           provider,
           model: modelName.trim(),
           inputPerMillion: 0,
-          outputPerMillion: 0,
+          outputPerMillion: 0
         });
         showToast({ type: "success", message: "Model added to provider catalog." });
         router.refresh();
@@ -316,53 +328,38 @@ export default function AISettingsCard({
     <div className="h-full flex flex-col">
       {/* 1. Provider Configuration */}
       <div className={section === "engine" ? "h-full flex flex-col" : "hidden"}>
-        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
-            <div className="flex items-center gap-2 text-[#222]">
-              <Cpu className="w-4 h-4 text-[#777]" />
-              <span className="text-sm font-semibold">Engine Configuration</span>
-            </div>
-            <button
-              onClick={saveProviderSettings}
-              disabled={isSavingProvider}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
-            >
-              {isSavingProvider ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-              Sync Engine
-            </button>
-          </div>
-
-          <div className="flex-1 min-h-0 space-y-4 overflow-y-auto pr-1">
-            <div className="rounded-md border border-[#e8e8e8] bg-[#fcfcfc] p-3">
+        <div className="flex flex-col h-full">
+          <div className="flex-1 min-h-0 space-y-4 overflow-y-auto">
+            <Card>
               <div className="flex items-center justify-between gap-2 mb-2">
                 <p className="text-xs font-semibold text-[#5a5a5a] uppercase tracking-wide">AI Provider Health</p>
-                <button
-                  onClick={() => {
-                    void loadHealth(true);
-                  }}
-                  disabled={healthLoading}
-                  className="inline-flex h-7 items-center gap-1 rounded-md border border-[#d8d8d8] bg-white px-2 text-[11px] font-medium text-[#444] hover:bg-[#f8f8f8] disabled:opacity-60"
-                >
-                  {healthLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                <Button variant="outline"
+                onClick={() => {
+                  void loadHealth(true);
+                }}
+                disabled={healthLoading}>
+
+                  
+                  {healthLoading ? <Loader2 className="animate-spin" /> : null}
                   Refresh
-                </button>
+                </Button>
               </div>
-              {healthLoading ? (
-                <div className="flex items-center gap-2 text-[12px] text-[#777]">
+              {healthLoading ?
+              <div className="flex items-center gap-2 text-[12px] text-[#777]">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   Checking environment status...
-                </div>
-              ) : !healthStats ? (
-                <p className="text-[12px] text-[#8a8a8a]">Health status unavailable.</p>
-              ) : (
-                <div className="space-y-2">
+                </div> :
+              !healthStats ?
+              <p className="text-[12px] text-[#8a8a8a]">Health status unavailable.</p> :
+
+              <div className="space-y-2">
                   <div
-                    className={`rounded-md border px-2.5 py-2 text-[12px] ${
-                      healthStats.healthy
-                        ? "border-[#d6ebd6] bg-[#f6fbf6] text-[#256b25]"
-                        : "border-[#efd8d8] bg-[#fff7f7] text-[#8b3434]"
-                    }`}
-                  >
+                  className={` border px-2.5 py-2 text-[12px] ${
+                  healthStats.healthy ?
+                  "border-[#d6ebd6] bg-[#f6fbf6] text-[#256b25]" :
+                  "border-[#efd8d8] bg-[#fff7f7] text-[#8b3434]"}`
+                  }>
+                  
                     <div className="flex items-center gap-1.5">
                       {healthStats.healthy ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
                       <span className="font-medium">
@@ -371,128 +368,130 @@ export default function AISettingsCard({
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {healthStats.providers.map((item) => (
-                      <div key={item.provider} className="rounded-md border border-[#e9e9e9] bg-white p-2.5">
+                    {healthStats.providers.map((item) =>
+                  <Card key={item.provider}>
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-[12px] font-semibold capitalize text-[#333]">{item.provider}</span>
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                              item.healthy && item.probe?.ok !== false
-                                ? "border-[#cce5cc] bg-[#f3fbf3] text-[#2f7a2f]"
-                                : "border-[#f0d0d0] bg-[#fff6f6] text-[#9d3b3b]"
-                            }`}
-                          >
+                        className={`inline-flex items-center gap-1 border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                        item.healthy && item.probe?.ok !== false ?
+                        "border-[#cce5cc] bg-[#f3fbf3] text-[#2f7a2f]" :
+                        "border-[#f0d0d0] bg-[#fff6f6] text-[#9d3b3b]"}`
+                        }>
+                        
                             {item.healthy && item.probe?.ok !== false ? "Healthy" : "Needs attention"}
                           </span>
                         </div>
-                        {!item.healthy && item.missing.length > 0 ? (
-                          <p className="mt-1.5 text-[11px] text-[#8a4a4a] break-words">
+                        {!item.healthy && item.missing.length > 0 ?
+                    <p className="mt-1.5 text-[11px] text-[#8a4a4a] break-words">
                             Missing: {item.missing.join(", ")}
-                          </p>
-                        ) : (
-                          <p className="mt-1.5 text-[11px] text-[#5f7b5f]">Required environment vars detected.</p>
-                        )}
-                        {item.probe ? (
-                          <p className={`mt-1 text-[11px] ${item.probe.ok ? "text-[#5f7b5f]" : "text-[#8a4a4a]"}`}>
+                          </p> :
+
+                    <p className="mt-1.5 text-[11px] text-[#5f7b5f]">Required environment vars detected.</p>
+                    }
+                        {item.probe ?
+                    <p className={`mt-1 text-[11px] ${item.probe.ok ? "text-[#5f7b5f]" : "text-[#8a4a4a]"}`}>
                             Probe: {item.probe.ok ? "OK" : "Failed"}
                             {item.probe.status ? ` (HTTP ${item.probe.status})` : ""}
                             {item.probe.reason ? ` - ${item.probe.reason}` : ""}
-                          </p>
-                        ) : null}
-                      </div>
-                    ))}
+                          </p> :
+                    null}
+                      </Card>
+                  )}
                   </div>
-                  {healthStats.active ? (
-                    <p className="text-[11px] text-[#666]">
+                  {healthStats.active ?
+                <p className="text-[11px] text-[#666]">
                       Active engine: {healthStats.active.provider || "-"} / {healthStats.active.model || "-"}
-                    </p>
-                  ) : null}
+                    </p> :
+                null}
                   <p className="text-[10px] text-[#9a9a9a]">
                     Checked: {new Date(healthStats.checked_at).toLocaleString()}
                   </p>
                 </div>
-              )}
-            </div>
+              }
+            </Card>
 
-            <div className="rounded-md border border-[#e8e8e8] bg-[#fcfcfc] p-3">
+            <Card>
               <p className="text-xs font-semibold text-[#5a5a5a] mb-2 uppercase tracking-wide">Provider</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                {AI_PROVIDERS.map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => {
-                      const nextProvider = p as AIProvider;
-                      const available = modelsForProvider(nextProvider);
-                      setProvider(nextProvider);
-                      if (available.length > 0 && !available.includes(defaultModel)) setDefaultModel(available[0]);
-                    }}
-                    className={`rounded-md border px-3 py-2 text-left transition-colors ${
-                      provider === p
-                        ? "border-[#1f1f1f] bg-[#1f1f1f] text-white"
-                        : "border-[#d8d8d8] bg-white text-[#333] hover:bg-[#f8f8f8]"
-                    }`}
-                  >
-                    <p className="text-sm font-semibold capitalize">{p}</p>
+                {AI_PROVIDERS.map((p) =>
+                <Button variant="outline"
+                key={p}
+                onClick={() => {
+                  const nextProvider = p as AIProvider;
+                  const available = modelsForProvider(nextProvider);
+                  setProvider(nextProvider);
+                  if (available.length > 0 && !available.includes(defaultModel)) setDefaultModel(available[0]);
+                }}>
+
+
+
+
+
+                  
+                    <p className="font-semibold capitalize">{p}</p>
                     <p className={`text-[11px] mt-0.5 ${provider === p ? "text-[#efefef]" : "text-[#6f6f6f]"}`}>
                       {PROVIDER_HINTS[p as AIProvider]}
                     </p>
-                  </button>
-                ))}
+                  </Button>
+                )}
               </div>
-            </div>
+            </Card>
 
-            <div className="rounded-md border border-[#e8e8e8] bg-white p-3">
+            <Card>
               <div className="flex items-center justify-between gap-2 mb-2">
                 <p className="text-xs font-semibold text-[#5a5a5a] uppercase tracking-wide">Model</p>
                 <p className="text-[11px] text-[#7a7a7a]">Selected provider: <span className="font-semibold capitalize">{provider}</span></p>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const input = window.prompt(`Add model id for ${provider}`, "");
-                    const modelName = String(input || "").trim();
-                    if (!modelName) return;
-                    void handleAddModelToCatalog(modelName);
-                  }}
-                  disabled={isSavingCatalog}
-                  className="inline-flex h-9 items-center justify-center rounded-md border border-[#d8d8d8] bg-white px-2.5 text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
-                  title="Add model"
-                  aria-label="Add model"
-                >
-                  {isSavingCatalog ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                </button>
-                <select
-                  value={defaultModel}
-                  onChange={(e) => setDefaultModel(e.target.value)}
-                  className="h-9 flex-1 rounded-md border border-[#d8d8d8] bg-white px-2.5 text-[12px] font-mono text-[#333] outline-none focus:border-[#bcbcbc]"
-                >
-                  {modelsForProvider(provider).map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => void handleDeleteModelFromCatalog(defaultModel)}
-                  disabled={isSavingCatalog || !defaultModel}
-                  className="inline-flex h-9 items-center justify-center rounded-md border border-[#ebd0d0] bg-white px-2.5 text-[#9d3b3b] hover:bg-[#fff5f5] transition-colors disabled:opacity-50"
-                  title="Delete model"
-                  aria-label="Delete model"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
+                <Button variant="outline"
+                onClick={() => {
+                  const input = window.prompt(`Add model id for ${provider}`, "");
+                  const modelName = String(input || "").trim();
+                  if (!modelName) return;
+                  void handleAddModelToCatalog(modelName);
+                }}
+                disabled={isSavingCatalog}
 
-            <div className="rounded-md border border-[#e8e8e8] bg-white p-3">
+                title="Add model"
+                aria-label="Add model">
+                  
+                  {isSavingCatalog ? <Loader2 className="animate-spin" /> : <Plus />}
+                </Button>
+                <Select value={defaultModel || undefined} onValueChange={setDefaultModel}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Models</SelectLabel>
+                      {modelsForProvider(provider).map((m) =>
+                      <SelectItem key={m} value={m}>
+                          {m}
+                        </SelectItem>
+                      )}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline"
+                onClick={() => void handleDeleteModelFromCatalog(defaultModel)}
+                disabled={isSavingCatalog || !defaultModel}
+
+                title="Delete model"
+                aria-label="Delete model">
+                  
+                  <Trash2 />
+                </Button>
+              </div>
+            </Card>
+
+            <Card>
               <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={webSearchEnabled}
-                  onChange={(e) => setWebSearchEnabled(e.target.checked)}
-                  disabled={isSavingProvider}
-                  className="mt-1 w-4 h-4 rounded border-gray-300 text-[#1f1f1f] focus:ring-[#1f1f1f]"
-                />
+                  onCheckedChange={(checked) => setWebSearchEnabled(checked === true)}
+                  disabled={isSavingProvider} />
+                
                 <div>
                   <p className="text-sm font-semibold text-[#222]">Web Grounding</p>
                   <p className="text-xs text-[#666] mt-0.5">
@@ -500,7 +499,7 @@ export default function AISettingsCard({
                   </p>
                 </div>
               </label>
-            </div>
+            </Card>
 
           </div>
         </div>
@@ -508,130 +507,130 @@ export default function AISettingsCard({
 
       {/* 2. Study Planner Logic */}
       <div className={section === "study-planner" ? "h-full flex flex-col" : "hidden"}>
-        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
+        <Card>
+          <Card>
             <div className="flex items-center gap-2 text-[#222]">
               <Sparkles className="w-4 h-4 text-[#777]" />
               <span className="text-sm font-semibold">Study Planner Logic</span>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={savePlannerPrompt}
-                disabled={isSavingPlanner}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
-              >
-                {isSavingPlanner ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+              <Button variant="outline"
+              onClick={savePlannerPrompt}
+              disabled={isSavingPlanner}>
+
+                
+                {isSavingPlanner ? <Loader2 className="animate-spin" /> : <Save />}
                 Push Study Planner Logic
-              </button>
-              <button
-                onClick={() => setPlannerPromptTemplate("")}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-              >
+              </Button>
+              <Button variant="outline"
+              onClick={() => setPlannerPromptTemplate("")}>
+
+                
                 Clear
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
 
           <div className="flex-1 flex flex-col min-h-0 gap-3">
-            <textarea
+            <Textarea
               value={plannerPromptTemplate}
               onChange={(e) => setPlannerPromptTemplate(e.target.value)}
-              className="w-full flex-1 min-h-0 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              className="w-full flex-1 min-h-0 border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
               placeholder="ENTER_INSTRUCTION_SET..."
-              disabled={isSavingPlanner}
-            />
+              disabled={isSavingPlanner} />
+            
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* 3. Course Generation Logic */}
       <div className={section === "course-intel" ? "h-full flex flex-col" : "hidden"}>
-        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 flex flex-col h-full">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#efefef] shrink-0">
+        <Card>
+          <Card>
             <div className="flex items-center gap-2 text-[#222]">
               <Sparkles className="w-4 h-4 text-[#777]" />
               <span className="text-sm font-semibold">Course Generation Logic</span>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={saveCourseIntelPrompt}
-                disabled={isSavingCourseIntel}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#333] hover:bg-[#f8f8f8] transition-colors disabled:opacity-50"
-              >
-                {isSavingCourseIntel ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+              <Button variant="outline"
+              onClick={saveCourseIntelPrompt}
+              disabled={isSavingCourseIntel}>
+
+                
+                {isSavingCourseIntel ? <Loader2 className="animate-spin" /> : <Save />}
                 Save Generation Logic
-              </button>
-              <button
-                onClick={() => setCourseIntelPromptTemplate("")}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d3d3d3] bg-white px-2.5 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors"
-              >
+              </Button>
+              <Button variant="outline"
+              onClick={() => setCourseIntelPromptTemplate("")}>
+
+                
                 Clear
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
 
           <div className="flex-1 flex flex-col min-h-0 gap-3">
-            <textarea
+            <Textarea
               value={courseIntelPromptTemplate}
               onChange={(e) => setCourseIntelPromptTemplate(e.target.value)}
-              className="w-full flex-1 min-h-0 rounded-md border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
+              className="w-full flex-1 min-h-0 border border-[#d8d8d8] bg-white p-3 text-[13px] leading-relaxed text-[#333] outline-none transition-colors focus:border-[#bcbcbc] resize-none"
               placeholder="ENTER_INSTRUCTION_SET..."
-              disabled={isSavingCourseIntel}
-            />
+              disabled={isSavingCourseIntel} />
+            
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* 8. Usage Statistics */}
       <div className={section === "usage" ? "h-full flex flex-col overflow-y-auto" : "hidden"}>
-        <div className="bg-white border border-[#e5e5e5] rounded-md p-4 space-y-4">
-          <div className="flex items-center gap-2 text-[#222] pb-3 border-b border-[#efefef]">
+        <Card>
+          <Card>
             <BarChart2 className="w-4 h-4 text-[#777]" />
             <span className="text-sm font-semibold">Usage Statistics</span>
-          </div>
+          </Card>
 
-          {usageLoading ? (
-            <div className="flex items-center justify-center py-10" aria-live="polite" aria-busy="true">
+          {usageLoading ?
+          <div className="flex items-center justify-center py-10" aria-live="polite" aria-busy="true">
               <Loader2 className="w-4 h-4 animate-spin text-[#aaa]" />
-            </div>
-          ) : !usageStats || usageStats.totals.requests === 0 ? (
-            <p className="text-sm text-[#666] text-center py-6">No AI calls tracked yet.</p>
-          ) : (
-            <div className="space-y-4">
-              <section aria-label="Usage summary" className="rounded-md bg-[#fafafa] border border-[#ececec] p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="rounded-md border border-[#ededed] bg-white p-3">
+            </div> :
+          !usageStats || usageStats.totals.requests === 0 ?
+          <p className="text-sm text-[#666] text-center py-6">No AI calls tracked yet.</p> :
+
+          <div className="space-y-4">
+              <Card aria-label="Usage summary">
+                <Card>
                   <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Requests</p>
                   <p className="text-xl font-semibold text-[#111] mt-1">{usageStats.totals.requests.toLocaleString()}</p>
                   <p className="text-xs text-[#666] mt-1">{usageStats.recentTotals.requests.toLocaleString()} in last 7 days</p>
-                </div>
-                <div className="rounded-md border border-[#ededed] bg-white p-3">
+                </Card>
+                <Card>
                   <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Input Tokens</p>
                   <p className="text-xl font-semibold text-[#111] mt-1">{usageStats.totals.tokens_input.toLocaleString()}</p>
-                </div>
-                <div className="rounded-md border border-[#ededed] bg-white p-3">
+                </Card>
+                <Card>
                   <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Output Tokens</p>
                   <p className="text-xl font-semibold text-[#111] mt-1">{usageStats.totals.tokens_output.toLocaleString()}</p>
-                </div>
-                <div className="rounded-md border border-[#ededed] bg-white p-3">
+                </Card>
+                <Card>
                   <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Total Cost (USD)</p>
                   <p className="text-xl font-semibold text-[#111] mt-1">${usageStats.totals.cost_usd.toFixed(4)}</p>
                   <p className="text-xs text-[#666] mt-1">${usageStats.recentTotals.cost_usd.toFixed(4)} in last 7 days</p>
-                </div>
-              </section>
+                </Card>
+              </Card>
 
-              {usageStats.daily && (
-                <section aria-label="Last 7 days activity chart">
+              {usageStats.daily &&
+            <section aria-label="Last 7 days activity chart">
                   <UsageBarChart daily={usageStats.daily} />
                 </section>
-              )}
+            }
 
-              {usageStats.recentResponses.length > 0 && (
-                <section aria-label="Recent responses" className="rounded-md border border-[#eaeaea] overflow-hidden">
-                  <div className="px-3 py-2 bg-[#fafafa] border-b border-[#ececec]">
+              {usageStats.recentResponses.length > 0 &&
+            <Card aria-label="Recent responses">
+                  <Card>
                     <p className="text-xs font-semibold text-[#555] uppercase tracking-wide">
                       Recent AI Responses ({usageStats.recentResponses.length})
                     </p>
-                  </div>
+                  </Card>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-white">
@@ -645,67 +644,67 @@ export default function AISettingsCard({
                       </thead>
                       <tbody>
                         {usageStats.recentResponses.map((item) => {
-                          const featureLabel = FEATURE_LABELS[item.feature] ?? item.feature;
-                          const preset = (item.preset || "").trim();
-                          const isDuplicatePreset = preset.length > 0 && preset.toLowerCase() === featureLabel.toLowerCase();
-                          const featureText = isDuplicatePreset ? featureLabel : `${featureLabel}${preset ? ` · ${preset}` : ""}`;
-                          return (
-                            <tr key={item.id} className="border-b border-[#f6f6f6] last:border-b-0">
+                      const featureLabel = FEATURE_LABELS[item.feature] ?? item.feature;
+                      const preset = (item.preset || "").trim();
+                      const isDuplicatePreset = preset.length > 0 && preset.toLowerCase() === featureLabel.toLowerCase();
+                      const featureText = isDuplicatePreset ? featureLabel : `${featureLabel}${preset ? ` · ${preset}` : ""}`;
+                      return (
+                        <tr key={item.id} className="border-b border-[#f6f6f6] last:border-b-0">
                               <td className="px-3 py-2 text-[#222]">{featureText}</td>
                               <td className="px-3 py-2 text-[#444]">
-                                {(item.provider || "-")}/{(item.model || "-")}
+                                {item.provider || "-"}/{item.model || "-"}
                               </td>
                               <td className="px-3 py-2 text-right text-[#444]">
                                 in {item.tokens_input.toLocaleString()} / out {item.tokens_output.toLocaleString()}
                               </td>
                               <td className="px-3 py-2 text-right font-medium text-[#222]">${Number(item.cost_usd || 0).toFixed(4)}</td>
                               <td className="px-3 py-2 text-right text-[#666]">{new Date(item.created_at).toLocaleString()}</td>
-                            </tr>
-                          );
-                        })}
+                            </tr>);
+
+                    })}
                       </tbody>
                     </table>
                   </div>
-                </section>
-              )}
+                </Card>
+            }
 
-              {sortedFeatureStats.length > 0 && (
-                <section aria-label="Spend by feature" className="rounded-md border border-[#eaeaea] overflow-hidden">
-                  <div className="px-3 py-2 bg-[#fafafa] border-b border-[#ececec]">
+              {sortedFeatureStats.length > 0 &&
+            <Card aria-label="Spend by feature">
+                  <Card>
                     <p className="text-xs font-semibold text-[#555] uppercase tracking-wide">By Feature (Top Spend)</p>
-                  </div>
+                  </Card>
                   <div className="divide-y divide-[#f5f5f5]" role="list">
-                    {sortedFeatureStats.map(([feature, stat]) => (
-                      <div key={feature} className="px-3 py-3 flex items-center justify-between gap-4" role="listitem">
+                    {sortedFeatureStats.map(([feature, stat]) =>
+                <div key={feature} className="px-3 py-3 flex items-center justify-between gap-4" role="listitem">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm text-[#222]">{FEATURE_LABELS[feature] ?? feature}</span>
                             <span className="text-xs text-[#666]">{stat.requests.toLocaleString()} req</span>
                           </div>
-                          <div className="mt-2 h-2.5 w-full rounded bg-[#efefef]" aria-hidden="true">
+                          <div className="mt-2 h-2.5 w-full bg-[#efefef]" aria-hidden="true">
                             <div
-                              className="h-2.5 rounded bg-[#3a3a3a]"
-                              style={{ width: `${Math.min(100, totalCostUsd > 0 ? (Number(stat.cost_usd || 0) / totalCostUsd) * 100 : 0)}%` }}
-                            />
+                        className="h-2.5 bg-[#3a3a3a]"
+                        style={{ width: `${Math.min(100, totalCostUsd > 0 ? Number(stat.cost_usd || 0) / totalCostUsd * 100 : 0)}%` }} />
+                      
                           </div>
                           <p className="text-xs text-[#666] mt-1">
-                            {totalCostUsd > 0 ? `${((Number(stat.cost_usd || 0) / totalCostUsd) * 100).toFixed(1)}% of spend` : "0.0% of spend"}
+                            {totalCostUsd > 0 ? `${(Number(stat.cost_usd || 0) / totalCostUsd * 100).toFixed(1)}% of spend` : "0.0% of spend"}
                           </p>
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-sm font-semibold text-[#222]">${Number(stat.cost_usd || 0).toFixed(4)}</p>
                         </div>
                       </div>
-                    ))}
+                )}
                   </div>
-                </section>
-              )}
+                </Card>
+            }
 
-              {sortedModelStats.length > 0 && (
-                <section aria-label="Spend by model" className="rounded-md border border-[#eaeaea] overflow-hidden">
-                  <div className="px-3 py-2 bg-[#fafafa] border-b border-[#ececec]">
+              {sortedModelStats.length > 0 &&
+            <Card aria-label="Spend by model">
+                  <Card>
                     <p className="text-xs font-semibold text-[#555] uppercase tracking-wide">By Model (Top Spend)</p>
-                  </div>
+                  </Card>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-white">
@@ -717,8 +716,8 @@ export default function AISettingsCard({
                         </tr>
                       </thead>
                       <tbody>
-                    {sortedModelStats.map(([model, stat]) => (
-                      <tr key={model} className="border-b border-[#f6f6f6] last:border-b-0">
+                    {sortedModelStats.map(([model, stat]) =>
+                    <tr key={model} className="border-b border-[#f6f6f6] last:border-b-0">
                         <td className="px-3 py-2 font-mono text-[#222]">{model}</td>
                         <td className="px-3 py-2 text-right text-[#444]">{stat.requests.toLocaleString()}</td>
                         <td className="px-3 py-2 text-right text-[#444]">
@@ -726,16 +725,16 @@ export default function AISettingsCard({
                         </td>
                         <td className="px-3 py-2 text-right font-medium text-[#222]">${Number(stat.cost_usd || 0).toFixed(4)}</td>
                       </tr>
-                    ))}
+                    )}
                       </tbody>
                     </table>
                   </div>
-                </section>
-              )}
+                </Card>
+            }
             </div>
-          )}
-        </div>
+          }
+        </Card>
       </div>
-    </div>
-  );
+    </div>);
+
 }

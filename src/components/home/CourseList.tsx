@@ -5,12 +5,52 @@ import { Course, EnrolledCoursesResponse } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
 import CourseCard from "./CourseCard";
 import CourseListHeader from "./CourseListHeader";
-import Pagination from "./Pagination";
 import { useAppToast } from "@/components/common/AppToastProvider";
-import { Check, EyeOff, Loader2, Trash2, WandSparkles } from "lucide-react";
-import { clearTopicsForCoursesAction, generateTopicsForCoursesAction, hideCoursesAction } from "@/actions/courses";
-import { useRouter, useSearchParams } from "next/navigation";
+import {
+  EyeOff,
+  Loader2,
+  MoreHorizontalIcon,
+  Trash2,
+  WandSparkles,
+} from "lucide-react";
+import {
+  clearTopicsForCoursesAction,
+  generateTopicsForCoursesAction,
+  hideCoursesAction,
+  hideCourseAction,
+  toggleCourseEnrollmentAction,
+} from "@/actions/courses";
+import { useSearchParams } from "next/navigation";
 import { trackAiUsage } from "@/lib/ai/usage";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import UniversityIcon from "@/components/common/UniversityIcon";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface CourseListProps {
   initialCourses: Course[];
@@ -35,7 +75,6 @@ export default function CourseList({
   filterUniversities,
   filterSemesters,
 }: CourseListProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [enrolledIds, setEnrolledIds] = useState<number[]>(initialEnrolledIds);
@@ -47,8 +86,10 @@ export default function CourseList({
   const [isHidingSelected, setIsHidingSelected] = useState(false);
   const { showToast } = useAppToast();
   const observerTarget = useRef<HTMLDivElement>(null);
-  const selectAllRef = useRef<HTMLInputElement>(null);
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
+  const [actionLoadingIds, setActionLoadingIds] = useState<
+    Record<number, boolean>
+  >({});
 
   useEffect(() => {
     const savedMode = localStorage.getItem("courseViewMode");
@@ -62,16 +103,14 @@ export default function CourseList({
     setPage(currentPage);
     setSelectedCourseIds([]);
   }, [initialCourses, currentPage]);
-
   const visibleCourseIds = courses.map((course) => course.id);
-  const selectedVisibleCount = visibleCourseIds.filter((id) => selectedCourseIds.includes(id)).length;
-  const allVisibleSelected = visibleCourseIds.length > 0 && selectedVisibleCount === visibleCourseIds.length;
+  const selectedVisibleCount = visibleCourseIds.filter((id) =>
+    selectedCourseIds.includes(id),
+  ).length;
+  const allVisibleSelected =
+    visibleCourseIds.length > 0 &&
+    selectedVisibleCount === visibleCourseIds.length;
   const hasPartialSelection = selectedVisibleCount > 0 && !allVisibleSelected;
-
-  useEffect(() => {
-    if (!selectAllRef.current) return;
-    selectAllRef.current.indeterminate = hasPartialSelection;
-  }, [hasPartialSelection]);
 
   const handleViewModeChange = (mode: "list" | "grid") => {
     setViewMode(mode);
@@ -106,28 +145,14 @@ export default function CourseList({
     } catch (error) {
       showToast({
         type: "error",
-        message: error instanceof Error ? error.message : "Failed to hide selected courses.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to hide selected courses.",
       });
     } finally {
       setIsHidingSelected(false);
     }
-  };
-
-  const toggleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedCourseIds(visibleCourseIds);
-      return;
-    }
-    setSelectedCourseIds([]);
-  };
-
-  const toggleSelectOne = (courseId: number, checked: boolean) => {
-    setSelectedCourseIds((prev) => {
-      if (checked) {
-        return prev.includes(courseId) ? prev : [...prev, courseId];
-      }
-      return prev.filter((id) => id !== courseId);
-    });
   };
 
   const handleGenerateTopicsForSelected = async () => {
@@ -149,7 +174,8 @@ export default function CourseList({
     } catch (error) {
       showToast({
         type: "error",
-        message: error instanceof Error ? error.message : "Failed to generate topics.",
+        message:
+          error instanceof Error ? error.message : "Failed to generate topics.",
       });
     } finally {
       setIsGeneratingTopics(false);
@@ -169,7 +195,8 @@ export default function CourseList({
     } catch (error) {
       showToast({
         type: "error",
-        message: error instanceof Error ? error.message : "Failed to clear topics.",
+        message:
+          error instanceof Error ? error.message : "Failed to clear topics.",
       });
     } finally {
       setIsClearingTopics(false);
@@ -204,7 +231,9 @@ export default function CourseList({
       if (nextData.items && nextData.items.length > 0) {
         setCourses((prev) => {
           const existingIds = new Set(prev.map((c) => c.id));
-          const newItems = (nextData.items as Course[]).filter((c) => !existingIds.has(c.id));
+          const newItems = (nextData.items as Course[]).filter(
+            (c) => !existingIds.has(c.id),
+          );
           return [...prev, ...newItems];
         });
         setPage((prev) => prev + 1);
@@ -237,9 +266,64 @@ export default function CourseList({
   }, [loadMore, isLoading, page, totalPages]);
 
   const effectiveViewMode: "list" | "grid" = viewMode;
+  const refParams = searchParams.toString();
+  const createPageHref = (nextPage: number) => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("page", String(nextPage));
+    return `/courses?${next.toString()}`;
+  };
+  const pageNumbers = Array.from(
+    new Set([1, currentPage - 1, currentPage, currentPage + 1, totalPages]),
+  )
+    .filter((p) => p >= 1 && p <= totalPages)
+    .sort((a, b) => a - b);
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedCourseIds(visibleCourseIds);
+      return;
+    }
+    setSelectedCourseIds([]);
+  };
+
+  const toggleSelectOne = (courseId: number, checked: boolean) => {
+    setSelectedCourseIds((prev) => {
+      if (checked) return prev.includes(courseId) ? prev : [...prev, courseId];
+      return prev.filter((id) => id !== courseId);
+    });
+  };
+
+  const runRowAction = async (
+    courseId: number,
+    action: "toggle-enroll" | "hide",
+  ) => {
+    if (actionLoadingIds[courseId]) return;
+    setActionLoadingIds((prev) => ({ ...prev, [courseId]: true }));
+    const isEnrolled = enrolledIds.includes(courseId);
+    try {
+      if (action === "toggle-enroll") {
+        await toggleCourseEnrollmentAction(courseId, isEnrolled);
+        await fetchEnrolled();
+      } else {
+        await hideCourseAction(courseId);
+        handleHide(courseId);
+      }
+    } catch (error) {
+      showToast({
+        type: "error",
+        message: error instanceof Error ? error.message : "Action failed",
+      });
+    } finally {
+      setActionLoadingIds((prev) => {
+        const next = { ...prev };
+        delete next[courseId];
+        return next;
+      });
+    }
+  };
 
   return (
-    <main className="flex-grow space-y-3 min-w-0">
+    <main className="flex h-full min-h-0 min-w-0 flex-col gap-3">
       <CourseListHeader
         viewMode={effectiveViewMode}
         setViewMode={handleViewModeChange}
@@ -248,86 +332,182 @@ export default function CourseList({
         filterSemesters={filterSemesters}
       />
 
-      <div className={`bg-[#fcfcfc] rounded-lg overflow-hidden border border-[#e5e5e5] ${effectiveViewMode === "grid" ? "p-3" : ""}`}>
-        <div className={`hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide ${effectiveViewMode === "grid" ? "!hidden" : ""}`}>
-          <div className="w-4">
-            <label className="relative inline-flex h-4 w-4 cursor-pointer items-center justify-center">
-              <input
-                ref={selectAllRef}
-                type="checkbox"
-                checked={allVisibleSelected}
-                onChange={(event) => toggleSelectAll(event.target.checked)}
-                aria-label="Select all courses"
-                className="peer sr-only"
-              />
-              <span className="h-4 w-4 rounded-[4px] border border-[#cfcfcf] bg-white transition-colors peer-checked:border-[#2f2f2f] peer-checked:bg-[#2f2f2f]" />
-              {allVisibleSelected ? (
-                <Check className="pointer-events-none absolute h-3 w-3 text-white" />
-              ) : hasPartialSelection ? (
-                <span className="pointer-events-none absolute h-0.5 w-2 rounded-full bg-[#2f2f2f]" />
-              ) : null}
-            </label>
-          </div>
-          <div className="flex-1 min-w-0">Course</div>
-          <div className="w-[18%] flex items-center gap-1.5">
-            <span>Subdomain</span>
+      {effectiveViewMode === "list" ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="flex items-center justify-end gap-1.5 p-2 border-b border-[#e5e5e5]">
             {selectedCourseIds.length >= 2 ? (
-              <button
+              <Button
+                variant="outline"
                 type="button"
                 onClick={handleGenerateTopicsForSelected}
                 disabled={isGeneratingTopics}
-                className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
                 title="Generate subdomains for selected courses"
                 aria-label="Generate subdomains for selected courses"
               >
                 {isGeneratingTopics ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="animate-spin" />
                 ) : (
-                  <WandSparkles className="h-3 w-3" />
+                  <WandSparkles />
                 )}
-              </button>
+              </Button>
             ) : null}
             {selectedCourseIds.length >= 1 ? (
-              <button
+              <Button
+                variant="outline"
                 type="button"
                 onClick={handleClearTopicsForSelected}
                 disabled={isClearingTopics}
-                className="inline-flex h-5 w-5 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
                 title="Clear subdomains for selected courses"
                 aria-label="Clear subdomains for selected courses"
               >
                 {isClearingTopics ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="animate-spin" />
                 ) : (
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 />
                 )}
-              </button>
+              </Button>
             ) : null}
-          </div>
-          <div className="w-[8%]">Credit</div>
-          <div className="w-[10%]">Semester</div>
-          <div className="w-[5%] flex items-center justify-end gap-1 pr-1">
             {selectedCourseIds.length >= 1 ? (
-              <button
+              <Button
+                variant="outline"
                 type="button"
                 onClick={handleHideSelected}
                 disabled={isHidingSelected}
-                className="inline-flex h-5 w-5 shrink-0 p-0 items-center justify-center rounded border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] disabled:opacity-50"
                 title="Hide selected courses"
                 aria-label="Hide selected courses"
               >
                 {isHidingSelected ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="animate-spin" />
                 ) : (
-                  <EyeOff className="h-3 w-3" />
+                  <EyeOff />
                 )}
-              </button>
+              </Button>
             ) : null}
-            <span>Action</span>
           </div>
-        </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  <Checkbox
+                    checked={
+                      allVisibleSelected ||
+                      (hasPartialSelection ? "indeterminate" : false)
+                    }
+                    onCheckedChange={(checked) =>
+                      toggleSelectAll(checked === true)
+                    }
+                    aria-label="Select all courses"
+                  />
+                </TableHead>
+                <TableHead>Course</TableHead>
+                <TableHead>Subdomain</TableHead>
+                <TableHead>Credit</TableHead>
+                <TableHead>Semester</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {courses.map((course) => {
+                const latestSemester = getLatestSemesterLabel(
+                  course.semesters || [],
+                );
+                const detailHref = `/courses/${course.id}${refParams ? `?refParams=${encodeURIComponent(refParams)}` : ""}`;
+                const isEnrolled = enrolledIds.includes(course.id);
+                const isRowLoading = Boolean(actionLoadingIds[course.id]);
+                const primaryField = course.subdomain || course.fields?.[0];
 
-        <div className={effectiveViewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" : ""}>
+                return (
+                  <TableRow key={course.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedCourseIds.includes(course.id)}
+                        onCheckedChange={(checked) =>
+                          toggleSelectOne(course.id, checked === true)
+                        }
+                        aria-label={`Select ${course.title}`}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="min-w-0 flex items-start gap-3">
+                        <UniversityIcon
+                          name={course.university}
+                          size={26}
+                          className="bg-white border border-[#dfdfdf]"
+                        />
+                        <div className="min-w-0">
+                          <Link
+                            href={detailHref}
+                            prefetch={false}
+                            className="block"
+                          >
+                            <h2 className="text-[14px] md:text-[15px] font-medium text-[#2e2e2e] line-clamp-2 md:truncate hover:text-black transition-colors">
+                              {course.title}
+                            </h2>
+                            <p className="text-xs text-[#7a7a7a] truncate">
+                              {course.courseCode} · {course.university}
+                            </p>
+                          </Link>
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                            {latestSemester ? (
+                              <Badge>{latestSemester}</Badge>
+                            ) : null}
+                            {course.credit != null ? (
+                              <Badge>{course.credit} cr</Badge>
+                            ) : null}
+                            {primaryField ? (
+                              <Badge>{primaryField}</Badge>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{course.subdomain || "-"}</TableCell>
+                    <TableCell>{course.credit ?? "-"}</TableCell>
+                    <TableCell>{latestSemester ?? "-"}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={isRowLoading}
+                          >
+                            {isRowLoading ? (
+                              <Loader2 className="animate-spin" />
+                            ) : (
+                              <MoreHorizontalIcon />
+                            )}
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              void runRowAction(course.id, "toggle-enroll")
+                            }
+                          >
+                            {isEnrolled ? "Unenroll" : "Enroll"}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() =>
+                              void runRowAction(course.id, "hide")
+                            }
+                          >
+                            Hide
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 p-3">
           {courses.map((course, idx) => (
             <CourseCard
               key={course.id}
@@ -335,32 +515,94 @@ export default function CourseList({
               isInitialEnrolled={enrolledIds.includes(course.id)}
               onEnrollToggle={fetchEnrolled}
               onHide={handleHide}
-              viewMode={effectiveViewMode}
+              viewMode="grid"
               rowIndex={idx}
-              isSelected={selectedCourseIds.includes(course.id)}
-              onSelectChange={toggleSelectOne}
             />
           ))}
         </div>
+      )}
 
-        {courses.length === 0 && (
-          <div className="text-center py-16">
-            <h3 className="text-sm font-semibold text-slate-900">{dict?.empty_header || "No matches found"}</h3>
-            <p className="text-sm text-slate-500 mt-1">{dict?.empty_desc || "Try adjusting your current filters."}</p>
-          </div>
-        )}
-      </div>
+      {courses.length === 0 && (
+        <div className="text-center py-16">
+          <h3 className="text-sm font-semibold text-slate-900">
+            {dict?.empty_header || "No matches found"}
+          </h3>
+          <p className="text-sm text-slate-500 mt-1">
+            {dict?.empty_desc || "Try adjusting your current filters."}
+          </p>
+        </div>
+      )}
 
       <div ref={observerTarget} className="md:hidden py-4 flex justify-center">
-        {isLoading && <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />}
+        {isLoading && (
+          <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
+        )}
         {!isLoading && page >= totalPages && courses.length > 0 && (
           <span className="text-xs text-slate-400">End of catalog</span>
         )}
       </div>
 
-      <div className="hidden md:block sticky bottom-0 bg-[#fcfcfc]">
-        <Pagination totalPages={totalPages} currentPage={currentPage} totalItems={totalItems} perPage={perPage} />
+      <div className="hidden md:block">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href={createPageHref(Math.max(1, currentPage - 1))}
+              />
+            </PaginationItem>
+            {pageNumbers.map((p, i) => (
+              <PaginationItem key={p}>
+                {i > 0 && p - pageNumbers[i - 1] > 1 ? (
+                  <PaginationEllipsis />
+                ) : null}
+                <PaginationLink
+                  href={createPageHref(p)}
+                  isActive={p === currentPage}
+                >
+                  {p}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext
+                href={createPageHref(Math.min(totalPages, currentPage + 1))}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </main>
   );
+}
+
+function getLatestSemesterLabel(semesters: string[]): string | null {
+  if (!semesters.length) return null;
+  const termOrder: Record<string, number> = {
+    spring: 1,
+    summer: 2,
+    fall: 3,
+    winter: 4,
+  };
+
+  const parsed = semesters
+    .map((value) => {
+      const m = value.trim().match(/^([A-Za-z]+)\s+(\d{4})$/);
+      if (!m) return null;
+      const term = m[1];
+      const year = Number(m[2]);
+      const weight = termOrder[term.toLowerCase()] || 0;
+      return { label: `${term} ${year}`, year, weight };
+    })
+    .filter(
+      (v): v is { label: string; year: number; weight: number } => v !== null,
+    );
+
+  if (!parsed.length) return semesters[0] || null;
+
+  parsed.sort((a, b) => {
+    if (a.year !== b.year) return b.year - a.year;
+    return b.weight - a.weight;
+  });
+
+  return parsed[0].label;
 }

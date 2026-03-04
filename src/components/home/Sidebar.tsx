@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { University, Field } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
 import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface SidebarProps {
   universities: University[];
@@ -72,25 +74,22 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
   return (
     <>
       <div className="fixed inset-0 z-[70]">
-      <button
+      <Button variant="outline"
         onClick={closeDrawer}
         aria-label="Close filters"
-        className="absolute inset-0 bg-black/25 backdrop-blur-[1px]"
+       
       />
 
-      <aside className="absolute inset-0 overflow-y-auto bg-white px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] shadow-xl md:inset-y-0 md:right-0 md:left-auto md:w-[320px] md:max-h-none md:rounded-none md:border-l md:border-slate-200 md:py-4">
+      <aside className="absolute inset-0 overflow-y-auto bg-white px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] shadow-xl md:inset-y-0 md:right-0 md:left-auto md:w-[320px] md:max-h-none md: md:border-l md:border-slate-200 md:py-4">
           <div className="md:hidden flex justify-center mb-5">
-            <div className="w-12 h-1.5 bg-gray-100 rounded-full" />
+            <div className="w-12 h-1.5 bg-gray-100" />
           </div>
 
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[14px] font-semibold tracking-tight text-slate-900">Filters</h2>
-            <button
-              onClick={closeDrawer}
-              className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <h2 className="font-semibold tracking-tight text-slate-900">Filters</h2>
+            <Button variant="outline" size="icon" onClick={closeDrawer}>
+              <X />
+            </Button>
           </div>
 
           <div className="space-y-6">
@@ -102,9 +101,9 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
             </div>
             <label className="flex items-center justify-between group cursor-pointer">
               <div className="flex items-center gap-3">
-                <input 
+                <Input 
                   type="checkbox" 
-                  className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
+                  
                   checked={showEnrolledOnly} 
                   onChange={(e) => updateParams("enrolled", e.target.checked)} 
                 />
@@ -126,9 +125,9 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
             <div className="grid grid-cols-1 gap-2.5 max-h-48 overflow-y-auto custom-scroll pr-2">
               {semesters.slice(0, 4).map((sem) => (
                 <label key={sem} className="flex items-center gap-3 group cursor-pointer">
-                  <input 
+                  <Input 
                     type="checkbox" 
-                    className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
+                    
                     checked={selectedSemesters.includes(sem)} 
                     onChange={() => updateParams("semesters", handleToggle(selectedSemesters, sem))} 
                   />
@@ -149,9 +148,9 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
               {universities.map((uni) => (
                 <label key={uni.name} className="flex items-center justify-between group cursor-pointer">
                   <div className="flex items-center gap-3">
-                    <input 
+                    <Input 
                       type="checkbox" 
-                      className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
+                      
                       checked={selectedUniversities.includes(uni.name)} 
                       onChange={() => updateParams("universities", handleToggle(selectedUniversities, uni.name))} 
                     />
@@ -176,9 +175,9 @@ export default function Sidebar({ universities, fields, semesters, enrolledCount
               {fields.map((field) => (
                 <label key={field.name} className="flex items-center justify-between group cursor-pointer">
                   <div className="flex items-center gap-3">
-                    <input 
+                    <Input 
                       type="checkbox" 
-                      className="w-4 h-4 md:w-3.5 md:h-3.5 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer" 
+                      
                       checked={selectedFields.includes(field.name)} 
                       onChange={() => updateParams("fields", handleToggle(selectedFields, field.name))} 
                     />

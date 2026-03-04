@@ -3,8 +3,9 @@
 import { useTransition } from "react";
 import { setLanguage } from "@/actions/language";
 import { Locale } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
 
-export default function LanguageSwitcher({ currentLang }: { currentLang: Locale }) {
+export default function LanguageSwitcher({ currentLang }: {currentLang: Locale;}) {
   const [isPending, startTransition] = useTransition();
 
   const handleLanguageChange = (lang: Locale) => {
@@ -15,21 +16,21 @@ export default function LanguageSwitcher({ currentLang }: { currentLang: Locale 
 
   return (
     <div className="flex gap-4">
-      <button 
-        onClick={() => handleLanguageChange('en')}
-        disabled={isPending}
-        className={`text-[10px] font-black uppercase tracking-widest transition-colors ${currentLang === 'en' ? 'text-brand-blue' : 'text-gray-400 hover:text-gray-900'}`}
-      >
+      <Button variant="outline"
+      onClick={() => handleLanguageChange('en')}
+      disabled={isPending}>
+
+        
         English
-      </button>
+      </Button>
       <span className="text-gray-300 text-[10px] font-black">/</span>
-      <button 
-        onClick={() => handleLanguageChange('zh')}
-        disabled={isPending}
-        className={`text-[10px] font-black uppercase tracking-widest transition-colors ${currentLang === 'zh' ? 'text-brand-blue' : 'text-gray-400 hover:text-gray-900'}`}
-      >
+      <Button variant="outline"
+      onClick={() => handleLanguageChange('zh')}
+      disabled={isPending}>
+
+        
         中文
-      </button>
-    </div>
-  );
+      </Button>
+    </div>);
+
 }

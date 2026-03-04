@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface FilterOption {
   name: string;
@@ -19,15 +21,22 @@ interface WorkoutSidebarProps {
 const DAY_OPTIONS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const INITIAL_CATEGORY_LIMIT = 8;
 
-export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSidebarProps) {
+export default function WorkoutSidebar({
+  categories,
+  statuses,
+  dict,
+}: WorkoutSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isExpanded, setIsExpanded] = useState(false);
   const filtersOpen = searchParams.get("filters") === "open";
 
-  const selectedCategories = searchParams.get("categories")?.split(",").filter(Boolean) || [];
-  const selectedDays = searchParams.get("days")?.split(",").filter(Boolean) || [];
-  const selectedStatuses = searchParams.get("status")?.split(",").filter(Boolean) || [];
+  const selectedCategories =
+    searchParams.get("categories")?.split(",").filter(Boolean) || [];
+  const selectedDays =
+    searchParams.get("days")?.split(",").filter(Boolean) || [];
+  const selectedStatuses =
+    searchParams.get("status")?.split(",").filter(Boolean) || [];
 
   const updateParams = (key: string, value: string[]) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -38,11 +47,16 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
   };
 
   const handleToggle = (list: string[], item: string) => {
-    return list.includes(item) ? list.filter((i) => i !== item) : [...list, item];
+    return list.includes(item)
+      ? list.filter((i) => i !== item)
+      : [...list, item];
   };
 
-  const displayedCategories = isExpanded ? categories : categories.slice(0, INITIAL_CATEGORY_LIMIT);
-  const totalFilters = selectedCategories.length + selectedDays.length + selectedStatuses.length;
+  const displayedCategories = isExpanded
+    ? categories
+    : categories.slice(0, INITIAL_CATEGORY_LIMIT);
+  const totalFilters =
+    selectedCategories.length + selectedDays.length + selectedStatuses.length;
 
   const closeDrawer = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -54,31 +68,32 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
 
   return (
     <div className="fixed inset-0 z-[70]">
-      <button
+      <Button
+        variant="outline"
         onClick={closeDrawer}
         aria-label="Close filters"
-        className="absolute inset-0 bg-black/25 backdrop-blur-[1px] animate-[fadeIn_180ms_ease-out]"
       />
 
-      <aside className="absolute inset-0 overflow-y-auto bg-white px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] shadow-xl animate-[fadeUp_220ms_ease-out] md:inset-y-0 md:right-0 md:left-auto md:w-[320px] md:max-h-none md:rounded-none md:border-l md:border-slate-200 md:animate-[fadeIn_180ms_ease-out] md:py-4">
+      <aside className="absolute inset-0 overflow-y-auto bg-white px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] shadow-xl animate-[fadeUp_220ms_ease-out] md:inset-y-0 md:right-0 md:left-auto md:w-[320px] md:max-h-none md: md:border-l md:border-slate-200 md:animate-[fadeIn_180ms_ease-out] md:py-4">
         <div className="md:hidden flex justify-center mb-5">
-          <div className="w-12 h-1.5 bg-gray-100 rounded-full" />
+          <div className="w-12 h-1.5 bg-gray-100" />
         </div>
 
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[14px] font-semibold tracking-tight text-slate-900">Filters</h2>
-          <button
-            onClick={closeDrawer}
-            className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <h2 className="font-semibold tracking-tight text-slate-900">
+            Filters
+          </h2>
+          <Button variant="outline" size="icon" onClick={closeDrawer}>
+            <X />
+          </Button>
         </div>
 
         <div className="space-y-6">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[12px] font-semibold uppercase tracking-wide text-slate-500">Filters</h3>
+              <h3 className="text-[12px] font-semibold uppercase tracking-wide text-slate-500">
+                Filters
+              </h3>
               <span className="text-[12px] text-slate-400">{totalFilters}</span>
             </div>
           </div>
@@ -89,39 +104,51 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
             </h3>
             <div className="grid grid-cols-1 gap-2.5">
               {displayedCategories.map((cat) => (
-                <label key={cat.name} className="flex items-center justify-between group cursor-pointer">
+                <label
+                  key={cat.name}
+                  className="flex items-center justify-between group cursor-pointer"
+                >
                   <div className="flex items-center gap-3">
-                    <input
+                    <Input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
                       checked={selectedCategories.includes(cat.name)}
-                      onChange={() => updateParams("categories", handleToggle(selectedCategories, cat.name))}
+                      onChange={() =>
+                        updateParams(
+                          "categories",
+                          handleToggle(selectedCategories, cat.name),
+                        )
+                      }
                     />
-                    <span className={`text-[13px] font-medium tracking-tight transition-colors ${selectedCategories.includes(cat.name) ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}>
+
+                    <span
+                      className={`text-[13px] font-medium tracking-tight transition-colors ${selectedCategories.includes(cat.name) ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}
+                    >
                       {cat.name}
                     </span>
                   </div>
-                  <span className={`text-[12px] font-medium transition-colors ${selectedCategories.includes(cat.name) ? "text-brand-blue" : "text-gray-300"}`}>
+                  <span
+                    className={`text-[12px] font-medium transition-colors ${selectedCategories.includes(cat.name) ? "text-brand-blue" : "text-gray-300"}`}
+                  >
                     {cat.count}
                   </span>
                 </label>
               ))}
 
               {categories.length > INITIAL_CATEGORY_LIMIT ? (
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="flex items-center gap-2 text-[12px] font-medium text-slate-600 hover:text-slate-900 transition-colors pt-1"
                 >
                   {isExpanded ? (
                     <>
-                      Show less <ChevronUp className="w-3 h-3" />
+                      Show less <ChevronUp />
                     </>
                   ) : (
                     <>
-                      Show all ({categories.length}) <ChevronDown className="w-3 h-3" />
+                      Show all ({categories.length}) <ChevronDown />
                     </>
                   )}
-                </button>
+                </Button>
               ) : null}
             </div>
           </div>
@@ -132,14 +159,21 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
             </h3>
             <div className="grid grid-cols-2 gap-2.5">
               {DAY_OPTIONS.map((day) => (
-                <label key={day} className="flex items-center gap-3 group cursor-pointer">
-                  <input
+                <label
+                  key={day}
+                  className="flex items-center gap-3 group cursor-pointer"
+                >
+                  <Input
                     type="checkbox"
-                    className="w-4 h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
                     checked={selectedDays.includes(day)}
-                    onChange={() => updateParams("days", handleToggle(selectedDays, day))}
+                    onChange={() =>
+                      updateParams("days", handleToggle(selectedDays, day))
+                    }
                   />
-                  <span className={`text-[13px] font-medium tracking-tight transition-colors ${selectedDays.includes(day) ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}>
+
+                  <span
+                    className={`text-[13px] font-medium tracking-tight transition-colors ${selectedDays.includes(day) ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}
+                  >
                     {day}
                   </span>
                 </label>
@@ -153,7 +187,10 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
             </h3>
             <div className="grid grid-cols-1 gap-2.5">
               {statuses.map((s) => {
-                const statusMap: Record<string, keyof Dictionary["dashboard"]["workouts"]> = {
+                const statusMap: Record<
+                  string,
+                  keyof Dictionary["dashboard"]["workouts"]
+                > = {
                   available: "status_available",
                   fully_booked: "status_full",
                   expired: "status_expired",
@@ -165,19 +202,31 @@ export default function WorkoutSidebar({ categories, statuses, dict }: WorkoutSi
                 const label = key && dict[key] ? String(dict[key]) : s.name;
 
                 return (
-                  <label key={s.name} className="flex items-center justify-between group cursor-pointer">
+                  <label
+                    key={s.name}
+                    className="flex items-center justify-between group cursor-pointer"
+                  >
                     <div className="flex items-center gap-3">
-                      <input
+                      <Input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-gray-200 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
                         checked={selectedStatuses.includes(s.name)}
-                        onChange={() => updateParams("status", handleToggle(selectedStatuses, s.name))}
+                        onChange={() =>
+                          updateParams(
+                            "status",
+                            handleToggle(selectedStatuses, s.name),
+                          )
+                        }
                       />
-                      <span className={`text-[13px] font-medium tracking-tight transition-colors ${selectedStatuses.includes(s.name) ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}>
+
+                      <span
+                        className={`text-[13px] font-medium tracking-tight transition-colors ${selectedStatuses.includes(s.name) ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}
+                      >
                         {label}
                       </span>
                     </div>
-                    <span className={`text-[12px] font-medium transition-colors ${selectedStatuses.includes(s.name) ? "text-brand-blue" : "text-gray-300"}`}>
+                    <span
+                      className={`text-[12px] font-medium transition-colors ${selectedStatuses.includes(s.name) ? "text-brand-blue" : "text-gray-300"}`}
+                    >
                       {s.count}
                     </span>
                   </label>

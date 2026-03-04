@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function BackToTop() {
   const [isVisible, setIsVisible] = useState(false);
@@ -43,13 +44,13 @@ export default function BackToTop() {
 
   return (
     <div className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom,0px)+92px)] z-40 md:right-8 md:bottom-8">
-      <button
+      <Button variant="outline" size="icon"
         onClick={scrollToTop}
-        className="flex items-center justify-center w-11 h-11 bg-white text-brand-blue rounded-full shadow-xl active:scale-90 transition-all border border-gray-200 hover:bg-gray-50 group"
+       
         aria-label="Back to top"
       >
-        <ChevronUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
-      </button>
+        <ChevronUp className="group-hover:-translate-y-0.5 transition-transform" />
+      </Button>
     </div>
   );
 }

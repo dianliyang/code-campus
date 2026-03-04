@@ -3,7 +3,7 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import { Badge } from "@/components/ui/badge";
 import RoadmapAchievementsSection from "@/components/home/RoadmapAchievementsSection";
-import { Course } from "@/types";
+import { Course } from "@/types";import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -12,33 +12,33 @@ export default async function ProfilePage() {
   type CompletedAchievement = Course & {
     gpa?: number;
     score?: number;
-    attendance?: { attended: number; total: number };
+    attendance?: {attended: number;total: number;};
     updated_at: string;
   };
 
   const [dict, { data: enrolledData }, completedCoursesRes] = await Promise.all([
-    getDictionary(lang),
-    user
-      ? supabase
-          .from("user_courses")
-          .select("course_id, status, updated_at, courses!inner(subdomain)")
-          .eq("user_id", user.id)
-          .neq("status", "hidden")
-      : Promise.resolve({ data: null }),
-    user
-      ? supabase
-          .from("courses")
-          .select(`
+  getDictionary(lang),
+  user ?
+  supabase.
+  from("user_courses").
+  select("course_id, status, updated_at, courses!inner(subdomain)").
+  eq("user_id", user.id).
+  neq("status", "hidden") :
+  Promise.resolve({ data: null }),
+  user ?
+  supabase.
+  from("courses").
+  select(`
             id, university, course_code, title, units, credit, url, description, details, is_hidden,
             uc:user_courses!inner(status, progress, updated_at, gpa, score),
             semesters:course_semesters(semesters(term, year))
-          `)
-          .eq("user_courses.user_id", user.id)
-          .eq("user_courses.status", "completed")
-          .neq("is_hidden", true)
-          .order("updated_at", { foreignTable: "user_courses", ascending: false })
-      : Promise.resolve({ data: null, error: null }),
-  ]);
+          `).
+  eq("user_courses.user_id", user.id).
+  eq("user_courses.status", "completed").
+  neq("is_hidden", true).
+  order("updated_at", { foreignTable: "user_courses", ascending: false }) :
+  Promise.resolve({ data: null, error: null })]
+  );
 
   if (!user) return <div className="p-10 text-center">{dict.dashboard.profile.user_not_found}</div>;
 
@@ -53,40 +53,39 @@ export default async function ProfilePage() {
   });
 
   let universityCount = 0;
-  let allFieldStats: { name: string; count: number }[] = [];
+  let allFieldStats: {name: string;count: number;}[] = [];
 
   if (enrolledIds.length > 0) {
     const [uniRes, fieldRes] = await Promise.all([
-      supabase.from("courses").select("university").in("id", enrolledIds),
-      supabase.from("course_fields").select("fields(name)").in("course_id", enrolledIds),
-    ]);
+    supabase.from("courses").select("university").in("id", enrolledIds),
+    supabase.from("course_fields").select("fields(name)").in("course_id", enrolledIds)]
+    );
 
     universityCount = new Set(uniRes.data?.map((r) => r.university)).size;
 
     const fieldCounts: Record<string, number> = {};
-    (fieldRes.data as { fields: { name: string } | null }[] | null)?.forEach((cf) => {
+    (fieldRes.data as {fields: {name: string;} | null;}[] | null)?.forEach((cf) => {
       if (cf.fields?.name) {
         fieldCounts[cf.fields.name] = (fieldCounts[cf.fields.name] || 0) + 1;
       }
     });
 
-    allFieldStats = Object.entries(fieldCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count);
+    allFieldStats = Object.entries(fieldCounts).
+    map(([name, count]) => ({ name, count })).
+    sort((a, b) => b.count - a.count);
   }
 
-  const totalCourses = enrolledData?.length || 0;
   const completedCount = statusCounts.completed || 0;
 
   const completedRows = completedCoursesRes.data || [];
-  const completedAchievements: CompletedAchievement[] = completedRows.map((row: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const completedAchievements: CompletedAchievement[] = completedRows.map((row: any) => {// eslint-disable-line @typescript-eslint/no-explicit-any
     const course = mapCourseFromRow(row);
     const semesterNames =
-      (row.semesters as { semesters: { term: string; year: number } }[] | null)
-        ?.map((s) => `${s.semesters.term} ${s.semesters.year}`) || [];
+    (row.semesters as {semesters: {term: string;year: number;};}[] | null)?.
+    map((s) => `${s.semesters.term} ${s.semesters.year}`) || [];
     const uc =
-      (row.uc as { updated_at: string; gpa?: number; score?: number }[] | null)?.[0] ||
-      (row.user_courses as { updated_at: string; gpa?: number; score?: number }[] | null)?.[0];
+    (row.uc as {updated_at: string;gpa?: number;score?: number;}[] | null)?.[0] ||
+    (row.user_courses as {updated_at: string;gpa?: number;score?: number;}[] | null)?.[0];
 
     return {
       ...course,
@@ -94,7 +93,7 @@ export default async function ProfilePage() {
       semesters: semesterNames,
       updated_at: uc?.updated_at || new Date().toISOString(),
       gpa: uc?.gpa,
-      score: uc?.score,
+      score: uc?.score
     } as CompletedAchievement;
   });
 
@@ -106,35 +105,33 @@ export default async function ProfilePage() {
     return (order[termB] ?? -1) - (order[termA] ?? -1);
   });
 
-  const topField = allFieldStats[0]?.name || dict.dashboard.profile.none;
   const lastActiveData = enrolledData?.sort(
-    (a, b) => new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime(),
+    (a, b) => new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime()
   )[0];
   const lastActiveDate = lastActiveData?.updated_at ? new Date(lastActiveData.updated_at) : null;
 
   const fieldTotal = allFieldStats.reduce((acc, curr) => acc + curr.count, 0);
-  const coveragePercent = universityCount > 0 ? Math.min(100, Math.round((universityCount / 8) * 100)) : 0;
-  const recentStatuses = Object.entries(statusCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 4);
+  const recentStatuses = Object.entries(statusCounts).
+  sort((a, b) => b[1] - a[1]).
+  slice(0, 4);
 
   const learningProfileColors = [
-    "from-fuchsia-500 to-pink-500",
-    "from-cyan-500 to-blue-500",
-    "from-emerald-500 to-teal-500",
-    "from-amber-500 to-orange-500",
-    "from-violet-500 to-indigo-500",
-    "from-rose-500 to-red-500",
-    "from-lime-500 to-green-500",
-    "from-sky-500 to-cyan-500",
-  ];
+  "from-fuchsia-500 to-pink-500",
+  "from-cyan-500 to-blue-500",
+  "from-emerald-500 to-teal-500",
+  "from-amber-500 to-orange-500",
+  "from-violet-500 to-indigo-500",
+  "from-rose-500 to-red-500",
+  "from-lime-500 to-green-500",
+  "from-sky-500 to-cyan-500"];
+
 
   return (
     <main className="w-full space-y-4">
-      <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+      <Card>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-14 w-14 rounded-xl bg-[#1f1f1f] text-white flex items-center justify-center text-2xl font-semibold">
+            <div className="h-14 w-14 bg-[#1f1f1f] text-white flex items-center justify-center text-2xl font-semibold">
               {name.substring(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0">
@@ -143,9 +140,9 @@ export default async function ProfilePage() {
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
                 <span>
                   Last active:{" "}
-                  {lastActiveDate
-                    ? lastActiveDate.toLocaleDateString(lang, { month: "short", day: "numeric", year: "numeric" })
-                    : "N/A"}
+                  {lastActiveDate ?
+                  lastActiveDate.toLocaleDateString(lang, { month: "short", day: "numeric", year: "numeric" }) :
+                  "N/A"}
                 </span>
                 <span>Universities: {universityCount}</span>
               </div>
@@ -157,90 +154,71 @@ export default async function ProfilePage() {
             <Badge variant="secondary">{dict.dashboard.profile.user_level}</Badge>
           </div>
         </div>
-      </section>
+      </Card>
 
-      <section className="grid grid-cols-2 lg:grid-cols-4 rounded-lg overflow-hidden border border-[#e5e5e5] bg-[#fcfcfc]">
-        <div className="px-4 py-3 border-r border-b lg:border-b-0 border-[#e5e5e5]">
-          <p className="text-xs text-slate-500">Courses Enrolled</p>
-          <p className="mt-1 text-[26px] leading-none font-semibold tracking-tight text-slate-900">{totalCourses}</p>
-        </div>
-        <div className="px-4 py-3 border-b lg:border-b-0 lg:border-r border-[#e5e5e5]">
-          <p className="text-xs text-slate-500">Completed</p>
-          <p className="mt-1 text-[26px] leading-none font-semibold tracking-tight text-slate-900">{completedCount}</p>
-        </div>
-        <div className="px-4 py-3 border-r border-[#e5e5e5]">
-          <p className="text-xs text-slate-500">Top Field</p>
-          <p className="mt-1 text-[20px] leading-none font-semibold tracking-tight text-slate-900 truncate">{topField}</p>
-        </div>
-        <div className="px-4 py-3">
-          <p className="text-xs text-slate-500">Network Coverage</p>
-          <p className="mt-1 text-[26px] leading-none font-semibold tracking-tight text-slate-900">{coveragePercent}%</p>
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-4">
+      <Card>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
             <h2 className="text-base font-semibold text-[#1f1f1f]">Learning Profile</h2>
             <p className="text-xs text-[#7a7a7a] mt-1 mb-3">{dict.dashboard.profile.neural_map}</p>
 
-            {fieldTotal > 0 ? (
-              <div className="space-y-2">
+            {fieldTotal > 0 ?
+            <div className="space-y-2">
                 {allFieldStats.slice(0, 8).map((field, idx) => {
-                  const pct = Math.max(3, Math.round((field.count / fieldTotal) * 100));
-                  const barColor = learningProfileColors[idx % learningProfileColors.length];
-                  return (
-                    <div key={field.name} className="rounded-md border border-[#e8e8e8] bg-white px-3 py-2">
+                const pct = Math.max(3, Math.round(field.count / fieldTotal * 100));
+                const barColor = learningProfileColors[idx % learningProfileColors.length];
+                return (
+                  <Card key={field.name}>
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-medium text-[#2a2a2a] truncate">{field.name}</p>
                         <p className="text-xs text-[#666]">
                           {field.count} {dict.dashboard.profile.units}
                         </p>
                       </div>
-                      <div className="mt-2 h-2 rounded-full bg-[#efefef] overflow-hidden">
+                      <div className="mt-2 h-2 bg-[#efefef] overflow-hidden">
                         <div className={`h-full bg-gradient-to-r ${barColor}`} style={{ width: `${pct}%` }} />
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="rounded-md border border-dashed border-[#e1e1e1] bg-white p-6 text-center">
+                    </Card>);
+
+              })}
+              </div> :
+
+            <Card>
                 <p className="text-sm text-slate-500">{dict.dashboard.profile.no_data}</p>
-              </div>
-            )}
+              </Card>
+            }
           </div>
 
           <div>
             <h3 className="text-base font-semibold text-[#1f1f1f]">Course Status</h3>
             <p className="text-xs text-[#7a7a7a] mt-1 mb-3">Enrollment distribution</p>
             <div className="space-y-2">
-              {recentStatuses.length > 0 ? (
-                recentStatuses.map(([status, count]) => (
-                  <div
-                    key={status}
-                    className="rounded-md border border-[#e8e8e8] bg-white px-3 py-2 flex items-center justify-between"
-                  >
+              {recentStatuses.length > 0 ?
+              recentStatuses.map(([status, count]) =>
+              <Card
+                key={status}>
+                
+                
                     <span className="text-sm text-[#333] capitalize">{status.replace(/_/g, " ")}</span>
                     <span className="text-sm font-medium text-[#222]">{count}</span>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-md border border-dashed border-[#e1e1e1] bg-white p-6 text-center">
+                  </Card>
+              ) :
+
+              <Card>
                   <p className="text-sm text-slate-500">{dict.dashboard.profile.no_data}</p>
-                </div>
-              )}
+                </Card>
+              }
             </div>
           </div>
         </div>
-      </section>
+      </Card>
 
       <RoadmapAchievementsSection
         availableSemesters={availableSemesters}
         completed={completedAchievements}
         title={dict.dashboard.roadmap.phase_2_title}
-        emptyText={dict.dashboard.roadmap.peak_ahead}
-      />
-    </main>
-  );
+        emptyText={dict.dashboard.roadmap.peak_ahead} />
+      
+    </main>);
+
 }

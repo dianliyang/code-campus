@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Copy, KeyRound, Loader2, Trash2, WandSparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";import { Card } from "@/components/ui/card";
 
 type ApiKeyItem = {
   id: number;
@@ -13,7 +15,7 @@ type ApiKeyItem = {
   lastUsedAt: string | null;
 };
 
-type DraftById = Record<number, { name: string; requestsLimit: string; isActive: boolean }>;
+type DraftById = Record<number, {name: string;requestsLimit: string;isActive: boolean;}>;
 
 function toLimitValue(limit: number | null): string {
   return limit == null ? "" : String(limit);
@@ -49,7 +51,7 @@ export default function ApiManagementCard() {
         nextDrafts[item.id] = {
           name: item.name || "API Key",
           requestsLimit: toLimitValue(item.requestsLimit),
-          isActive: Boolean(item.isActive),
+          isActive: Boolean(item.isActive)
         };
       }
       setDrafts(nextDrafts);
@@ -106,7 +108,7 @@ export default function ApiManagementCard() {
       const response = await fetch("/api/settings/api-key", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim(), requestsLimit: limit }),
+        body: JSON.stringify({ name: newName.trim(), requestsLimit: limit })
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.error || "Failed to generate key");
@@ -124,7 +126,7 @@ export default function ApiManagementCard() {
     }
   };
 
-  const persistRow = async (id: number, draftOverride?: { name: string; requestsLimit: string; isActive: boolean }) => {
+  const persistRow = async (id: number, draftOverride?: {name: string;requestsLimit: string;isActive: boolean;}) => {
     const draft = draftOverride ?? drafts[id];
     if (!draft) return;
 
@@ -138,8 +140,8 @@ export default function ApiManagementCard() {
         body: JSON.stringify({
           id,
           isActive: draft.isActive,
-          requestsLimit,
-        }),
+          requestsLimit
+        })
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.error || "Failed to save");
@@ -170,73 +172,67 @@ export default function ApiManagementCard() {
   };
 
   return (
-    <div className="bg-white border border-[#e5e5e5] rounded-md p-4 space-y-4">
-      <div className="flex items-center gap-2 text-[#222] mb-3 pb-3 border-b border-[#efefef]">
+    <Card>
+      <Card>
         <KeyRound className="w-4 h-4 text-[#777]" />
         <span className="text-sm font-semibold">API Management</span>
-      </div>
+      </Card>
 
       <div className="grid gap-2 sm:grid-cols-[1.3fr_1fr_auto] items-end">
         <div className="space-y-1">
           <label className="text-xs font-medium text-[#666] block">Key Name</label>
-          <input
+          <Input
             value={newName}
             onChange={(e) => {
               setNewName(e.target.value);
               if (nameError && e.target.value.trim()) setNameError(false);
             }}
-            className={`h-8 w-full rounded-md px-2.5 text-[13px] outline-none ${
-              nameError
-                ? "border border-red-400 focus:border-red-500"
-                : "border border-[#d9d9d9] focus:border-[#bdbdbd]"
-            }`}
-            placeholder="Enter key name"
-          />
+            placeholder="Enter key name" />
+          
         </div>
         <div className="space-y-1">
           <label className="text-xs font-medium text-[#666] block">Request Limit (optional)</label>
-          <input
+          <Input
             value={newLimit}
             onChange={(e) => setNewLimit(e.target.value)}
             type="number"
             min={1}
-            className="h-8 w-full rounded-md border border-[#d9d9d9] px-2.5 text-[13px] outline-none focus:border-[#bdbdbd]"
-            placeholder="Unlimited"
-          />
+            placeholder="Unlimited" />
+          
         </div>
-        <button
-          type="button"
-          onClick={generateKey}
-          disabled={isCreating}
-          className="inline-flex items-center justify-center gap-2 h-8 rounded-md border border-[#d3d3d3] bg-white px-3 text-[13px] font-medium text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors disabled:opacity-60"
-        >
-          {isCreating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <WandSparkles className="w-3.5 h-3.5" />}
+        <Button variant="outline"
+        type="button"
+        onClick={generateKey}
+        disabled={isCreating}>
+
+          
+          {isCreating ? <Loader2 className="animate-spin" /> : <WandSparkles />}
           Generate Key
-        </button>
+        </Button>
       </div>
 
-      {latestKey ? (
-        <div className="space-y-1">
+      {latestKey ?
+      <div className="space-y-1">
           <p className="text-[11px] text-[#777]">New key (shown once)</p>
           <div className="flex items-center gap-2">
-            <input
-              readOnly
-              value={latestKey}
-              className="h-8 flex-1 rounded-md border border-[#d9d9d9] px-2.5 text-[12px] text-[#444] bg-[#fcfcfc]"
-            />
-            <button
-              type="button"
-              onClick={copyLatestKey}
-              className="inline-flex items-center gap-1 h-8 rounded-md border border-[#d3d3d3] px-2.5 text-[12px] font-medium text-[#333] hover:bg-[#f8f8f8]"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              Copy
-            </button>
-          </div>
-        </div>
-      ) : null}
+            <Input
+            readOnly
+            value={latestKey} />
 
-      <div className="overflow-x-auto border border-[#ededed] rounded-md">
+          
+            <Button variant="outline"
+          type="button"
+          onClick={copyLatestKey}>
+
+            
+              <Copy />
+              Copy
+            </Button>
+          </div>
+        </div> :
+      null}
+
+      <Card>
         <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-[#fafafa]">
             <tr className="text-left text-[12px] text-[#666]">
@@ -250,59 +246,59 @@ export default function ApiManagementCard() {
             </tr>
           </thead>
           <tbody>
-            {isLoading ? (
-              <tr>
+            {isLoading ?
+            <tr>
                 <td className="px-3 py-3 text-[#666]" colSpan={7}>Loading...</td>
-              </tr>
-            ) : !hasRows ? (
-              <tr>
+              </tr> :
+            !hasRows ?
+            <tr>
                 <td className="px-3 py-3 text-[#666]" colSpan={7}>No API keys yet.</td>
-              </tr>
-            ) : (
-              items.map((item) => {
-                const fallbackDraft = {
-                  name: item.name,
-                  requestsLimit: toLimitValue(item.requestsLimit),
-                  isActive: item.isActive,
-                };
-                const draft = drafts[item.id] || fallbackDraft;
-                const busy = workingId === item.id;
-                return (
-                  <tr key={item.id} className="border-t border-[#f0f0f0]">
+              </tr> :
+
+            items.map((item) => {
+              const fallbackDraft = {
+                name: item.name,
+                requestsLimit: toLimitValue(item.requestsLimit),
+                isActive: item.isActive
+              };
+              const draft = drafts[item.id] || fallbackDraft;
+              const busy = workingId === item.id;
+              return (
+                <tr key={item.id} className="border-t border-[#f0f0f0]">
                     <td className="px-3 py-2 text-[13px] text-[#444]">{item.name || "API Key"}</td>
                     <td className="px-3 py-2 text-[13px] text-[#444]">{toMaskedKey(item.keyPrefix)}</td>
                     <td className="px-3 py-2">
-                      <input
-                        value={draft.requestsLimit}
-                          onChange={(e) =>
-                            setDrafts((prev) => {
-                              const current = prev[item.id] || fallbackDraft;
-                              return { ...prev, [item.id]: { ...current, requestsLimit: e.target.value } };
-                            })
-                          }
-                          onBlur={() => void persistRow(item.id)}
-                          type="number"
-                          min={1}
-                          disabled={busy}
-                          className="h-8 w-[110px] rounded-md border border-[#d9d9d9] px-2.5 text-[13px] outline-none focus:border-[#bdbdbd]"
-                          placeholder="Unlimited"
-                        />
+                      <Input
+                      value={draft.requestsLimit}
+                      onChange={(e) =>
+                      setDrafts((prev) => {
+                        const current = prev[item.id] || fallbackDraft;
+                        return { ...prev, [item.id]: { ...current, requestsLimit: e.target.value } };
+                      })
+                      }
+                      onBlur={() => void persistRow(item.id)}
+                      type="number"
+                      min={1}
+                      disabled={busy}
+                      className="h-8 w-[110px] border border-[#d9d9d9] px-2.5 text-[13px] outline-none focus:border-[#bdbdbd]"
+                      placeholder="Unlimited" />
+                    
                     </td>
                     <td className="px-3 py-2 text-[13px] text-[#444]">
                       {item.requestsUsed}{item.requestsLimit != null ? ` / ${item.requestsLimit}` : ""}
                     </td>
                     <td className="px-3 py-2">
                       <label className="inline-flex items-center gap-1.5 text-[13px] text-[#444]">
-                        <input
-                          type="checkbox"
-                          checked={draft.isActive}
-                          onChange={(e) => {
-                            const nextDraft = { ...draft, isActive: e.target.checked };
-                            setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
-                            void persistRow(item.id, nextDraft);
-                          }}
-                          disabled={busy}
-                        />
+                        <Input
+                        type="checkbox"
+                        checked={draft.isActive}
+                        onChange={(e) => {
+                          const nextDraft = { ...draft, isActive: e.target.checked };
+                          setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
+                          void persistRow(item.id, nextDraft);
+                        }}
+                        disabled={busy} />
+                      
                         {draft.isActive ? "Enabled" : "Disabled"}
                       </label>
                     </td>
@@ -311,32 +307,32 @@ export default function ApiManagementCard() {
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => deleteRow(item.id)}
-                          disabled={busy}
-                          aria-label="Delete API key"
-                          title="Delete API key"
-                          className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-60"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <Button variant="outline"
+                      type="button"
+                      onClick={() => deleteRow(item.id)}
+                      disabled={busy}
+                      aria-label="Delete API key"
+                      title="Delete API key">
+
+                        
+                          <Trash2 />
+                        </Button>
                       </div>
                     </td>
-                  </tr>
-                );
-              })
-            )}
+                  </tr>);
+
+            })
+            }
           </tbody>
         </table>
-      </div>
+      </Card>
 
-      {saved ? (
-        <p className="text-xs text-emerald-700 inline-flex items-center gap-1.5">
+      {saved ?
+      <p className="text-xs text-emerald-700 inline-flex items-center gap-1.5">
           <CheckCircle2 className="w-3.5 h-3.5" />
           {saved}
-        </p>
-      ) : null}
-    </div>
-  );
+        </p> :
+      null}
+    </Card>);
+
 }

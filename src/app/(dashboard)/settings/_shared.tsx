@@ -3,8 +3,8 @@ import { createAdminClient, getCachedProfileSettings, getUser } from "@/lib/supa
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { getModelCatalogByProvider } from "@/lib/ai/models";
+import { Button } from "@/components/ui/button";
 
 export async function renderSettingsPage(initialSection?: SectionId) {
   const [user, lang, modelCatalog] = await Promise.all([
@@ -18,7 +18,7 @@ export async function renderSettingsPage(initialSection?: SectionId) {
     return (
       <div className="p-10 text-center">
         <p>{dict.dashboard.profile.user_not_found}</p>
-        <Button asChild className="mt-6">
+        <Button variant="outline" asChild>
           <Link href="/login">{dict.dashboard.login.title}</Link>
         </Button>
       </div>

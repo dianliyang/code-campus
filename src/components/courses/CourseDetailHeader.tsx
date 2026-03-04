@@ -6,11 +6,24 @@ import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, Plus, X } from "lucide-react";
+import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, Plus, X, ChevronDown } from "lucide-react";
 import { trackAiUsage } from "@/lib/ai/usage";
 import { useAppToast } from "@/components/common/AppToastProvider";
 import { type CodeBreakdownItem } from "@/lib/course-code-breakdown";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger } from
+"@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";import { Card } from "@/components/ui/card";
 
 type AiSyncSourceMode = "auto" | "existing" | "fresh";
 const AI_SYNC_MODE_STORAGE_KEY = "cc:ai-sync-source-mode";
@@ -18,7 +31,7 @@ interface CourseDetailHeaderProps {
   course: Course;
   isEditing?: boolean;
   onToggleEdit?: () => void;
-  projectSeminarRef?: { id: number; category: string } | null;
+  projectSeminarRef?: {id: number;category: string;} | null;
   enrolled?: boolean;
   isEnrolling?: boolean;
   onToggleEnroll?: () => void;
@@ -56,15 +69,15 @@ type CourseIntelJob = {
   } | null;
 };
 
-function GoogleIcon({ className }: { className?: string }) {
+function GoogleIcon({ className }: {className?: string;}) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-    </svg>
-  );
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+    </svg>);
+
 }
 
 export default function CourseDetailHeader({
@@ -75,7 +88,7 @@ export default function CourseDetailHeader({
   enrolled = false,
   isEnrolling = false,
   onToggleEnroll,
-  codeBreakdown = [],
+  codeBreakdown = []
 }: CourseDetailHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -83,23 +96,26 @@ export default function CourseDetailHeader({
   const [aiStatus, setAiStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [aiJob, setAiJob] = useState<CourseIntelJob | null>(null);
   const [liveActivity, setLiveActivity] = useState<ActivityItem[]>([]);
-  const [aiSourceMode, setAiSourceMode] = useState<AiSyncSourceMode>(() => {
-    if (typeof window === "undefined") return "auto";
-    try {
-      const saved = window.localStorage.getItem(AI_SYNC_MODE_STORAGE_KEY);
-      return saved === "fresh" || saved === "existing" || saved === "auto" ? saved : "auto";
-    } catch {
-      return "auto";
-    }
-  });
+  const [aiSourceMode, setAiSourceMode] = useState<AiSyncSourceMode>("auto");
   const { showToast } = useAppToast();
-  const previousJobRef = useRef<{ id: number; status: string } | null>(null);
+  const previousJobRef = useRef<{id: number;status: string;} | null>(null);
   const searchQuery = `${course.university || ""} ${course.courseCode || ""} ${course.title || ""}`.trim();
   const searchHref = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
 
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(AI_SYNC_MODE_STORAGE_KEY);
+      if (saved === "fresh" || saved === "existing" || saved === "auto") {
+        setAiSourceMode(saved);
+      }
+    } catch {
+
+
+      // Ignore localStorage errors.
+    }}, []);
   const isAiUpdating =
-    (aiJob?.status === "queued" || aiJob?.status === "running") &&
-    Number(aiJob?.meta?.progress ?? 0) < 100;
+  (aiJob?.status === "queued" || aiJob?.status === "running") &&
+  Number(aiJob?.meta?.progress ?? 0) < 100;
   const progress = typeof aiJob?.meta?.progress === "number" ? aiJob.meta.progress : null;
   const activity = liveActivity;
 
@@ -116,10 +132,10 @@ export default function CourseDetailHeader({
         setLiveActivity([]);
       }
     } catch {
-      // Ignore background status fetch errors.
-    }
-  };
 
+
+      // Ignore background status fetch errors.
+    }};
   useEffect(() => {
     void loadLatestJob();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,90 +144,90 @@ export default function CourseDetailHeader({
   useEffect(() => {
     if (!isAiUpdating) return;
     const supabase = createBrowserSupabaseClient();
-    const channel = supabase
-      .channel(`course_intel_jobs:${course.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "scraper_jobs" },
-        (payload) => {
-          const row = (payload as { new?: Record<string, unknown>; old?: Record<string, unknown> }).new
-            || (payload as { new?: Record<string, unknown>; old?: Record<string, unknown> }).old;
-          const rowId = Number(row?.id || 0);
-          const rowMeta = row?.meta && typeof row.meta === "object" ? (row.meta as Record<string, unknown>) : null;
-          const rowCourseId = Number((rowMeta?.course_id as number | string | undefined) || 0);
-          const shouldApply =
-            (aiJob?.id ? rowId === aiJob.id : false) ||
-            rowCourseId === course.id;
+    const channel = supabase.
+    channel(`course_intel_jobs:${course.id}`).
+    on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "scraper_jobs" },
+      (payload) => {
+        const row = (payload as {new?: Record<string, unknown>;old?: Record<string, unknown>;}).new ||
+        (payload as {new?: Record<string, unknown>;old?: Record<string, unknown>;}).old;
+        const rowId = Number(row?.id || 0);
+        const rowMeta = row?.meta && typeof row.meta === "object" ? row.meta as Record<string, unknown> : null;
+        const rowCourseId = Number(rowMeta?.course_id as number | string | undefined || 0);
+        const shouldApply =
+        (aiJob?.id ? rowId === aiJob.id : false) ||
+        rowCourseId === course.id;
 
-          if (shouldApply && rowId > 0) {
-            setAiJob((prev) => ({
-              ...(prev || { id: rowId, sourceMode: aiSourceMode }),
-              ...row,
-              id: rowId,
-            }) as CourseIntelJob);
+        if (shouldApply && rowId > 0) {
+          setAiJob((prev) => ({
+            ...(prev || { id: rowId, sourceMode: aiSourceMode }),
+            ...row,
+            id: rowId
+          }) as CourseIntelJob);
 
-            const nextProgress = typeof rowMeta?.progress === "number" ? rowMeta.progress : undefined;
-            const statusText = typeof row?.status === "string" ? row.status : "running";
-            setLiveActivity((prev) => {
-              const entry: ActivityItem = {
-                ts: new Date().toISOString(),
-                stage: "realtime",
-                message: `Realtime update: ${statusText}${typeof nextProgress === "number" ? ` (${nextProgress}%)` : ""}`,
-                progress: nextProgress,
-              };
-              const last = prev[prev.length - 1];
-              if (last?.message === entry.message) return prev;
-              return [...prev, entry].slice(-40);
-            });
-          }
-          void loadLatestJob();
+          const nextProgress = typeof rowMeta?.progress === "number" ? rowMeta.progress : undefined;
+          const statusText = typeof row?.status === "string" ? row.status : "running";
+          setLiveActivity((prev) => {
+            const entry: ActivityItem = {
+              ts: new Date().toISOString(),
+              stage: "realtime",
+              message: `Realtime update: ${statusText}${typeof nextProgress === "number" ? ` (${nextProgress}%)` : ""}`,
+              progress: nextProgress
+            };
+            const last = prev[prev.length - 1];
+            if (last?.message === entry.message) return prev;
+            return [...prev, entry].slice(-40);
+          });
         }
-      )
-      .on(
-        "broadcast",
-        { event: "course_intel_progress" },
-        (payload) => {
-          const body = ((payload as { payload?: BroadcastProgressPayload }).payload || {}) as BroadcastProgressPayload;
-          const eventCourseId = Number(body.courseId || 0);
-          if (eventCourseId && eventCourseId !== course.id) return;
+        void loadLatestJob();
+      }
+    ).
+    on(
+      "broadcast",
+      { event: "course_intel_progress" },
+      (payload) => {
+        const body = ((payload as {payload?: BroadcastProgressPayload;}).payload || {}) as BroadcastProgressPayload;
+        const eventCourseId = Number(body.courseId || 0);
+        if (eventCourseId && eventCourseId !== course.id) return;
 
-          const message = typeof body.message === "string" ? body.message.trim() : "";
-          const stage = typeof body.stage === "string" ? body.stage : "running";
-          const progressFromEvent = typeof body.progress === "number" ? body.progress : undefined;
+        const message = typeof body.message === "string" ? body.message.trim() : "";
+        const stage = typeof body.stage === "string" ? body.stage : "running";
+        const progressFromEvent = typeof body.progress === "number" ? body.progress : undefined;
 
-          if (message) {
-            setLiveActivity((prev) => {
-              const entry: ActivityItem = {
-                ts: typeof body.ts === "string" ? body.ts : new Date().toISOString(),
-                stage,
-                message,
-                progress: progressFromEvent,
-              };
-              const last = prev[prev.length - 1];
-              if (last?.message === entry.message && last?.stage === entry.stage && last?.progress === entry.progress) {
-                return prev;
+        if (message) {
+          setLiveActivity((prev) => {
+            const entry: ActivityItem = {
+              ts: typeof body.ts === "string" ? body.ts : new Date().toISOString(),
+              stage,
+              message,
+              progress: progressFromEvent
+            };
+            const last = prev[prev.length - 1];
+            if (last?.message === entry.message && last?.stage === entry.stage && last?.progress === entry.progress) {
+              return prev;
+            }
+            return [...prev, entry].slice(-40);
+          });
+        }
+
+        if (typeof progressFromEvent === "number") {
+          setAiJob((prev) => {
+            if (!prev) return prev;
+            const meta = prev.meta && typeof prev.meta === "object" ? prev.meta : {};
+            return {
+              ...prev,
+              status: typeof body.status === "string" ? body.status : prev.status,
+              meta: {
+                ...meta,
+                progress: progressFromEvent
               }
-              return [...prev, entry].slice(-40);
-            });
-          }
-
-          if (typeof progressFromEvent === "number") {
-            setAiJob((prev) => {
-              if (!prev) return prev;
-              const meta = prev.meta && typeof prev.meta === "object" ? prev.meta : {};
-              return {
-                ...prev,
-                status: typeof body.status === "string" ? body.status : prev.status,
-                meta: {
-                  ...meta,
-                  progress: progressFromEvent,
-                },
-              };
-            });
-          }
+            };
+          });
         }
-      )
-      .subscribe();
+      }
+    ).
+    subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
@@ -232,8 +248,8 @@ export default function CourseDetailHeader({
     const previous = previousJobRef.current;
     const fromActiveSameJob = Boolean(
       previous &&
-      previous.id === aiJob.id &&
-      (previous.status === "queued" || previous.status === "running")
+      previous.id === aiJob.id && (
+      previous.status === "queued" || previous.status === "running")
     );
 
     if (aiJob.status === "completed") {
@@ -262,7 +278,7 @@ export default function CourseDetailHeader({
       const res = await fetch('/api/ai/course-intel/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId: course.id, sourceMode: aiSourceMode }),
+        body: JSON.stringify({ courseId: course.id, sourceMode: aiSourceMode })
       });
       if (res.ok || res.status === 202) {
         try {
@@ -271,10 +287,10 @@ export default function CourseDetailHeader({
             setAiJob(payload.item as CourseIntelJob);
           }
         } catch {
+
+
           // Ignore payload parse errors and rely on realtime/explicit refresh to pick up the job.
-        }
-        showToast({ type: "success", message: `AI sync started in background (${aiSourceMode}).` });
-        window.dispatchEvent(new Event("course-intel-job-started"));
+        }showToast({ type: "success", message: `AI sync started in background (${aiSourceMode}).` });window.dispatchEvent(new Event("course-intel-job-started"));
         await loadLatestJob();
       } else {
         setAiStatus('error');
@@ -284,14 +300,18 @@ export default function CourseDetailHeader({
           const candidate = typeof payload?.error === "string" ? payload.error.trim() : "";
           if (candidate) errorMessage = candidate;
         } catch {
+
+
           // Ignore parse error and use default message.
-        }
-        showToast({ type: "error", message: errorMessage });
-      }
+        }showToast({ type: "error", message: errorMessage });}
     } catch {
       setAiStatus('error');
       showToast({ type: "error", message: "Network error while running AI sync." });
     }
+  };
+
+  const handleToggleEnroll = () => {
+    onToggleEnroll?.();
   };
 
   const handleDelete = async () => {
@@ -313,18 +333,17 @@ export default function CourseDetailHeader({
       router.refresh();
     } catch (error) {
       console.error(error);
-      alert("Failed to delete course");
+      toast.error("Failed to delete course", { position: "bottom-right" });
       setIsDeleting(false);
     }
   };
 
-  const btnBase = "h-7 w-7 rounded-md border border-[#d3d3d3] bg-white text-[#666] hover:bg-[#f8f8f8] inline-flex items-center justify-center transition-colors shrink-0";
 
   return (
     <header
       data-course-title-header
-      className="sticky top-0 z-20 rounded-sm border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4"
-    >
+      className="sticky top-0 z-20 border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
+      
 
       {/* Single row: logo · info · actions */}
       <div className="flex items-center gap-2.5 sm:gap-3">
@@ -333,40 +352,40 @@ export default function CourseDetailHeader({
         <UniversityIcon
           name={course.university}
           size={40}
-          className="flex-shrink-0 bg-white rounded-lg border border-[#e5e5e5]"
-        />
+          className="flex-shrink-0 bg-white border border-[#e5e5e5]" />
+        
 
         {/* Info — fills remaining space, truncates */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="text-[11px] font-medium text-[#555] bg-white px-2 py-0.5 rounded border border-[#e5e5e5] truncate shrink min-w-0 max-w-[9rem] sm:max-w-none">
+            <span className="text-[11px] font-medium text-[#555] bg-white px-2 py-0.5 border border-[#e5e5e5] truncate shrink min-w-0 max-w-[9rem] sm:max-w-none">
               {course.university}
             </span>
-            {course.isInternal && (
-              <span className="text-[11px] font-medium bg-[#efefef] text-[#333] px-2 py-0.5 rounded border border-[#e1e1e1] shrink-0">
+            {course.isInternal &&
+            <span className="text-[11px] font-medium bg-[#efefef] text-[#333] px-2 py-0.5 border border-[#e1e1e1] shrink-0">
                 Internal
               </span>
-            )}
+            }
             <div className="relative shrink-0 group">
               <span className="text-[11px] text-[#999] cursor-help">{course.courseCode}</span>
-              {codeBreakdown.length > 0 && (
-                <div className="pointer-events-none invisible absolute left-0 top-full z-30 mt-1 w-[280px] rounded-md border border-[#e5e5e5] bg-white p-2 opacity-0 shadow-sm transition-opacity group-hover:visible group-hover:opacity-100">
+              {codeBreakdown.length > 0 &&
+              <Card>
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[#888] mb-1">Course Code Breakdown</p>
                   <dl className="space-y-1.5 text-[11px]">
-                    {codeBreakdown.map((item, idx) => (
-                      <div key={`${item.label}-${idx}`} className="flex justify-between gap-3">
+                    {codeBreakdown.map((item, idx) =>
+                  <div key={`${item.label}-${idx}`} className="flex justify-between gap-3">
                         <dt className="text-[#666]">{item.label}</dt>
                         <dd className="text-right">
                           <p className="font-medium text-[#222]">{item.value}</p>
-                          {item.detail && (
-                            <p className="text-[10px] text-[#777]">{item.detail}</p>
-                          )}
+                          {item.detail &&
+                      <p className="text-[10px] text-[#777]">{item.detail}</p>
+                      }
                         </dd>
                       </div>
-                    ))}
+                  )}
                   </dl>
-                </div>
-              )}
+                </Card>
+              }
             </div>
           </div>
           <h1 className="text-[17px] sm:text-[19px] font-semibold text-[#1f1f1f] tracking-tight leading-snug truncate">
@@ -376,141 +395,122 @@ export default function CourseDetailHeader({
 
         {/* Action buttons — always visible */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-          <select
-            value={aiSourceMode}
-            onChange={(e) => {
-              const next = e.target.value as AiSyncSourceMode;
-              setAiSourceMode(next);
-              try {
-                window.localStorage.setItem(AI_SYNC_MODE_STORAGE_KEY, next);
-              } catch {
-                // Ignore localStorage errors.
-              }
-            }}
-            className="h-7 rounded-md border border-[#d3d3d3] bg-white px-1.5 text-[10px] text-[#555] outline-none hover:bg-[#f8f8f8]"
-            title="AI Sync mode"
-            aria-label="AI Sync mode"
-          >
-            <option value="auto">Auto</option>
-            <option value="existing">Existing</option>
-            <option value="fresh">Fresh</option>
-          </select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" type="button">
+                {isAiUpdating ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                <span className="uppercase">{aiSourceMode}</span>
+                <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>AI Sync Mode</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={aiSourceMode}
+                  onValueChange={(next) => {
+                    const nextMode = next as AiSyncSourceMode;
+                    setAiSourceMode(nextMode);
+                    try {
+                      window.localStorage.setItem(AI_SYNC_MODE_STORAGE_KEY, nextMode);
+                    } catch {
+
+
+                      // Ignore localStorage errors.
+                    }}}>
+                  
+                  <DropdownMenuRadioItem value="auto">Auto</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="existing">Existing</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="fresh">Fresh</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={handleAiUpdate} disabled={isAiUpdating}>
+                  {isAiUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  Run AI Sync
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Enroll / Unenroll */}
-          <button
-            type="button"
-            onClick={onToggleEnroll}
-            disabled={isEnrolling}
-            className={`h-7 rounded-md border px-2 text-[11px] font-medium inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 ${
-              enrolled
-                ? "border-[#d3d3d3] bg-white text-[#3b3b3b] hover:bg-[#f8f8f8]"
-                : "border-[#c3d9c3] bg-[#f0f7f0] text-[#2d6a2d] hover:bg-[#e4f0e4]"
-            }`}
-            title={enrolled ? "Unenroll" : "Enroll"}
-            aria-label={enrolled ? "Unenroll" : "Enroll"}
-          >
-            {isEnrolling ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : enrolled ? (
-              <X className="w-3 h-3" />
-            ) : (
-              <Plus className="w-3 h-3" />
-            )}
-            <span>{enrolled ? "Unenroll" : "Enroll"}</span>
-          </button>
+          <Button variant="outline" type="button" onClick={handleToggleEnroll} disabled={isEnrolling}>
+            {isEnrolling ? <Loader2 className="animate-spin" /> :
+            enrolled ?
+            <X /> :
 
-          {/* AI Update */}
-          <button
-            onClick={handleAiUpdate}
-            disabled={isAiUpdating}
-            className={`h-7 w-7 rounded-md border bg-white inline-flex items-center justify-center transition-all disabled:opacity-50 shrink-0 ${
-              aiStatus === 'success'
-                ? 'border-emerald-300 text-emerald-600'
-                : aiStatus === 'error'
-                  ? 'border-rose-300 text-rose-500'
-                  : 'border-[#d3d3d3] text-[#666] hover:bg-[#f8f8f8]'
-            }`}
-            title="AI Sync — fetch resources, syllabus, and assignments"
-            aria-label="AI Sync"
-          >
-            {isAiUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-          </button>
+            <Plus />
+            }
+            <span>{enrolled ? "Unenroll" : "Enroll"}</span>
+          </Button>
 
           {/* Google Search */}
-          <a
-            href={searchHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={btnBase}
-            title="Search on Google"
-            aria-label="Search on Google"
-          >
-            <GoogleIcon className="w-3 h-3" />
-          </a>
+          <Button variant="outline" size="icon"
+          type="button"
+          onClick={() => window.open(searchHref, "_blank", "noopener,noreferrer")}
+          title="Search on Google"
+          aria-label="Search on Google">
+            
+            <GoogleIcon />
+          </Button>
 
           {/* Edit */}
-          <button
-            onClick={() => onToggleEdit?.()}
-            className={btnBase}
-            title={isEditing ? "Cancel Editing" : "Edit Course Details"}
-            aria-label={isEditing ? "Cancel Editing" : "Edit Course Details"}
-          >
-            <PenSquare className="w-3 h-3" />
-          </button>
+          <Button variant="outline" size="icon"
+          onClick={() => onToggleEdit?.()}
+          title={isEditing ? "Cancel Editing" : "Edit Course Details"}
+          aria-label={isEditing ? "Cancel Editing" : "Edit Course Details"}>
+            
+            <PenSquare />
+          </Button>
 
           {/* Delete */}
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className={`${btnBase} disabled:opacity-50`}
-            title="Delete Course"
-            aria-label="Delete Course"
-          >
-            {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-          </button>
+          <Button variant="outline" size="icon" type="button" onClick={handleDelete} disabled={isDeleting} title="Delete Course" aria-label="Delete Course">
+            {isDeleting ? <Loader2 className="animate-spin" /> : <Trash2 />}
+          </Button>
         </div>
       </div>
 
       {/* Field tags */}
-      {(course.fields.length > 0 || projectSeminarRef) && (
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          {projectSeminarRef ? (
-            <Link
-              href={`/projects-seminars/${projectSeminarRef.id}`}
-              className="inline-flex items-center gap-1 text-xs font-medium bg-white text-[#3e3e3e] px-2 py-0.5 rounded-full border border-[#dcdcdc] hover:bg-[#f7f7f7] transition-colors"
-            >
+      {(course.fields.length > 0 || projectSeminarRef) &&
+      <div className="flex flex-wrap gap-1.5 mt-3">
+          {projectSeminarRef ?
+        <Link
+          href={`/projects-seminars/${projectSeminarRef.id}`}
+          className="inline-flex items-center gap-1 text-xs font-medium bg-white text-[#3e3e3e] px-2 py-0.5 border border-[#dcdcdc] hover:bg-[#f7f7f7] transition-colors">
+          
               View {projectSeminarRef.category}
               <ArrowUpRight className="h-3 w-3" />
-            </Link>
-          ) : null}
-          {course.fields.map((field) => (
-            <span
-              key={field}
-              className="text-xs font-medium bg-white text-[#666] px-2 py-0.5 rounded-full border border-[#e5e5e5]"
-            >
+            </Link> :
+        null}
+          {course.fields.map((field) =>
+        <span
+          key={field}
+          className="text-xs font-medium bg-white text-[#666] px-2 py-0.5 border border-[#e5e5e5]">
+          
               {field}
             </span>
-          ))}
+        )}
         </div>
-      )}
+      }
 
-      {isAiUpdating && (
-        <div className="mt-3 rounded-sm border border-[#e8e8e8] bg-white p-2.5">
+      {isAiUpdating &&
+      <Card>
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-[#444]">AI Sync Activity</span>
             <span className="text-[11px] text-[#777]">
-              {(aiJob?.meta?.source_mode || aiJob?.sourceMode || aiSourceMode)} · {progress !== null ? `${progress}%` : aiJob?.status || "running"}
+              {aiJob?.meta?.source_mode || aiJob?.sourceMode || aiSourceMode} · {progress !== null ? `${progress}%` : aiJob?.status || "running"}
             </span>
           </div>
           <div className="mt-2 max-h-24 overflow-y-auto space-y-1">
-            {activity.slice(-6).map((item, idx) => (
-              <p key={`${item.ts}-${idx}`} className="text-[11px] text-[#666]">
+            {activity.slice(-6).map((item, idx) =>
+          <p key={`${item.ts}-${idx}`} className="text-[11px] text-[#666]">
                 {item.message}
               </p>
-            ))}
+          )}
           </div>
-        </div>
-      )}
-    </header>
-  );
+        </Card>
+      }
+    </header>);
+
 }

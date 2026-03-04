@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Check, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function Pricing({ dict }: { dict: any }) {
+import { Card } from "@/components/ui/card";export default function Pricing({ dict }: {dict: any;}) {
   return (
-    <div id="pricing" className="py-20 sm:py-32 bg-slate-50 relative overflow-hidden border-t border-slate-200">
+    <Card id="pricing">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Header */}
@@ -24,7 +25,7 @@ export default function Pricing({ dict }: { dict: any }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto px-2 sm:px-4">
           
           {/* Free Tier */}
-          <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-10 border border-slate-100 shadow-sm flex flex-col hover:shadow-xl transition-all duration-500 lg:my-8 group relative overflow-hidden">
+          <Card>
             <div className="mb-8 sm:mb-10 relative z-10">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 block">Tier 01</span>
               <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-6">{dict.free.name}</h3>
@@ -37,36 +38,36 @@ export default function Pricing({ dict }: { dict: any }) {
               <p className="text-xs sm:text-[13px] text-slate-500 leading-relaxed min-h-[40px]">{dict.free.desc}</p>
             </div>
             
-            <div className="flex-grow space-y-6 relative z-10 border-t border-slate-50 pt-6 sm:pt-8">
+            <Card>
               <ul className="space-y-3 sm:space-y-4">
-                {dict.free.features.map((feat: string, i: number) => (
-                  <li key={i} className="flex items-center gap-3 text-xs sm:text-[13px] text-slate-600">
-                    <div className="w-5 h-5 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                {dict.free.features.map((feat: string, i: number) =>
+                <li key={i} className="flex items-center gap-3 text-xs sm:text-[13px] text-slate-600">
+                    <div className="w-5 h-5 bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
                       <Check className="w-3 h-3 text-slate-300" />
                     </div>
                     {feat}
                   </li>
-                ))}
+                )}
               </ul>
-            </div>
+            </Card>
 
             <div className="mt-8 sm:mt-12 relative z-10">
-              <Link 
-                href="/courses" 
-                className="w-full py-3 sm:py-3.5 px-6 rounded-xl border border-slate-200 bg-white text-slate-500 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-slate-50 hover:border-slate-900 hover:text-slate-900 transition-all text-center flex items-center justify-center group"
-              >
+              <Link
+                href="/courses"
+                className="w-full py-3 sm:py-3.5 px-6 border border-slate-200 bg-white text-slate-500 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-slate-50 hover:border-slate-900 hover:text-slate-900 transition-all text-center flex items-center justify-center group">
+                
                 {dict.free.cta}
               </Link>
             </div>
-          </div>
+          </Card>
 
           {/* Pro Tier (RECOMMENDED) */}
-          <div className="bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-8 sm:p-12 border border-brand-blue/20 shadow-md flex flex-col relative z-20 transition-all duration-500 transform lg:hover:scale-[1.01] hover:shadow-xl hover:border-brand-blue/40">
+          <Card>
             {/* Overlapping Badge */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30">
-              <div className="px-4 sm:px-6 py-1.5 sm:py-2 bg-brand-blue text-white text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-md border-2 border-white whitespace-nowrap">
+              <Card>
                 Most Popular
-              </div>
+              </Card>
             </div>
 
             <div className="mb-8 sm:mb-10 relative z-10">
@@ -81,29 +82,29 @@ export default function Pricing({ dict }: { dict: any }) {
               <p className="text-xs sm:text-[14px] text-slate-600 leading-relaxed min-h-[40px] font-medium">{dict.pro.desc}</p>
             </div>
             
-            <div className="flex-grow space-y-6 relative z-10 border-t border-slate-50 pt-6 sm:pt-8">
+            <Card>
               <ul className="space-y-4 sm:space-y-5">
-                {dict.pro.features.map((feat: string, i: number) => (
-                  <li key={i} className="flex items-center gap-3 sm:gap-4 text-xs sm:text-[14px] text-slate-800 font-semibold group/item">
-                    <div className="w-6 h-6 rounded-full bg-brand-blue/10 flex items-center justify-center transition-transform group-hover/item:scale-110 shrink-0">
+                {dict.pro.features.map((feat: string, i: number) =>
+                <li key={i} className="flex items-center gap-3 sm:gap-4 text-xs sm:text-[14px] text-slate-800 font-semibold group/item">
+                    <div className="w-6 h-6 bg-brand-blue/10 flex items-center justify-center transition-transform group-hover/item:scale-110 shrink-0">
                       <Check className="w-3 h-3 text-brand-blue" />
                     </div>
                     {feat}
                   </li>
-                ))}
+                )}
               </ul>
-            </div>
+            </Card>
 
             <div className="mt-8 sm:mt-12 relative z-10">
-              <button className="w-full py-3.5 sm:py-4 px-8 rounded-xl bg-slate-900 text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-brand-blue transition-all shadow-md flex items-center justify-center group overflow-hidden active:shadow-inner">
+              <Button variant="outline">
                 <span className="relative z-10">{dict.pro.cta}</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
 
           {/* Elite Tier */}
-          <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-10 border border-slate-100 shadow-sm flex flex-col hover:border-slate-300 transition-all duration-500 lg:my-8 group relative overflow-hidden">
+          <Card>
             <div className="mb-8 sm:mb-10 relative z-10">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 block">Tier 03</span>
               <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-6">{dict.elite.name}</h3>
@@ -116,28 +117,28 @@ export default function Pricing({ dict }: { dict: any }) {
               <p className="text-xs sm:text-[13px] text-slate-500 leading-relaxed min-h-[40px]">{dict.elite.desc}</p>
             </div>
             
-            <div className="flex-grow space-y-6 relative z-10 border-t border-slate-50 pt-6 sm:pt-8">
+            <Card>
               <ul className="space-y-3 sm:space-y-4">
-                {dict.elite.features.map((feat: string, i: number) => (
-                  <li key={i} className="flex items-center gap-3 text-xs sm:text-[13px] text-slate-600">
-                    <div className="w-5 h-5 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                {dict.elite.features.map((feat: string, i: number) =>
+                <li key={i} className="flex items-center gap-3 text-xs sm:text-[13px] text-slate-600">
+                    <div className="w-5 h-5 bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
                       <Plus className="w-3 h-3 text-slate-400" />
                     </div>
                     {feat}
                   </li>
-                ))}
+                )}
               </ul>
-            </div>
+            </Card>
 
             <div className="mt-8 sm:mt-12 relative z-10">
-              <button className="w-full py-3 sm:py-3.5 px-6 rounded-xl border border-slate-200 bg-white text-slate-500 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-slate-50 hover:border-slate-900 hover:text-slate-900 transition-all text-center flex items-center justify-center group active:shadow-inner">
+              <Button variant="outline">
                 {dict.elite.cta}
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
 
         </div>
       </div>
-    </div>
-  );
+    </Card>);
+
 }

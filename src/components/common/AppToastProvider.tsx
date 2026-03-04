@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import Toast from "@/components/common/Toast";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import { toast } from "sonner";
 
 type AppToastType = "success" | "error" | "info";
 
@@ -16,13 +16,25 @@ type AppToastContextValue = {
   showToast: (input: ShowToastInput) => void;
 };
 
-const AppToastContext = createContext<AppToastContextValue | null>(null);
+const AppToastContext = createContext<AppToastContextValue | null >(null);
 
 export function AppToastProvider({ children }: { children: React.ReactNode }) {
-  const [toast, setToast] = useState<(ShowToastInput & { id: number }) | null>(null);
-
   const showToast = useCallback((input: ShowToastInput) => {
-    setToast({ ...input, id: Date.now() + Math.floor(Math.random() * 1000) });
+    const position = input.position || "bottom-right";
+    const duration = input.duration;
+    if (input.type === "error") {
+      toast.error(input.message, { position, duration });
+      return;
+    }
+    if (input.type === "info") {
+      toast.info(input.message, { position, duration });
+      return;
+    }
+    if (input.type === "success") {
+      toast.success(input.message, { position, duration });
+      return;
+    }
+    toast(input.message, { position, duration });
   }, []);
 
   const value = useMemo(() => ({ showToast }), [showToast]);
@@ -30,16 +42,6 @@ export function AppToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppToastContext.Provider value={value}>
       {children}
-      {toast ? (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          type={toast.type || "success"}
-          duration={toast.duration}
-          position={toast.position || "top-right"}
-          onClose={() => setToast(null)}
-        />
-      ) : null}
     </AppToastContext.Provider>
   );
 }
@@ -51,4 +53,3 @@ export function useAppToast() {
   }
   return context;
 }
-

@@ -19,7 +19,7 @@ export default async function DashboardLayout({
 
   return (
     <AppToastProvider>
-      <main className="h-[100svh] bg-[#f5f5f5] overflow-hidden">
+      <main className="h-svh w-full overflow-hidden overscroll-none">
         <DashboardShell
           labels={{
             hub: dict.navbar?.hub || "Hub",

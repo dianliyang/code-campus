@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function GlobalError({
   error,
@@ -45,7 +46,7 @@ export default function GlobalError({
             }}>
               A critical error occurred. Please try refreshing the page.
             </p>
-            <button
+            <Button variant="outline"
               onClick={reset}
               style={{
                 background: "#111827",
@@ -61,7 +62,7 @@ export default function GlobalError({
               }}
             >
               Try Again
-            </button>
+            </Button>
           </div>
         </div>
       </body>

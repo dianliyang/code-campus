@@ -5,17 +5,17 @@ import { createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { getWorkoutLastUpdateTime } from "@/actions/scrapers";
-import { aggregateWorkoutsByName } from "@/lib/workouts";
+import { aggregateWorkoutsByName } from "@/lib/workouts";import { Card } from "@/components/ui/card";
 
 interface PageProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<{[key: string]: string | string[] | undefined;}>;
 }
 
 export default async function WorkoutsPage({ searchParams }: PageProps) {
   const [lang, params] = await Promise.all([
-    getLanguage(),
-    searchParams,
-  ]);
+  getLanguage(),
+  searchParams]
+  );
   const dict = await getDictionary(lang);
 
   return (
@@ -28,18 +28,18 @@ export default async function WorkoutsPage({ searchParams }: PageProps) {
           <WorkoutListData params={params} dict={dict.dashboard.workouts} />
         </Suspense>
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
-async function SidebarData({ dict }: { 
-  dict: Dictionary['dashboard']['workouts']
-}) {
+async function SidebarData({ dict
+
+}: {dict: Dictionary['dashboard']['workouts'];}) {
   const supabase = await createClient();
 
-  const { data: workoutsData, error } = await supabase
-    .from('workouts')
-    .select('*');
+  const { data: workoutsData, error } = await supabase.
+  from('workouts').
+  select('*');
 
   if (error) {
     console.error("[Supabase] Fetch sidebar workouts error:", error);
@@ -58,73 +58,73 @@ async function SidebarData({ dict }: {
     }
     if (name) categoryCounts[name] = (categoryCounts[name] || 0) + 1;
   });
-  
-  const categories = Object.entries(categoryCounts)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
+
+  const categories = Object.entries(categoryCounts).
+  map(([name, count]) => ({ name, count })).
+  sort((a, b) => b.count - a.count);
 
   const statusCounts: Record<string, number> = {};
   aggregatedWorkouts.forEach((w) => {
     const name = w.bookingStatus;
     if (name) statusCounts[name] = (statusCounts[name] || 0) + 1;
   });
-  const statuses = Object.entries(statusCounts)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
+  const statuses = Object.entries(statusCounts).
+  map(([name, count]) => ({ name, count })).
+  sort((a, b) => b.count - a.count);
 
   return <WorkoutSidebar categories={categories} statuses={statuses} dict={dict} />;
 }
 
-async function WorkoutListData({ params, dict }: { 
-  params: Record<string, string | string[] | undefined>, 
-  dict: Dictionary['dashboard']['workouts'] 
-}) {
-  const query = (params.q as string) || "";
-  const sort = (params.sort as string) || "title";
-  const categories = ((params.categories as string) || "").split(",").filter(Boolean);
-  const days = ((params.days as string) || "").split(",").filter(Boolean);
-  const status = ((params.status as string) || "").split(",").filter(Boolean);
-  const selectedCategory = (params.category as string) || "";
+async function WorkoutListData({ params, dict
+
+
+}: {params: Record<string, string | string[] | undefined>;dict: Dictionary['dashboard']['workouts'];}) {
+  const query = params.q as string || "";
+  const sort = params.sort as string || "title";
+  const categories = (params.categories as string || "").split(",").filter(Boolean);
+  const days = (params.days as string || "").split(",").filter(Boolean);
+  const status = (params.status as string || "").split(",").filter(Boolean);
+  const selectedCategory = params.category as string || "";
 
   const [dbWorkouts, lastUpdated] = await Promise.all([
-    fetchWorkouts(query, sort, categories, days, status, selectedCategory),
-    getWorkoutLastUpdateTime()
-  ]);
+  fetchWorkouts(query, sort, categories, days, status, selectedCategory),
+  getWorkoutLastUpdateTime()]
+  );
 
   return (
-    <WorkoutList 
+    <WorkoutList
       initialWorkouts={dbWorkouts.items}
       dict={dict}
       lastUpdated={lastUpdated}
       categoryGroups={dbWorkouts.categoryGroups}
-      selectedCategory={dbWorkouts.selectedCategory}
-    />
-  );
+      selectedCategory={dbWorkouts.selectedCategory} />);
+
+
 }
 
 async function fetchWorkouts(
-  query: string, 
-  sort: string, 
-  categories: string[], 
-  days: string[], 
-  status: string[],
-  selectedCategory: string,
-) {
+query: string,
+sort: string,
+categories: string[],
+days: string[],
+status: string[],
+selectedCategory: string)
+{
   const supabase = await createClient();
-  
-  let supabaseQuery = supabase
-    .from('workouts')
-    .select('*', { count: 'exact' });
+
+  let supabaseQuery = supabase.
+  from('workouts').
+  select('*', { count: 'exact' });
 
   if (query) {
     // Transform query for prefix matching (e.g. "swim" -> "swim:*")
-    const formattedQuery = query
-      .trim()
-      .split(/\s+/)
-      .map(term => `${term}:*`)
-      .join(' & ');
-    
-    supabaseQuery = supabaseQuery.textSearch('search_vector', formattedQuery, { 
+    const formattedQuery = query.
+    trim().
+    split(/\s+/).
+    map((term) => `${term}:*`).
+    join(' & ');
+
+    supabaseQuery = supabaseQuery.textSearch('search_vector', formattedQuery, {
       config: 'english'
     });
   }
@@ -146,10 +146,10 @@ async function fetchWorkouts(
   }
 
   // Sorting
-  if (sort === 'price') supabaseQuery = supabaseQuery.order('price_student', { ascending: true });
-  else if (sort === 'newest') supabaseQuery = supabaseQuery.order('updated_at', { ascending: false });
-  else if (sort === 'day') supabaseQuery = supabaseQuery.order('day_of_week', { ascending: true });
-  else supabaseQuery = supabaseQuery.order('title', { ascending: true });
+  if (sort === 'price') supabaseQuery = supabaseQuery.order('price_student', { ascending: true });else
+  if (sort === 'newest') supabaseQuery = supabaseQuery.order('updated_at', { ascending: false });else
+  if (sort === 'day') supabaseQuery = supabaseQuery.order('day_of_week', { ascending: true });else
+  supabaseQuery = supabaseQuery.order('title', { ascending: true });
 
   const { data, error } = await supabaseQuery;
 
@@ -170,30 +170,30 @@ async function fetchWorkouts(
     grouped.set(key, arr);
   });
 
-  const categoryGroups = Array.from(grouped.entries())
-    .map(([category, items]) => {
-      const prices = items
-        .map((i) => i.priceStudent)
-        .filter((v): v is number => typeof v === "number");
-      return {
-        category,
-        count: items.length,
-        minStudentPrice: prices.length ? Math.min(...prices) : null,
-        maxStudentPrice: prices.length ? Math.max(...prices) : null,
-      };
-    })
-    .sort((a, b) => {
-      const isASemesterFee = a.category.toLowerCase().includes("semester fee") || a.category.toLowerCase().includes("semestergebühr");
-      const isBSemesterFee = b.category.toLowerCase().includes("semester fee") || b.category.toLowerCase().includes("semestergebühr");
-      if (isASemesterFee && !isBSemesterFee) return -1;
-      if (!isASemesterFee && isBSemesterFee) return 1;
-      return a.category.localeCompare(b.category);
-    });
+  const categoryGroups = Array.from(grouped.entries()).
+  map(([category, items]) => {
+    const prices = items.
+    map((i) => i.priceStudent).
+    filter((v): v is number => typeof v === "number");
+    return {
+      category,
+      count: items.length,
+      minStudentPrice: prices.length ? Math.min(...prices) : null,
+      maxStudentPrice: prices.length ? Math.max(...prices) : null
+    };
+  }).
+  sort((a, b) => {
+    const isASemesterFee = a.category.toLowerCase().includes("semester fee") || a.category.toLowerCase().includes("semestergebühr");
+    const isBSemesterFee = b.category.toLowerCase().includes("semester fee") || b.category.toLowerCase().includes("semestergebühr");
+    if (isASemesterFee && !isBSemesterFee) return -1;
+    if (!isASemesterFee && isBSemesterFee) return 1;
+    return a.category.localeCompare(b.category);
+  });
 
-  const activeCategory = selectedCategory && grouped.has(selectedCategory)
-    ? selectedCategory
-    : (categoryGroups[0]?.category || "");
-  const items = activeCategory ? (grouped.get(activeCategory) || []) : [];
+  const activeCategory = selectedCategory && grouped.has(selectedCategory) ?
+  selectedCategory :
+  categoryGroups[0]?.category || "";
+  const items = activeCategory ? grouped.get(activeCategory) || [] : [];
 
   return { items, total: items.length, categoryGroups, selectedCategory: activeCategory };
 }
@@ -201,29 +201,29 @@ async function fetchWorkouts(
 function WorkoutListSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
-      <div className="flex items-center justify-between rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] px-4 py-2">
-        <div className="h-4 w-24 bg-[#f0f0f0] rounded" />
+      <Card>
+        <div className="h-4 w-24 bg-[#f0f0f0]" />
         <div className="flex gap-2">
-          <div className="h-7 w-16 bg-[#f0f0f0] rounded" />
-          <div className="h-7 w-16 bg-[#f0f0f0] rounded" />
+          <div className="h-7 w-16 bg-[#f0f0f0]" />
+          <div className="h-7 w-16 bg-[#f0f0f0]" />
         </div>
-      </div>
-      <div className="rounded-lg border border-[#e5e5e5] overflow-hidden">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div key={i} className={`flex items-center gap-4 px-4 py-3 ${i % 2 === 0 ? "bg-[#fcfcfc]" : "bg-[#f7f7f7]"} ${i > 0 ? "border-t border-[#f0f0f0]" : ""}`}>
+      </Card>
+      <Card>
+        {[0, 1, 2, 3, 4].map((i) =>
+        <div key={i} className={`flex items-center gap-4 px-4 py-3 ${i % 2 === 0 ? "bg-[#fcfcfc]" : "bg-[#f7f7f7]"} ${i > 0 ? "border-t border-[#f0f0f0]" : ""}`}>
             <div className="flex-1 space-y-1.5">
-              <div className="h-4 w-1/2 bg-[#ebebeb] rounded" />
-              <div className="h-3 w-1/4 bg-[#f2f2f2] rounded" />
+              <div className="h-4 w-1/2 bg-[#ebebeb]" />
+              <div className="h-3 w-1/4 bg-[#f2f2f2]" />
             </div>
             <div className="hidden md:block w-[15%]">
-              <div className="h-5 w-16 bg-[#f0f0f0] rounded-full" />
+              <div className="h-5 w-16 bg-[#f0f0f0]" />
             </div>
             <div className="w-[5%] flex justify-end">
-              <div className="h-8 w-8 bg-[#f0f0f0] rounded-md" />
+              <div className="h-8 w-8 bg-[#f0f0f0]" />
             </div>
           </div>
-        ))}
-      </div>
-    </div>
-  );
+        )}
+      </Card>
+    </div>);
+
 }

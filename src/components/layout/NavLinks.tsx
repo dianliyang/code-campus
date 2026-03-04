@@ -19,7 +19,7 @@ export default function NavLinks({
 }) {
   const pathname = usePathname();
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
-  const navRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLDivElement >(null);
   const linksRef = useRef<(HTMLAnchorElement | null)[]>([]);
   
   const navLinks = useMemo((): { name: string; href: string; icon: LucideIcon }[] => {
@@ -66,13 +66,13 @@ export default function NavLinks({
       className={`hidden lg:flex items-center relative transition-all duration-500 ${
         collapsed 
           ? 'gap-2 bg-transparent border-none' 
-          : `gap-0.5 p-1 rounded-full border ${isDark ? 'bg-black/40 border-white/5 shadow-2xl' : 'bg-gray-50 border-slate-200/60'}`
+          : `gap-0.5 p-1 border ${isDark ? 'bg-black/40 border-white/5 shadow-2xl' : 'bg-gray-50 border-slate-200/60'}`
       }`}
     >
       {/* Smooth Sliding Background Indicator */}
       {!collapsed && (
         <div 
-          className={`absolute transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] rounded-full z-0 ${
+          className={`absolute transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] z-0 ${
             isDark ? 'bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'bg-slate-900 shadow-lg shadow-slate-200'
           }`}
           style={{
@@ -95,8 +95,8 @@ export default function NavLinks({
             ref={(el) => { linksRef.current[idx] = el; }}
             className={`group relative flex items-center justify-center transition-all duration-500 z-10 ${
               collapsed 
-                ? 'w-8 h-8 rounded-full hover:bg-white/10 text-gray-400 hover:text-white' 
-                : `px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] gap-2 ${
+                ? 'w-8 h-8 hover:bg-white/10 text-gray-400 hover:text-white' 
+                : `px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] gap-2 ${
                     isActive 
                       ? (isDark ? 'text-gray-950' : 'text-white') 
                       : (isDark ? 'text-gray-400 hover:text-white' : 'text-slate-500 hover:text-slate-900')

@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import StudyCalendar from "@/components/home/StudyCalendar";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -19,14 +19,14 @@ export default async function StudySchedulePage() {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <p className="text-gray-500 font-mono uppercase tracking-widest">{dict.dashboard.profile.user_not_found}</p>
-        <Button asChild className="mt-8"><Link href="/login">{dict.dashboard.login.title}</Link></Button>
+        <Button variant="outline" asChild><Link href="/login">{dict.dashboard.login.title}</Link></Button>
       </div>
     );
   }
 
   return (
-    <main className="w-full flex flex-col gap-5">
-      <Suspense fallback={<div className="animate-pulse h-96 bg-gray-100 rounded-lg" />}>
+    <main className="w-full h-full flex flex-col">
+      <Suspense fallback={<div className="animate-pulse h-96 bg-gray-100" />}>
         <StudyScheduleContent userId={user.id} dict={dict} />
       </Suspense>
     </main>
@@ -154,23 +154,13 @@ async function StudyScheduleContent({
     .map(c => ({ id: c.id, courseCode: c.courseCode, title: c.title }));
 
   return (
-    <div className="flex flex-col gap-4">
-      <section className="sticky top-[-12px] z-20 -mx-3 sm:-mx-4 px-3 sm:px-4 pb-4 bg-[#fcfcfc] border-b border-[#e5e5e5]">
-        <div className="rounded-lg border border-[#e5e5e5] bg-[#fcfcfc] p-3 sm:p-4">
-          <h3 className="text-lg font-bold text-[#1f1f1f]">{dict.dashboard.roadmap.calendar_title}</h3>
-          <p className="text-xs text-[#7a7a7a] mt-0.5">Manage your academic schedule and track session attendance.</p>
-        </div>
-      </section>
-
-      <div className="mt-2">
-        <StudyCalendar
-          courses={enrolledCourses as unknown as Parameters<typeof StudyCalendar>[0]["courses"]}
-          plans={plans}
-          logs={filteredLogs}
-          dict={dict.dashboard.roadmap}
-          coursesWithoutPlans={coursesWithoutPlans}
-        />
-      </div>
+    <div className="h-full flex flex-col">
+      <StudyCalendar
+        courses={enrolledCourses as unknown as Parameters<typeof StudyCalendar>[0]["courses"]}
+        plans={plans}
+        logs={filteredLogs}
+        dict={dict.dashboard.roadmap}
+      />
     </div>
   );
 }

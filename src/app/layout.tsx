@@ -1,22 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import PWARegister from "@/components/PWARegister";
 import BackToTop from "@/components/common/BackToTop";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -61,14 +50,15 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
         <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-        <BackToTop />
-        <PWARegister />
-        <SpeedInsights />
-        <Analytics />
+      <body className="antialiased">
+        <TooltipProvider>
+          {children}
+          <Toaster position="bottom-right" />
+          <BackToTop />
+          <PWARegister />
+          <SpeedInsights />
+          <Analytics />
+        </TooltipProvider>
       </body>
     </html>
   );

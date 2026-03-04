@@ -1,29 +1,50 @@
 import { ExternalLink } from "lucide-react";
-import Pagination from "@/components/home/Pagination";
 import { createClient, getUser } from "@/lib/supabase/server";
 import ProjectsSeminarsToolbar from "@/components/projects-seminars/ProjectsSeminarsToolbar";
 import Link from "next/link";
 import ProjectSeminarEnrollButton from "@/components/projects-seminars/ProjectSeminarEnrollButton";
-import { Suspense } from "react";
+import ProjectsSeminarsDataTable from "@/components/projects-seminars/table/projects-seminars-data-table";
+import { ProjectSeminarTableRow } from "@/components/projects-seminars/table/columns";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
+import { Card } from "@/components/ui/card";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-function readParam(params: Record<string, string | string[] | undefined>, key: string): string {
+function readParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+): string {
   const value = params[key];
   if (Array.isArray(value)) return value[0] || "";
   return value || "";
 }
 
-function readListParam(params: Record<string, string | string[] | undefined>, key: string): string[] {
+function readListParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+): string[] {
   const value = readParam(params, key);
-  return value.split(",").map((item) => item.trim()).filter(Boolean);
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
-export default async function ProjectsSeminarsPage({ searchParams }: PageProps) {
+export default async function ProjectsSeminarsPage({
+  searchParams,
+}: PageProps) {
   const [params, user, lang] = await Promise.all([
     searchParams,
     getUser(),
@@ -46,10 +67,15 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
 
   let dataQuery = supabase
     .from("projects_seminars")
-    .select("id, title, course_code, category, credit, url, latest_semester, university, details", { count: "exact" });
+    .select(
+      "id, title, course_code, category, credit, url, latest_semester, university, details",
+      { count: "exact" },
+    );
 
   if (query) {
-    dataQuery = dataQuery.textSearch("search_vector", query, { type: "websearch" });
+    dataQuery = dataQuery.textSearch("search_vector", query, {
+      type: "websearch",
+    });
   }
   if (categoriesFilter.length > 0) {
     dataQuery = dataQuery.in("category", categoriesFilter);
@@ -69,9 +95,15 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
     }
   }
 
-  if (sort === "newest") dataQuery = dataQuery.order("updated_at", { ascending: false });
-  else if (sort === "credit") dataQuery = dataQuery.order("credit", { ascending: false, nullsFirst: false });
-  else if (sort === "category") dataQuery = dataQuery.order("category", { ascending: true });
+  if (sort === "newest")
+    dataQuery = dataQuery.order("updated_at", { ascending: false });
+  else if (sort === "credit")
+    dataQuery = dataQuery.order("credit", {
+      ascending: false,
+      nullsFirst: false,
+    });
+  else if (sort === "category")
+    dataQuery = dataQuery.order("category", { ascending: true });
   else dataQuery = dataQuery.order("title", { ascending: true });
 
   const [{ data: items, count }, { data: categories }] = await Promise.all([
@@ -81,6 +113,25 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
 
   const total = count || 0;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const baseParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value == null) return;
+    if (Array.isArray(value)) {
+      if (value[0]) baseParams.set(key, value[0]);
+    } else if (value) {
+      baseParams.set(key, value);
+    }
+  });
+  const createPageHref = (nextPage: number) => {
+    const next = new URLSearchParams(baseParams);
+    next.set("page", String(nextPage));
+    return `/projects-seminars?${next.toString()}`;
+  };
+  const pageNumbers = Array.from(
+    new Set([1, page - 1, page, page + 1, totalPages]),
+  )
+    .filter((p) => p >= 1 && p <= totalPages)
+    .sort((a, b) => a - b);
   const itemIds = (items || []).map((item) => item.id);
   const enrollmentMap = new Map<number, string>();
   const departmentMap = new Map<number, string>();
@@ -110,13 +161,20 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
   }
 
   const uniqueCategories = Array.from(
-    new Set((categories || []).map((c) => c.category).filter((c): c is string => Boolean(c))),
+    new Set(
+      (categories || [])
+        .map((c) => c.category)
+        .filter((c): c is string => Boolean(c)),
+    ),
   ).sort((a, b) => a.localeCompare(b));
   const uniqueSemesters = Array.from(
     new Set(
       (categories || [])
         .map((c) => {
-          const sem = c.latest_semester as { term?: string; year?: number } | null;
+          const sem = c.latest_semester as {
+            term?: string;
+            year?: number;
+          } | null;
           return sem?.term && sem?.year ? `${sem.term} ${sem.year}` : null;
         })
         .filter((value): value is string => Boolean(value)),
@@ -125,170 +183,193 @@ export default async function ProjectsSeminarsPage({ searchParams }: PageProps) 
     const [termA, yearA] = a.split(" ");
     const [termB, yearB] = b.split(" ");
     if (yearA !== yearB) return Number(yearB) - Number(yearA);
-    const order: Record<string, number> = { Winter: 4, Fall: 3, Summer: 2, Spring: 1 };
+    const order: Record<string, number> = {
+      Winter: 4,
+      Fall: 3,
+      Summer: 2,
+      Spring: 1,
+    };
     return (order[termB] || 0) - (order[termA] || 0);
+  });
+
+  const tableRows: ProjectSeminarTableRow[] = (items || []).map((item) => {
+    const semester = (item.latest_semester || {}) as {
+      term?: string;
+      year?: number;
+    };
+    const status = enrollmentMap.get(item.id) ? "Enrolled" : "Not Enrolled";
+    const department = (departmentMap.get(item.id) ||
+      (item.details &&
+        typeof item.details === "object" &&
+        !Array.isArray(item.details) &&
+        typeof (item.details as Record<string, unknown>).department ===
+          "string" &&
+        (item.details as Record<string, unknown>).department) ||
+      "-") as string;
+
+    return {
+      id: item.id,
+      title: item.title || "",
+      courseCode: item.course_code || "",
+      university: item.university || "",
+      category: item.category || "",
+      department,
+      status,
+      credit: item.credit ?? null,
+      semesterLabel:
+        semester.term && semester.year
+          ? `${semester.term} ${semester.year}`
+          : "-",
+      url: item.url || null,
+    };
   });
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="sticky top-[-12px] z-20 -mx-3 sm:-mx-4 px-3 sm:px-4 pb-4 bg-[#fcfcfc] border-b border-[#e5e5e5]">
-        <ProjectsSeminarsToolbar categories={uniqueCategories} semesters={uniqueSemesters} />
+      <div>
+        <ProjectsSeminarsToolbar
+          categories={uniqueCategories}
+          semesters={uniqueSemesters}
+        />
       </div>
 
-      <div className="rounded-lg overflow-hidden bg-[#fcfcfc] border border-[#e3e3e3]">
-        {view === "list" ? (
-          <>
-            <div className="hidden md:flex items-center gap-4 px-4 py-2.5 bg-[#f3f3f3] text-[11px] font-semibold text-[#757575] select-none uppercase tracking-wide">
-              <div className="flex-1 min-w-0">S&P</div>
-              <div className="w-[14%]">Category</div>
-              <div className="w-[16%]">Department</div>
-              <div className="w-[10%]">Status</div>
-              <div className="w-[6%]">Credit</div>
-              <div className="w-[8%]">Semester</div>
-              <div className="w-[6%] text-right pr-1">Action</div>
-            </div>
-            <div>
-              {(items || []).map((item, idx) => {
-                const semester = (item.latest_semester || {}) as { term?: string; year?: number };
-                const status = enrollmentMap.get(item.id) ? "Enrolled" : "Not Enrolled";
-                return (
-                  <article
-                    key={item.id}
-                    className={`group flex flex-col md:flex-row md:items-center gap-2 md:gap-4 px-4 py-3 transition-colors border-t border-[#e9e9e9] first:border-t-0 ${
-                      idx % 2 === 0 ? "bg-[#fcfcfc]" : "bg-[#f7f7f7]"
-                    } hover:bg-[#f2f2f2]`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-[14px] font-medium text-[#222] truncate">
-                        <Link href={`/projects-seminars/${item.id}`} className="hover:text-black transition-colors">
-                          {item.title}
-                        </Link>
-                      </h3>
-                      <p className="text-[12px] text-[#717171] mt-0.5">
-                        {item.course_code} · {item.university}
-                      </p>
-                    </div>
-                    <div className="md:w-[14%] text-[12px] text-[#555]">{item.category}</div>
-                    <div className="md:w-[16%] text-[12px] text-[#555] truncate">
-                      {(
-                        departmentMap.get(item.id) ||
-                        (item.details &&
-                          typeof item.details === "object" &&
-                          !Array.isArray(item.details) &&
-                          typeof (item.details as Record<string, unknown>).department === "string" &&
-                          (item.details as Record<string, unknown>).department) ||
-                        "-"
-                      ) as string}
-                    </div>
-                    <div className="md:w-[10%] text-[12px]">
-                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${status === "Enrolled" ? "border-green-100 bg-green-50 text-green-700" : "border-[#e5e5e5] bg-[#f3f3f3] text-[#666]"}`}>
-                        {status}
+      {view === "list" ? (
+        <ProjectsSeminarsDataTable rows={tableRows} />
+      ) : (
+        <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2 xl:grid-cols-3">
+          {(items || []).map((item) => {
+            const semester = (item.latest_semester || {}) as {
+              term?: string;
+              year?: number;
+            };
+            const status = enrollmentMap.get(item.id)
+              ? "Enrolled"
+              : "Not Enrolled";
+            return (
+              <Card key={item.id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="line-clamp-2 text-sm font-semibold text-slate-900">
+                      <Link
+                        href={`/projects-seminars/${item.id}`}
+                        className="transition-colors hover:text-black"
+                      >
+                        {item.title}
+                      </Link>
+                    </h3>
+                    <p className="mt-0.5 truncate text-xs text-slate-500">
+                      {item.course_code} · {item.university}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ProjectSeminarEnrollButton
+                      projectSeminarId={item.id}
+                      initialEnrolled={Boolean(enrollmentMap.get(item.id))}
+                      iconOnly
+                    />
+                    {item.url ? (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex h-8 w-8 items-center justify-center border border-[#d6d6d6] bg-white text-[#4f4f4f] transition-colors hover:bg-[#f4f4f4]"
+                        aria-label="Open seminar"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : (
+                      <span className="inline-flex h-8 w-8 items-center justify-center bg-[#ececec] text-[#9a9a9a]">
+                        <ExternalLink className="h-3 w-3" />
                       </span>
-                    </div>
-                    <div className="md:w-[6%] text-[12px] text-[#555]">{item.credit ?? "-"}</div>
-                    <div className="md:w-[8%] text-[12px] text-[#555]">
-                      {semester.term && semester.year ? `${semester.term} ${semester.year}` : "-"}
-                    </div>
-                    <div className="md:w-[6%] flex md:justify-end items-center gap-1">
-                      <ProjectSeminarEnrollButton projectSeminarId={item.id} initialEnrolled={Boolean(enrollmentMap.get(item.id))} iconOnly />
-                      {item.url ? (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
-                          aria-label="Open seminar"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        <span className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-[#ececec] text-[#9a9a9a]">
-                          <ExternalLink className="w-3 h-3" />
-                        </span>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 p-3">
-            {(items || []).map((item) => {
-              const semester = (item.latest_semester || {}) as { term?: string; year?: number };
-              const status = enrollmentMap.get(item.id) ? "Enrolled" : "Not Enrolled";
-              return (
-                <article key={item.id} className="bg-[#fafafa] border border-[#e3e3e3] rounded-xl p-4 h-full flex flex-col">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-slate-900 line-clamp-2">
-                        <Link href={`/projects-seminars/${item.id}`} className="hover:text-black transition-colors">
-                          {item.title}
-                        </Link>
-                      </h3>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">{item.course_code} · {item.university}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <ProjectSeminarEnrollButton projectSeminarId={item.id} initialEnrolled={Boolean(enrollmentMap.get(item.id))} iconOnly />
-                      {item.url ? (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
-                          aria-label="Open seminar"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        <span className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-[#ececec] text-[#9a9a9a]">
-                          <ExternalLink className="w-3 h-3" />
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
+                </div>
 
-                  <div className="mt-3 flex items-center gap-1.5">
-                    <span className="inline-flex rounded px-2 py-0.5 text-[11px] font-medium bg-[#efefef] text-[#666]">
+                <div className="mt-3 flex items-center gap-1.5">
+                  <span className="inline-flex bg-[#efefef] px-2 py-0.5 text-[11px] font-medium text-[#666]">
+                    {item.category}
+                  </span>
+                  <span
+                    className={`inline-flex px-2 py-0.5 text-[11px] font-medium ${
+                      status === "Enrolled"
+                        ? "bg-green-50 text-green-700"
+                        : "bg-[#efefef] text-[#666]"
+                    }`}
+                  >
+                    {status}
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2 pt-3">
+                  <div className="flex min-h-[56px] flex-col bg-white px-2 py-1.5">
+                    <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
+                      Credit
+                    </p>
+                    <p className="mt-auto text-[13px] font-medium text-[#3b3b3b]">
+                      {item.credit ?? "-"}
+                    </p>
+                  </div>
+                  <div className="flex min-h-[56px] flex-col bg-white px-2 py-1.5">
+                    <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
+                      Category
+                    </p>
+                    <p className="mt-auto truncate text-[13px] font-medium text-[#3b3b3b]">
                       {item.category}
-                    </span>
-                    <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${status === "Enrolled" ? "bg-green-50 text-green-700" : "bg-[#efefef] text-[#666]"}`}>
-                      {status}
-                    </span>
+                    </p>
                   </div>
-
-                  <div className="mt-auto pt-3 grid grid-cols-3 gap-2">
-                    <div className="rounded-md bg-white px-2 py-1.5 flex min-h-[56px] flex-col">
-                      <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Credit</p>
-                      <p className="mt-auto text-[13px] font-medium text-[#3b3b3b]">{item.credit ?? "-"}</p>
-                    </div>
-                    <div className="rounded-md bg-white px-2 py-1.5 flex min-h-[56px] flex-col">
-                      <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Category</p>
-                      <p className="mt-auto text-[13px] font-medium text-[#3b3b3b] truncate">{item.category}</p>
-                    </div>
-                    <div className="rounded-md bg-white px-2 py-1.5 flex min-h-[56px] flex-col">
-                      <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">Semester</p>
-                      <p className="mt-auto text-[13px] font-medium text-[#3b3b3b]">
-                        {semester.term && semester.year ? `${semester.term} ${semester.year}` : "-"}
-                      </p>
-                    </div>
+                  <div className="flex min-h-[56px] flex-col bg-white px-2 py-1.5">
+                    <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
+                      Semester
+                    </p>
+                    <p className="mt-auto text-[13px] font-medium text-[#3b3b3b]">
+                      {semester.term && semester.year
+                        ? `${semester.term} ${semester.year}`
+                        : "-"}
+                    </p>
                   </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
-        {(items || []).length === 0 ? (
-          <div className="text-center py-16">
-            <h3 className="text-sm font-semibold text-slate-900">No seminars found</h3>
-            <p className="text-sm text-slate-500 mt-1">Try adjusting your search or category filter.</p>
-          </div>
-        ) : null}
-      </div>
+      {(items || []).length === 0 ? (
+        <div className="py-16 text-center">
+          <h3 className="text-sm font-semibold text-slate-900">
+            No seminars found
+          </h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Try adjusting your search or category filter.
+          </p>
+        </div>
+      ) : null}
 
-      <div className="sticky bottom-0 bg-[#fcfcfc]">
-        <Pagination totalPages={totalPages} currentPage={page} totalItems={total} perPage={perPage} />
+      <div>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href={createPageHref(Math.max(1, page - 1))}
+              />
+            </PaginationItem>
+            {pageNumbers.map((p, i) => (
+              <PaginationItem key={p}>
+                {i > 0 && p - pageNumbers[i - 1] > 1 ? (
+                  <PaginationEllipsis />
+                ) : null}
+                <PaginationLink href={createPageHref(p)} isActive={p === page}>
+                  {p}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext
+                href={createPageHref(Math.min(totalPages, page + 1))}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle, XCircle, Info, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ToastProps {
   message: string;
@@ -39,25 +40,25 @@ export default function Toast({ message, type = "success", duration = 5500, onCl
 
   return (
     <div
-      className={`fixed ${positionClass} z-50 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg backdrop-blur-sm will-change-transform transition-all duration-200 ease-out ${
-        colorMap[type]
-      } ${
-        isVisible
-          ? "opacity-100 translate-y-0 scale-100"
-          : `opacity-0 scale-[0.98] ${position === "top-right" ? "-translate-y-2" : "translate-y-2"}`
-      }`}
-    >
-      {(() => { const Icon = iconMap[type]; return <Icon className="w-5 h-5" />; })()}
+      className={`fixed ${positionClass} z-50 flex items-center gap-3 px-4 py-3 border shadow-lg backdrop-blur-sm will-change-transform transition-all duration-200 ease-out ${
+      colorMap[type]} ${
+
+      isVisible ?
+      "opacity-100 translate-y-0 scale-100" :
+      `opacity-0 scale-[0.98] ${position === "top-right" ? "-translate-y-2" : "translate-y-2"}`}`
+      }>
+      
+      {(() => {const Icon = iconMap[type];return <Icon className="w-5 h-5" />;})()}
       <span className="text-sm font-medium">{message}</span>
-      <button
-        onClick={() => {
-          setIsVisible(false);
-          setTimeout(onClose, 300);
-        }}
-        className="ml-2 text-current opacity-60 hover:opacity-100 transition-opacity"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-  );
+      <Button variant="outline"
+      onClick={() => {
+        setIsVisible(false);
+        setTimeout(onClose, 300);
+      }}>
+
+        
+        <X />
+      </Button>
+    </div>);
+
 }

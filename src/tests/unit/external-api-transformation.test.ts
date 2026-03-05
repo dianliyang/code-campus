@@ -196,4 +196,33 @@ describe('transformExternalCourse', () => {
       persistedKind: 'project'
     });
   });
+
+  it('should normalize metadata deadline/exercise kinds for external clients', () => {
+    const rawCourse = {
+      course_fields: [],
+      user_courses: [{ status: 'in_progress', gpa: null, score: null }],
+      study_plans: [],
+      course_assignments: [
+        {
+          id: 3,
+          kind: 'assignment',
+          label: 'Practice sheet',
+          due_on: '2026-03-18',
+          metadata: { task_kind: 'exercise' }
+        },
+        {
+          id: 4,
+          kind: 'assignment',
+          label: 'Final due',
+          due_on: '2026-03-20',
+          metadata: { task_kind: 'deadline' }
+        }
+      ]
+    };
+
+    const result = transformExternalCourse(rawCourse as Record<string, unknown>);
+    expect(result.assignments).toHaveLength(2);
+    expect(result.assignments[0].kind).toBe('assignment');
+    expect(result.assignments[1].kind).toBe('exam');
+  });
 });

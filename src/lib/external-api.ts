@@ -26,30 +26,25 @@ function transformSchedules(plans: Array<Record<string, unknown>>) {
   }));
 }
 
-function transformAssignments(rows: Array<Record<string, unknown>>) {
-  const knownKinds = new Set([
-    'reading',
-    'lecture',
-    'assignment',
-    'lab',
-    'project',
-    'quiz',
-    'exam',
-    'task',
-    'other',
-  ]);
+function normalizeExternalKind(input: unknown): string {
+  const value = typeof input === 'string' ? input.trim().toLowerCase() : '';
+  if (!value) return 'other';
+  if (value === 'exercise') return 'assignment';
+  if (value === 'deadline') return 'exam';
+  if (['reading', 'lecture', 'assignment', 'lab', 'project', 'quiz', 'exam', 'task', 'other'].includes(value)) {
+    return value;
+  }
+  return 'other';
+}
 
+function transformAssignments(rows: Array<Record<string, unknown>>) {
   return rows.map((row) => {
     const metadata = (row.metadata && typeof row.metadata === 'object')
       ? (row.metadata as Record<string, unknown>)
       : {};
-    const metadataTaskKind = typeof metadata.task_kind === 'string'
-      ? metadata.task_kind.trim().toLowerCase()
-      : '';
-    const storedKind = typeof row.kind === 'string' ? row.kind.trim().toLowerCase() : 'other';
-    const resolvedKind = knownKinds.has(metadataTaskKind)
-      ? metadataTaskKind
-      : (knownKinds.has(storedKind) ? storedKind : 'other');
+    const metadataTaskKind = normalizeExternalKind(metadata.task_kind);
+    const storedKind = normalizeExternalKind(row.kind);
+    const resolvedKind = metadataTaskKind !== 'other' ? metadataTaskKind : storedKind;
 
     return {
       id: row.id ?? null,

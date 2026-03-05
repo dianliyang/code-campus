@@ -4,7 +4,7 @@ Legend: [ ] pending, [x] done
 
 ## Tasks
 1. [x] Remove verbose magic-link info log in `src/app/login/page.tsx`.
-2. [ ] Remove production service-worker success log noise in `src/components/PWARegister.tsx`.
+2. [x] Remove production service-worker success log noise in `src/components/PWARegister.tsx`.
 3. [ ] Sanitize email success logging payload in `src/lib/email.ts`.
 4. [ ] Review `src/app/(dashboard)/calendar/page.tsx` for schedule rendering regressions.
 5. [ ] Review `src/components/home/StudyCalendar.tsx` for optimistic-state consistency.
@@ -36,3 +36,4 @@ Legend: [ ] pending, [x] done
 
 ## Execution Notes
 - Task 1: Removed non-essential magic-link console logs; kept error logging path.
+- Task 2: Removed PWA registration success log to reduce client console noise in production.

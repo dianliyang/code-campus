@@ -20,8 +20,6 @@ export default function PWARegister() {
     navigator.serviceWorker
       .register("/sw.js")
       .then((registration) => {
-        console.log("[PWA] Service Worker registered:", registration.scope);
-
         // Check for updates periodically.
         updateTimer = setInterval(() => {
           void registration.update();

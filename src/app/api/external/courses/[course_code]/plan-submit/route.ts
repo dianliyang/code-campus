@@ -45,6 +45,15 @@ function normalizeKind(input: unknown): string {
   return "assignment";
 }
 
+function normalizeTaskKind(input: unknown): string | null {
+  const v = String(input || "").toLowerCase().trim();
+  if (!v) return null;
+  if (["reading", "lecture", "assignment", "lab", "project", "quiz", "exam", "task", "exercise", "deadline"].includes(v)) {
+    return v;
+  }
+  return "task";
+}
+
 function hashKey(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -315,8 +324,14 @@ export async function POST(
         .map((row) => {
           const label = normalizeString(row.label || row.title);
           const due = isIsoDate(row.due_on) ? row.due_on : isIsoDate(row.dueOn) ? row.dueOn : null;
+          const taskKind = normalizeTaskKind(row.kind);
           const kind = normalizeKind(row.kind);
           const key = `${due || ""}|${String(label || "").toLowerCase()}|${kind}`;
+          const metadataBase = (row.metadata && typeof row.metadata === "object" ? row.metadata : {}) as Record<string, unknown>;
+          const metadata = {
+            ...metadataBase,
+            task_kind: taskKind || (typeof metadataBase.task_kind === "string" ? metadataBase.task_kind : null),
+          } as Json;
           return {
             course_id: courseId,
             syllabus_id: syllabusId,
@@ -328,7 +343,7 @@ export async function POST(
             description: normalizeString(row.description),
             source_sequence: normalizeString(row.source_sequence || row.sourceSequence),
             source_row_date: isIsoDate(row.source_row_date) ? row.source_row_date : isIsoDate(row.sourceRowDate) ? row.sourceRowDate : due,
-            metadata: (row.metadata && typeof row.metadata === "object" ? row.metadata : {}) as Json,
+            metadata,
             retrieved_at: nowIso,
             updated_at: nowIso,
           };

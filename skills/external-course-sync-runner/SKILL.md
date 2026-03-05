@@ -35,7 +35,7 @@ Writes: `courses`, `study_plans`, `course_syllabi`, `course_schedules`, `course_
 
 ## Agent Workflow (No Codebase Dependency)
 1. Ask user to choose planning mode: `fresh`, `existing`, or `hybrid`.
-   - `fresh`: retrieve minimal required course/source context and exclude existing plan/signal payload from `plan-input`.
+   - `fresh`: ignore prior generated plan shape and rebuild from current source-of-truth. Always call `plan-input?mode=fresh`, set `replaceExisting=true` on submit, and regenerate schedule/task rows from newly retrieved sources.
    - `existing`: retrieve and use existing plan/signal payload as-is.
    - `hybrid`: retrieve existing payload and merge with new retrieval/internet findings.
 2. Call `GET /api/external/courses/:course_code/plan-input?mode=:mode` using the selected mode.
@@ -43,11 +43,15 @@ Writes: `courses`, `study_plans`, `course_syllabi`, `course_schedules`, `course_
    - Course metadata found/missing.
    - Number of lectures/tasks/assignments and detected date window.
    - Existing plan/schedule presence (if any).
-4. Check if data is sufficient:
+4. For `fresh` mode, do a source-grounded pass before planning:
+   - Fetch official course pages (home, syllabus, schedule, assignments/projects pages) from `primaryUrl/resources`.
+   - Build a structured list of real items from sources: lecture sequence, assignment/project milestones, labs/quizzes/exams, and known policies/deadlines.
+   - Prefer latest term/semester pages; if incomplete, fallback to older archived term pages.
+5. Check if data is sufficient:
    - At least one source URL (`primaryUrl` or `resources`)
-   - Non-empty signals (`lectures` or `tasks`)
+   - Non-empty actionable items (lectures/tasks/assignments extracted from source)
    - Reasonable planning window (`startDate/endDate` or inferable duration)
-5. If insufficient, retrieve from internet directly:
+6. If insufficient, retrieve from internet directly:
    - Crawl official course pages from known URLs.
    - Search web for syllabus/assignments/calendar pages.
    - Extract: lecture timeline, readings, labs, assignments, projects, quizzes, exams.
@@ -73,6 +77,8 @@ Writes: `courses`, `study_plans`, `course_syllabi`, `course_schedules`, `course_
    - Use a rolling horizon: detailed day-level tasks for the next 21 days; beyond that, keep at most 1 lighter placeholder/planning task per week until closer to due dates.
    - Compute weekly capacity from `daysOfWeek`, `startTime`, and `endTime`; target about 60-85% of that capacity, not 100%.
    - If required work cannot fit without cramming, extend schedule range or mark carry-over tasks instead of increasing daily load.
+   - In `fresh` mode, do not use generic/template-only task lists when source pages provide explicit lecture/assignment items; include source-grounded items in the plan.
+   - In `fresh` mode, distribute task kinds across the plan (reading/lecture/lab/assignment/project where available), not a single-kind cluster.
 9. Validate JSON payload (strict checks below).
 10. Call `POST /api/external/courses/:course_code/plan-submit`.
 11. After reporting submit result, ask the user to clear any exported env vars used for this run (for example `unset CM_API_KEY CM_USER_ID API_KEY`).
@@ -85,6 +91,10 @@ Writes: `courses`, `study_plans`, `course_syllabi`, `course_schedules`, `course_
 - No date before today unless explicitly required by user.
 - `studyPlan.startDate` must be today or later; if source dates are in the past, convert to catch-up priorities instead of backdating plan days.
 - Must include explicit `mode` choice (`fresh|existing|hybrid`) before generation.
+- If mode is `fresh`:
+  - submit with `replaceExisting: true`.
+  - include source-backed lecture/assignment/project items when available (not only generic placeholders).
+  - keep a mixed task-kind distribution (reading/lecture/lab/assignment/project where available).
 - No task explosion:
   - Prefer <=3 tasks/day (<=2 for most days)
   - Weekly load balanced (no single week containing majority of heavy tasks)

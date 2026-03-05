@@ -2,6 +2,8 @@ import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import RoadmapAchievementsSection from "@/components/home/RoadmapAchievementsSection";
 import { Course } from "@/types";
 import CourseStatusChart from "@/components/identity/CourseStatusChart";
@@ -78,6 +80,7 @@ export default async function IdentityPage() {
   }
 
   const completedCount = statusCounts.completed || 0;
+  const enrolledCount = enrolledData?.length || 0;
 
   const completedRows = completedCoursesRes.data || [];
   const completedAchievements: CompletedAchievement[] = completedRows.map((row: any) => {// eslint-disable-line @typescript-eslint/no-explicit-any
@@ -145,74 +148,110 @@ export default async function IdentityPage() {
     }).length;
   });
 
+  const profileStats = [
+  {
+    label: "Enrolled",
+    value: enrolledCount
+  },
+  {
+    label: "Completed",
+    value: completedCount
+  },
+  {
+    label: "Universities",
+    value: universityCount
+  },
+  {
+    label: "In Progress",
+    value: inProgressCount
+  }];
+
   return (
-    <main className="w-full space-y-4">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Identity</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your learning identity, progress signals, and achievements.
-        </p>
-      </div>
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-14 w-14 bg-[#1f1f1f] text-white flex items-center justify-center text-2xl font-semibold">
-              {name.substring(0, 1).toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-[26px] leading-none font-semibold tracking-tight text-slate-900 truncate">{name}</h1>
-              <p className="mt-1 text-sm text-slate-500 truncate">{email}</p>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                <span>
+    <main className="w-full space-y-5">
+      <section className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Identity</h1>
+            <p className="text-sm text-muted-foreground">Minimal snapshot of your learning profile and progress.</p>
+          </div>
+          <Badge className="shrink-0">LVL {Math.floor(completedCount / 2) + 1}</Badge>
+        </div>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-12 w-12 rounded-md bg-[#1f1f1f] text-white flex items-center justify-center text-xl font-semibold shrink-0">
+                {name.substring(0, 1).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-semibold leading-tight truncate text-slate-900">{name}</p>
+                <p className="text-sm text-slate-500 truncate">{email}</p>
+                <p className="mt-1 text-xs text-slate-500">
                   Last active:{" "}
                   {lastActiveDate ?
                   lastActiveDate.toLocaleDateString(lang, { month: "short", day: "numeric", year: "numeric" }) :
                   "N/A"}
-                </span>
-                <span>Universities: {universityCount}</span>
+                </p>
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="flex items-center gap-2">
-            <Badge>LVL {Math.floor(completedCount / 2) + 1}</Badge>
-            <Badge variant="secondary">{dict.dashboard.identity.user_level}</Badge>
-          </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          {profileStats.map((item) => (
+            <Card key={item.label}>
+              <CardContent className="p-3">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{item.label}</p>
+                <p className="mt-1 text-lg font-semibold text-foreground">{item.value}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <h2 className="text-base font-semibold text-[#1f1f1f]">Learning Identity</h2>
-          <p className="text-xs text-[#7a7a7a] mt-1 mb-3">{dict.dashboard.identity.neural_map}</p>
-          <LearningProfileChart
-            data={allFieldStats}
-            unitLabel={dict.dashboard.identity.units}
-            emptyText={dict.dashboard.identity.no_data}
-          />
-        </div>
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <Card className="xl:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Learning Identity</CardTitle>
+            <p className="text-xs text-muted-foreground">{dict.dashboard.identity.neural_map}</p>
+          </CardHeader>
+          <CardContent>
+            <LearningProfileChart
+              data={allFieldStats}
+              unitLabel={dict.dashboard.identity.units}
+              emptyText={dict.dashboard.identity.no_data}
+            />
+          </CardContent>
+        </Card>
 
-        <div>
-          <h3 className="text-base font-semibold text-[#1f1f1f]">Course Status</h3>
-          <p className="text-xs text-[#7a7a7a] mt-1 mb-3">Enrollment distribution</p>
-          <CourseStatusChart
-            data={recentStatuses}
-            emptyText={dict.dashboard.identity.no_data}
-            recentUpdates30={recentUpdates30}
-            inProgressCount={inProgressCount}
-            stalledCount={stalledCount}
-            avgProgress={avgProgress}
-            weeklyActivity={weeklyActivity}
-          />
-        </div>
-      </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Course Status</CardTitle>
+            <p className="text-xs text-muted-foreground">Enrollment distribution</p>
+          </CardHeader>
+          <CardContent>
+            <CourseStatusChart
+              data={recentStatuses}
+              emptyText={dict.dashboard.identity.no_data}
+              recentUpdates30={recentUpdates30}
+              inProgressCount={inProgressCount}
+              stalledCount={stalledCount}
+              avgProgress={avgProgress}
+              weeklyActivity={weeklyActivity}
+            />
+          </CardContent>
+        </Card>
+      </section>
 
-      <RoadmapAchievementsSection
-        availableSemesters={availableSemesters}
-        completed={completedAchievements}
-        title={dict.dashboard.roadmap.phase_2_title}
-        emptyText={dict.dashboard.roadmap.peak_ahead} />
-      
+      <Separator />
+
+      <section>
+        <RoadmapAchievementsSection
+          availableSemesters={availableSemesters}
+          completed={completedAchievements}
+          title={dict.dashboard.roadmap.phase_2_title}
+          emptyText={dict.dashboard.roadmap.peak_ahead} />
+      </section>
     </main>);
 
 }

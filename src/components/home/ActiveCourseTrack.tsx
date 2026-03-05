@@ -84,11 +84,10 @@ export default function ActiveCourseTrack({
         setAiSourceMode(saved);
       }
     } catch {
-
-
-
       // Ignore localStorage errors.
-    }}, []);const detailHref = `/courses/${course.id}`;
+    }}, []);
+
+  const detailHref = `/courses/${course.id}`;
   const progress = useMemo(() => {
     if (!localPlan?.start_date || !localPlan?.end_date)
     return Math.max(0, Math.min(100, Math.round(initialProgress || 0)));
@@ -132,11 +131,11 @@ export default function ActiveCourseTrack({
           typeof payload?.error === "string" ? payload.error.trim() : "";
           if (candidate) message = candidate;
         } catch {
-
-
-
           // Ignore parse error and use default message.
-        }showToast({ type: "error", message });}} catch {
+        }
+        showToast({ type: "error", message });
+      }
+    } catch {
       setAiStatus("error");
       showToast({
         type: "error",
@@ -168,22 +167,22 @@ export default function ActiveCourseTrack({
 
   return (
     <Card className="h-full flex flex-col overflow-hidden border-[#efefef] hover:border-[#dfdfdf] transition-all duration-200 shadow-sm hover:shadow-md">
-      <CardHeader className="space-y-4 p-4 pb-0">
-        <div className="flex items-start justify-between gap-2">
+      <CardHeader className="p-4 pb-2">
+        <div className="flex items-start justify-between gap-2 mb-3">
           <UniversityIcon
             name={course.university}
-            size={36}
-            className="shrink-0 bg-gray-50 border border-gray-100 p-1.5 rounded-md"
+            size={40}
+            className="shrink-0 bg-gray-50 border border-gray-100 p-2 rounded-lg"
           />
           <div className="flex flex-col items-end gap-1.5">
             {roadmapSubdomain ? (
-              <Badge variant="secondary" className="max-w-[120px] truncate text-[10px] uppercase font-bold tracking-wider">
+              <Badge variant="secondary" className="max-w-[120px] truncate text-[10px] uppercase font-bold tracking-wider px-2 py-0">
                 {roadmapSubdomain}
               </Badge>
             ) : null}
             {course.aiPlanSummary?.days ? (
-              <Badge variant="outline" className="text-[9px] border-emerald-100 bg-emerald-50/50 text-emerald-700">
-                AI Plan Ready
+              <Badge variant="outline" className="text-[9px] border-emerald-100 bg-emerald-50/50 text-emerald-700 px-2 py-0">
+                AI Ready
               </Badge>
             ) : null}
           </div>
@@ -193,43 +192,50 @@ export default function ActiveCourseTrack({
           role="link"
           tabIndex={0}
           onClick={handleCardNavigation}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleCardNavigation();
-            }
-          }}
-          className="cursor-pointer space-y-1"
+          className="cursor-pointer space-y-1 group"
         >
           <span className="block text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
             {course.courseCode} · {course.university}
           </span>
-          <CardTitle className="text-lg font-bold tracking-tight text-[#1f1f1f] leading-tight line-clamp-2 hover:text-black transition-colors">
+          <CardTitle className="text-lg font-bold tracking-tight text-[#1f1f1f] leading-tight line-clamp-2 group-hover:text-black transition-colors">
             <Link href={detailHref}>{course.title}</Link>
           </CardTitle>
-          
-          {localPlan ? (
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
-              <Clock className="h-3 w-3" />
-              <span>{localPlan.start_time.slice(0, 5)} - {localPlan.end_time.slice(0, 5)}</span>
-            </div>
-          ) : (
-            <p className="text-[11px] italic text-muted-foreground pt-1">No schedule defined</p>
-          )}
         </div>
       </CardHeader>
 
-      <CardContent className="flex flex-1 flex-col p-4 pt-6">
-        <div className="mt-auto space-y-2">
+      <CardContent className="flex flex-1 flex-col p-4 pt-2 gap-6">
+        {/* Schedule/Description Part */}
+        <div className="space-y-3">
+          {localPlan ? (
+            <div className="flex items-center gap-2 text-[12px] text-stone-600 bg-stone-50 p-2 rounded-md border border-stone-100/50">
+              <Clock className="h-3.5 w-3.5 text-stone-400" />
+              <span className="font-medium">{localPlan.start_time.slice(0, 5)} - {localPlan.end_time.slice(0, 5)}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-[12px] text-stone-400 italic bg-stone-50/30 p-2 rounded-md border border-dashed border-stone-200">
+              <Clock className="h-3.5 w-3.5 opacity-50" />
+              <span>No schedule defined</span>
+            </div>
+          )}
+          
+          {course.description && (
+            <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+              {course.description}
+            </p>
+          )}
+        </div>
+
+        {/* Progress Part */}
+        <div className="mt-auto space-y-2.5">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
             <span className="text-muted-foreground text-[10px]">Completion</span>
             <span className="text-[#1f1f1f]">{progress}%</span>
           </div>
-          <div className="flex items-center gap-1 h-1.5 w-full">
+          <div className="flex items-center gap-1 h-2 w-full">
             {Array.from({ length: 15 }).map((_, index) => (
               <span
                 key={index}
-                className={`h-full flex-1 rounded-full transition-all duration-300 ${
+                className={`h-full flex-1 rounded-sm transition-all duration-300 ${
                   index < Math.round((progress / 100) * 15)
                     ? "bg-black"
                     : "bg-gray-100"
@@ -240,12 +246,12 @@ export default function ActiveCourseTrack({
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 border-t border-[#f5f5f5] mt-auto">
-        <div className="flex items-center justify-between gap-2 w-full pt-4">
+      <CardFooter className="p-4 pt-4 border-t border-[#f5f5f5] bg-gray-50/30">
+        <div className="flex items-center justify-between gap-2 w-full">
           {localPlan ? (
             <HoverCard openDelay={60} closeDelay={80}>
               <HoverCardTrigger asChild>
-                <div className="flex items-center gap-1" aria-label="Study days">
+                <div className="flex items-center gap-1.5" aria-label="Study days">
                   {Array.from({ length: 7 }).map((_, idx) => (
                     <span
                       key={`study-day-dot-${idx}`}
@@ -265,7 +271,7 @@ export default function ActiveCourseTrack({
               ) : null}
             </HoverCard>
           ) : (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               {Array.from({ length: 7 }).map((_, idx) => (
                 <span key={idx} className="h-2 w-2 rounded-full bg-gray-100" />
               ))}
@@ -275,7 +281,7 @@ export default function ActiveCourseTrack({
           <ButtonGroup>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon-sm" className="h-8 w-8" type="button">
+                <Button variant="outline" size="icon-sm" className="h-8 w-8 rounded-md" type="button">
                   {isAiUpdating ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
@@ -322,7 +328,7 @@ export default function ActiveCourseTrack({
 
             <Popover open={showAddPlanModal} onOpenChange={setShowAddPlanModal}>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="icon-sm" className="h-8 w-8" type="button">
+                <Button variant="outline" size="icon-sm" className="h-8 w-8 rounded-md" type="button">
                   {localPlan ? <CalendarCheck className="h-3.5 w-3.5" /> : <CalendarPlus className="h-3.5 w-3.5" />}
                 </Button>
               </PopoverTrigger>
@@ -338,7 +344,7 @@ export default function ActiveCourseTrack({
               </PopoverContent>
             </Popover>
 
-            <Button variant="outline" size="icon-sm" className="h-8 w-8" asChild>
+            <Button variant="outline" size="icon-sm" className="h-8 w-8 rounded-md" asChild>
               <Link href={detailHref} title="Open course" aria-label="Open course">
                 <ExternalLink className="h-3.5 w-3.5" />
               </Link>

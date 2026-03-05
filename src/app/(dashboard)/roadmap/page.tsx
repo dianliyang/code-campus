@@ -31,6 +31,7 @@ interface EnrolledProjectSeminar {
   courseCode: string;
   university: string;
   category: string;
+  description: string | null;
   url: string | null;
   semesterLabel: string;
   status: string;
@@ -110,7 +111,7 @@ async function StudyPlanContent({
   supabase.
   from('projects_seminars').
   select(`
-        id, university, course_code, title, category, url, latest_semester,
+        id, university, course_code, title, category, url, latest_semester, description,
         ups:user_projects_seminars!inner(status, progress, updated_at)
       `).
   eq('user_projects_seminars.user_id', userId).
@@ -194,6 +195,7 @@ async function StudyPlanContent({
       courseCode: row.course_code || "",
       university: row.university || "",
       category: row.category || "",
+      description: row.description || null,
       url: row.url || null,
       semesterLabel,
       status: ups?.status || "in_progress",
@@ -299,15 +301,15 @@ async function StudyPlanContent({
 function ActiveProjectSeminarTrack({ item }: {item: EnrolledProjectSeminar;}) {
   return (
     <Card className="h-full flex flex-col overflow-hidden border-[#efefef] hover:border-[#dfdfdf] transition-all duration-200 shadow-sm hover:shadow-md">
-      <CardHeader className="space-y-4 p-4 pb-0">
+      <CardHeader className="p-4 pb-2">
         {/* Top: Icon and Category */}
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-2 mb-3">
           <UniversityIcon
             name={item.university}
-            size={36}
-            className="shrink-0 bg-gray-50 border border-gray-100 p-1.5 rounded-md" />
+            size={40}
+            className="shrink-0 bg-gray-50 border border-gray-100 p-2 rounded-lg" />
           
-          <Badge variant="secondary" className="max-w-[120px] truncate text-[10px] uppercase font-bold tracking-wider">
+          <Badge variant="secondary" className="max-w-[120px] truncate text-[10px] uppercase font-bold tracking-wider px-2 py-0">
             {item.category || "Project/Seminar"}
           </Badge>
         </div>
@@ -320,40 +322,49 @@ function ActiveProjectSeminarTrack({ item }: {item: EnrolledProjectSeminar;}) {
           <CardTitle className="text-lg font-bold tracking-tight text-[#1f1f1f] leading-tight line-clamp-2 hover:text-black transition-colors">
             <Link href={`/projects-seminars/${item.id}`}>{item.title}</Link>
           </CardTitle>
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
-            <span>{item.semesterLabel}</span>
-          </div>
         </div>
       </CardHeader>
 
-      <CardContent className="flex flex-1 flex-col p-4 pt-6">
-        {/* Progress Section */}
-        <div className="mt-auto space-y-2">
+      <CardContent className="flex flex-1 flex-col p-4 pt-2 gap-6">
+        {/* Status/Semester Part */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-[12px] text-stone-600 bg-stone-50 p-2 rounded-md border border-stone-100/50">
+            <span className="font-medium">{item.semesterLabel}</span>
+          </div>
+          {item.description && (
+            <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+              {item.description}
+            </p>
+          )}
+        </div>
+
+        {/* Progress Part */}
+        <div className="mt-auto space-y-2.5">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
             <span className="text-muted-foreground text-[10px]">Status</span>
             <span className="text-[#1f1f1f]">In Progress</span>
           </div>
-          <div className="flex items-center gap-1 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-full w-1/2 bg-black rounded-full" />
+          <div className="flex items-center gap-1 h-2 w-full bg-gray-100 rounded-sm overflow-hidden">
+            <div className="h-full w-1/2 bg-black rounded-sm" />
           </div>
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 border-t border-[#f5f5f5] mt-auto">
-        <div className="flex items-center justify-between gap-2 w-full pt-4">
-          <div className="flex items-center gap-1">
+      <CardFooter className="p-4 pt-4 border-t border-[#f5f5f5] bg-gray-50/30 mt-auto">
+        <div className="flex items-center justify-between gap-2 w-full">
+          <div className="flex items-center gap-1.5">
             {Array.from({ length: 7 }).map((_, idx) => (
               <span key={idx} className="h-2 w-2 rounded-full bg-gray-100" />
             ))}
           </div>
           <div className="flex gap-1">
-            <Button variant="outline" size="icon-sm" className="h-8 w-8" asChild>
+            <Button variant="outline" size="icon-sm" className="h-8 w-8 rounded-md" asChild>
               <Link href={`/projects-seminars/${item.id}`}>
                 <ExternalLink className="h-3.5 w-3.5" />
               </Link>
             </Button>
             {item.url ? (
-              <Button variant="outline" size="icon-sm" className="h-8 w-8" asChild>
+              <Button variant="outline" size="icon-sm" className="h-8 w-8 rounded-md" asChild>
                 <a href={item.url} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>

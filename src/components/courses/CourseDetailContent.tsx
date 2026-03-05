@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Copy,
   Globe,
   Info,
   Loader2,
@@ -36,6 +37,7 @@ import {
   Trash2,
   Users,
   WandSparkles,
+  ExternalLink,
   X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -252,6 +254,23 @@ function getThirdPartyPreviewImageUrl(url: string): string | null {
   return `https://image.thum.io/get/width/900/crop/560/noanimate/${encodeURIComponent(previewable)}`;
 }
 
+function getFaviconUrl(url: string): string | null {
+  const previewable = getPreviewableUrl(url);
+  if (!previewable) return null;
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(previewable)}&sz=64`;
+}
+
+function getPreviewPath(url: string): string {
+  const previewable = getPreviewableUrl(url);
+  if (!previewable) return "";
+  try {
+    const parsed = new URL(previewable);
+    return parsed.pathname && parsed.pathname !== "/" ? parsed.pathname : "Homepage";
+  } catch {
+    return "";
+  }
+}
+
 export default function CourseDetailContent({
   course,
   isEnrolled,
@@ -295,6 +314,7 @@ export default function CourseDetailContent({
   const [resourcePreviewState, setResourcePreviewState] = useState<
     Record<string, "blocked">
   >({});
+  const [copiedResourceUrl, setCopiedResourceUrl] = useState<string | null>(null);
   const [showAllResources, setShowAllResources] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<
     string | null
@@ -1878,18 +1898,55 @@ export default function CourseDetailContent({
                                 </div>
                               </>
                             ) : (
-                              <div className="px-3 py-2 text-xs space-y-1.5">
-                                <p className="text-muted-foreground">
-                                  Host:{" "}
-                                  <span className="font-medium text-foreground">
-                                    {getPreviewHost(url)}
-                                  </span>
-                                </p>
-                                <p className="text-muted-foreground">
-                                  This site blocks embedded previews
-                                  (X-Frame-Options/CSP). Open the link in a new
-                                  tab.
-                                </p>
+                              <div className="px-3 py-2 text-xs space-y-2">
+                                <div className="flex items-start gap-2 rounded-md border border-stone-200 bg-stone-50/70 p-2">
+                                  {getFaviconUrl(url) ? (
+                                    <Image
+                                      src={getFaviconUrl(url) || ""}
+                                      alt="Site icon"
+                                      width={18}
+                                      height={18}
+                                      unoptimized
+                                      className="mt-0.5 rounded-sm"
+                                    />
+                                  ) : (
+                                    <Globe className="h-4 w-4 mt-0.5 text-stone-500" />
+                                  )}
+                                  <div className="min-w-0 flex-1 space-y-0.5">
+                                    <p className="font-semibold text-foreground truncate">{getPreviewHost(url)}</p>
+                                    <p className="text-muted-foreground truncate">{getPreviewPath(url)}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-[11px]"
+                                    onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+                                  >
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    Open
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 text-[11px]"
+                                    onClick={async () => {
+                                      try {
+                                        await navigator.clipboard.writeText(url);
+                                        setCopiedResourceUrl(url);
+                                        setTimeout(() => setCopiedResourceUrl((prev) => (prev === url ? null : prev)), 1200);
+                                      } catch {
+                                        // ignore clipboard failures
+                                      }
+                                    }}
+                                  >
+                                    <Copy className="h-3 w-3 mr-1" />
+                                    {copiedResourceUrl === url ? "Copied" : "Copy"}
+                                  </Button>
+                                </div>
                               </div>
                             )}
                           </HoverCardContent>

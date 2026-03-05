@@ -4,15 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import {
+  BrainCog,
   BarChart3,
   BookOpen,
   CalendarDays,
   CircleHelp,
   Dumbbell,
+  FileUp,
   FolderKanban,
+  GraduationCap,
   KeyRound,
-  LayoutDashboard,
-  Library,
   Loader2,
   Map,
   Settings2,
@@ -69,18 +70,18 @@ const commandNavItems = [
 ] as const;
 
 const hubNavItems = [
-  { href: "/courses", key: "courses", icon: LayoutDashboard },
+  { href: "/courses", key: "courses", icon: GraduationCap },
   { href: "/projects-seminars", key: "projectsSeminars", icon: FolderKanban },
   { href: "/workouts", key: "workouts", icon: Dumbbell },
 ] as const;
 
 const settingsNavItems = [
-  { href: "/settings/engine", key: "settingsEngine", icon: Sparkles },
+  { href: "/settings/engine", key: "settingsEngine", icon: BrainCog },
   { href: "/settings/usage", key: "settingsUsage", icon: BarChart3 },
   { href: "/settings/security", key: "settingsSecurity", icon: ShieldCheck },
   { href: "/settings/system", key: "settingsSystem", icon: Settings2 },
   { href: "/settings/api-management", key: "settingsApiControl", icon: KeyRound },
-  { href: "/settings/import", key: "import", icon: Library },
+  { href: "/settings/import", key: "import", icon: FileUp },
 ] as const;
 
 const docsNavItems = [

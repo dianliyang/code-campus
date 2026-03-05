@@ -144,53 +144,55 @@ export default function ActiveCourseTrack({
 
   return (
     <Card className="h-full flex flex-col border-[#efefef] hover:border-[#dfdfdf] transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden">
-      <CardHeader className="space-y-3 pb-0">
-        <div className="flex items-start justify-between gap-2">
+      <CardHeader className="p-4 pb-0">
+        <div className="flex items-start gap-3">
           <UniversityIcon
             name={course.university}
-            size={40}
-            className="shrink-0 bg-gray-50 border border-gray-100 p-2 rounded-lg"
+            size={42}
+            className="shrink-0 bg-white border border-stone-100 p-2 rounded-lg shadow-sm"
           />
-          <div className="flex flex-col items-end gap-1.5">
-            {roadmapSubdomain && (
-              <Badge variant="secondary" className="max-w-[120px] truncate text-[10px] uppercase font-bold tracking-wider">
-                {roadmapSubdomain}
-              </Badge>
-            )}
-            {course.aiPlanSummary?.days ? (
-              <Badge variant="outline" className="text-[9px] border-emerald-100 bg-emerald-50/50 text-emerald-700">
-                AI Ready
-              </Badge>
-            ) : null}
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[9px] text-stone-400 uppercase tracking-[0.2em] font-black truncate">
+                {course.courseCode}
+              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                {course.aiPlanSummary?.days ? (
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" title="AI Ready" />
+                ) : null}
+                {roadmapSubdomain && (
+                  <Badge variant="secondary" className="h-4 text-[8px] uppercase px-1 font-bold">
+                    {roadmapSubdomain}
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <CardTitle className="text-[15px] font-bold tracking-tight text-stone-900 leading-tight line-clamp-2">
+              <Link href={detailHref} className="hover:text-black transition-colors">{course.title}</Link>
+            </CardTitle>
+            <div className="text-[10px] text-stone-500 font-medium truncate">
+              {course.university}
+            </div>
           </div>
-        </div>
-
-        <div onClick={handleCardNavigation} className="cursor-pointer space-y-1">
-          <CardDescription className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-            {course.courseCode} · {course.university}
-          </CardDescription>
-          <CardTitle className="text-lg font-bold tracking-tight text-[#1f1f1f] leading-tight line-clamp-2 hover:text-black transition-colors">
-            <Link href={detailHref}>{course.title}</Link>
-          </CardTitle>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col gap-4 py-4">
+      <CardContent className="flex-1 flex flex-col gap-4 p-4 pt-4">
         <div className="space-y-3">
           {localPlan ? (
-            <div className="flex items-center gap-2 text-[12px] text-stone-600 bg-stone-50 p-2 rounded-md border border-stone-100/50">
-              <Clock className="h-3.5 w-3.5 text-stone-400" />
-              <span className="font-medium">{localPlan.start_time.slice(0, 5)} - {localPlan.end_time.slice(0, 5)}</span>
+            <div className="flex items-center gap-2 text-[11px] text-stone-600 bg-stone-50 p-2 rounded-md border border-stone-100/50">
+              <Clock className="h-3 w-3 text-stone-400" />
+              <span className="font-semibold">{localPlan.start_time.slice(0, 5)} - {localPlan.end_time.slice(0, 5)}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-[12px] text-stone-400 italic bg-stone-50/30 p-2 rounded-md border border-dashed border-stone-200">
-              <Clock className="h-3.5 w-3.5 opacity-50" />
-              <span>No schedule defined</span>
+            <div className="flex items-center gap-2 text-[11px] text-stone-400 italic bg-stone-50/30 p-2 rounded-md border border-dashed border-stone-200">
+              <Clock className="h-3 w-3 opacity-50" />
+              <span>No schedule</span>
             </div>
           )}
           
           {course.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+            <p className="text-[12px] text-stone-500 line-clamp-2 leading-relaxed">
               {course.description}
             </p>
           )}
@@ -198,17 +200,17 @@ export default function ActiveCourseTrack({
 
         <div className="mt-auto space-y-2">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-            <span className="text-muted-foreground text-[10px]">Completion</span>
-            <span className="text-[#1f1f1f]">{progress}%</span>
+            <span className="text-stone-400 text-[9px] tracking-widest">Progress</span>
+            <span className="text-stone-900 text-[10px]">{progress}%</span>
           </div>
           <div className="flex items-center gap-1 h-1.5 w-full">
             {Array.from({ length: 15 }).map((_, index) => (
               <span
                 key={index}
-                className={`h-full flex-1 rounded-sm transition-all duration-300 ${
+                className={`h-full flex-1 rounded-full transition-all duration-300 ${
                   index < Math.round((progress / 100) * 15)
-                    ? "bg-black"
-                    : "bg-gray-100"
+                    ? "bg-stone-900"
+                    : "bg-stone-100"
                 }`}
               />
             ))}

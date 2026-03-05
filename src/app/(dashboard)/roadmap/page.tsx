@@ -301,35 +301,39 @@ async function StudyPlanContent({
 function ActiveProjectSeminarTrack({ item }: {item: EnrolledProjectSeminar;}) {
   return (
     <Card className="h-full flex flex-col border-[#efefef] hover:border-[#dfdfdf] transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden">
-      <CardHeader className="space-y-3 pb-0">
-        <div className="flex items-start justify-between gap-2">
+      <CardHeader className="p-4 pb-0">
+        <div className="flex items-start gap-3">
           <UniversityIcon
             name={item.university}
-            size={40}
-            className="shrink-0 bg-gray-50 border border-gray-100 p-2 rounded-lg" />
+            size={42}
+            className="shrink-0 bg-white border border-stone-100 p-2 rounded-lg shadow-sm" />
           
-          <Badge variant="secondary" className="max-w-[120px] truncate text-[10px] uppercase font-bold tracking-wider px-2 py-0">
-            {item.category || "Project/Seminar"}
-          </Badge>
-        </div>
-
-        <div className="space-y-1">
-          <CardDescription className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-            {item.courseCode || "P&S"} · {item.university}
-          </CardDescription>
-          <CardTitle className="text-lg font-bold tracking-tight text-[#1f1f1f] leading-tight line-clamp-2 hover:text-black transition-colors">
-            <Link href={`/projects-seminars/${item.id}`}>{item.title}</Link>
-          </CardTitle>
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[9px] text-stone-400 uppercase tracking-[0.2em] font-black truncate">
+                {item.courseCode || "P&S"}
+              </span>
+              <Badge variant="secondary" className="h-4 text-[8px] uppercase px-1 font-bold shrink-0">
+                {item.category || "Project/Seminar"}
+              </Badge>
+            </div>
+            <CardTitle className="text-[15px] font-bold tracking-tight text-stone-900 leading-tight line-clamp-2">
+              <Link href={`/projects-seminars/${item.id}`} className="hover:text-black transition-colors">{item.title}</Link>
+            </CardTitle>
+            <div className="text-[10px] text-stone-500 font-medium truncate">
+              {item.university}
+            </div>
+          </div>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col gap-4 py-4">
+      <CardContent className="flex-1 flex flex-col gap-4 p-4 pt-4">
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-[12px] text-stone-600 bg-stone-50 p-2 rounded-md border border-stone-100/50">
-            <span className="font-medium">{item.semesterLabel}</span>
+          <div className="flex items-center gap-2 text-[11px] text-stone-600 bg-stone-50 p-2 rounded-md border border-stone-100/50">
+            <span className="font-semibold">{item.semesterLabel}</span>
           </div>
           {item.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+            <p className="text-[12px] text-stone-500 line-clamp-2 leading-relaxed">
               {item.description}
             </p>
           )}
@@ -337,11 +341,11 @@ function ActiveProjectSeminarTrack({ item }: {item: EnrolledProjectSeminar;}) {
 
         <div className="mt-auto space-y-2">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-            <span className="text-muted-foreground text-[10px]">Status</span>
-            <span className="text-[#1f1f1f]">In Progress</span>
+            <span className="text-stone-400 text-[9px] tracking-widest">Status</span>
+            <span className="text-stone-900 text-[10px]">In Progress</span>
           </div>
-          <div className="flex items-center gap-1 h-1.5 w-full bg-gray-100 rounded-sm overflow-hidden">
-            <div className="h-full w-1/2 bg-black rounded-sm" />
+          <div className="flex items-center gap-1 h-1.5 w-full bg-stone-100 rounded-full overflow-hidden">
+            <div className="h-full w-1/2 bg-stone-900 rounded-full" />
           </div>
         </div>
       </CardContent>

@@ -46,25 +46,55 @@ export default function LoginForm({ onMagicLink, sent: initialSent, dict }: Logi
 
   if (isSent) {
     return (
-      <div className="border border-stone-200 bg-white p-6" style={{ fontFamily: "var(--font-landing-sans)" }}>
-        <div className="mb-4 inline-flex h-9 w-9 items-center justify-center border border-stone-200 bg-stone-50">
-          <Send className="h-4 w-4 text-stone-700" />
+      <div className="border border-stone-200 bg-white p-8 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ fontFamily: "var(--font-landing-sans)" }}>
+        <div className="mb-6 inline-flex h-12 w-12 items-center justify-center border border-stone-100 bg-stone-50 shadow-sm">
+          <Send className="h-5 w-5 text-stone-800" />
         </div>
-        <h2 className="text-2xl tracking-tight text-stone-900" style={{ fontFamily: "var(--font-landing-serif)" }}>
-          {dict?.success_title || "Check your email"}
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-stone-600">
-          {dict?.success_desc ||
-            "We've sent a magic link to your inbox. Please click the link to sign in."}
-        </p>
-        <p className="mt-4 text-xs uppercase tracking-widest text-stone-500" style={{ fontFamily: "var(--font-landing-mono)" }}>
-          {dict?.spam_notice || "If you don't see the email, please check your spam folder."}
-        </p>
-        <div className="mt-6">
-          <Button variant="outline" onClick={() => setIsSent(false)}>
-            <ArrowLeft />
-            {dict?.wrong_email || "Use a different email"}
-          </Button>
+        
+        <div className="space-y-2">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-400 font-bold" style={{ fontFamily: "var(--font-landing-mono)" }}>
+            Verification Dispatched
+          </div>
+          <h2 className="text-3xl tracking-tight text-stone-900 leading-tight" style={{ fontFamily: "var(--font-landing-serif)" }}>
+            {dict?.success_title || "Check your email"}
+          </h2>
+          <p className="text-sm leading-relaxed text-stone-600 max-w-sm">
+            {dict?.success_desc ||
+              "We've sent a magic link to your inbox. Please click the link to sign in."}
+          </p>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-stone-100 space-y-6">
+          <div className="space-y-1">
+            <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold" style={{ fontFamily: "var(--font-landing-mono)" }}>
+              Identity Node
+            </p>
+            <p className="text-xs text-stone-500 italic">
+              {dict?.spam_notice || "If you don't see the email, please check your spam folder."}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Button 
+              variant="ghost" 
+              className="h-auto p-0 justify-start text-[11px] uppercase tracking-widest text-stone-500 hover:text-stone-900 hover:bg-transparent group"
+              onClick={() => setIsSent(false)}
+              style={{ fontFamily: "var(--font-landing-mono)" }}
+            >
+              <ArrowLeft className="h-3 w-3 mr-2 transition-transform group-hover:-translate-x-1" />
+              {dict?.wrong_email || "Use a different email"}
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              className="h-auto p-0 justify-start text-[11px] uppercase tracking-widest text-stone-400 hover:text-stone-700 hover:bg-transparent"
+              onClick={() => setIsSent(false)}
+              style={{ fontFamily: "var(--font-landing-mono)" }}
+            >
+              <Send className="h-3 w-3 mr-2" />
+              {dict?.submit_resend || "Resend Magic Link"}
+            </Button>
+          </div>
         </div>
       </div>
     );

@@ -299,8 +299,8 @@ async function StudyPlanContent({
 
 function ActiveProjectSeminarTrack({ item }: {item: EnrolledProjectSeminar;}) {
   return (
-    <Card className="h-full flex flex-col border-[#efefef] hover:border-[#dfdfdf] transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden bg-white">
-      <CardHeader className="p-4 pb-0">
+    <Card className="h-full flex flex-col border-[#efefef] hover:border-[#dfdfdf] transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden bg-white text-[#1f1f1f]">
+      <CardHeader className="p-4 pb-3">
         <div className="flex items-start gap-3">
           <UniversityIcon
             name={item.university}
@@ -316,7 +316,7 @@ function ActiveProjectSeminarTrack({ item }: {item: EnrolledProjectSeminar;}) {
                 {item.category || "Project/Seminar"}
               </Badge>
             </div>
-            <CardTitle className="text-base font-bold tracking-tight text-[#1f1f1f] leading-tight line-clamp-2">
+            <CardTitle className="text-base font-bold tracking-tight leading-tight line-clamp-2">
               <Link href={`/projects-seminars/${item.id}`} className="hover:text-black transition-colors">{item.title}</Link>
             </CardTitle>
             <div className="text-[11px] text-muted-foreground font-medium">
@@ -326,17 +326,11 @@ function ActiveProjectSeminarTrack({ item }: {item: EnrolledProjectSeminar;}) {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col gap-4 p-4 pt-4">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-[12px] text-stone-600 bg-stone-50 p-2 rounded-md border border-stone-100/50">
-            <span className="font-semibold">{item.semesterLabel}</span>
-          </div>
-        </div>
-
+      <CardContent className="flex-1 flex flex-col gap-3 p-4 pt-0">
         <div className="mt-auto space-y-2">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
             <span className="text-muted-foreground text-[10px]">Status</span>
-            <span className="text-[#1f1f1f] text-[10px]">In Progress</span>
+            <span className="text-[#1f1f1f] text-[10px] font-bold">In Progress</span>
           </div>
           <div className="flex items-center gap-1 h-1.5 w-full bg-stone-100 rounded-full overflow-hidden">
             <div className="h-full w-1/2 bg-[#1f1f1f] rounded-full" />
@@ -344,20 +338,26 @@ function ActiveProjectSeminarTrack({ item }: {item: EnrolledProjectSeminar;}) {
         </div>
       </CardContent>
 
-      <CardFooter className="pt-0 border-t border-stone-100 bg-gray-50/30 flex items-center justify-between gap-2 py-3 px-4 mt-auto">
-        <div className="flex items-center gap-1.5">
-          {Array.from({ length: 7 }).map((_, idx) => (
-            <span key={idx} className="h-2 w-2 rounded-full bg-stone-200" />
-          ))}
+      <CardFooter className="border-t border-stone-100 bg-gray-50/30 flex items-center justify-between gap-2 py-2 px-4 mt-auto">
+        <div className="flex flex-1 items-center gap-3 min-w-0">
+          <div className="flex items-center gap-1.5 shrink-0">
+            {Array.from({ length: 7 }).map((_, idx) => (
+              <span key={idx} className="h-2 w-2 rounded-full bg-stone-200" />
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] text-stone-500 min-w-0">
+            <span className="font-semibold uppercase truncate">{item.semesterLabel}</span>
+          </div>
         </div>
-        <div className="flex gap-1">
-          <Button variant="outline" size="icon-sm" className="h-8 w-8 rounded-md border-stone-200 hover:bg-white shadow-none" asChild>
+        
+        <div className="flex gap-1 shrink-0">
+          <Button variant="outline" size="icon-sm" className="h-7 w-7 rounded-md border-stone-200 hover:bg-white shadow-none" asChild>
             <Link href={`/projects-seminars/${item.id}`}>
               <ExternalLink className="h-3.5 w-3.5 text-stone-600" />
             </Link>
           </Button>
           {item.url ? (
-            <Button variant="outline" size="icon-sm" className="h-8 w-8 rounded-md border-stone-200 hover:bg-white shadow-none" asChild>
+            <Button variant="outline" size="icon-sm" className="h-7 w-7 rounded-md border-stone-200 hover:bg-white shadow-none" asChild>
               <a href={item.url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-3.5 w-3.5 text-stone-600" />
               </a>

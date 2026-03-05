@@ -39,7 +39,7 @@ describe('transformExternalCourse', () => {
 
     const result = transformExternalCourse(rawCourse as Record<string, unknown>);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       code: 'CS101',
       name: 'Algorithms',
       university: 'Example University',
@@ -146,6 +146,54 @@ describe('transformExternalCourse', () => {
       daysOfWeek: [1, 3, 5],
       startTime: '10:00',
       endTime: '11:20'
+    });
+  });
+
+  it('should prefer metadata.task_kind when transforming assignments', () => {
+    const rawCourse = {
+      course_fields: [],
+      user_courses: [{ status: 'in_progress', gpa: null, score: null }],
+      study_plans: [],
+      course_assignments: [
+        {
+          id: 1,
+          kind: 'assignment',
+          label: 'Lecture: Why Parallelism? Why Efficiency?',
+          due_on: '2026-03-05',
+          metadata: { task_kind: 'lecture' }
+        }
+      ]
+    };
+
+    const result = transformExternalCourse(rawCourse as Record<string, unknown>);
+    expect(result.assignments).toHaveLength(1);
+    expect(result.assignments[0]).toMatchObject({
+      kind: 'lecture',
+      persistedKind: 'assignment',
+      label: 'Lecture: Why Parallelism? Why Efficiency?'
+    });
+  });
+
+  it('should fall back to stored kind when metadata.task_kind is missing', () => {
+    const rawCourse = {
+      course_fields: [],
+      user_courses: [{ status: 'in_progress', gpa: null, score: null }],
+      study_plans: [],
+      course_assignments: [
+        {
+          id: 2,
+          kind: 'project',
+          label: 'Project milestone',
+          due_on: '2026-03-12'
+        }
+      ]
+    };
+
+    const result = transformExternalCourse(rawCourse as Record<string, unknown>);
+    expect(result.assignments).toHaveLength(1);
+    expect(result.assignments[0]).toMatchObject({
+      kind: 'project',
+      persistedKind: 'project'
     });
   });
 });

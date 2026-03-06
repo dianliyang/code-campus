@@ -129,13 +129,20 @@ export default function OverviewRoutineList({
                 </Badge>
               </div>
               <div className="min-w-0 space-y-1">
-                <p className={`break-words text-sm font-semibold tracking-[-0.02em] ${item.isDone ? "text-muted-foreground line-through" : "text-foreground"}`}>
-                  {item.title}
-                </p>
-                <p className="break-words text-xs text-muted-foreground">
-                  {item.meta}
-                  {item.location ? ` · ${item.location}` : ""}
-                </p>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <p className={`text-sm font-bold tracking-tight ${item.isDone ? "text-muted-foreground line-through" : "text-[#0f172a]"}`}>
+                    {item.title}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                  <span>{item.meta.split(' · ')[0]}</span>
+                  {item.location && (
+                    <>
+                      <span className="text-muted-foreground/30 text-[8px] tracking-normal">·</span>
+                      <span>{item.location}</span>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 sm:justify-self-end">
                 {item.action ? (

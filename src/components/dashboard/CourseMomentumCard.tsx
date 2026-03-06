@@ -26,41 +26,46 @@ export default function CourseMomentumCard({
   const assignmentCount = routineItems.filter((item) => item.sourceType === "assignment").length;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-background flex flex-col h-full">
-      <div className="border-b border-border p-4">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Now</p>
-        <p className="mt-2 text-sm font-medium leading-relaxed text-foreground line-clamp-2">
-          {nextItem
-            ? `Start with ${nextItem.title} at ${nextItem.timeLabel}.`
-            : "No scheduled work is waiting right now."}
-        </p>
+    <div className="overflow-hidden rounded-2xl border border-border bg-background flex flex-col h-full shadow-sm">
+      <div className="border-b border-border p-5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80 leading-none mb-3">Now</p>
+        <div className="space-y-1">
+          <p className="text-sm font-bold leading-tight text-foreground line-clamp-2">
+            {nextItem ? nextItem.title : "No scheduled work is waiting right now."}
+          </p>
+          {nextItem && (
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/70">
+              {nextItem.meta.split(' · ')[0]} · {nextItem.timeLabel}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid flex-1 border-b border-border grid-cols-3 divide-x divide-border">
-        <div className="flex flex-col items-center justify-center gap-1.5 p-4 text-center">
+        <div className="flex flex-col items-center justify-center gap-2 p-5 text-center transition-colors hover:bg-muted/5">
           <CalendarClock className="h-4 w-4 text-muted-foreground" />
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground truncate">Today</p>
-            <p className="text-xl font-bold text-foreground leading-none mt-0.5">{routineItems.length}</p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/80 truncate">Today</p>
+            <p className="text-xl font-bold text-foreground leading-none mt-1">{routineItems.length}</p>
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center gap-1.5 p-4 text-center">
+        <div className="flex flex-col items-center justify-center gap-2 p-5 text-center transition-colors hover:bg-muted/5">
           <Activity className="h-4 w-4 text-muted-foreground" />
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground truncate">In Progress</p>
-            <p className="text-xl font-bold text-foreground leading-none mt-0.5">{inProgressCount}</p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/80 truncate">In Progress</p>
+            <p className="text-xl font-bold text-foreground leading-none mt-1">{inProgressCount}</p>
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center gap-1.5 p-4 text-center">
+        <div className="flex flex-col items-center justify-center gap-2 p-5 text-center transition-colors hover:bg-muted/5">
           <Dumbbell className="h-4 w-4 text-muted-foreground" />
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground truncate">Checked In</p>
-            <p className="text-xl font-bold text-foreground leading-none mt-0.5">{attendedToday}</p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/80 truncate">Checked In</p>
+            <p className="text-xl font-bold text-foreground leading-none mt-1">{attendedToday}</p>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 p-4 bg-muted/5">
+      <div className="flex flex-wrap items-center gap-2 p-5 bg-muted/5">
         {studyCount > 0 && (
           <span className="inline-flex items-center rounded-full bg-muted/50 px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground border border-border/50">
             {studyCount} study

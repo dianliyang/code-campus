@@ -260,25 +260,25 @@ async function OverviewContent({ userId }: { userId: string }) {
 
   return (
     <div className="min-h-full space-y-6 pb-4">
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="overflow-hidden rounded-2xl border border-border bg-background">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <section className="overflow-hidden rounded-2xl border border-border bg-background flex flex-col h-full">
           <div className="border-b border-border px-6 py-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 space-y-1">
-                <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground">Today</h2>
+                <h2 className="text-lg font-bold tracking-tight text-foreground">Today&apos;s Routine</h2>
                 <p className="text-sm text-muted-foreground">
                   Specific tasks and routine items, ordered by time.
                 </p>
               </div>
-              <div className="sm:text-right">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Primary focus</p>
-                <p className="mt-1 text-sm font-semibold text-foreground truncate max-w-[180px]">
+              <div className="sm:text-right shrink-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">Primary focus</p>
+                <p className="mt-1 text-sm font-bold text-foreground truncate max-w-[180px]">
                   {fieldStats[0]?.name || "Undeclared"}
                 </p>
               </div>
             </div>
           </div>
-          <div className="space-y-4 p-5">
+          <div className="flex-1 space-y-4 p-5 overflow-auto">
             <OverviewRoutineList initialItems={routineItems} />
           </div>
         </section>

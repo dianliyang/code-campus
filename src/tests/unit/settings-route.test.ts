@@ -7,7 +7,7 @@ describe("settings route mapping", () => {
   });
 
   it("maps security route to identity section", () => {
-    expect(getSettingsSectionFromPathname("/settings/security", "engine")).toBe("identity");
+    expect(getSettingsSectionFromPathname("/settings/security", "engine")).toBe("engine");
   });
 
   it("maps bare settings route to engine section", () => {

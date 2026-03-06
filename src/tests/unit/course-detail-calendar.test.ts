@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { buildCourseDetailCalendar } from "@/lib/course-detail-calendar";
 
 describe("buildCourseDetailCalendar", () => {
-  test("includes recurring study plan sessions even when there are no assignments", () => {
+  test("does not include recurring generated study plan sessions when there are no scheduled tasks", () => {
     const result = buildCourseDetailCalendar({
       courseTitle: "Fundamentals of Programming",
       assignments: [],
@@ -21,15 +21,33 @@ describe("buildCourseDetailCalendar", () => {
       ],
     });
 
-    expect(result.range).toEqual({
-      startIso: "2026-03-05",
-      endIso: "2026-03-05",
+    expect(result.range).toBeNull();
+    expect(result.eventsByDate.get("2026-03-05")).toBeUndefined();
+  });
+
+  test("keeps scheduled task duration and infers a concrete kind from the task text", () => {
+    const result = buildCourseDetailCalendar({
+      courseTitle: "Fundamentals of Programming",
+      assignments: [],
+      scheduleItems: [
+        {
+          date: "2026-03-10",
+          title: "Read cache notes",
+          kind: null,
+          focus: "Caching",
+          durationMinutes: 45,
+        },
+      ],
+      studyPlans: [],
     });
-    expect(result.eventsByDate.get("2026-03-05")).toEqual([
+
+    expect(result.eventsByDate.get("2026-03-10")).toEqual([
       {
-        label: "Fundamentals of Programming",
-        meta: "Self-Study · 09:00-11:00 · Library",
-        kind: "self-study",
+        label: "Read cache notes",
+        meta: "reading · 45m",
+        kind: "reading",
+        badgeLabel: "reading",
+        timeLabel: "45m",
       },
     ]);
   });

@@ -500,12 +500,12 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
         </div>
 
         <section className="bg-transparent overflow-hidden h-full min-h-0 relative flex flex-col">
-          <div className="mb-2 flex h-12 items-center justify-between rounded-lg px-2" data-testid="week-header">
-            <div className="min-w-0">
+          <div className="mb-2 grid h-12 grid-cols-[1fr_auto] items-center rounded-lg px-2" data-testid="week-header">
+            <div className="grid h-full min-w-0 grid-cols-[1fr_auto] items-center">
               <p className="text-sm font-semibold leading-none text-[#1f2937]">Today</p>
-            </div>
-            <div className="flex items-center">
-              <p className="text-sm font-semibold leading-none text-[#0f172a]">{`Week ${weekNumber} ${weekLabel}`}</p>
+              <div className="flex justify-center">
+                <p className="text-sm font-semibold leading-none text-[#0f172a]">{`Week ${weekNumber} ${weekLabel}`}</p>
+              </div>
             </div>
             <div className="ml-3 flex items-center gap-1">
               <Button variant="outline"
@@ -685,15 +685,17 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
               </div>
               {isTodayVisibleInWeek ? (
                 <div
-                  className="pointer-events-none absolute left-[56px] right-0 z-40"
+                  className="pointer-events-none absolute left-0 right-0 z-40"
                   data-testid="current-time-line"
                   style={{ top: 40 + Math.max(currentTimeTop, 0) }}
                 >
                   <div className="relative flex items-center">
-                    <span className="inline-flex h-5 shrink-0 items-center rounded-full bg-[#ef4444] px-1.5 text-[10px] font-semibold text-white">
-                      {currentTimeLabel}
-                    </span>
-                    <div className="h-px w-full bg-[#ef4444]" />
+                    <div className="flex w-[56px] justify-center pr-1">
+                      <span className="inline-flex h-5 shrink-0 items-center rounded-full bg-[#ef4444] px-1.5 text-[10px] font-semibold text-white">
+                        {currentTimeLabel}
+                      </span>
+                    </div>
+                    <div className="h-px flex-1 bg-[#ef4444]" />
                   </div>
                 </div>
               ) : null}

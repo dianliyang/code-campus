@@ -30,6 +30,8 @@ export interface CourseDetailCalendarEvent {
   label: string;
   meta: string;
   kind: string;
+  badgeLabel: string;
+  timeLabel: string | null;
 }
 
 export interface CourseDetailCalendarResult {
@@ -62,11 +64,28 @@ function addDaysUtc(date: Date, days: number): Date {
   return copy;
 }
 
+function inferCalendarKind(input: Array<string | null | undefined>): string {
+  const text = input
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (!text.trim()) return "task";
+  if (/\b(read|reading|chapter|notes|textbook)\b/.test(text)) return "reading";
+  if (/\b(lab|studio|workshop)\b/.test(text)) return "lab";
+  if (/\b(project|milestone)\b/.test(text)) return "project";
+  if (/\b(exam|midterm|final)\b/.test(text)) return "exam";
+  if (/\b(quiz)\b/.test(text)) return "quiz";
+  if (/\b(assignment|homework|hw\b|pset|problem set)\b/.test(text)) return "assignment";
+  if (/\b(lecture|watch|video|recitation)\b/.test(text)) return "lecture";
+  return "task";
+}
+
 export function buildCourseDetailCalendar({
-  courseTitle,
+  courseTitle: _courseTitle,
   assignments,
   scheduleItems,
-  studyPlans,
+  studyPlans: _studyPlans,
 }: {
   courseTitle: string;
   assignments: CourseDetailCalendarAssignment[];
@@ -83,55 +102,12 @@ export function buildCourseDetailCalendar({
         typeof item.durationMinutes === "number" && Number.isFinite(item.durationMinutes)
           ? `${Math.max(1, Math.round(item.durationMinutes))}m`
           : "";
-      const kind = String(item.kind || "task").trim().toLowerCase();
+      const explicitKind = String(item.kind || "").trim().toLowerCase();
+      const kind = explicitKind || inferCalendarKind([item.title, item.focus]);
       const meta = [kind, duration].filter(Boolean).join(" · ") || "Scheduled";
-      return { dateIso, label, meta, kind };
+      return { dateIso, label, meta, kind, badgeLabel: kind, timeLabel: duration || null };
     })
-    .filter((row): row is { dateIso: string; label: string; meta: string; kind: string } => row !== null);
-
-  const planRows = studyPlans.flatMap((plan) => {
-    const startDate = parseIsoDate(plan.startDate);
-    const endDate = parseIsoDate(plan.endDate);
-    if (!startDate || !endDate) return [];
-
-    const normalizedDays = (plan.daysOfWeek || [])
-      .map((day) => (typeof day === "number" ? day : Number(day)))
-      .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6);
-    if (normalizedDays.length === 0) return [];
-
-    const kind = String(plan.kind || "study-plan").trim().toLowerCase() || "study-plan";
-    const timeRange = [plan.startTime, plan.endTime].filter(Boolean).join("-");
-    const metaParts = [plan.kind || "Study Plan", timeRange, plan.location].filter(Boolean);
-    const rows: Array<{ dateIso: string; label: string; meta: string; kind: string }> = [];
-
-    for (let cursor = new Date(startDate.getTime()); cursor <= endDate; cursor = addDaysUtc(cursor, 1)) {
-      if (!normalizedDays.includes(cursor.getUTCDay())) continue;
-      rows.push({
-        dateIso: toIsoDateUtc(cursor),
-        label: courseTitle,
-        meta: metaParts.join(" · "),
-        kind,
-      });
-    }
-
-    return rows;
-  });
-
-  const datedRows = [...scheduleRows, ...planRows];
-
-  if (datedRows.length === 0) {
-    return {
-      range: null,
-      months: [],
-      eventsByDate: new Map<string, CourseDetailCalendarEvent[]>(),
-    };
-  }
-
-  const datedSorted = datedRows.map((row) => row.dateIso).sort();
-  const rangeStart = parseIsoDate(datedSorted[0])!;
-  const rangeEnd = parseIsoDate(datedSorted[datedSorted.length - 1])!;
-  const rangeStartIso = toIsoDateUtc(rangeStart);
-  const rangeEndIso = toIsoDateUtc(rangeEnd);
+    .filter((row): row is { dateIso: string; label: string; meta: string; kind: string; badgeLabel: string; timeLabel: string | null } => row !== null);
 
   const deadlineRows = assignments
     .map((item) => {
@@ -139,23 +115,43 @@ export function buildCourseDetailCalendar({
       const parsedDate = parseIsoDate(item.due_on);
       if (!parsedDate) return null;
       const dateIso = toIsoDateUtc(parsedDate);
-      if (dateIso < rangeStartIso || dateIso > rangeEndIso) return null;
       const label = String(item.label || "Deadline").trim() || "Deadline";
-      const kind = String(item.kind || "deadline").trim().toLowerCase();
+      const kind = String(item.kind || "deadline").trim().toLowerCase() || "deadline";
       return {
         dateIso,
         label,
         meta: `Deadline${kind ? ` · ${kind}` : ""}`,
         kind,
+        badgeLabel: kind,
+        timeLabel: null,
       };
     })
-    .filter((row): row is { dateIso: string; label: string; meta: string; kind: string } => row !== null);
+    .filter((row): row is { dateIso: string; label: string; meta: string; kind: string; badgeLabel: string; timeLabel: null } => row !== null);
 
-  const rows = [...datedRows, ...deadlineRows];
+  const rows = [...scheduleRows, ...deadlineRows];
+  if (rows.length === 0) {
+    return {
+      range: null,
+      months: [],
+      eventsByDate: new Map<string, CourseDetailCalendarEvent[]>(),
+    };
+  }
+
+  const datedSorted = rows.map((row) => row.dateIso).sort();
+  const rangeStart = parseIsoDate(datedSorted[0])!;
+  const rangeEnd = parseIsoDate(datedSorted[datedSorted.length - 1])!;
+  const rangeStartIso = toIsoDateUtc(rangeStart);
+  const rangeEndIso = toIsoDateUtc(rangeEnd);
   const eventsByDate = new Map<string, CourseDetailCalendarEvent[]>();
   for (const row of rows) {
     const list = eventsByDate.get(row.dateIso) || [];
-    list.push({ label: row.label, meta: row.meta, kind: row.kind });
+    list.push({
+      label: row.label,
+      meta: row.meta,
+      kind: row.kind,
+      badgeLabel: row.badgeLabel,
+      timeLabel: row.timeLabel,
+    });
     eventsByDate.set(row.dateIso, list);
   }
 

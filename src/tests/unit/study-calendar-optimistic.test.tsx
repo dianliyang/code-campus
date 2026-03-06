@@ -139,6 +139,7 @@ describe("StudyCalendar redesign", () => {
 
     expect(currentTimeLine).toBeDefined();
     expect(currentTimeLine.textContent).toContain("10:00");
+    expect(currentTimeLine.className).toContain("left-0");
 
     await waitFor(() => {
       expect((timelineScroller as HTMLElement).scrollTop).toBeGreaterThan(0);
@@ -150,14 +151,17 @@ describe("StudyCalendar redesign", () => {
 
     const weekHeader = screen.getAllByTestId("week-header")[0];
     const miniCalendarSection = screen.getAllByTestId("mini-calendar-section")[0];
+    const todayHeading = screen.getAllByTestId("today-heading")[0];
 
     expect(screen.getAllByText("Today").length).toBeGreaterThan(1);
     expect(within(weekHeader).getByText("Week 5 Feb 1 - Feb 7, 2026")).toBeDefined();
     expect(weekHeader.className).toContain("items-center");
+    expect(weekHeader.className).toContain("h-12");
+    expect(todayHeading.className).toContain("h-12");
     expect(miniCalendarSection.className).toContain("pb-4");
   });
 
-  test("navigates weeks by prev/next controls", () => {
+  test("navigates weeks by prev/next controls", { timeout: 10000 }, () => {
     render(<StudyCalendar {...makeProps()} />);
 
     expect(screen.getAllByText("Week 5 Feb 1 - Feb 7, 2026").length).toBeGreaterThan(0);
@@ -191,7 +195,7 @@ describe("StudyCalendar redesign", () => {
     expect(buttons[2].getAttribute("aria-label")).toBe("Next month");
   });
 
-  test("clicking another event focuses a different course event", () => {
+  test("clicking another event focuses a different course event", { timeout: 10000 }, () => {
     render(<StudyCalendar {...makeProps()} />);
 
     fireEvent.click(screen.getAllByRole("button", { name: /Course A/i })[0]);

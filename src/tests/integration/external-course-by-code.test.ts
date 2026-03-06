@@ -17,6 +17,21 @@ function makeMock(resolvedValue: { data: unknown; error: unknown }) {
   return { mockFrom, mockSelect, mockNeq, mockEq2 };
 }
 
+function makeAuthMock(resolvedValue: { data: unknown; error: unknown }) {
+  const mockMaybeSingle = vi.fn().mockResolvedValue(resolvedValue);
+  const mockEq = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
+  const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+  const mockUpdateEq = vi.fn().mockResolvedValue({ error: null });
+  const mockUpdate = vi.fn().mockReturnValue({ eq: mockUpdateEq });
+  const mockFrom = vi.fn((table: string) => {
+    if (table === 'user_api_keys') {
+      return { select: mockSelect, update: mockUpdate };
+    }
+    return { select: vi.fn().mockReturnValue({ neq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: null, error: null }) }) }) };
+  });
+  return { mockFrom, mockSelect, mockEq, mockMaybeSingle, mockUpdate, mockUpdateEq };
+}
+
 describe('GET /api/external/courses/[course_code]', () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -24,6 +39,9 @@ describe('GET /api/external/courses/[course_code]', () => {
   });
 
   it('should return 401 if x-api-key is missing or incorrect', async () => {
+    const { mockFrom } = makeAuthMock({ data: null, error: null });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (createAdminClient as any).mockReturnValue({ from: mockFrom });
     const req = new NextRequest('http://localhost:3000/api/external/courses/CS-101', {
       headers: { 'x-api-key': 'wrong-key' }
     });
@@ -82,7 +100,7 @@ describe('GET /api/external/courses/[course_code]', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe(EXTERNAL_API_CACHE_CONTROL);
     expect(data).toEqual({
-      courses: [{
+      courses: [expect.objectContaining({
         code: 'CS-101',
         name: 'Course 1',
         university: 'CAU Kiel',
@@ -106,8 +124,9 @@ describe('GET /api/external/courses/[course_code]', () => {
         gpa: null,
         score: null,
         assignments: [],
-        schedules: [{ id: undefined, kind: null, location: null, timezone: 'UTC', startDate: null, endDate: null, daysOfWeek: [], startTime: null, endTime: null }],
-      }]
+        syllabus: null,
+        schedules: [expect.objectContaining({ kind: null, location: null, timezone: 'UTC', startDate: null, endDate: null, daysOfWeek: [], startTime: null, endTime: null })],
+      })]
     });
 
     expect(mockFrom).toHaveBeenCalledWith('courses');

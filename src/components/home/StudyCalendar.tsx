@@ -364,7 +364,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
           data-testid="calendar-left-column"
         >
           <section className="flex min-h-0 flex-1 flex-col rounded-lg py-0 pr-0">
-            <div className="flex h-12 items-center pb-3" data-testid="today-heading">
+            <div className="mb-2 flex h-12 items-center rounded-lg px-2" data-testid="today-heading">
               <h3
                 className="text-xl font-semibold leading-none text-[#1f2937]"
                 data-testid="today-header-title"
@@ -372,7 +372,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                 Today
               </h3>
             </div>
-            <div className="min-h-0 flex-1 space-y-2 overflow-auto pr-1" data-testid="today-events-list">
+            <div className="min-h-0 flex-1 space-y-2 overflow-auto pb-4 pr-1" data-testid="today-events-list">
               {todayEvents.length > 0 ?
               <div className="space-y-2">
                   {todayEvents.map((event) =>

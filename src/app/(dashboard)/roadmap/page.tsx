@@ -56,7 +56,7 @@ export default async function StudyPlanPage() {
 
   return (
     <main className="h-full w-full px-4 pb-4">
-      <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pb-5 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="px-4 pb-5 pt-4 -mx-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Roadmap

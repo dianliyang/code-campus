@@ -174,7 +174,7 @@ export default function ActiveCourseTrack({
   const filledSegments = Math.max(0, Math.min(progressSegments, Math.round(progress / (100 / progressSegments))));
 
   return (
-    <Card className="h-full flex flex-col border-[#efefef] hover:border-[#dfdfdf] transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden bg-white text-[#1f1f1f]">
+    <Card className="h-full flex flex-col overflow-hidden bg-white text-[#1f1f1f] shadow-sm">
       <CardHeader className="p-3 pb-1.5">
         <div className="space-y-2">
           <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
@@ -261,7 +261,7 @@ export default function ActiveCourseTrack({
               </Button>
             </ButtonGroup>
           </div>
-          <CardTitle className="text-[15px] font-semibold tracking-tight leading-snug line-clamp-2">
+          <CardTitle className="text-lg font-semibold tracking-tight leading-snug line-clamp-2">
             <Link href={detailHref} className="hover:text-black transition-colors">{course.title}</Link>
           </CardTitle>
         </div>

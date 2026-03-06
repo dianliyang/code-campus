@@ -24,7 +24,7 @@ export default async function UsageStatisticsStandalone() {
   }
 
   return (
-    <div className="h-full px-4 py-4">
+    <div className="h-full px-4 pb-4">
       <UsageStatisticsPanel />
     </div>
   );

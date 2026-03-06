@@ -125,9 +125,11 @@ describe("StudyCalendar redesign", () => {
     const eventCards = screen.getAllByTestId("today-event-card");
 
     expect(leftColumn.className).toContain("h-full");
-    expect(todayHeader.className).toContain("pb-3");
+    expect(todayHeader.className).toContain("items-center");
+    expect(todayHeader.className).toContain("px-2");
     expect(todayList.className).toContain("flex-1");
     expect(todayList.className).toContain("space-y-2");
+    expect(todayList.className).toContain("pb-4");
     expect(eventCards.length).toBeGreaterThan(0);
   });
 

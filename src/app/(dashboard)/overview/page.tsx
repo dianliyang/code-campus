@@ -1,12 +1,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Activity, CalendarClock, Dumbbell } from "lucide-react";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import { createClient, getUser, mapCourseFromRow } from "@/lib/supabase/server";
 import LearningProfileChart from "@/components/identity/LearningProfileChart";
 import CourseStatusChart from "@/components/identity/CourseStatusChart";
 import OverviewRoutineList from "@/components/dashboard/OverviewRoutineList";
+import CourseMomentumCard from "@/components/dashboard/CourseMomentumCard";
 import { Button } from "@/components/ui/button";
 import { buildOverviewRoutineItems, buildWeeklyActivity } from "@/lib/overview-routine";
 
@@ -33,7 +33,7 @@ export default async function OverviewPage() {
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Overview</h1>
           <p className="text-sm text-muted-foreground">
-            Charts for momentum, plus a clear view of today&apos;s tasks, workouts, and due items.
+            Course momentum, today&apos;s routine, and learning identity.
           </p>
         </div>
       </div>
@@ -246,7 +246,7 @@ async function OverviewContent({ userId }: { userId: string }) {
 
   return (
     <div className="min-h-full space-y-6 pb-4">
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <section className="overflow-hidden rounded-2xl border border-border bg-background">
           <div className="border-b border-border px-6 py-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -258,7 +258,7 @@ async function OverviewContent({ userId }: { userId: string }) {
               </div>
               <div className="sm:text-right">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Primary focus</p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
+                <p className="mt-1 text-sm font-semibold text-foreground truncate max-w-[180px]">
                   {fieldStats[0]?.name || "Undeclared"}
                 </p>
               </div>
@@ -268,49 +268,13 @@ async function OverviewContent({ userId }: { userId: string }) {
             <OverviewRoutineList initialItems={routineItems} />
           </div>
         </section>
-        <aside className="overflow-hidden rounded-2xl border border-border bg-background">
-            <div className="border-b border-border p-4">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Now</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {routineItems[0]
-                  ? `Start with ${routineItems[0].title} at ${routineItems[0].timeLabel}.`
-                  : "No scheduled work is waiting right now."}
-              </p>
-            </div>
-            <div className="grid border-b border-border sm:grid-cols-3 sm:divide-x sm:divide-border">
-              <div className="flex items-center gap-3 p-4">
-                <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Today</p>
-                  <p className="text-lg font-semibold text-foreground">{routineItems.length}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-4">
-                <Activity className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">In Progress</p>
-                  <p className="text-lg font-semibold text-foreground">{inProgressCount}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-4">
-                <Dumbbell className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Checked In</p>
-                  <p className="text-lg font-semibold text-foreground">{attendedToday}</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2 p-4">
-              <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                {routineItems.filter((item) => item.sourceType === "study_plan").length} study
-              </span>
-              <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                {routineItems.filter((item) => item.sourceType === "workout").length} workouts
-              </span>
-              <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                {routineItems.filter((item) => item.sourceType === "assignment").length} due
-              </span>
-            </div>
+        
+        <aside className="h-full">
+          <CourseMomentumCard 
+            routineItems={routineItems} 
+            inProgressCount={inProgressCount} 
+            attendedToday={attendedToday} 
+          />
         </aside>
       </section>
 

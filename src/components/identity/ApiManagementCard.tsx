@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Copy, Loader2, Trash2, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,7 +43,14 @@ export default function ApiManagementCard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [workingId, setWorkingId] = useState<number | null>(null);
+  const [shakingId, setShakingId] = useState<number | null>(null);
   const [latestKey, setLatestKey] = useState("");
+
+  const triggerShake = (id: number) => {
+    setShakingId(id);
+    setTimeout(() => setShakingId(null), 400);
+  };
+
   const [saved, setSaved] = useState<string | null>(null);
 
   const [newName, setNewName] = useState("");
@@ -347,6 +355,7 @@ export default function ApiManagementCard() {
                         <Toggle
                           pressed={draft.isActive}
                           onPressedChange={(pressed) => {
+                            triggerShake(item.id);
                             const nextDraft = { ...draft, isActive: pressed };
                             setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
                             void persistRow(item.id, nextDraft);
@@ -354,7 +363,10 @@ export default function ApiManagementCard() {
                           disabled={busy}
                           size="sm"
                           variant="outline"
-                          className="h-7 px-2 text-[10px] uppercase font-bold tracking-wider data-[state=on]:bg-emerald-50 data-[state=on]:text-emerald-700 data-[state=on]:border-emerald-200"
+                          className={cn(
+                            "h-7 px-2 text-[10px] uppercase font-bold tracking-wider data-[state=on]:bg-emerald-50 data-[state=on]:text-emerald-700 data-[state=on]:border-emerald-200",
+                            shakingId === item.id && "animate-shake"
+                          )}
                         >
                           {draft.isActive ? "Active" : "Paused"}
                         </Toggle>
@@ -363,6 +375,7 @@ export default function ApiManagementCard() {
                         <Toggle
                           pressed={draft.isReadOnly}
                           onPressedChange={(pressed) => {
+                            triggerShake(item.id);
                             const nextDraft = { ...draft, isReadOnly: pressed };
                             setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
                             void persistRow(item.id, nextDraft);
@@ -370,7 +383,10 @@ export default function ApiManagementCard() {
                           disabled={busy}
                           size="sm"
                           variant="outline"
-                          className="h-7 px-2 text-[10px] uppercase font-bold tracking-wider data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 data-[state=on]:border-amber-200"
+                          className={cn(
+                            "h-7 px-2 text-[10px] uppercase font-bold tracking-wider data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 data-[state=on]:border-amber-200",
+                            shakingId === item.id && "animate-shake"
+                          )}
                         >
                           {draft.isReadOnly ? "Read-Only" : "Full-Access"}
                         </Toggle>
@@ -382,14 +398,19 @@ export default function ApiManagementCard() {
                         <Button
                           variant="ghost"
                           type="button"
-                          onClick={() => deleteRow(item.id)}
+                          onClick={() => {
+                            triggerShake(item.id);
+                            void deleteRow(item.id);
+                          }}
                           disabled={busy}
                           aria-label="Delete API key"
                           title="Delete API key"
+                          className={cn(shakingId === item.id && "animate-shake")}
                         >
                           <Trash2 />
                         </Button>
                       </td>
+
                     </tr>
                   );
                 })

@@ -1,12 +1,39 @@
 "use client";
 
 import { Activity, CalendarClock, Dumbbell } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { OverviewRoutineItem } from "@/lib/overview-routine";
 
 interface CourseMomentumCardProps {
   routineItems: OverviewRoutineItem[];
   inProgressCount: number;
   attendedToday: number;
+}
+
+function MomentumBar({ label, count, colorClass, activeColorClass, max = 15 }: { label: string, count: number, colorClass: string, activeColorClass: string, max?: number }) {
+  const squares = Array.from({ length: 10 });
+  const activeCount = Math.min(10, Math.ceil((count / max) * 10));
+
+  return (
+    <div className="flex-1 flex flex-col items-center gap-3 group cursor-default">
+      <div className="w-full flex flex-col-reverse items-center gap-1 h-28 justify-start">
+        {squares.map((_, i) => (
+          <div 
+            key={i}
+            className={cn(
+              "w-full max-w-[32px] h-1.5 rounded-[1px] transition-all duration-300",
+              i < activeCount ? activeColorClass : colorClass
+            )}
+            style={{ transitionDelay: `${i * 30}ms` }}
+          />
+        ))}
+      </div>
+      <div className="text-center space-y-1">
+        <p className="text-xl font-bold text-foreground leading-none">{count}</p>
+        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80 whitespace-nowrap">{label}</p>
+      </div>
+    </div>
+  );
 }
 
 export default function CourseMomentumCard({
@@ -30,11 +57,11 @@ export default function CourseMomentumCard({
       <div className="border-b border-border p-5">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80 leading-none mb-3">Now</p>
         <div className="space-y-1">
-          <p className="text-sm font-bold leading-tight text-foreground line-clamp-2">
+          <p className="text-sm font-medium tracking-tight text-foreground line-clamp-2">
             {nextItem ? nextItem.title : "No scheduled work is waiting right now."}
           </p>
           {nextItem && (
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/70">
+            <p className="text-[10px] font-medium text-muted-foreground/70">
               {nextItem.meta.split(' · ')[0]} · {nextItem.timeLabel}
             </p>
           )}
@@ -42,38 +69,24 @@ export default function CourseMomentumCard({
       </div>
 
       <div className="flex flex-1 border-b border-border p-5 items-end justify-between gap-4">
-        <div className="flex-1 flex flex-col items-center gap-2 group cursor-default">
-          <div className="w-full relative flex flex-col items-center justify-end h-24">
-            <div 
-              className="w-full max-w-[40px] rounded-t-sm bg-stone-100 transition-colors group-hover:bg-stone-200" 
-              style={{ height: `${Math.min(100, (routineItems.length / 15) * 100)}%` }}
-            />
-            <p className="absolute bottom-2 text-lg font-bold text-stone-900">{routineItems.length}</p>
-          </div>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80">Today</p>
-        </div>
-
-        <div className="flex-1 flex flex-col items-center gap-2 group cursor-default">
-          <div className="w-full relative flex flex-col items-center justify-end h-24">
-            <div 
-              className="w-full max-w-[40px] rounded-t-sm bg-blue-50 transition-colors group-hover:bg-blue-100" 
-              style={{ height: `${Math.min(100, (inProgressCount / 15) * 100)}%` }}
-            />
-            <p className="absolute bottom-2 text-lg font-bold text-blue-900">{inProgressCount}</p>
-          </div>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80">In Progress</p>
-        </div>
-
-        <div className="flex-1 flex flex-col items-center gap-2 group cursor-default">
-          <div className="w-full relative flex flex-col items-center justify-end h-24">
-            <div 
-              className="w-full max-w-[40px] rounded-t-sm bg-emerald-50 transition-colors group-hover:bg-emerald-100" 
-              style={{ height: `${Math.min(100, (attendedToday / 15) * 100 || 5)}%` }}
-            />
-            <p className="absolute bottom-2 text-lg font-bold text-emerald-900">{attendedToday}</p>
-          </div>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80 whitespace-nowrap">Checked In</p>
-        </div>
+        <MomentumBar 
+          label="Today" 
+          count={routineItems.length} 
+          colorClass="bg-stone-100" 
+          activeColorClass="bg-stone-900" 
+        />
+        <MomentumBar 
+          label="In Progress" 
+          count={inProgressCount} 
+          colorClass="bg-blue-50" 
+          activeColorClass="bg-blue-600" 
+        />
+        <MomentumBar 
+          label="Checked In" 
+          count={attendedToday} 
+          colorClass="bg-emerald-50" 
+          activeColorClass="bg-emerald-600" 
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 p-5 bg-muted/5">

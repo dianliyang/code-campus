@@ -207,33 +207,33 @@ export default function SystemMaintenanceCard() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-12">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Card className="overflow-hidden">
-          <CardContent className="px-4 py-3">
+          <CardContent className="px-4 py-3 flex flex-col justify-between h-20">
             <div className="flex items-center gap-2">
               <Landmark className="h-3.5 w-3.5 text-muted-foreground" />
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Institutions</p>
             </div>
-            <p className="mt-0.5 text-xl font-bold tracking-tight">{selectedUnis.length}</p>
+            <p className="mt-auto text-xl font-bold tracking-tight leading-none">{selectedUnis.length}</p>
           </CardContent>
         </Card>
         <Card className="overflow-hidden">
-          <CardContent className="px-4 py-3">
+          <CardContent className="px-4 py-3 flex flex-col justify-between h-20">
             <div className="flex items-center gap-2">
               <CalendarRange className="h-3.5 w-3.5 text-muted-foreground" />
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Years</p>
             </div>
-            <p className="mt-0.5 text-xl font-bold tracking-tight">{selectedYears.length}</p>
+            <p className="mt-auto text-xl font-bold tracking-tight leading-none">{selectedYears.length}</p>
           </CardContent>
         </Card>
         <Card className="overflow-hidden">
-          <CardContent className="px-4 py-3">
+          <CardContent className="px-4 py-3 flex flex-col justify-between h-20">
             <div className="flex items-center gap-2">
               <Zap className="h-3.5 w-3.5 text-muted-foreground" />
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Execution Mode</p>
             </div>
-            <p className="mt-0.5 text-sm font-bold capitalize">{executionMode}</p>
+            <p className="mt-auto text-sm font-bold capitalize leading-none">{executionMode}</p>
           </CardContent>
         </Card>
       </div>

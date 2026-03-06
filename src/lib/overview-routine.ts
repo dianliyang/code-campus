@@ -72,6 +72,7 @@ type OverviewSchedule = {
 export type OverviewRoutineItem = {
   key: string;
   sourceType: "study_plan" | "workout" | "assignment";
+  courseId: number | null;
   title: string;
   meta: string;
   timeLabel: string;
@@ -185,6 +186,7 @@ export function buildOverviewRoutineItems({
       return {
         key: `task:${sch.id}:${date}`,
         sourceType: "study_plan" as const,
+        courseId: sch.course_id,
         title: sch.task_title,
         meta: metaBits.join(" · "),
         timeLabel,
@@ -214,6 +216,7 @@ export function buildOverviewRoutineItems({
       return {
         key: `study:${plan.id}:${date}`,
         sourceType: "study_plan" as const,
+        courseId: plan.course_id,
         title: plan.courses?.title || "Study session",
         meta: metaBits.join(" · "),
         timeLabel: getTimeLabel(plan.start_time, plan.end_time),
@@ -240,6 +243,7 @@ export function buildOverviewRoutineItems({
       return {
         key: `workout:${workout.id}:${date}`,
         sourceType: "workout" as const,
+        courseId: null,
         title: workout.title,
         meta: metaBits.join(" · ") || "Workout",
         timeLabel: getTimeLabel(workout.start_time, workout.end_time),
@@ -264,6 +268,7 @@ export function buildOverviewRoutineItems({
       return {
         key: `assignment:${assignment.id}`,
         sourceType: "assignment" as const,
+        courseId: assignment.course_id,
         title: assignment.label,
         meta: metaBits.join(" · "),
         timeLabel: "Due today",

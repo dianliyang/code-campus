@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, ChevronRight, Dumbbell, ExternalLink, Loader2, NotebookPen, Coffee } from "lucide-react";
+import { CheckCircle2, ChevronRight, Dumbbell, ExternalLink, Loader2, NotebookPen, Coffee, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { OverviewRoutineItem } from "@/lib/overview-routine";
+import Link from "next/link";
 
 export default function OverviewRoutineList({
   initialItems,
@@ -30,27 +31,7 @@ export default function OverviewRoutineList({
   const handleAction = async (item: OverviewRoutineItem) => {
     if (!item.action || pendingKeys[item.key]) return;
 
-    const previous = item.isDone;
-    setPendingKeys((current) => ({ ...current, [item.key]: true }));
-    setItems((current) =>
-      current.map((entry) =>
-        entry.key === item.key
-          ? {
-              ...entry,
-              isDone: !entry.isDone,
-              statusLabel:
-                entry.sourceType === "workout"
-                  ? !entry.isDone
-                    ? "Attended"
-                    : "Mark attended"
-                  : !entry.isDone
-                    ? "Completed"
-                    : "Mark complete",
-            }
-          : entry
-      )
-    );
-
+    setPendingKeys((prev) => ({ ...prev, [item.key]: true }));
     try {
       const endpoint =
         item.action.type === "toggle_complete" ? "/api/schedule" : "/api/workouts/attendance";
@@ -68,39 +49,23 @@ export default function OverviewRoutineList({
               date: item.action.date,
             };
 
-      const response = await fetch(endpoint, {
+      const res = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update routine state");
-      }
-    } catch {
-      setItems((current) =>
-        current.map((entry) =>
-          entry.key === item.key
-            ? {
-                ...entry,
-                isDone: previous,
-                statusLabel:
-                  entry.sourceType === "workout"
-                    ? previous
-                      ? "Attended"
-                      : "Mark attended"
-                    : previous
-                      ? "Completed"
-                      : "Mark complete",
-              }
-            : entry
-        )
+      if (!res.ok) throw new Error("Action failed");
+
+      // Optimistic update
+      setItems((prev) =>
+        prev.map((it) => (it.key === item.key ? { ...it, isDone: !it.isDone } : it))
       );
+    } catch (error) {
+      console.error(error);
     } finally {
-      setPendingKeys((current) => {
-        const next = { ...current };
+      setPendingKeys((prev) => {
+        const next = { ...prev };
         delete next[item.key];
         return next;
       });
@@ -125,66 +90,67 @@ export default function OverviewRoutineList({
     <div className="space-y-1">
       {sortedItems.map((item) => {
         const isPending = Boolean(pendingKeys[item.key]);
-        return (
+        const content = (
           <div
-            key={item.key}
-            className="grid gap-3 border-b border-border/50 pb-4 last:border-b-0 last:pb-0 sm:grid-cols-[96px_minmax(0,1fr)_auto] sm:items-center"
+            className="grid gap-3 border-b border-border/50 pb-4 last:border-b-0 last:pb-0 sm:grid-cols-[96px_minmax(0,1fr)_auto] sm:items-center group/item"
           >
-              <div className="space-y-1">
-                <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">{item.timeLabel}</p>
-                <Badge variant="outline" className="rounded-full px-1.5 text-[9px] uppercase tracking-[0.18em]">
-                  {item.kind}
-                </Badge>
+            <div className="flex flex-col items-start gap-1 sm:items-center sm:text-center">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">{item.timeLabel}</p>
+              <Badge variant="outline" className="rounded-full px-1.5 text-[9px] uppercase tracking-[0.18em]">
+                {item.kind}
+              </Badge>
+            </div>
+            <div className="min-w-0 space-y-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className={`text-sm font-medium tracking-tight ${item.isDone ? "text-muted-foreground line-through" : "text-[#0f172a]"}`}>
+                  {item.title}
+                </p>
               </div>
-              <div className="min-w-0 space-y-1">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <p className={`text-sm font-medium tracking-tight ${item.isDone ? "text-muted-foreground line-through" : "text-[#0f172a]"}`}>
-                    {item.title}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                  <span className="truncate max-w-[240px]">{item.meta}</span>
-                  {item.location && (
-                    <>
-                      <span className="text-muted-foreground/30 text-[8px] tracking-normal">·</span>
-                      <span className="truncate max-w-[120px]">{item.location}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 sm:justify-self-end">
-                {item.action ? (
-                  <Button
-                    variant={item.isDone ? "secondary" : "outline"}
-                    size="sm"
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => void handleAction(item)}
-                    className="h-8"
-                  >
-                    {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : item.sourceType === "workout" ? <Dumbbell className="mr-2 h-4 w-4" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                    {item.statusLabel}
-                  </Button>
-                ) : item.href ? (
-                  <Button size="sm" variant="ghost" asChild className="h-8">
-                    <a href={item.href} target="_blank" rel="noreferrer" aria-label={`Open ${item.title}`}>
-                      <NotebookPen className="mr-2 h-4 w-4" />
-                      Open
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </a>
-                  </Button>
-                ) : (
-                  <div className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground">
-                    <NotebookPen className="h-4 w-4" />
-                    Due today
-                  </div>
+              <div className="flex flex-wrap items-center gap-x-2 text-[11px] font-medium text-muted-foreground/70">
+                <span className="truncate max-w-[240px] uppercase">{item.meta}</span>
+                {item.location && (
+                  <>
+                    <span className="text-muted-foreground/30 text-[8px] tracking-normal">·</span>
+                    <span className="truncate max-w-[120px]">{item.location}</span>
+                  </>
                 )}
-                {item.sourceType === "assignment" ? (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                ) : null}
               </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 sm:justify-self-end">
+              {item.courseId && (
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/0 group-hover/item:text-muted-foreground/40 transition-all translate-x-[-4px] group-hover/item:translate-x-0" />
+              )}
+              {item.action ? (
+                <Button
+                  variant={item.isDone ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    void handleAction(item);
+                  }}
+                  disabled={isPending}
+                  className="h-7 px-2 text-[11px] uppercase font-bold tracking-wider"
+                >
+                  {isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
+                  {item.statusLabel}
+                </Button>
+              ) : item.sourceType === "assignment" ? (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              ) : null}
+            </div>
           </div>
         );
+
+        if (item.courseId) {
+          return (
+            <Link key={item.key} href={`/courses/${item.courseId}`} className="block">
+              {content}
+            </Link>
+          );
+        }
+
+        return <div key={item.key}>{content}</div>;
       })}
     </div>
   );

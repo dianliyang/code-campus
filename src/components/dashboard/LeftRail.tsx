@@ -139,10 +139,10 @@ function SidebarLinkItem({
         <Link
           href={href}
           prefetch={false}
-          className={active ? "font-bold" : ""}
+          className={active ? cn("font-bold", c.text) : ""}
         >
           <Icon className={cn("transition-colors", active ? c.icon : "text-muted-foreground/70")} strokeWidth={active ? 2.5 : 2} />
-          <span>{title}</span>
+          <span className={active ? c.text : ""}>{title}</span>
           {trailingSpin ? <Loader2 className="ml-auto animate-spin" /> : null}
         </Link>
       </SidebarMenuButton>

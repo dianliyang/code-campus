@@ -124,98 +124,99 @@ export default function WorkoutListHeader({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
-        <Tabs
-          value={viewMode}
-          onValueChange={(value) => setViewMode(value as "list" | "grid")}
-          className="w-full md:w-auto"
-        >
-          <TabsList>
-            <TabsTrigger value="list" aria-label="List view">
-              <List className="h-3.5 w-3.5" />
-              List
-            </TabsTrigger>
-            <TabsTrigger value="grid" aria-label="Grid view">
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Grid
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
+          <Tabs
+            value={viewMode}
+            onValueChange={(value) => setViewMode(value as "list" | "grid")}
+            className="shrink-0"
+          >
+            <TabsList className="w-full sm:w-auto">
+              <TabsTrigger value="list" aria-label="List view" className="flex-1 sm:flex-none">
+                <List className="h-3.5 w-3.5" />
+                List
+              </TabsTrigger>
+              <TabsTrigger value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Grid
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-        <div className="w-full md:w-auto space-y-2 md:space-y-0 md:flex md:items-center md:gap-2">
-          <div className="grid grid-cols-2 md:flex items-center gap-2">
+          <div className="flex-1 min-w-0 sm:max-w-[360px]">
+            <InputGroup>
+              <InputGroupInput
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onCompositionStart={() => {
+                  isComposing.current = true;
+                }}
+                onCompositionEnd={(e) => {
+                  isComposing.current = false;
+                  setQuery(e.currentTarget.value);
+                }}
+                placeholder="Search workouts..."
+              />
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+              <InputGroupAddon align="inline-end">
+                {query ? (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    aria-label="Clear search"
+                  >
+                    <X />
+                  </button>
+                ) : null}
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               onClick={refreshList}
               disabled={isRefreshing}
+              className="flex-1 sm:flex-none"
             >
               <RefreshCw
                 className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
               />
               {isRefreshing ? "Refreshing..." : "Refresh"}
             </Button>
-            <Button variant="outline" onClick={openFilters}>
+            <Button variant="outline" onClick={openFilters} className="flex-1 sm:flex-none">
               <SlidersHorizontal />
               Filter
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:flex items-center gap-2">
-            <Select value={sortBy} onValueChange={handleSortChange}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Sort</SelectLabel>
-                  <SelectItem value="title">
-                    {dict?.sort_title || "Title (A-Z)"}
-                  </SelectItem>
-                  <SelectItem value="price">
-                    {dict?.sort_price || "Price (Low-High)"}
-                  </SelectItem>
-                  <SelectItem value="day">
-                    {dict?.sort_day || "Day of Week"}
-                  </SelectItem>
-                  <SelectItem value="newest">
-                    {dict?.sort_newest || "Newest"}
-                  </SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-
-            <div className="w-full md:min-w-[280px]">
-              <InputGroup>
-                <InputGroupInput
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onCompositionStart={() => {
-                    isComposing.current = true;
-                  }}
-                  onCompositionEnd={(e) => {
-                    isComposing.current = false;
-                    setQuery(e.currentTarget.value);
-                  }}
-                  placeholder="Search workouts..."
-                />
-                <InputGroupAddon>
-                  <Search />
-                </InputGroupAddon>
-                <InputGroupAddon align="inline-end">
-                  {query ? (
-                    <button
-                      type="button"
-                      onClick={() => setQuery("")}
-                      aria-label="Clear search"
-                    >
-                      <X />
-                    </button>
-                  ) : null}
-                </InputGroupAddon>
-              </InputGroup>
-            </div>
-          </div>
+          <Select value={sortBy} onValueChange={handleSortChange}>
+            <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Sort</SelectLabel>
+                <SelectItem value="title">
+                  {dict?.sort_title || "Title (A-Z)"}
+                </SelectItem>
+                <SelectItem value="price">
+                  {dict?.sort_price || "Price (Low-High)"}
+                </SelectItem>
+                <SelectItem value="day">
+                  {dict?.sort_day || "Day of Week"}
+                </SelectItem>
+                <SelectItem value="newest">
+                  {dict?.sort_newest || "Newest"}
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

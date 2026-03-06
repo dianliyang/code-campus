@@ -209,31 +209,31 @@ export default function SystemMaintenanceCard() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="overflow-hidden">
+          <CardContent className="px-4 py-3">
             <div className="flex items-center gap-2">
-              <Landmark className="h-4 w-4 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">Institutions</p>
+              <Landmark className="h-3.5 w-3.5 text-muted-foreground" />
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Institutions</p>
             </div>
-            <p className="mt-1 text-2xl font-semibold">{selectedUnis.length}</p>
+            <p className="mt-0.5 text-xl font-bold tracking-tight">{selectedUnis.length}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="overflow-hidden">
+          <CardContent className="px-4 py-3">
             <div className="flex items-center gap-2">
-              <CalendarRange className="h-4 w-4 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">Years</p>
+              <CalendarRange className="h-3.5 w-3.5 text-muted-foreground" />
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Years</p>
             </div>
-            <p className="mt-1 text-2xl font-semibold">{selectedYears.length}</p>
+            <p className="mt-0.5 text-xl font-bold tracking-tight">{selectedYears.length}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="overflow-hidden">
+          <CardContent className="px-4 py-3">
             <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">Execution Mode</p>
+              <Zap className="h-3.5 w-3.5 text-muted-foreground" />
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Execution Mode</p>
             </div>
-            <p className="mt-1 text-base font-semibold capitalize">{executionMode}</p>
+            <p className="mt-0.5 text-sm font-bold capitalize">{executionMode}</p>
           </CardContent>
         </Card>
       </div>

@@ -87,83 +87,22 @@ export default function ProjectsSeminarsToolbar({
   }, [query]);
 
   return (
-    <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:justify-between">
-      <Tabs value={view} onValueChange={(next) => pushWith({ view: next })}>
-        <TabsList>
-          <TabsTrigger value="list">
-            <List className="h-3.5 w-3.5" />
-            List
-          </TabsTrigger>
-          <TabsTrigger value="grid">
-            <LayoutGrid className="h-3.5 w-3.5" />
-            Grid
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+    <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
+        <Tabs value={view} onValueChange={(next) => pushWith({ view: next })} className="shrink-0">
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="list" className="flex-1 sm:flex-none">
+              <List className="h-3.5 w-3.5" />
+              List
+            </TabsTrigger>
+            <TabsTrigger value="grid" className="flex-1 sm:flex-none">
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Grid
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-      <div className="flex w-full flex-wrap md:w-auto md:flex-nowrap items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" type="button">
-              <SlidersHorizontal />
-              Filters
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>
-              Category
-            </DropdownMenuLabel>
-            <div className="max-h-40 space-y-1 overflow-y-auto">
-              {categories.map((name) => (
-                <label key={name} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={selectedCategories.includes(name)}
-                    onCheckedChange={() =>
-                      pushWith({
-                        category: toggleItem(selectedCategories, name),
-                      })
-                    }
-                  />
-                  <span>{name}</span>
-                </label>
-              ))}
-            </div>
-            <DropdownMenuSeparator className="my-2" />
-            <DropdownMenuLabel>
-              Semesters
-            </DropdownMenuLabel>
-            <div className="max-h-40 space-y-1 overflow-y-auto">
-              {semesters.map((name) => (
-                <label key={name} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={selectedSemesters.includes(name)}
-                    onCheckedChange={() =>
-                      pushWith({
-                        semester: toggleItem(selectedSemesters, name),
-                      })
-                    }
-                  />
-                  <span>{name}</span>
-                </label>
-              ))}
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Select value={sort} onValueChange={(next) => pushWith({ sort: next })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Sort</SelectLabel>
-              <SelectItem value="title">Sort by Title</SelectItem>
-              <SelectItem value="category">Sort by Category</SelectItem>
-              <SelectItem value="credit">Sort by Credit</SelectItem>
-              <SelectItem value="newest">Sort by Newest</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <div className="w-full md:w-[280px]">
+        <div className="flex-1 min-w-0 sm:max-w-[360px]">
           <InputGroup>
             <InputGroupInput
               type="text"
@@ -175,6 +114,72 @@ export default function ProjectsSeminarsToolbar({
               <Search />
             </InputGroupAddon>
           </InputGroup>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" type="button" className="flex-1 sm:flex-none">
+                <SlidersHorizontal />
+                Filters
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuLabel>
+                Category
+              </DropdownMenuLabel>
+              <div className="max-h-40 space-y-1 overflow-y-auto">
+                {categories.map((name) => (
+                  <label key={name} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={selectedCategories.includes(name)}
+                      onCheckedChange={() =>
+                        pushWith({
+                          category: toggleItem(selectedCategories, name),
+                        })
+                      }
+                    />
+                    <span>{name}</span>
+                  </label>
+                ))}
+              </div>
+              <DropdownMenuSeparator className="my-2" />
+              <DropdownMenuLabel>
+                Semesters
+              </DropdownMenuLabel>
+              <div className="max-h-40 space-y-1 overflow-y-auto">
+                {semesters.map((name) => (
+                  <label key={name} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={selectedSemesters.includes(name)}
+                      onCheckedChange={() =>
+                        pushWith({
+                          semester: toggleItem(selectedSemesters, name),
+                        })
+                      }
+                    />
+                    <span>{name}</span>
+                  </label>
+                ))}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Select value={sort} onValueChange={(next) => pushWith({ sort: next })}>
+            <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Sort</SelectLabel>
+                <SelectItem value="title">Sort by Title</SelectItem>
+                <SelectItem value="category">Sort by Category</SelectItem>
+                <SelectItem value="credit">Sort by Credit</SelectItem>
+                <SelectItem value="newest">Sort by Newest</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>);

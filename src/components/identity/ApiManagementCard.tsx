@@ -344,46 +344,36 @@ export default function ApiManagementCard() {
                         {item.requestsLimit != null ? ` / ${item.requestsLimit}` : ""}
                       </td>
                       <td className="px-3 py-2">
-                        <Field orientation="horizontal" className="gap-2">
-                          <Checkbox
-                            id={`api-key-active-${item.id}`}
-                            checked={draft.isActive}
-                            onCheckedChange={(checked) => {
-                              const nextDraft = { ...draft, isActive: checked === true };
-                              setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
-                              void persistRow(item.id, nextDraft);
-                            }}
-                            disabled={busy}
-                          />
-                          <FieldContent className="gap-0">
-                            <FieldLabel htmlFor={`api-key-active-${item.id}`}>
-                              <Badge variant={draft.isActive ? "secondary" : "outline"}>
-                                {draft.isActive ? "Enabled" : "Disabled"}
-                              </Badge>
-                            </FieldLabel>
-                          </FieldContent>
-                        </Field>
+                        <Toggle
+                          pressed={draft.isActive}
+                          onPressedChange={(pressed) => {
+                            const nextDraft = { ...draft, isActive: pressed };
+                            setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
+                            void persistRow(item.id, nextDraft);
+                          }}
+                          disabled={busy}
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-[10px] uppercase font-bold tracking-wider data-[state=on]:bg-emerald-50 data-[state=on]:text-emerald-700 data-[state=on]:border-emerald-200"
+                        >
+                          {draft.isActive ? "Active" : "Paused"}
+                        </Toggle>
                       </td>
                       <td className="px-3 py-2">
-                        <Field orientation="horizontal" className="gap-2">
-                          <Checkbox
-                            id={`api-key-mode-${item.id}`}
-                            checked={draft.isReadOnly}
-                            onCheckedChange={(checked) => {
-                              const nextDraft = { ...draft, isReadOnly: checked === true };
-                              setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
-                              void persistRow(item.id, nextDraft);
-                            }}
-                            disabled={busy}
-                          />
-                          <FieldContent className="gap-0">
-                            <FieldLabel htmlFor={`api-key-mode-${item.id}`}>
-                              <Badge variant={draft.isReadOnly ? "secondary" : "outline"}>
-                                {draft.isReadOnly ? "Read-only" : "Read/Write"}
-                              </Badge>
-                            </FieldLabel>
-                          </FieldContent>
-                        </Field>
+                        <Toggle
+                          pressed={draft.isReadOnly}
+                          onPressedChange={(pressed) => {
+                            const nextDraft = { ...draft, isReadOnly: pressed };
+                            setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
+                            void persistRow(item.id, nextDraft);
+                          }}
+                          disabled={busy}
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-[10px] uppercase font-bold tracking-wider data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 data-[state=on]:border-amber-200"
+                        >
+                          {draft.isReadOnly ? "Read-Only" : "Full-Access"}
+                        </Toggle>
                       </td>
                       <td className="px-3 py-2 text-xs text-muted-foreground">
                         {item.lastUsedAt ? new Date(item.lastUsedAt).toLocaleString() : "Never"}

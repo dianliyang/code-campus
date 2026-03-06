@@ -130,21 +130,32 @@ export default function UsageStatisticsPanel() {
       <section className="space-y-1.5">
         <h4 className="text-sm font-semibold">Daily Activity</h4>
         <Card>
-          <CardContent>
+          <CardContent className="pt-6">
           {dailyRows.length > 0 ? (
-            <div className="grid h-28 grid-cols-7 items-end gap-2">
+            <div className="flex h-32 items-end justify-between gap-1 sm:gap-2">
               {dailyRows.map(([day, row]) => (
-                <div key={day} className="flex h-full flex-col items-center justify-end gap-1">
-                  <div className="flex h-20 w-full items-end">
+                <div key={day} className="group relative flex flex-1 flex-col items-center">
+                  <div className="flex h-20 w-full items-end justify-center">
                     <div
-                      className="w-full bg-foreground"
+                      className="w-full max-w-[32px] rounded-t-[2px] bg-foreground/10 transition-colors group-hover:bg-foreground/20"
                       style={{
-                        height: `${Math.max(6, Math.round((Number(row.requests || 0) / maxDailyRequests) * 100))}%`,
+                        height: `${Math.max(4, Math.round((Number(row.requests || 0) / maxDailyRequests) * 100))}%`,
+                        backgroundColor: Number(row.requests) > 0 ? undefined : 'transparent'
                       }}
-                      title={`${day}: ${row.requests} req`}
                     />
+                    {Number(row.requests) > 0 && (
+                      <div
+                        className="absolute bottom-6 z-10 hidden min-w-[80px] -translate-y-full rounded bg-stone-900 px-2 py-1 text-center text-[10px] text-white shadow-xl group-hover:block"
+                      >
+                        <p className="font-bold">{row.requests} requests</p>
+                        <p className="text-stone-400">{day}</p>
+                        <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-stone-900" />
+                      </div>
+                    )}
                   </div>
-                  <span className="text-[10px] text-muted-foreground">{day.slice(5)}</span>
+                  <span className="mt-2 text-[9px] font-medium uppercase tracking-tighter text-muted-foreground sm:tracking-normal">
+                    {new Date(day).toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 3)}
+                  </span>
                 </div>
               ))}
             </div>

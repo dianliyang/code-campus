@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import UniversityIcon from "@/components/common/UniversityIcon";
+import CourseCodeHoverCard from "@/components/common/CourseCodeHoverCard";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, Plus, EyeOff } from "lucide-react";
 import {
@@ -119,9 +120,12 @@ export default function CourseCard({
               <h2 className="text-[14px] md:text-[15px] font-medium text-[#2e2e2e] line-clamp-2 md:truncate hover:text-black transition-colors">
                 {course.title}
               </h2>
-              <p className="text-xs text-[#7a7a7a] truncate">
-                {course.courseCode} · {course.university}
-              </p>
+              <CourseCodeHoverCard
+                university={course.university}
+                courseCode={course.courseCode}
+                title={course.title}
+                className="text-xs text-[#7a7a7a]"
+              />
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
                 {latestSemester ? (
                   <Badge className="bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">
@@ -204,9 +208,12 @@ export default function CourseCard({
                   {course.title}
                 </h2>
               </Link>
-              <p className="text-xs text-slate-500 truncate">
-                {course.courseCode} · {course.university}
-              </p>
+              <CourseCodeHoverCard
+                university={course.university}
+                courseCode={course.courseCode}
+                title={course.title}
+                className="text-xs text-slate-500"
+              />
             </div>
           </div>
           <Button

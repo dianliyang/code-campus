@@ -294,7 +294,7 @@ export default function SystemMaintenanceCard() {
                   disabled={isPending}
                   className="w-full data-[state=on]:bg-transparent data-[state=on]:text-foreground data-[state=on]:border-black data-[state=on]:border-2"
                 >
-                  One by one
+                  Sequential
                 </Toggle>
                 <Toggle
                   variant="outline"
@@ -376,16 +376,15 @@ export default function SystemMaintenanceCard() {
                           <span className="font-medium text-foreground">
                             {job.university.toUpperCase()} {job.semester ? `· ${job.semester.toUpperCase()}` : ""}
                           </span>
-                          <Badge
-                            variant={
-                              String(job.status || "").toLowerCase() === "failed"
-                                ? "destructive"
-                                : "secondary"
-                            }
-                            className="h-5 px-1.5 text-[10px]"
-                          >
-                            {job.status}
-                          </Badge>
+                          <div title={job.status}>
+                            {String(job.status || "").toLowerCase() === "success" || String(job.status || "").toLowerCase() === "completed" ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            ) : String(job.status || "").toLowerCase() === "failed" ? (
+                              <AlertCircle className="h-4 w-4 text-rose-500" />
+                            ) : (
+                              <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                            )}
+                          </div>
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {job.job_type || "courses"} · {job.triggered_by || "manual"} · {job.course_count ?? 0} items · {job.duration_ms ? `${Math.round(job.duration_ms / 1000)}s` : "-"}

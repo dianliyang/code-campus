@@ -263,5 +263,29 @@ export const getCourseCodeBreakdown = (university: string | undefined, courseCod
     ];
   }
 
+  // Fallback for unknown universities
+  const genericMatch = code.match(/^([A-Z]+)\s*(\d+)([A-Z]*)$/i);
+  if (genericMatch) {
+    const dept = genericMatch[1].toUpperCase();
+    const numText = genericMatch[2];
+    const suffix = genericMatch[3] || "";
+    const num = Number(numText);
+    const firstDigit = numText[0];
+
+    const level = (() => {
+      if (num < 100) return "Introductory / Lower Division";
+      if (num < 300) return "Lower Division / Sophomore";
+      if (num < 500) return "Upper Division / Junior-Senior";
+      if (num < 700) return "Advanced / Master's";
+      return "Graduate / Doctorate";
+    })();
+
+    return [
+      { label: "Department", value: dept, detail: "Academic Subject" },
+      { label: "Course Number", value: numText, detail: `${level} (L${firstDigit})` },
+      ...(suffix ? [{ label: "Suffix", value: suffix, detail: "Course Variant" }] : []),
+    ];
+  }
+
   return [];
 };

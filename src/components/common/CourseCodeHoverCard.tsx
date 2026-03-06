@@ -107,7 +107,7 @@ export default function CourseCodeHoverCard({
             <div className="space-y-2 border-t pt-3">
               <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
                 <Layers className="h-3 w-3" />
-                <span>Registry Breakdown</span>
+                <span>Course Code Meaning</span>
               </div>
               <div className="grid grid-cols-1 gap-1.5">
                 {breakdown.map((item, idx) => (

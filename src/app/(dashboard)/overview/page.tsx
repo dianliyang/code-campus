@@ -272,7 +272,7 @@ async function OverviewContent({ userId }: { userId: string }) {
               </div>
               <div className="sm:text-right shrink-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">Primary focus</p>
-                <p className="mt-1 text-sm font-bold text-foreground truncate max-w-[180px]">
+                <p className="mt-1 text-sm font-bold text-foreground truncate max-w-[280px]">
                   {fieldStats[0]?.name || "Undeclared"}
                 </p>
               </div>

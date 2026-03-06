@@ -87,7 +87,7 @@ export default function OverviewRoutineList({
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-3">
       {sortedItems.map((item) => {
         const isPending = Boolean(pendingKeys[item.key]);
         const content = (

@@ -13,11 +13,6 @@ type LearningProfileChartProps = {
   emptyText: string;
 };
 
-function toShortLabel(label: string): string {
-  if (label.length <= 16) return label;
-  return `${label.slice(0, 13)}...`;
-}
-
 export default function LearningProfileChart({
   data,
   unitLabel,
@@ -55,12 +50,12 @@ export default function LearningProfileChart({
       className="space-y-5 rounded-2xl border border-border bg-background p-4"
       data-testid="learning-profile-chart"
     >
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-end">
-        <div className="space-y-2">
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] md:items-end">
+        <div className="min-w-0 space-y-2">
           <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             Total Learning Units
           </p>
-          <div className="flex items-end gap-3">
+          <div className="flex flex-wrap items-end gap-3">
             <p
               className="text-4xl font-semibold leading-none tracking-[-0.04em] text-foreground"
               data-testid="learning-profile-total"
@@ -71,7 +66,7 @@ export default function LearningProfileChart({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-muted/30 px-4 py-3">
+        <div className="min-w-0 rounded-2xl border border-border bg-muted/30 px-4 py-3">
           <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
             Dominant field
           </p>
@@ -103,7 +98,7 @@ export default function LearningProfileChart({
             >
               <div className="flex items-center justify-between gap-3 text-sm">
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">{toShortLabel(item.name)}</p>
+                  <p className="break-words font-medium text-foreground">{item.name}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">{pct}% share</p>
                 </div>
                 <span className="shrink-0 text-xs font-medium text-muted-foreground">

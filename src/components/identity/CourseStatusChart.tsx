@@ -1,7 +1,6 @@
 "use client";
 
 import { Activity, Clock3, TrendingUp } from "lucide-react";
-import { Card, CardFooter, CardHeader } from "@/components/ui/card";
 
 type CourseStatusChartProps = {
   data: Array<[string, number]>;
@@ -43,7 +42,7 @@ export default function CourseStatusChart({
   if (items.length === 0 || total === 0) {
     return (
       <div className="rounded-sm p-3">
-        <p className="text-sm text-slate-500">{emptyText}</p>
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
       </div>
     );
   }
@@ -83,40 +82,28 @@ export default function CourseStatusChart({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <Card className="shadow-none">
-          <CardHeader className="px-3 py-0">
-            <p className="inline-flex items-center gap-1.5 text-[10px] uppercase text-slate-500">
-              <Clock3 className="h-3 w-3 text-slate-500" />
+      <div className="grid gap-2 sm:grid-cols-3">
+        <div className="rounded-xl border border-border bg-muted/20 px-3 py-3">
+          <p className="inline-flex items-center gap-1.5 text-[10px] uppercase text-muted-foreground">
+              <Clock3 className="h-3 w-3 text-muted-foreground" />
               Updated 30d
-            </p>
-          </CardHeader>
-          <CardFooter className="px-3 py-0">
-            <p className="text-sm font-semibold text-slate-900">{recentUpdates30}</p>
-          </CardFooter>
-        </Card>
-        <Card className="shadow-none">
-          <CardHeader className="px-3 py-0">
-            <p className="inline-flex items-center gap-1.5 text-[10px] uppercase text-sky-600">
-              <Activity className="h-3 w-3 text-sky-600" />
+          </p>
+          <p className="mt-2 text-sm font-semibold text-foreground">{recentUpdates30}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-muted/20 px-3 py-3">
+          <p className="inline-flex items-center gap-1.5 text-[10px] uppercase text-muted-foreground">
+              <Activity className="h-3 w-3 text-muted-foreground" />
               In Progress
-            </p>
-          </CardHeader>
-          <CardFooter className="px-3 py-0">
-            <p className="text-sm font-semibold text-sky-700">{inProgressCount}</p>
-          </CardFooter>
-        </Card>
-        <Card className="shadow-none">
-          <CardHeader className="px-3 py-0">
-            <p className="inline-flex items-center gap-1.5 text-[10px] uppercase text-emerald-600">
-              <TrendingUp className="h-3 w-3 text-emerald-600" />
+          </p>
+          <p className="mt-2 text-sm font-semibold text-foreground">{inProgressCount}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-muted/20 px-3 py-3">
+          <p className="inline-flex items-center gap-1.5 text-[10px] uppercase text-muted-foreground">
+              <TrendingUp className="h-3 w-3 text-muted-foreground" />
               Avg Progress
-            </p>
-          </CardHeader>
-          <CardFooter className="px-3 py-0">
-            <p className="text-sm font-semibold text-emerald-700">{avgProgress}%</p>
-          </CardFooter>
-        </Card>
+          </p>
+          <p className="mt-2 text-sm font-semibold text-foreground">{avgProgress}%</p>
+        </div>
       </div>
 
       <div className="space-y-1">
@@ -149,7 +136,7 @@ export default function CourseStatusChart({
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: color }}
                   />
-                  <span className="truncate text-[#444]">{toLabel(status)}</span>
+                  <span className="truncate text-foreground">{toLabel(status)}</span>
                 </span>
                 <span className="shrink-0 text-muted-foreground">
                   {count} ({pct}%)

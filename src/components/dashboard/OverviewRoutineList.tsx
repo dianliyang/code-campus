@@ -115,7 +115,7 @@ export default function OverviewRoutineList({
         return (
           <div
             key={item.key}
-            className="grid grid-cols-[96px_minmax(0,1fr)_auto] items-center gap-3 border-b border-black/5 px-4 py-3 last:border-b-0"
+            className="grid gap-3 border-b border-black/5 px-4 py-3 last:border-b-0 sm:grid-cols-[96px_minmax(0,1fr)_auto] sm:items-center"
           >
               <div className="space-y-1">
                 <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">{item.timeLabel}</p>
@@ -124,15 +124,15 @@ export default function OverviewRoutineList({
                 </Badge>
               </div>
               <div className="min-w-0 space-y-1">
-                <p className={`truncate text-sm font-semibold tracking-[-0.02em] ${item.isDone ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                <p className={`break-words text-sm font-semibold tracking-[-0.02em] ${item.isDone ? "text-muted-foreground line-through" : "text-foreground"}`}>
                   {item.title}
                 </p>
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="break-words text-xs text-muted-foreground">
                   {item.meta}
                   {item.location ? ` · ${item.location}` : ""}
                 </p>
               </div>
-              <div className="flex items-center gap-2 justify-self-end">
+              <div className="flex flex-wrap items-center gap-2 sm:justify-self-end">
                 {item.action ? (
                   <Button
                     variant={item.isDone ? "secondary" : "outline"}

@@ -8,7 +8,6 @@ import LearningProfileChart from "@/components/identity/LearningProfileChart";
 import CourseStatusChart from "@/components/identity/CourseStatusChart";
 import OverviewRoutineList from "@/components/dashboard/OverviewRoutineList";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildOverviewRoutineItems, buildWeeklyActivity } from "@/lib/overview-routine";
 
 export const dynamic = "force-dynamic";
@@ -248,30 +247,29 @@ async function OverviewContent({ userId }: { userId: string }) {
   return (
     <div className="min-h-full space-y-6 pb-4">
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-        <Card className="overflow-hidden border-[#ebe6dc]">
-          <CardHeader className="border-b border-[#f2ede4] pb-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <CardTitle className="text-lg tracking-[-0.02em] text-foreground">Today</CardTitle>
+        <section className="overflow-hidden rounded-2xl border border-border bg-background">
+          <div className="border-b border-border px-6 py-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground">Today</h2>
                 <p className="text-sm text-muted-foreground">
                   Specific tasks and routine items, ordered by time.
                 </p>
               </div>
-              <div className="text-right">
+              <div className="sm:text-right">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Primary focus</p>
                 <p className="mt-1 text-sm font-semibold text-foreground">
                   {fieldStats[0]?.name || "Undeclared"}
                 </p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          </div>
+          <div className="space-y-4 p-5">
             <OverviewRoutineList initialItems={routineItems} />
-          </CardContent>
-        </Card>
-        <Card className="overflow-hidden border-[#ebe6dc]">
-          <CardContent className="p-0">
-            <div className="border-b border-black/5 p-4">
+          </div>
+        </section>
+        <aside className="overflow-hidden rounded-2xl border border-border bg-background">
+            <div className="border-b border-border p-4">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Now</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {routineItems[0]
@@ -279,7 +277,7 @@ async function OverviewContent({ userId }: { userId: string }) {
                   : "No scheduled work is waiting right now."}
               </p>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-black/5 border-b border-black/5">
+            <div className="grid border-b border-border sm:grid-cols-3 sm:divide-x sm:divide-border">
               <div className="flex items-center gap-3 p-4">
                 <CalendarClock className="h-4 w-4 text-muted-foreground" />
                 <div>
@@ -313,21 +311,17 @@ async function OverviewContent({ userId }: { userId: string }) {
                 {routineItems.filter((item) => item.sourceType === "assignment").length} due
               </span>
             </div>
-          </CardContent>
-        </Card>
+        </aside>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
-        <Card className="overflow-hidden border-[#ebe6dc]">
-          <CardHeader className="border-b border-[#f2ede4] pb-4">
+        <section className="space-y-3">
             <div className="space-y-1">
-              <CardTitle className="text-lg tracking-[-0.02em] text-foreground">Course momentum</CardTitle>
+              <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground">Course momentum</h2>
               <p className="text-sm text-muted-foreground">
                 Status mix, update cadence, and current progress.
               </p>
             </div>
-          </CardHeader>
-          <CardContent className="p-5">
             <CourseStatusChart
               data={Object.entries(statusCounts)}
               emptyText="No course status data yet"
@@ -337,25 +331,20 @@ async function OverviewContent({ userId }: { userId: string }) {
               avgProgress={avgProgress}
               weeklyActivity={buildWeeklyActivity(userCourseRows.map((row) => row.updated_at))}
             />
-          </CardContent>
-        </Card>
-        <Card className="overflow-hidden border-[#ebe6dc]">
-          <CardHeader className="border-b border-[#f2ede4] pb-4">
+        </section>
+        <section className="space-y-3">
             <div className="space-y-1">
-              <CardTitle className="text-lg tracking-[-0.02em] text-foreground">Learning identity</CardTitle>
+              <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground">Learning identity</h2>
               <p className="text-sm text-muted-foreground">
                 Field distribution across your current learning graph.
               </p>
             </div>
-          </CardHeader>
-          <CardContent className="p-5">
             <LearningProfileChart
               data={fieldStats}
               unitLabel="units"
               emptyText="No learning units yet"
             />
-          </CardContent>
-        </Card>
+        </section>
       </section>
     </div>
   );

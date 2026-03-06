@@ -55,8 +55,8 @@ export default async function StudyPlanPage() {
   }
 
   return (
-    <main className="h-full w-full px-4 pb-4">
-      <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pb-5 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <main className="h-full w-full px-4 py-4">
+      <div className="sticky top-0 z-20 -mx-4 -mt-4 bg-background/95 px-4 pb-5 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Roadmap
@@ -263,11 +263,11 @@ async function StudyPlanContent({
   const hasPlanningItems = planningCourses.length > 0;
 
   return (
-    <div className="h-full w-full flex flex-col gap-2">
+    <div className="min-h-full w-full flex flex-col gap-2 pb-4">
       <CourseIntelSyncWindow />
 
       <section>
-        <div className="mb-3 space-y-1">
+        <div className="mb-5 space-y-2 py-2">
           <h2 className="text-lg font-semibold tracking-tight text-[#1f1f1f]">
             Active
           </h2>
@@ -294,7 +294,7 @@ async function StudyPlanContent({
       </section>
 
       <section>
-        <div className="mb-3 space-y-1">
+        <div className="mb-5 space-y-2 py-2">
           <h2 className="text-lg font-semibold tracking-tight text-[#1f1f1f]">
             Planning
           </h2>

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import WorkoutSidebar from "@/components/workouts/WorkoutSidebar";
 import WorkoutList from "@/components/workouts/WorkoutList";
-import { createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
+import { createClient, getUser, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { getWorkoutLastUpdateTime } from "@/actions/scrapers";
@@ -106,6 +106,7 @@ async function WorkoutListData({ params, dict
 
 
 }: {params: Record<string, string | string[] | undefined>;dict: Dictionary['dashboard']['workouts'];}) {
+  const user = await getUser();
   const query = params.q as string || "";
   const sort = params.sort as string || "title";
   const categories = (params.categories as string || "").split(",").filter(Boolean);
@@ -120,11 +121,13 @@ async function WorkoutListData({ params, dict
     days,
     status,
     selectedCategory,
+    user?.id || null,
   );
 
   return (
     <WorkoutList
       initialWorkouts={dbWorkouts.items}
+      initialEnrolledIds={dbWorkouts.enrolledIds}
       dict={dict}
       categoryGroups={dbWorkouts.categoryGroups}
       selectedCategory={dbWorkouts.selectedCategory} />);
@@ -138,7 +141,8 @@ sort: string,
 categories: string[],
 days: string[],
 status: string[],
-selectedCategory: string)
+selectedCategory: string,
+userId: string | null)
 {
   const supabase = await createClient();
   const normalizeCategory = (value: string) => {
@@ -186,14 +190,28 @@ selectedCategory: string)
   if (sort === 'day') supabaseQuery = supabaseQuery.order('day_of_week', { ascending: true });else
   supabaseQuery = supabaseQuery.order('title', { ascending: true });
 
-  const { data, error } = await supabaseQuery;
+  const [{ data, error }, enrolledRes] = await Promise.all([
+    supabaseQuery,
+    userId
+      ? supabase
+          .from("user_workouts")
+          .select("workout_id")
+          .eq("user_id", userId)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
 
   if (error) {
     console.error("[Supabase] Fetch workouts error:", error);
-    return { items: [], total: 0, categoryGroups: [], selectedCategory: "" };
+    return { items: [], total: 0, categoryGroups: [], selectedCategory: "", enrolledIds: [] as number[] };
   }
 
-  const allItemsRaw = aggregateWorkoutsByName((data || []).map((row: any) => mapWorkoutFromRow(row))); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const enrolledIds = new Set(
+    ((enrolledRes.data || []) as Array<{ workout_id: number }>).map((row) => Number(row.workout_id))
+  );
+  const allItemsRaw = aggregateWorkoutsByName((data || []).map((row: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+    ...mapWorkoutFromRow(row),
+    enrolled: enrolledIds.has(Number(row.id)),
+  })));
   const normalizedCategoryFilters = new Set(
     categories.map((value) => normalizeCategory(value)).filter(Boolean)
   );
@@ -238,5 +256,11 @@ selectedCategory: string)
   categoryGroups[0]?.category || "";
   const items = activeCategory ? grouped.get(activeCategory) || [] : [];
 
-  return { items, total: items.length, categoryGroups, selectedCategory: activeCategory };
+  return {
+    items,
+    total: items.length,
+    categoryGroups,
+    selectedCategory: activeCategory,
+    enrolledIds: Array.from(enrolledIds),
+  };
 }

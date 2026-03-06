@@ -133,6 +133,7 @@ export interface Workout {
   url: string | null;
   semester: string | null;
   details: Record<string, unknown> | null;
+  enrolled?: boolean;
 }
 
 export interface CourseRecommendation {

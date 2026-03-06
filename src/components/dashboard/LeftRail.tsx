@@ -14,6 +14,7 @@ import {
   FolderKanban,
   GraduationCap,
   KeyRound,
+  LayoutGrid,
   Loader2,
   Map,
   Settings2,
@@ -40,6 +41,7 @@ import {
 interface LeftRailProps {
   labels: {
     command: string;
+    overview: string;
     identity: string;
     hub: string;
     courses: string;
@@ -61,6 +63,7 @@ interface LeftRailProps {
 }
 
 const commandNavItems = [
+  { href: "/overview", key: "overview", icon: LayoutGrid },
   { href: "/roadmap", key: "studyPlan", icon: Map },
   { href: "/assist", key: "smartPlanner", icon: Sparkles },
   { href: "/calendar", key: "studySchedule", icon: CalendarDays },
@@ -129,20 +132,20 @@ export default function LeftRail({ labels }: LeftRailProps) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader
-        className={`sticky top-0 z-10 bg-sidebar px-3 py-3 flex-row items-center ${collapsed ? "justify-center" : "justify-between"}`}
+        className={`sticky top-0 z-10 bg-sidebar py-3 flex-row items-center ${collapsed ? "justify-center px-0" : "justify-between px-2"}`}
       >
         <Link
-          href="/courses"
-          className={`flex h-8 items-center gap-2.5 ${collapsed ? "opacity-0 pointer-events-none" : ""}`}
+          href="/overview"
+          className={`flex h-10 items-center gap-3 px-2 ${collapsed ? "hidden" : ""}`}
           title="Athena"
         >
-          <Image src="/athena.svg" alt="Athena" width={22} height={22} />
-          {!collapsed && <span className="font-brand text-base leading-none">Athena</span>}
+          <Image src="/athena.svg" alt="Athena" width={28} height={28} />
+          {!collapsed && <span className="font-brand text-lg leading-none">Athena</span>}
         </Link>
-        <SidebarTrigger className={collapsed ? "absolute left-1/2 -translate-x-1/2" : ""} />
+        <SidebarTrigger className={collapsed ? "mx-auto" : ""} />
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
+      <SidebarContent className={collapsed ? "px-0" : "px-2"}>
         <SidebarGroup>
           <SidebarGroupLabel>{labels.command}</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -206,7 +209,7 @@ export default function LeftRail({ labels }: LeftRailProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="sticky bottom-0 z-10 bg-sidebar px-2">
+      <SidebarFooter className={`sticky bottom-0 z-10 bg-sidebar ${collapsed ? "px-0" : "px-2"}`}>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Help">

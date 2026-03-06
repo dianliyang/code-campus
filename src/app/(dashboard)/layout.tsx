@@ -23,6 +23,7 @@ export default async function DashboardLayout({
         <DashboardShell
           labels={{
             hub: dict.navbar?.hub || "Hub",
+            overview: dict.navbar?.overview || "Overview",
             courses: dict.navbar?.courses || "Courses",
             projectsSeminars: dict.navbar?.projects_seminars || "Seminars",
             studyPlan: dict.navbar?.roadmap || "Roadmap",
@@ -46,6 +47,7 @@ export default async function DashboardLayout({
       </main>
       <BottomTabBar
         labels={{
+          overview: dict.navbar?.overview || "Overview",
           courses: dict.navbar?.courses || "Courses",
           studyPlan: dict.navbar?.roadmap || "Roadmap",
           workouts: dict.navbar?.workouts || "Workouts",

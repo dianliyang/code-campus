@@ -36,7 +36,6 @@ import {
   ExternalLink,
   CalendarCheck,
   CalendarPlus,
-  Clock,
   Check,
   Loader2,
   Sparkles } from
@@ -170,6 +169,13 @@ export default function ActiveCourseTrack({
 
   const roadmapSubdomain = course.subdomain || course.fields?.[0] || "";
   const primarySemester = course.semesters?.[0] || "";
+  const creditValue =
+    typeof course.credit === "number" && Number.isFinite(course.credit)
+      ? String(course.credit)
+      : typeof course.units === "number" && Number.isFinite(course.units)
+        ? String(course.units)
+        : null;
+  const creditLabel = creditValue ? `${creditValue} credits` : "No credit";
   const progressSegments = 10;
   const filledSegments = Math.max(0, Math.min(progressSegments, Math.round(progress / (100 / progressSegments))));
 
@@ -287,61 +293,81 @@ export default function ActiveCourseTrack({
       </CardContent>
 
       <CardFooter className="border-t border-stone-50 bg-gray-50/20 px-3 py-1.5">
-        <div className="min-w-0">
+        <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-3 text-[10px]">
           {localPlan && planMeta ? (
-            <div className="space-y-1.5 text-[10px] text-stone-700">
-              <div className="flex items-center justify-between gap-3">
-                <span className="min-w-0">{`${scheduleSummary?.startTimeLabel || "Not set"} - ${scheduleSummary?.endTimeLabel || "Not set"}`}</span>
-                <span className="shrink-0 flex items-center gap-1.25" aria-label="Study days">
-                  <HoverCard openDelay={60} closeDelay={80}>
-                    <HoverCardTrigger asChild>
-                      <span className="flex items-center gap-1.25">
-                        {Array.from({ length: 7 }).map((_, idx) => (
-                          <span
-                            key={`study-day-dot-${idx}`}
-                            className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                              localPlan.days_of_week.includes(idx) ? "bg-[#1f1f1f]" : "bg-stone-200"
-                            }`}
-                          />
-                        ))}
-                      </span>
-                    </HoverCardTrigger>
-                    {scheduleSummary ? (
-                      <HoverCardContent className="w-auto p-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-stone-600">
-                          {scheduleSummary.dayText || "No days selected"}
-                        </p>
-                      </HoverCardContent>
-                    ) : null}
-                  </HoverCard>
-                </span>
+            <>
+              <div className="min-w-0 space-y-1.5 text-stone-700" data-testid="roadmap-plan-leading">
+                <div className="min-w-0">{`${scheduleSummary?.startTimeLabel || "Not set"} - ${scheduleSummary?.endTimeLabel || "Not set"}`}</div>
+                <div className="min-w-0">{`${planMeta.startLabel} - ${planMeta.endLabel}`}</div>
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="min-w-0">{`${planMeta.startLabel} - ${planMeta.endLabel}`}</span>
-                <span className="shrink-0">
-                  <span className="font-semibold">{planMeta.totalLabel}</span>
-                  <span className="ml-1 text-stone-400">{planMeta.totalSuffix}</span>
-                </span>
+              <div className="space-y-2 text-right text-stone-700" data-testid="roadmap-plan-trailing">
+                <div className="flex justify-end">
+                  <span className="shrink-0 flex items-center gap-1.25" aria-label="Study days">
+                    <HoverCard openDelay={60} closeDelay={80}>
+                      <HoverCardTrigger asChild>
+                        <span className="flex items-center gap-1.25">
+                          {Array.from({ length: 7 }).map((_, idx) => (
+                            <span
+                              key={`study-day-dot-${idx}`}
+                              className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                                localPlan.days_of_week.includes(idx) ? "bg-[#1f1f1f]" : "bg-stone-200"
+                              }`}
+                            />
+                          ))}
+                        </span>
+                      </HoverCardTrigger>
+                      {scheduleSummary ? (
+                        <HoverCardContent className="w-auto p-2">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-stone-600">
+                            {scheduleSummary.dayText || "No days selected"}
+                          </p>
+                        </HoverCardContent>
+                      ) : null}
+                    </HoverCard>
+                  </span>
+                </div>
+                <div className="block shrink-0 leading-none" data-testid="roadmap-plan-credits">
+                  {creditValue ? (
+                    <>
+                      <strong>{creditValue}</strong> credits
+                    </>
+                  ) : (
+                    "No credit"
+                  )}
+                </div>
+                <div className="block shrink-0 leading-none" data-testid="roadmap-plan-days">
+                  <strong>{planMeta.totalLabel}</strong> {planMeta.totalSuffix}
+                </div>
               </div>
-            </div>
+            </>
           ) : (
-            <div className="space-y-1.5 text-[10px] text-stone-400">
-              <div className="flex items-center justify-between gap-3">
-                <span className="min-w-0">Not set - Not set</span>
-                <span className="shrink-0 flex items-center gap-1.25">
-                  {Array.from({ length: 7 }).map((_, idx) => (
-                    <span key={idx} className="h-1.5 w-1.5 rounded-full bg-stone-200" />
-                  ))}
-                </span>
+            <>
+              <div className="min-w-0 space-y-1.5 text-stone-400" data-testid="roadmap-plan-leading">
+                <div className="min-w-0">Not set - Not set</div>
+                <div className="min-w-0">Not set - Not set</div>
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="min-w-0">Not set - Not set</span>
-                <span className="shrink-0 flex items-center gap-1">
-                  <Clock className="h-3 w-3 shrink-0" />
-                  <span>No schedule</span>
-                </span>
+              <div className="space-y-2 text-right text-stone-400" data-testid="roadmap-plan-trailing">
+                <div className="flex justify-end">
+                  <span className="shrink-0 flex items-center gap-1.25" aria-label="Study days">
+                    {Array.from({ length: 7 }).map((_, idx) => (
+                      <span key={idx} className="h-1.5 w-1.5 rounded-full bg-stone-200" />
+                    ))}
+                  </span>
+                </div>
+                <div className="shrink-0 leading-none" data-testid="roadmap-plan-credits">
+                  {creditValue ? (
+                    <>
+                      <strong>{creditValue}</strong> credits
+                    </>
+                  ) : (
+                    "No credit"
+                  )}
+                </div>
+                <div className="shrink-0 leading-none" data-testid="roadmap-plan-days">
+                  <strong>0</strong> days
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </CardFooter>

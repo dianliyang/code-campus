@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Workout } from "@/types";
-import { ChevronDown, ChevronUp, Clock, ExternalLink, Info, MapPin } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Clock, ExternalLink, Info, MapPin, Plus } from "lucide-react";
 import { Dictionary } from "@/lib/dictionary";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";import { Card } from "@/components/ui/card";
@@ -12,6 +12,8 @@ interface WorkoutCardProps {
   viewMode?: "list" | "grid";
   dict: Dictionary["dashboard"]["workouts"];
   rowIndex?: number;
+  onToggleEnroll?: (workoutId: number) => void;
+  isEnrollmentPending?: boolean;
 }
 
 const statusStyle: Record<string, string> = {
@@ -71,7 +73,68 @@ function getAggregatedEntries(workout: Workout): AggregatedEntry[] {
   });
 }
 
-export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex = 0 }: WorkoutCardProps) {
+function ActionButtonGroup({
+  isEnrolled,
+  isEnrollmentPending,
+  onToggleEnroll,
+  workoutId,
+  actionHref,
+}: {
+  isEnrolled: boolean;
+  isEnrollmentPending: boolean;
+  onToggleEnroll?: (workoutId: number) => void;
+  workoutId: number;
+  actionHref: string | null;
+}) {
+  const baseButtonClass =
+    "h-7 w-7 rounded-none border-0 px-0 shadow-none first:rounded-l-md last:rounded-r-md";
+
+  return (
+    <div className="inline-flex overflow-hidden rounded-md border border-[#d6d6d6] bg-white">
+      <Button
+        variant={isEnrolled ? "secondary" : "ghost"}
+        size="icon"
+        type="button"
+        className={`${baseButtonClass} ${isEnrolled ? "bg-muted text-foreground" : "text-[#4f4f4f]"}`}
+        disabled={isEnrollmentPending}
+        onClick={() => onToggleEnroll?.(workoutId)}
+        aria-label={isEnrolled ? "Enrolled" : "Enroll"}
+        title={isEnrolled ? "Enrolled" : "Enroll"}
+      >
+        {isEnrolled ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+      </Button>
+      {actionHref ? (
+        <a
+          href={actionHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${baseButtonClass} inline-flex items-center justify-center border-l border-[#d6d6d6] text-[#4f4f4f] transition-colors hover:bg-[#f4f4f4]`}
+          title="Open booking"
+          aria-label="Open booking"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      ) : (
+        <span
+          className={`${baseButtonClass} inline-flex items-center justify-center border-l border-[#d6d6d6] bg-[#ececec] text-[#9a9a9a]`}
+          aria-label="Booking unavailable"
+          title="Booking unavailable"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </span>
+      )}
+    </div>
+  );
+}
+
+export default function WorkoutCard({
+  workout,
+  viewMode = "grid",
+  dict,
+  rowIndex = 0,
+  onToggleEnroll,
+  isEnrollmentPending = false,
+}: WorkoutCardProps) {
   const [expanded, setExpanded] = useState(false);
   const displayTitle = workout.titleEn || workout.title;
   const displayCategory = workout.categoryEn || workout.category;
@@ -87,6 +150,7 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
   workout.startDate && workout.endDate ? `${workout.startDate} - ${workout.endDate}` : "-";
   const price = workout.priceStudent == null ? "-" : Number(workout.priceStudent).toFixed(2);
   const actionHref = workout.bookingUrl || workout.url || null;
+  const isEnrolled = Boolean(workout.enrolled);
   const priceDetails = [
   workout.priceStudent != null ? { label: "Student", value: Number(workout.priceStudent).toFixed(2) } : null,
   workout.priceStaff != null ? { label: "Staff", value: Number(workout.priceStaff).toFixed(2) } : null,
@@ -148,22 +212,13 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
           </div>
 
           <div className="flex items-center justify-end pr-0 md:pr-1 self-center">
-            {actionHref ?
-            <a
-              href={actionHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-8 w-8 md:h-7 md:w-7 inline-flex items-center justify-center bg-white border border-[#d6d6d6] text-[#4f4f4f] hover:bg-[#f4f4f4] transition-colors"
-              title="Open booking"
-              aria-label="Open booking">
-              
-                <ExternalLink className="w-3 h-3" />
-              </a> :
-
-            <span className="h-8 w-8 md:h-7 md:w-7 inline-flex items-center justify-center bg-[#ececec] text-[#9a9a9a]">
-                <ExternalLink className="w-3 h-3" />
-              </span>
-            }
+            <ActionButtonGroup
+              isEnrolled={isEnrolled}
+              isEnrollmentPending={isEnrollmentPending}
+              onToggleEnroll={onToggleEnroll}
+              workoutId={workout.id}
+              actionHref={actionHref}
+            />
           </div>
         </div>
         {expanded && hasExpandableVariants ?
@@ -270,17 +325,23 @@ export default function WorkoutCard({ workout, viewMode = "grid", dict, rowIndex
 
       {actionHref ?
       <div className="mt-auto pt-3">
-          <a
-          href={actionHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="h-8 w-full inline-flex items-center justify-center gap-1.5 border border-[#d3d3d3] bg-white px-3 text-[13px] font-medium leading-none text-[#3b3b3b] hover:bg-[#f8f8f8] transition-colors">
-          
-            <span className="inline-flex items-center">Book</span>
-            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-          </a>
+          <ActionButtonGroup
+            isEnrolled={isEnrolled}
+            isEnrollmentPending={isEnrollmentPending}
+            onToggleEnroll={onToggleEnroll}
+            workoutId={workout.id}
+            actionHref={actionHref}
+          />
         </div> :
-      null}
+      <div className="mt-auto pt-3">
+          <ActionButtonGroup
+            isEnrolled={isEnrolled}
+            isEnrollmentPending={isEnrollmentPending}
+            onToggleEnroll={onToggleEnroll}
+            workoutId={workout.id}
+            actionHref={actionHref}
+          />
+        </div>}
     </Card>);
 
 }

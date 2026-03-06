@@ -25,7 +25,7 @@ export default async function StudySchedulePage() {
   }
 
   return (
-    <main className="w-full h-full flex flex-col px-4">
+    <main className="flex h-full w-full flex-col px-4 pb-4">
       <Suspense fallback={null}>
         <StudyScheduleContent userId={user.id} dict={dict} />
       </Suspense>
@@ -59,9 +59,22 @@ async function StudyScheduleContent({
     courses: PlanCourse | null;
   };
 
+  type NormalizedWorkout = {
+    id: number;
+    title: string;
+    category: string | null;
+    source: string | null;
+    day_of_week: string | null;
+    start_date: string | null;
+    end_date: string | null;
+    start_time: string | null;
+    end_time: string | null;
+    location: string | null;
+  };
+
   const supabase = await createClient();
 
-  const [coursesRes, plansRes, logsRes] = await Promise.all([
+  const [coursesRes, plansRes, logsRes, workoutsRes] = await Promise.all([
     supabase
       .from('courses')
       .select(`
@@ -91,11 +104,33 @@ async function StudyScheduleContent({
       .from('study_logs')
       .select('*')
       .eq('user_id', userId),
+    supabase
+      .from("user_workouts")
+      .select(`
+        workout_id,
+        workouts!inner(
+          id,
+          title,
+          title_en,
+          category,
+          category_en,
+          source,
+          day_of_week,
+          start_date,
+          end_date,
+          start_time,
+          end_time,
+          location,
+          location_en
+        )
+      `)
+      .eq("user_id", userId),
   ]);
 
   const enrolledCourses = (coursesRes.data || []).map(row => mapCourseFromRow(row));
   const rawPlans = plansRes.data || [];
   const logs = logsRes.data || [];
+  const rawWorkouts = workoutsRes.data || [];
 
   const toDateOnly = (value: unknown) => {
     if (typeof value !== "string") return "";
@@ -141,6 +176,25 @@ async function StudyScheduleContent({
   const plans = allPlans.filter((plan) => enrolledCourseIds.has(plan.course_id));
   const validPlanIds = new Set(plans.map((plan) => plan.id));
   const filteredLogs = (logs || []).filter((log: { plan_id: number }) => validPlanIds.has(log.plan_id));
+  const workouts: NormalizedWorkout[] = rawWorkouts
+    .map((row: Record<string, unknown>) => {
+      const raw = Array.isArray(row.workouts) ? row.workouts[0] : row.workouts;
+      if (!raw || typeof raw !== "object") return null;
+      const workout = raw as Record<string, unknown>;
+      return {
+        id: Number(workout.id),
+        title: String(workout.title_en || workout.title || ""),
+        category: workout.category_en ? String(workout.category_en) : workout.category ? String(workout.category) : null,
+        source: workout.source ? String(workout.source) : null,
+        day_of_week: workout.day_of_week ? String(workout.day_of_week) : null,
+        start_date: workout.start_date ? toDateOnly(workout.start_date) : null,
+        end_date: workout.end_date ? toDateOnly(workout.end_date) : null,
+        start_time: workout.start_time ? String(workout.start_time) : null,
+        end_time: workout.end_time ? String(workout.end_time) : null,
+        location: workout.location_en ? String(workout.location_en) : workout.location ? String(workout.location) : null,
+      };
+    })
+    .filter((workout): workout is NormalizedWorkout => workout !== null && Number.isFinite(workout.id));
 
   const courseIdsWithPlans = new Set(plans.map((p) => p.course_id));
   const coursesWithoutPlans = enrolledCourses
@@ -158,6 +212,7 @@ async function StudyScheduleContent({
       <StudyCalendar
         courses={enrolledCourses as unknown as Parameters<typeof StudyCalendar>[0]["courses"]}
         plans={plans}
+        workouts={workouts}
         logs={filteredLogs}
         dict={dict.dashboard.roadmap}
       />

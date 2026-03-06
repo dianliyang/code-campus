@@ -4,8 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Course } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
-import { Badge } from "@/components/ui/badge";
-import { BookOpen, CheckCircle2, ChevronLeft, ChevronRight, Loader2, MapPin } from "lucide-react";
+import { BookOpen, Check, ChevronLeft, ChevronRight, Clock, Coffee, Loader2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Item,
@@ -53,10 +52,23 @@ interface StudyLog {
   notes: string | null;
 }
 
+interface WorkoutSchedule {
+  id: number;
+  title: string;
+  category: string | null;
+  source: string | null;
+  day_of_week: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  location: string | null;
+}
+
 interface CalendarEvent {
   key: string;
-  planId: number;
-  courseId: number;
+  planId: number | null;
+  courseId: number | null;
   date: string;
   dayOfWeek: number;
   startTime: string;
@@ -70,11 +82,13 @@ interface CalendarEvent {
   credit?: number;
   location: string | null;
   kind: string;
+  sourceType: "study_plan" | "workout";
 }
 
 interface StudyCalendarProps {
   courses: EnrolledCourse[];
   plans: StudyPlan[];
+  workouts?: WorkoutSchedule[];
   logs: StudyLog[];
   dict: Dictionary["dashboard"]["roadmap"];
   initialDate?: Date;
@@ -97,6 +111,31 @@ function formatDateKey(date: Date) {
 function parseMinutes(time: string) {
   const [h, m] = time.split(":").map(Number);
   return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
+}
+
+function parseWorkoutDayOfWeek(value: string | null) {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  const dayMap: Record<string, number> = {
+    sun: 0,
+    sunday: 0,
+    mon: 1,
+    monday: 1,
+    tue: 2,
+    tues: 2,
+    tuesday: 2,
+    wed: 3,
+    wednesday: 3,
+    thu: 4,
+    thur: 4,
+    thurs: 4,
+    thursday: 4,
+    fri: 5,
+    friday: 5,
+    sat: 6,
+    saturday: 6,
+  };
+  return Number.isInteger(dayMap[normalized]) ? dayMap[normalized] : null;
 }
 
 function startOfWeek(date: Date) {
@@ -125,14 +164,13 @@ function formatTimeLabel(date: Date) {
   return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
-export default function StudyCalendar({ courses, plans, logs, dict, initialDate }: StudyCalendarProps) {
+export default function StudyCalendar({ courses, plans, workouts = [], logs, dict, initialDate }: StudyCalendarProps) {
   const router = useRouter();
   const anchorToday = initialDate ?? new Date();
   const timelineScrollRef = useRef<HTMLDivElement | null>(null);
   const [monthCursor, setMonthCursor] = useState(new Date(anchorToday.getFullYear(), anchorToday.getMonth(), 1));
   const [weekStart, setWeekStart] = useState(startOfWeek(anchorToday));
   const [selectedEventKey, setSelectedEventKey] = useState<string | null>(null);
-  const [openTodayPopoverKey, setOpenTodayPopoverKey] = useState<string | null>(null);
   const [openWeekPopoverKey, setOpenWeekPopoverKey] = useState<string | null>(null);
   const [selectedSmallDateKey, setSelectedSmallDateKey] = useState<string>(() => formatDateKey(anchorToday));
   const [localLogs, setLocalLogs] = useState<StudyLog[]>(logs);
@@ -200,13 +238,59 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
           university: plan.courses.university,
           credit: courseMap.get(plan.course_id)?.credit,
           location: plan.location,
-          kind: plan.kind || "session"
+          kind: plan.kind || "session",
+          sourceType: "study_plan",
+        });
+      }
+    }
+
+    for (const workout of workouts) {
+      const dayOfWeek = parseWorkoutDayOfWeek(workout.day_of_week);
+      if (
+        dayOfWeek == null ||
+        !workout.start_date ||
+        !workout.end_date ||
+        !workout.start_time ||
+        !workout.end_time
+      ) {
+        continue;
+      }
+
+      const startDate = new Date(workout.start_date);
+      const endDate = new Date(workout.end_date);
+      if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) continue;
+
+      const from = startDate > dateStart ? startDate : dateStart;
+      const to = endDate < dateEnd ? endDate : dateEnd;
+      const startMinutes = parseMinutes(workout.start_time);
+      const endMinutes = parseMinutes(workout.end_time);
+
+      for (let cursor = new Date(from); cursor <= to; cursor.setDate(cursor.getDate() + 1)) {
+        if (cursor.getDay() !== dayOfWeek) continue;
+
+        items.push({
+          key: `workout:${workout.id}:${formatDateKey(cursor)}`,
+          planId: null,
+          courseId: null,
+          date: formatDateKey(cursor),
+          dayOfWeek,
+          startTime: workout.start_time,
+          endTime: workout.end_time,
+          startMinutes,
+          endMinutes,
+          isCompleted: false,
+          title: workout.title,
+          courseCode: workout.category || "Workout",
+          university: workout.source || "Workout",
+          location: workout.location,
+          kind: "workout",
+          sourceType: "workout",
         });
       }
     }
 
     return items.sort((a, b) => a.date.localeCompare(b.date) || a.startMinutes - b.startMinutes);
-  }, [courseMap, localLogs, plans, monthCursor]);
+  }, [courseMap, localLogs, plans, monthCursor, workouts]);
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -280,6 +364,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
   };
 
   const handleToggleComplete = async (event: CalendarEvent) => {
+    if (event.sourceType !== "study_plan" || event.planId == null) return;
     const previous = event.isCompleted;
     setPendingEventKeys((current) => ({ ...current, [event.key]: true }));
     setOptimisticCompletion(event.planId, event.date, !previous);
@@ -301,6 +386,8 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
         throw new Error("Failed to toggle event completion");
       }
 
+      setSelectedEventKey(null);
+      setOpenWeekPopoverKey(null);
       router.refresh();
     } catch {
       setOptimisticCompletion(event.planId, event.date, previous);
@@ -313,18 +400,8 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
     }
   };
 
-  const getEventStatusLabel = (event: CalendarEvent) => event.isCompleted ? "Completed" : "Not completed";
-  const getEventStatusTone = (event: CalendarEvent) =>
-    event.isCompleted ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-stone-200 bg-stone-100 text-stone-600";
-
-  const renderStatusBadge = (event: CalendarEvent) =>
-    event.isCompleted ? (
-      <Badge variant="outline" className={`h-5 rounded-full px-1.5 text-[9px] font-semibold uppercase tracking-wide ${getEventStatusTone(event)}`}>
-        {getEventStatusLabel(event)}
-      </Badge>
-    ) : null;
-
   const renderToggleButton = (event: CalendarEvent) => (
+    event.sourceType !== "study_plan" ? null :
     <Button
       variant="outline"
       size="sm"
@@ -340,6 +417,9 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
   );
 
   const getTodayRowClassName = (event: CalendarEvent) =>
+    event.sourceType === "workout"
+      ? "border-stone-200 bg-white text-[#0f172a] hover:bg-stone-50"
+      :
     event.isCompleted
       ? "border-stone-200 bg-stone-100 text-stone-400"
       : "border-stone-200 bg-white text-[#0f172a] hover:bg-stone-50";
@@ -353,6 +433,11 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
   const getEventMetaLine = (event: CalendarEvent) => {
     if (typeof event.credit === "number") return `${event.credit} · ${event.university}`;
     return `${event.courseCode} · ${event.university}`;
+  };
+  const getEventDurationLabel = (event: CalendarEvent) => {
+    const durationMinutes = Math.max(0, event.endMinutes - event.startMinutes);
+    if (!durationMinutes) return "0m";
+    return `${durationMinutes}m`;
   };
 
 
@@ -381,24 +466,40 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                     variant="ghost"
                     className={`h-auto w-full justify-start px-0 py-0 text-left hover:bg-transparent ${event.isCompleted ? "opacity-80" : ""}`}
                     type="button"
-                    aria-label={`Toggle completion for ${event.title}`}
+                    aria-label={
+                      event.sourceType === "workout"
+                        ? `View event ${event.title}`
+                        : `Toggle completion for ${event.title}`
+                    }
                     onClick={() => {
                       setWeekStart(startOfWeek(new Date(event.date)));
                       setSelectedEventKey(event.key);
-                      setOpenTodayPopoverKey(null);
                       setOpenWeekPopoverKey(null);
-                      void handleToggleComplete(event);
+                      if (event.sourceType === "study_plan") {
+                        void handleToggleComplete(event);
+                      } else {
+                        setOpenWeekPopoverKey(event.key);
+                      }
                     }}
                   >
                     <div className={`flex w-full items-start gap-2 rounded-md border px-2 py-2 ${getTodayRowClassName(event)}`}>
-                      <span
-                        aria-hidden="true"
-                        className={`mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
-                          event.isCompleted ? "border-stone-400 bg-stone-400 text-white" : "border-stone-300 bg-white"
-                        }`}
-                      >
-                        {event.isCompleted ? "✓" : ""}
-                      </span>
+                      {event.sourceType === "study_plan" ? (
+                        <span
+                          aria-hidden="true"
+                          className={`mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
+                            event.isCompleted ? "border-stone-400 bg-stone-400 text-white" : "border-stone-300 bg-white"
+                          }`}
+                        >
+                          {event.isCompleted ? "✓" : ""}
+                        </span>
+                      ) : (
+                        <span
+                          aria-hidden="true"
+                          className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-stone-300 bg-white text-[#64748b]"
+                        >
+                          <Coffee className="h-2.5 w-2.5" />
+                        </span>
+                      )}
                       <Item size="sm" className="w-full px-0 py-0">
                         <ItemContent className="gap-0.5">
                           <p className={`text-xs leading-5 ${event.isCompleted ? "text-stone-400" : "text-[#475569]"}`}>
@@ -408,7 +509,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                             {event.title}
                           </ItemTitle>
                           <p className={`w-full whitespace-normal break-words text-xs leading-5 ${event.isCompleted ? "text-stone-400" : "text-[#334155]"}`}>
-                            {event.courseCode}
+                            {getEventMetaLine(event)}
                             {event.location ? ` · ${event.location}` : ""}
                           </p>
                         </ItemContent>
@@ -419,7 +520,26 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                 )}
                 </div> :
 
-              <p className="py-4 text-center text-xs text-[#64748b]">{dict.calendar_no_events}</p>
+              <div
+                className="flex min-h-[180px] flex-col items-center justify-center px-5 text-center text-muted-foreground"
+                data-testid="today-empty-state"
+              >
+                <div
+                  className="mb-3 flex h-8 w-8 items-center justify-center text-muted-foreground/70"
+                  data-testid="today-empty-state-icon"
+                >
+                  <Coffee className="h-4 w-4" />
+                </div>
+                <p className="text-sm font-medium tracking-[-0.02em] text-muted-foreground">
+                  {dict.calendar_rest_day}
+                </p>
+                <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground/70">
+                  {dict.calendar_no_events}
+                </p>
+                <p className="mt-3 max-w-[240px] text-sm leading-6 text-muted-foreground">
+                  {dict.calendar_rest_message}
+                </p>
+              </div>
               }
             </div>
           </section>
@@ -545,7 +665,7 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
 
           <div
             ref={timelineScrollRef}
-            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-4"
             data-testid="calendar-timeline-scroll"
           >
             <div className="relative w-full">
@@ -628,14 +748,25 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                               "bg-[#111111] text-white hover:bg-[#111111] hover:text-white" :
                               "bg-[#f8fafc] text-[#0f172a] hover:bg-[#eef2f7]"}`
                               }
+                              data-testid={`week-event-${event.key}`}
+                              data-selected={isSelected ? "true" : "false"}
                               type="button"
                               onClick={() => {
                                 setSelectedEventKey(event.key);
                                 setOpenWeekPopoverKey(event.key);
-                                setOpenTodayPopoverKey(null);
                               }}
                               style={{ top, height }}>
-                                <div className="h-full w-full overflow-hidden">
+                                <div className="relative h-full w-full overflow-hidden">
+                                  {event.isCompleted ? (
+                                    <span
+                                      className={`absolute right-0 top-0 inline-flex h-4 w-4 items-center justify-center rounded-full ${
+                                        isSelected ? "bg-white/15 text-white" : "bg-emerald-100 text-emerald-700"
+                                      }`}
+                                      data-testid="week-event-complete-icon"
+                                    >
+                                      <Check className="h-2.5 w-2.5" />
+                                    </span>
+                                  ) : null}
                                   <p className={`truncate text-[10px] font-medium ${isSelected ? "text-[#d1d5db]" : "text-[#475569]"}`}>
                                     {event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}
                                   </p>
@@ -643,9 +774,8 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                                     {event.title}
                                   </p>
                                   <p className={`mt-0.5 truncate text-[10px] ${isSelected ? "text-[#e5e7eb]" : "text-[#334155]"}`}>
-                                    {event.courseCode}
+                                    {getEventMetaLine(event)}
                                   </p>
-                                  <div className="mt-1">{renderStatusBadge(event)}</div>
                                 </div>
                               </Button>
                             </PopoverTrigger>
@@ -669,9 +799,9 @@ export default function StudyCalendar({ courses, plans, logs, dict, initialDate 
                                     <p className="whitespace-normal break-words">{event.kind}</p>
                                   </div>
                                   <div className="flex items-start gap-2">
-                                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#6b7280]" />
+                                    <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#6b7280]" />
                                     <p className="whitespace-normal break-words">
-                                      {event.isCompleted ? "Completed" : "Mark complete"}
+                                      {getEventDurationLabel(event)}
                                     </p>
                                   </div>
                                 </div>

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CalendarDays, User, Dumbbell, Settings, Map } from "lucide-react";
+import { BookOpen, CalendarDays, User, Dumbbell, Settings, Map, LayoutGrid } from "lucide-react";
 
 interface BottomTabBarProps {
   labels?: {
+    overview?: string;
     courses?: string;
     studyPlan?: string;
     studySchedule?: string;
@@ -19,6 +20,12 @@ export default function BottomTabBar({ labels }: BottomTabBarProps) {
   const pathname = usePathname();
 
   const tabs = [
+    {
+      name: labels?.overview || "Overview",
+      href: "/overview",
+      icon: LayoutGrid,
+      isActive: pathname === "/overview",
+    },
     {
       name: labels?.courses || "Courses",
       href: "/courses",

@@ -1709,6 +1709,33 @@ export async function toggleCourseEnrollmentAction(courseId: number, isEnrolled:
   revalidatePath('/roadmap');
 }
 
+export async function toggleWorkoutEnrollmentAction(workoutId: number, isEnrolled: boolean) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const supabase = await createClient();
+  if (isEnrolled) {
+    const { error } = await supabase
+      .from("user_workouts")
+      .delete()
+      .match({ user_id: user.id, workout_id: workoutId });
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from("user_workouts")
+      .upsert({
+        user_id: user.id,
+        workout_id: workoutId,
+        status: "enrolled",
+        updated_at: new Date().toISOString(),
+      });
+    if (error) throw error;
+  }
+
+  revalidatePath("/workouts");
+  revalidatePath("/calendar");
+}
+
 export async function fetchCoursesAction({
   page = 1,
   size = 12,

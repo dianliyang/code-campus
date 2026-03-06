@@ -5,8 +5,9 @@ import { Workout } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
 import WorkoutCard from "./WorkoutCard";
 import WorkoutListHeader from "./WorkoutListHeader";
-import { ChevronDown, ExternalLink } from "lucide-react";
+import { Check, ChevronDown, ExternalLink, Plus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { toggleWorkoutEnrollmentAction } from "@/actions/courses";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -21,6 +22,7 @@ import {
 
 interface WorkoutListProps {
   initialWorkouts: Workout[];
+  initialEnrolledIds: number[];
   dict: Dictionary["dashboard"]["workouts"];
   categoryGroups: Array<{
     category: string;
@@ -39,6 +41,59 @@ const statusStyle: Record<string, string> = {
   cancelled: "bg-rose-50 text-rose-700 border-rose-100",
   see_text: "bg-sky-50 text-sky-700 border-sky-100",
 };
+
+function IconActionGroup({
+  isEnrolled,
+  isEnrollmentPending,
+  onToggleEnroll,
+  workoutId,
+  bookingHref,
+}: {
+  isEnrolled: boolean;
+  isEnrollmentPending: boolean;
+  onToggleEnroll: (workoutId: number) => void;
+  workoutId: number;
+  bookingHref: string | null;
+}) {
+  const buttonClass = "h-7 w-7 rounded-none border-0 px-0 shadow-none first:rounded-l-md last:rounded-r-md";
+
+  return (
+    <div className="inline-flex overflow-hidden rounded-md border border-input bg-background">
+      <Button
+        variant={isEnrolled ? "secondary" : "ghost"}
+        size="icon"
+        type="button"
+        className={`${buttonClass} ${isEnrolled ? "bg-muted text-foreground" : ""}`}
+        disabled={isEnrollmentPending}
+        onClick={() => void onToggleEnroll(workoutId)}
+        aria-label={isEnrolled ? "Enrolled" : "Enroll"}
+        title={isEnrolled ? "Enrolled" : "Enroll"}
+      >
+        {isEnrolled ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+      </Button>
+      {bookingHref ? (
+        <a
+          href={bookingHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${buttonClass} inline-flex items-center justify-center border-l border-input text-foreground transition-colors hover:bg-muted`}
+          aria-label="Open booking"
+          title="Open booking"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      ) : (
+        <span
+          className={`${buttonClass} inline-flex items-center justify-center border-l border-input bg-muted text-muted-foreground`}
+          aria-label="Booking unavailable"
+          title="Booking unavailable"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </span>
+      )}
+    </div>
+  );
+}
 
 function getStatusLabel(
   status: string | null,
@@ -62,6 +117,7 @@ function getStatusLabel(
 
 export default function WorkoutList({
   initialWorkouts,
+  initialEnrolledIds,
   dict,
   categoryGroups,
   selectedCategory,
@@ -78,6 +134,8 @@ export default function WorkoutList({
   const [expandedGridCategory, setExpandedGridCategory] = useState<string | null>(
     selectedCategory || null,
   );
+  const [enrolledIds, setEnrolledIds] = useState<number[]>(initialEnrolledIds);
+  const [pendingIds, setPendingIds] = useState<Record<number, boolean>>({});
 
   const workouts: Workout[] = initialWorkouts;
   const effectiveViewMode: "list" | "grid" = viewMode;
@@ -108,12 +166,39 @@ export default function WorkoutList({
   };
 
   useEffect(() => {
+    setEnrolledIds(initialEnrolledIds);
+  }, [initialEnrolledIds]);
+
+  useEffect(() => {
     if (!searchParams.get("category") && selectedCategory) {
       const params = new URLSearchParams(searchParams.toString());
       params.set("category", selectedCategory);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
   }, [searchParams, selectedCategory, router, pathname]);
+
+  const handleToggleEnroll = async (workoutId: number) => {
+    if (pendingIds[workoutId]) return;
+    const isEnrolled = enrolledIds.includes(workoutId);
+    setPendingIds((current) => ({ ...current, [workoutId]: true }));
+    setEnrolledIds((current) =>
+      isEnrolled ? current.filter((id) => id !== workoutId) : [...current, workoutId]
+    );
+
+    try {
+      await toggleWorkoutEnrollmentAction(workoutId, isEnrolled);
+    } catch {
+      setEnrolledIds((current) =>
+        isEnrolled ? [...current, workoutId] : current.filter((id) => id !== workoutId)
+      );
+    } finally {
+      setPendingIds((current) => {
+        const next = { ...current };
+        delete next[workoutId];
+        return next;
+      });
+    }
+  };
 
   return (
     <main className="h-full min-w-0 flex flex-col">
@@ -213,6 +298,7 @@ export default function WorkoutList({
                                 ? `${w.startDate} - ${w.endDate}`
                                 : "-";
                           const bookingHref = w.bookingUrl || w.url;
+                          const isEnrolled = enrolledIds.includes(w.id);
 
                           return (
                             <div
@@ -253,33 +339,16 @@ export default function WorkoutList({
                                 <p className="text-muted-foreground">
                                   Staff: €{formatPrice(w.priceStaff)}
                                 </p>
-                              </div>
-
-                              {selectedCategory === "Semester Fee" ? (
-                                <div className="flex justify-end">
-                                  {bookingHref ? (
-                                    <Button variant="outline" size="icon" asChild>
-                                      <a
-                                        href={bookingHref}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label="Open booking"
-                                      >
-                                        <ExternalLink />
-                                      </a>
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      disabled
-                                      aria-label="Booking unavailable"
-                                    >
-                                      <ExternalLink />
-                                    </Button>
-                                  )}
+                                <div className="mt-2 flex justify-end">
+                                  <IconActionGroup
+                                    isEnrolled={isEnrolled}
+                                    isEnrollmentPending={Boolean(pendingIds[w.id])}
+                                    onToggleEnroll={handleToggleEnroll}
+                                    workoutId={w.id}
+                                    bookingHref={bookingHref || null}
+                                  />
                                 </div>
-                              ) : null}
+                              </div>
                             </div>
                           );
                         })}
@@ -293,10 +362,12 @@ export default function WorkoutList({
               {workouts.map((workout, idx) => (
                 <WorkoutCard
                   key={workout.id}
-                  workout={workout}
+                  workout={{ ...workout, enrolled: enrolledIds.includes(workout.id) }}
                   viewMode={effectiveViewMode}
                   dict={dict}
                   rowIndex={idx}
+                  onToggleEnroll={handleToggleEnroll}
+                  isEnrollmentPending={Boolean(pendingIds[workout.id])}
                 />
               ))}
             </div>
@@ -372,6 +443,7 @@ export default function WorkoutList({
                       ? statusStyle[workout.bookingStatus]
                       : "bg-slate-50 text-slate-600 border-slate-100";
                   const statusLabel = getStatusLabel(workout.bookingStatus, dict);
+                  const isEnrolled = enrolledIds.includes(workout.id);
 
                   return (
                     <Card
@@ -402,6 +474,20 @@ export default function WorkoutList({
                       </CardHeader>
                       <CardFooter className="mt-auto text-xs text-muted-foreground">
                         <Badge className={statusClass}>{statusLabel}</Badge>
+                        <div
+                          className="ml-2"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                          }}
+                        >
+                          <IconActionGroup
+                            isEnrolled={isEnrolled}
+                            isEnrollmentPending={Boolean(pendingIds[workout.id])}
+                            onToggleEnroll={handleToggleEnroll}
+                            workoutId={workout.id}
+                            bookingHref={bookingHref || null}
+                          />
+                        </div>
                         <p className="ml-auto font-medium text-foreground">
                           €{formatPrice(workout.priceStudent)}
                         </p>

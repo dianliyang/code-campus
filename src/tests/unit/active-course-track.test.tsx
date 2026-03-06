@@ -1,6 +1,6 @@
 import React from "react";
-import { describe, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
 
 vi.mock("next/link", () => ({
@@ -34,16 +34,25 @@ const course = {
   semesters: ["Spring 2026"],
 };
 
+const courseWithCredit = {
+  ...course,
+  credit: 8,
+};
+
 describe("ActiveCourseTrack", () => {
-  test("shows schedule times, study days, and inclusive date range for a roadmap plan", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  test("shows schedule times, date range, day count, and credits in separate footer columns", () => {
     render(
       <ActiveCourseTrack
-        course={course}
+        course={courseWithCredit}
         initialProgress={0}
         plan={{
           id: 9,
           start_date: "2026-03-05",
-          end_date: "2026-03-05",
+          end_date: "2026-06-05",
           days_of_week: [4],
           start_time: "09:00:00",
           end_time: "11:00:00",
@@ -59,9 +68,52 @@ describe("ActiveCourseTrack", () => {
     expect(screen.queryByText("End time")).toBeNull();
     expect(screen.queryByText("Start date")).toBeNull();
     expect(screen.queryByText("End date")).toBeNull();
-    expect(screen.getByText("9:00 AM - 11:00 AM")).toBeDefined();
-    expect(screen.getByText("Mar 5, 2026 - Mar 5, 2026")).toBeDefined();
-    expect(screen.getByText("1")).toBeDefined();
-    expect(screen.getByText("day")).toBeDefined();
+    const leading = screen.getByTestId("roadmap-plan-leading");
+    const trailing = screen.getByTestId("roadmap-plan-trailing");
+
+    expect(within(leading).getByText("9:00 AM - 11:00 AM")).toBeDefined();
+    expect(within(leading).getByText("Mar 5, 2026 - Jun 5, 2026")).toBeDefined();
+
+    const dayCount = within(trailing).getByTestId("roadmap-plan-days");
+    expect(dayCount.textContent).toBe("93 days");
+    expect(within(dayCount).getByText("93").tagName).toBe("STRONG");
+
+    const creditSummary = within(trailing).getByTestId("roadmap-plan-credits");
+    expect(creditSummary.textContent).toBe("8 credits");
+    expect(within(creditSummary).getByText("8").tagName).toBe("STRONG");
+
+    expect(within(trailing).getByLabelText("Study days")).toBeDefined();
+    expect(trailing.textContent).toContain("8 credits");
+    expect(trailing.textContent).toContain("93 days");
+  });
+
+  test("keeps the day count on the left even when the course has no credit", () => {
+    render(
+      <ActiveCourseTrack
+        course={course}
+        initialProgress={0}
+        plan={{
+          id: 10,
+          start_date: "2026-03-05",
+          end_date: "2026-03-14",
+          days_of_week: [4],
+          start_time: "09:00:00",
+          end_time: "11:00:00",
+          location: "Library",
+        }}
+      />
+    );
+
+    const leading = screen.getByTestId("roadmap-plan-leading");
+    const trailing = screen.getByTestId("roadmap-plan-trailing");
+    const dayCount = within(trailing).getByTestId("roadmap-plan-days");
+    const creditSummary = within(trailing).getByTestId("roadmap-plan-credits");
+
+    expect(within(leading).getByText("9:00 AM - 11:00 AM")).toBeDefined();
+    expect(within(leading).getByText("Mar 5, 2026 - Mar 14, 2026")).toBeDefined();
+    expect(within(trailing).getByLabelText("Study days")).toBeDefined();
+    expect(dayCount.textContent).toBe("10 days");
+    expect(within(dayCount).getByText("10").tagName).toBe("STRONG");
+    expect(creditSummary.textContent).toBe("No credit");
   });
 });

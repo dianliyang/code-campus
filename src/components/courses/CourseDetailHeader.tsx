@@ -372,7 +372,7 @@ export default function CourseDetailHeader({
           <h1 className="text-[17px] sm:text-[20px] font-semibold text-[#1f1f1f] tracking-tight leading-snug line-clamp-2 mb-0.5">
             {course.title}
           </h1>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" data-testid="course-detail-meta">
             {codeBreakdown.length > 0 ? (
               <Popover>
                 <PopoverTrigger asChild>
@@ -380,7 +380,10 @@ export default function CourseDetailHeader({
                     <span className="text-[11px] font-medium text-[#555] truncate">
                       {course.university}
                     </span>
-                    <Badge variant="secondary">{course.courseCode}</Badge>
+                    <span className="text-[11px] font-medium text-[#555]">•</span>
+                    <span className="text-[11px] font-medium text-[#555] truncate">
+                      {course.courseCode}
+                    </span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent align="start">
@@ -410,7 +413,10 @@ export default function CourseDetailHeader({
                 <span className="text-[11px] font-medium text-[#555] truncate">
                   {course.university}
                 </span>
-                <Badge variant="secondary">{course.courseCode}</Badge>
+                <span className="text-[11px] font-medium text-[#555]">•</span>
+                <span className="text-[11px] font-medium text-[#555] truncate">
+                  {course.courseCode}
+                </span>
               </>
             )}
             {course.isInternal &&

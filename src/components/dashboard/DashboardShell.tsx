@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
 import LeftRail from "@/components/dashboard/LeftRail";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 const LEFT_RAIL_COLLAPSED_KEY = "cc:dashboard:left-rail-collapsed";
+const LEFT_RAIL_EVENT = "cc:dashboard:left-rail-changed";
 
 interface DashboardShellProps {
   labels: {
     command: string;
+    overview: string;
     identity: string;
     hub: string;
     courses: string;
@@ -32,16 +33,26 @@ interface DashboardShellProps {
 }
 
 export default function DashboardShell({ labels, children }: DashboardShellProps) {
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.localStorage.getItem(LEFT_RAIL_COLLAPSED_KEY) === "true";
-    } catch {
-      return false;
-    }
-  });
-  const pathname = usePathname();
-  const isCalendarPage = pathname === "/calendar";
+  const collapsed = useSyncExternalStore(
+    (callback) => {
+      if (typeof window === "undefined") return () => {};
+      const handleChange = () => callback();
+      window.addEventListener("storage", handleChange);
+      window.addEventListener(LEFT_RAIL_EVENT, handleChange);
+      return () => {
+        window.removeEventListener("storage", handleChange);
+        window.removeEventListener(LEFT_RAIL_EVENT, handleChange);
+      };
+    },
+    () => {
+      try {
+        return window.localStorage.getItem(LEFT_RAIL_COLLAPSED_KEY) === "true";
+      } catch {
+        return false;
+      }
+    },
+    () => false
+  );
 
   return (
     <SidebarProvider
@@ -49,9 +60,9 @@ export default function DashboardShell({ labels, children }: DashboardShellProps
       open={!collapsed}
       onOpenChange={(open) => {
         const nextCollapsed = !open;
-        setCollapsed(nextCollapsed);
         try {
           window.localStorage.setItem(LEFT_RAIL_COLLAPSED_KEY, String(nextCollapsed));
+          window.dispatchEvent(new Event(LEFT_RAIL_EVENT));
         } catch {
           // Ignore localStorage errors.
         }

@@ -82,6 +82,18 @@ function inferCalendarKind(input: Array<string | null | undefined>): string {
   return "task";
 }
 
+function normalizeCalendarKind(
+  explicitKind: string,
+  fallbackInput: Array<string | null | undefined>,
+): string {
+  const normalizedExplicitKind = explicitKind.trim().toLowerCase();
+  if (!normalizedExplicitKind) return inferCalendarKind(fallbackInput);
+  if (normalizedExplicitKind === "task" || normalizedExplicitKind === "scheduled") {
+    return inferCalendarKind(fallbackInput);
+  }
+  return normalizedExplicitKind;
+}
+
 export function buildCourseDetailCalendar({
   courseTitle: _courseTitle,
   assignments,
@@ -105,8 +117,7 @@ export function buildCourseDetailCalendar({
         typeof item.durationMinutes === "number" && Number.isFinite(item.durationMinutes)
           ? `${Math.max(1, Math.round(item.durationMinutes))}m`
           : "";
-      const explicitKind = String(item.kind || "").trim().toLowerCase();
-      const kind = explicitKind || inferCalendarKind([item.title, item.focus]);
+      const kind = normalizeCalendarKind(String(item.kind || ""), [item.title, item.focus]);
       const meta = [kind, duration].filter(Boolean).join(" · ") || "Scheduled";
       return {
         dateIso,

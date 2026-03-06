@@ -53,6 +53,34 @@ describe("buildCourseDetailCalendar", () => {
     ]);
   });
 
+  test("uses inferred lecture kind when the explicit kind is only a generic task", () => {
+    const result = buildCourseDetailCalendar({
+      courseTitle: "Parallel Computing",
+      assignments: [],
+      scheduleItems: [
+        {
+          date: "2026-03-10",
+          title: "Lecture: Why Parallelism? Why Efficiency?",
+          kind: "task",
+          focus: null,
+          durationMinutes: 65,
+        },
+      ],
+      studyPlans: [],
+    });
+
+    expect(result.eventsByDate.get("2026-03-10")).toEqual([
+      {
+        label: "Lecture: Why Parallelism? Why Efficiency?",
+        meta: "lecture · 65m",
+        kind: "lecture",
+        badgeLabel: "lecture",
+        timeLabel: "65m",
+        isCompleted: false,
+      },
+    ]);
+  });
+
   test("marks scheduled tasks completed only when the date exists in completion logs", () => {
     const result = buildCourseDetailCalendar({
       courseTitle: "Fundamentals of Programming",

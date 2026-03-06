@@ -46,7 +46,7 @@ export async function proxy(request: NextRequest) {
 
   // Redirect to dashboard if authenticated and trying to access login
   if (user && isLoginPage) {
-    return NextResponse.redirect(new URL("/courses", request.url));
+    return NextResponse.redirect(new URL("/overview", request.url));
   }
 
   return response

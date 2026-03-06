@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, expect, test, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Course } from "@/types";
 
 let mockSearchParams = new URLSearchParams();
@@ -36,10 +36,22 @@ vi.mock("@/components/courses/CourseDetailHeader", () => ({
 }));
 
 vi.mock("@/components/courses/WeeklyScheduleCard", () => ({
-  default: ({ title, children }: { title?: React.ReactNode; children?: React.ReactNode }) => (
+  default: ({
+    title,
+    headerRight,
+    children,
+    footer,
+  }: {
+    title?: React.ReactNode;
+    headerRight?: React.ReactNode;
+    children?: React.ReactNode;
+    footer?: React.ReactNode;
+  }) => (
     <div data-testid="weekly-schedule-card">
       <div>{title}</div>
+      <div>{headerRight}</div>
       <div>{children}</div>
+      <div>{footer}</div>
     </div>
   ),
 }));
@@ -300,5 +312,50 @@ describe("CourseDetailContent tabs", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  test("weekly schedule edit saves through the study plans update endpoint", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { default: CourseDetailContent } = await import("@/components/courses/CourseDetailContent");
+    mockSearchParams = new URLSearchParams();
+    render(
+      <CourseDetailContent
+        course={baseCourse}
+        isEnrolled={true}
+        descriptionEmptyText="No description"
+        availableTopics={[]}
+        availableSemesters={[]}
+        studyPlans={[
+          {
+            id: 11,
+            daysOfWeek: [1, 3],
+            startTime: "09:00:00",
+            endTime: "11:00:00",
+            location: "Library",
+            kind: "Lecture",
+            startDate: "2026-03-01",
+            endDate: "2026-03-31",
+            timezone: "UTC",
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByTitle("Edit plan")[0]);
+    fireEvent.click(screen.getAllByTitle("Confirm")[0]);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/study-plans/update",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      );
+    });
   });
 });

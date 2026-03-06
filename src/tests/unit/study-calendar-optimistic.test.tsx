@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import StudyCalendar from "@/components/home/StudyCalendar";
 
 const refreshMock = vi.fn();
@@ -40,6 +40,7 @@ const makeProps = () => ({
       courses: { id: 2, title: "Course B", course_code: "B102", university: "CCU" },
     },
   ],
+  workouts: [],
   logs: [],
   dict: {
     calendar_title: "Study Schedule",
@@ -81,6 +82,7 @@ describe("StudyCalendar redesign", () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
   });
 
@@ -94,13 +96,17 @@ describe("StudyCalendar redesign", () => {
     render(<StudyCalendar {...makeProps()} />);
 
     const todayRow = screen.getByRole("button", { name: /toggle completion for course a/i });
+    const weekEvent = screen.getByTestId("week-event-10:2026-02-03");
     expect(screen.queryByText("Not completed")).toBeNull();
 
     fireEvent.click(todayRow);
 
     await waitFor(() => {
-      expect(screen.getAllByText("Completed").length).toBeGreaterThan(0);
+      expect(screen.getAllByTestId("week-event-complete-icon").length).toBeGreaterThan(0);
     });
+
+    expect(weekEvent.getAttribute("data-selected")).toBe("false");
+    expect(screen.queryByText("Completed")).toBeNull();
 
     expect(fetchMock).toHaveBeenCalledWith("/api/schedule", expect.objectContaining({
       method: "POST",
@@ -114,6 +120,7 @@ describe("StudyCalendar redesign", () => {
     const todayList = screen.getAllByTestId("today-events-list")[0];
     expect(todayList.textContent).toContain("Course A");
     expect(todayList.textContent).not.toContain("Course B");
+    expect(screen.getAllByText("A101 · CCU").length).toBeGreaterThan(0);
   });
 
   test("stretches the left sidebar to full height and spaces today event cards", () => {
@@ -131,6 +138,69 @@ describe("StudyCalendar redesign", () => {
     expect(todayList.className).toContain("space-y-2");
     expect(todayList.className).toContain("pb-4");
     expect(eventCards.length).toBeGreaterThan(0);
+  });
+
+  test("renders a designed empty state when today has no activities", () => {
+    render(
+      <StudyCalendar
+        {...makeProps()}
+        initialDate={new Date(2026, 2, 5, 10, 0, 0)}
+      />
+    );
+
+    const todayList = screen.getAllByTestId("today-events-list")[0];
+    const emptyState = screen.getByTestId("today-empty-state");
+    const timelineScroller = screen.getAllByTestId("calendar-timeline-scroll")[0];
+
+    expect(emptyState).toBeDefined();
+    expect(emptyState.textContent).toContain("Rest Day");
+    expect(emptyState.textContent).toContain("Rest today, study tomorrow");
+    expect(emptyState.className).not.toContain("border");
+    expect(emptyState.className).not.toContain("bg-[");
+    expect(emptyState.className).toContain("justify-center");
+    expect(screen.getByTestId("today-empty-state-icon")).toBeDefined();
+    expect(todayList.className).toContain("pb-4");
+    expect(timelineScroller.className).toContain("pb-4");
+    expect(todayList.textContent).toContain("Rest Day");
+    expect(screen.queryByTestId("today-event-card")).toBeNull();
+  });
+
+  test("renders mirrored workout events as read-only calendar items", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <StudyCalendar
+        {...makeProps()}
+        workouts={[
+          {
+            id: 77,
+            title: "Campus Run",
+            category: "Cardio",
+            source: "Uni Sport",
+            day_of_week: "Tuesday",
+            start_date: "2026-02-01",
+            end_date: "2026-02-28",
+            start_time: "08:00",
+            end_time: "09:00",
+            location: "Track",
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getAllByText("Campus Run").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Cardio · Uni Sport").length).toBeGreaterThan(0);
+
+    const todayRow = screen.getByRole("button", { name: /view event campus run/i });
+    fireEvent.click(todayRow);
+
+    await waitFor(() => {
+      expect(screen.getByText("workout")).toBeDefined();
+    });
+
+    expect(screen.queryByRole("button", { name: /mark complete campus run/i })).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test("shows a current time line and auto-scrolls the timeline when today is visible", async () => {
@@ -212,10 +282,10 @@ describe("StudyCalendar redesign", () => {
     render(<StudyCalendar {...makeProps()} />);
 
     fireEvent.click(screen.getAllByRole("button", { name: /Course A/i })[0]);
-    expect(screen.getAllByText("A101").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("A101 · CCU").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getAllByRole("button", { name: /Course B/i })[0]);
-    expect(screen.getAllByText("B102").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("B102 · CCU").length).toBeGreaterThan(0);
   });
 
 });

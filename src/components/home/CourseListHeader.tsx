@@ -155,26 +155,139 @@ export default function CourseListHeader({
 
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="flex w-full items-center justify-between gap-2 md:w-auto md:flex-row md:items-center md:justify-start md:gap-2">
-        <Tabs
-          value={viewMode}
-          onValueChange={(value) => setViewMode(value as "list" | "grid")}
-          className="hidden md:block md:w-auto"
+      <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div
+          className="flex min-w-0 flex-1 items-center gap-2"
+          data-testid="course-toolbar-leading"
         >
-          <TabsList>
-            <TabsTrigger value="list" aria-label="List view">
-              <List className="size-4 shrink-0" />
-              <span className="hidden xl:inline">List</span>
-            </TabsTrigger>
-            <TabsTrigger value="grid" aria-label="Grid view">
-              <LayoutGrid className="size-4 shrink-0" />
-              <span className="hidden xl:inline">Grid</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+          <Tabs
+            value={viewMode}
+            onValueChange={(value) => setViewMode(value as "list" | "grid")}
+            className="hidden md:block md:w-auto"
+          >
+            <TabsList>
+              <TabsTrigger value="list" aria-label="List view">
+                <List className="size-4 shrink-0" />
+                <span className="hidden xl:inline">List</span>
+              </TabsTrigger>
+              <TabsTrigger value="grid" aria-label="Grid view">
+                <LayoutGrid className="size-4 shrink-0" />
+                <span className="hidden xl:inline">Grid</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-        <div className="w-auto">
+          <ButtonGroup className="xl:hidden">
+            <Button
+              variant="outline"
+              size="icon"
+              type="button"
+              className="size-9"
+              aria-label="Search courses"
+              title="Search courses"
+              onClick={() => setMobileSearchOpen((prev) => !prev)}
+            >
+              <Search className="size-4 shrink-0" />
+            </Button>
+          </ButtonGroup>
+
+          <ButtonGroup className="hidden xl:flex">
+            <InputGroup className="w-full min-w-[220px] md:w-[220px] lg:w-[280px]">
+              <InputGroupInput
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onCompositionStart={() => {
+                  isComposing.current = true;
+                }}
+                onCompositionEnd={(e) => {
+                  isComposing.current = false;
+                  setQuery(e.currentTarget.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitSearch(query);
+                  if (e.key === "Escape" && query) {
+                    setQuery("");
+                    commitSearch("");
+                  }
+                }}
+                placeholder="Search courses..."
+              />
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+              <InputGroupAddon align="inline-end">
+                {query ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      commitSearch("");
+                    }}
+                    aria-label="Clear search"
+                    title="Clear search"
+                  >
+                    <X className="size-4" />
+                  </button>
+                ) : null}
+              </InputGroupAddon>
+            </InputGroup>
+          </ButtonGroup>
+        </div>
+
+        <div
+          className="flex items-center justify-end gap-2"
+          data-testid="course-toolbar-trailing"
+        >
           <ButtonGroup className="w-auto text-[13px] text-[#6a6a6a]">
+            <ButtonGroup>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className="size-9 p-0 xl:hidden"
+                    aria-label="Sort"
+                    title="Sort"
+                  >
+                    <ArrowUpDown className="size-4 shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleSortChange("title")}>
+                    {dict?.sort_title || "Title (A-Z)"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleSortChange("popularity")}
+                  >
+                    {dict?.sort_popularity || "Popularity"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSortChange("newest")}>
+                    {dict?.sort_newest || "Newest"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div className="hidden xl:block">
+                <Select value={sortBy} onValueChange={handleSortChange}>
+                  <SelectTrigger className="w-[150px]">
+                    <ArrowUpDown className="size-4 shrink-0" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent align="end">
+                    <SelectItem value="title">
+                      {dict?.sort_title || "Title (A-Z)"}
+                    </SelectItem>
+                    <SelectItem value="popularity">
+                      {dict?.sort_popularity || "Popularity"}
+                    </SelectItem>
+                    <SelectItem value="newest">
+                      {dict?.sort_newest || "Newest"}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </ButtonGroup>
+
             <ButtonGroup>
               <Button variant="outline" asChild>
                 <Link href="/settings/import" aria-label="New course" title="New course">
@@ -281,111 +394,6 @@ export default function CourseListHeader({
                   </div>
                 </DrawerContent>
               </Drawer>
-            </ButtonGroup>
-
-            <ButtonGroup>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    className="size-9 p-0 xl:hidden"
-                    aria-label="Sort"
-                    title="Sort"
-                  >
-                    <ArrowUpDown className="size-4 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleSortChange("title")}>
-                    {dict?.sort_title || "Title (A-Z)"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleSortChange("popularity")}
-                  >
-                    {dict?.sort_popularity || "Popularity"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleSortChange("newest")}>
-                    {dict?.sort_newest || "Newest"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <div className="hidden xl:block">
-                <Select value={sortBy} onValueChange={handleSortChange}>
-                  <SelectTrigger className="w-[150px]">
-                    <ArrowUpDown className="size-4 shrink-0" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent align="end">
-                    <SelectItem value="title">
-                      {dict?.sort_title || "Title (A-Z)"}
-                    </SelectItem>
-                    <SelectItem value="popularity">
-                      {dict?.sort_popularity || "Popularity"}
-                    </SelectItem>
-                    <SelectItem value="newest">
-                      {dict?.sort_newest || "Newest"}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </ButtonGroup>
-
-            <ButtonGroup className="xl:hidden">
-              <Button
-                variant="outline"
-                size="icon"
-                type="button"
-                className="size-9"
-                aria-label="Search courses"
-                title="Search courses"
-                onClick={() => setMobileSearchOpen((prev) => !prev)}
-              >
-                <Search className="size-4 shrink-0" />
-              </Button>
-            </ButtonGroup>
-
-            <ButtonGroup className="hidden xl:flex">
-              <InputGroup className="w-full md:w-[160px] lg:w-[220px]">
-                <InputGroupInput
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onCompositionStart={() => {
-                    isComposing.current = true;
-                  }}
-                  onCompositionEnd={(e) => {
-                    isComposing.current = false;
-                    setQuery(e.currentTarget.value);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") commitSearch(query);
-                    if (e.key === "Escape" && query) {
-                      setQuery("");
-                      commitSearch("");
-                    }
-                  }}
-                  placeholder="Search courses..."
-                />
-                <InputGroupAddon>
-                  <Search />
-                </InputGroupAddon>
-                <InputGroupAddon align="inline-end">
-                  {query ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setQuery("");
-                        commitSearch("");
-                      }}
-                      aria-label="Clear search"
-                      title="Clear search"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  ) : null}
-                </InputGroupAddon>
-              </InputGroup>
             </ButtonGroup>
           </ButtonGroup>
         </div>

@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import CourseListHeader from "@/components/home/CourseListHeader";
 
 vi.mock("next/navigation", () => ({
@@ -20,8 +20,13 @@ describe("CourseListHeader", () => {
       />,
     );
 
+    const leading = screen.getByTestId("course-toolbar-leading");
+    const trailing = screen.getByTestId("course-toolbar-trailing");
+
     expect(screen.queryByText("Explore the catalog and enroll in courses.")).toBeNull();
-    expect(screen.getByRole("link", { name: /new course/i })).toBeDefined();
-    expect(screen.getByRole("button", { name: /filter/i })).toBeDefined();
+    expect(within(leading).getByLabelText(/list view/i)).toBeDefined();
+    expect(within(leading).getByPlaceholderText(/search courses/i)).toBeDefined();
+    expect(within(trailing).getByRole("link", { name: /new course/i })).toBeDefined();
+    expect(within(trailing).getByRole("button", { name: /filter/i })).toBeDefined();
   });
 });

@@ -659,6 +659,76 @@ export type Database = {
           },
         ]
       }
+      user_workouts: {
+        Row: {
+          created_at: string
+          status: string
+          updated_at: string
+          user_id: string
+          workout_id: number
+        }
+        Insert: {
+          created_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          workout_id: number
+        }
+        Update: {
+          created_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          workout_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_workouts_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_workout_logs: {
+        Row: {
+          created_at: string
+          id: number
+          is_attended: boolean
+          log_date: string
+          updated_at: string
+          user_id: string
+          workout_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          is_attended?: boolean
+          log_date: string
+          updated_at?: string
+          user_id: string
+          workout_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          is_attended?: boolean
+          log_date?: string
+          updated_at?: string
+          user_id?: string
+          workout_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_workout_logs_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workouts: {
         Row: {
           booking_status: string | null

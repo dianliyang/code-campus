@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Clock,
   ExternalLink,
+  Loader2,
   MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -125,9 +126,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
   );
 
   const allEvents = useMemo(() => {
-    return scheduleRows
-      .filter((row) => !(row.source_type === "study_plan" && row.plan_id && !row.schedule_id && !row.assignment_id))
-      .map((row) => {
+    return scheduleRows.map((row) => {
       const startMinutes = parseMinutes(row.start_time);
       const endMinutes = parseMinutes(row.end_time);
       
@@ -185,6 +184,15 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
       return a.startMinutes - b.startMinutes || a.endMinutes - b.endMinutes;
     });
   }, [eventsByDate, activeDateKey]);
+
+  const timelineEventsByDate = useMemo(() => {
+    const filteredMap = new Map<string, CalendarEvent[]>();
+    for (const [date, list] of eventsByDate.entries()) {
+      const filtered = list.filter(event => !(event.sourceType === "study_plan" && event.planId && !event.scheduleId && !event.assignmentId));
+      filteredMap.set(date, filtered);
+    }
+    return filteredMap;
+  }, [eventsByDate]);
 
   const weekDates = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
 
@@ -387,11 +395,13 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                               : "border-muted-foreground/20 hover:border-primary/50 bg-background"
                           )}
                         >
-                          {event.isCompleted && (
+                          {pendingEventKeys[event.key] ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                          ) : event.isCompleted ? (
                             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
-                          )}
+                          ) : null}
                         </button>
                       </div>
                     </CardContent>
@@ -439,7 +449,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
             <div className="flex min-w-[800px] h-full" style={{ height: `${timelineHeight}px` }}>
               {weekDates.map((date) => {
                 const key = formatDateKey(date);
-                const dayEvents = eventsByDate.get(key) || [];
+                const dayEvents = timelineEventsByDate.get(key) || [];
                 const isToday = key === todayKey;
 
                 return (
@@ -519,6 +529,9 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                                   onClick={() => toggleEventCompletion(event)}
                                   disabled={pendingEventKeys[event.key]}
                                 >
+                                  {pendingEventKeys[event.key] ? (
+                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                  ) : null}
                                   {event.isCompleted ? "Undo" : event.sourceType === "workout" ? "Mark attended" : "Mark complete"}
                                 </Button>
                                 {event.courseId && (

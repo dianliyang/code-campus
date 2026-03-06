@@ -37,17 +37,19 @@ function MomentumBar({ label, count, colorClass, activeColorClass, max = 15 }: {
 
 export default function CourseMomentumCard({
   routineItems,
-  inProgressCount,
+  studyDoneToday = 0,
   attendedToday
-}: CourseMomentumCardProps) {
+}: CourseMomentumCardProps & { studyDoneToday?: number }) {
   // Find the "Now" item: either something happening now or the next upcoming item
   const now = new Date();
   const currentHourMin = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
   
   const upcomingItem = routineItems.find(item => item.startsAtSort >= currentHourMin && !item.isDone);
-  const nextItem = upcomingItem || routineItems[0];
+  const nextItem = upcomingItem || routineItems.find(item => !item.isDone) || routineItems[0];
 
-  const studyCount = routineItems.filter((item) => item.sourceType === "study_plan").length;
+  const studyItems = routineItems.filter((item) => item.sourceType === "study_plan" || item.sourceType === "assignment");
+  const studyCount = studyItems.length;
+  
   const workoutCount = routineItems.filter((item) => item.sourceType === "workout").length;
   const assignmentCount = routineItems.filter((item) => item.sourceType === "assignment").length;
 
@@ -69,20 +71,22 @@ export default function CourseMomentumCard({
 
       <div className="flex flex-1 border-b border-border p-5 items-end justify-between gap-4">
         <MomentumBar 
-          label="Today" 
+          label="Routine" 
           count={routineItems.length} 
           colorClass="bg-stone-100" 
           activeColorClass="bg-stone-900" 
         />
         <MomentumBar 
-          label="In Progress" 
-          count={inProgressCount} 
+          label="Completed" 
+          count={studyDoneToday} 
+          max={Math.max(studyCount, 1)}
           colorClass="bg-blue-50" 
           activeColorClass="bg-blue-600" 
         />
         <MomentumBar 
-          label="Checked In" 
+          label="Attended" 
           count={attendedToday} 
+          max={Math.max(workoutCount, 1)}
           colorClass="bg-emerald-50" 
           activeColorClass="bg-emerald-600" 
         />

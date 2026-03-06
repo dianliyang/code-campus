@@ -32,6 +32,8 @@ export default function AttendanceLearningChart({ studyLogs, workoutLogs }: Atte
   }, [last7Days, studyLogs, workoutLogs]);
 
   const maxVal = Math.max(1, ...data.map((d) => d.studyCount + d.workoutCount));
+  const thisWeekStudy = data.reduce((acc, d) => acc + d.studyCount, 0);
+  const thisWeekWorkout = data.reduce((acc, d) => acc + d.workoutCount, 0);
 
   return (
     <div className="space-y-6">
@@ -92,14 +94,14 @@ export default function AttendanceLearningChart({ studyLogs, workoutLogs }: Atte
             <Clock className="h-3.5 w-3.5 text-blue-600" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Mastery sessions</span>
           </div>
-          <p className="mt-auto text-xl font-bold tracking-tight">{studyLogs.filter(l => l.is_completed).length}</p>
+          <p className="mt-auto text-xl font-bold tracking-tight">{thisWeekStudy}</p>
         </div>
         <div className="rounded-xl border border-border bg-muted/5 p-3 flex flex-col justify-between h-20">
           <div className="flex items-center gap-2">
             <Dumbbell className="h-3.5 w-3.5 text-emerald-600" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Gym consistency</span>
           </div>
-          <p className="mt-auto text-xl font-bold tracking-tight">{workoutLogs.filter(l => l.is_attended).length}</p>
+          <p className="mt-auto text-xl font-bold tracking-tight">{thisWeekWorkout}</p>
         </div>
       </div>
     </div>

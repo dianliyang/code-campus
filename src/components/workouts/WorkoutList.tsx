@@ -370,9 +370,9 @@ export default function WorkoutList({
                                 </p>
                               </div>
 
-                              <div className="text-sm lg:text-right">
-                                <p>Student: €{formatPrice(w.priceStudent)}</p>
-                                <p className="text-muted-foreground text-[10px]">
+                              <div className="text-sm lg:text-right space-y-0.5">
+                                <p className="text-muted-foreground font-medium">Student: €{formatPrice(w.priceStudent)}</p>
+                                <p className="text-muted-foreground/60 text-[10px]">
                                   Staff: €{formatPrice(w.priceStaff)}
                                 </p>
                               </div>
@@ -384,6 +384,7 @@ export default function WorkoutList({
                                   onToggleEnroll={handleToggleEnroll}
                                   workoutId={w.id}
                                   bookingHref={bookingHref || null}
+                                  standalone
                                 />
                               </div>
                             </div>

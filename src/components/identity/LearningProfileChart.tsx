@@ -20,7 +20,7 @@ export default function LearningProfileChart({
   const items = data
     .filter((d) => d.count > 0)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 12);
+    .slice(0, 3);
   const total = items.reduce((sum, item) => sum + item.count, 0);
 
   if (items.length === 0 || total === 0) {

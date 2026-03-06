@@ -6,6 +6,8 @@ interface ScheduleRequest {
   action: 'generate' | 'add_plan' | 'update_plan' | 'remove_plan' | 'toggle_complete' | 'get';
   // For add_plan / update_plan
   planId?: number;
+  scheduleId?: number;
+  assignmentId?: number;
   courseId?: number;
   startDate?: string;
   endDate?: string;
@@ -206,14 +208,22 @@ export async function POST(request: Request) {
 
     // Toggle completion (Log entry)
     if (action === 'toggle_complete') {
-      const { planId, date } = body;
-      if (!planId || !date) return NextResponse.json({ error: "planId and date required" }, { status: 400 });
+      const { planId, scheduleId, assignmentId, date } = body;
+      if ((!planId && !scheduleId && !assignmentId) || !date) {
+        return NextResponse.json({ error: "id and date required" }, { status: 400 });
+      }
+
+      // Build match criteria
+      const matchCriteria: Record<string, number | string> = { user_id: userId, log_date: date };
+      if (planId) matchCriteria.plan_id = planId;
+      if (scheduleId) matchCriteria.course_schedule_id = scheduleId;
+      if (assignmentId) matchCriteria.course_assignment_id = assignmentId;
 
       // Check if log exists
       const { data: existingLog, error: fetchError } = await supabase
         .from('study_logs')
         .select('id, is_completed')
-        .match({ user_id: userId, plan_id: planId, log_date: date })
+        .match(matchCriteria)
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') throw fetchError; // Ignore not found error
@@ -231,13 +241,17 @@ export async function POST(request: Request) {
           .from('study_logs')
           .insert({
             user_id: userId,
-            plan_id: planId,
+            plan_id: planId || null,
+            course_schedule_id: scheduleId || null,
+            course_assignment_id: assignmentId || null,
             log_date: date,
             is_completed: true
           });
         if (error) throw error;
       }
 
+      revalidatePath('/overview');
+      revalidatePath('/calendar');
       revalidatePath('/roadmap');
       return NextResponse.json({ success: true, message: "Completion toggled" });
     }

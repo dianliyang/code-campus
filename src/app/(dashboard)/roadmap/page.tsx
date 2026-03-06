@@ -238,13 +238,15 @@ async function StudyPlanContent({
   const enrolledCourseIds = new Set(enrolledCourses.map((course) => course.id));
   const plans = allPlans.filter((plan: {course_id: number;}) => enrolledCourseIds.has(plan.course_id));
   const validPlanIds = new Set(plans.map((plan: {id: number;}) => plan.id));
-  const filteredLogs = (logs || []).filter((log: {plan_id: number;}) => validPlanIds.has(log.plan_id));
+  const filteredLogs = (logs || []).filter((log) => log.plan_id != null && validPlanIds.has(log.plan_id));
 
   const enrolledWithAttendance = enrolledCourses.map((course) => {
     const coursePlans = plans?.filter((p: {course_id: number;}) => p.course_id === course.id) || [];
     // logs are already filtered by user_id, now filter by plans belonging to this course
     const planIds = coursePlans.map((p: {id: number;}) => p.id);
-    const courseLogs = filteredLogs.filter((l: {plan_id: number;}) => planIds.includes(l.plan_id));
+    const courseLogs = filteredLogs
+      .filter((l) => l.plan_id != null && planIds.includes(l.plan_id))
+      .map(l => ({ ...l, plan_id: l.plan_id! }));
 
     const { attended, total } = calculateAttendance(coursePlans, courseLogs);
 

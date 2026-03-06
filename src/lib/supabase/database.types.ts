@@ -563,7 +563,9 @@ export type Database = {
           is_completed: boolean | null
           log_date: string
           notes: string | null
-          plan_id: number
+          plan_id: number | null
+          course_schedule_id: number | null
+          course_assignment_id: number | null
           updated_at: string | null
           user_id: string
         }
@@ -573,7 +575,9 @@ export type Database = {
           is_completed?: boolean | null
           log_date: string
           notes?: string | null
-          plan_id: number
+          plan_id?: number | null
+          course_schedule_id?: number | null
+          course_assignment_id?: number | null
           updated_at?: string | null
           user_id: string
         }
@@ -583,7 +587,9 @@ export type Database = {
           is_completed?: boolean | null
           log_date?: string
           notes?: string | null
-          plan_id?: number
+          plan_id?: number | null
+          course_schedule_id?: number | null
+          course_assignment_id?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -593,6 +599,20 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "study_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_logs_course_schedule_id_fkey"
+            columns: ["course_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "course_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_logs_course_assignment_id_fkey"
+            columns: ["course_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "course_assignments"
             referencedColumns: ["id"]
           },
         ]

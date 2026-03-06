@@ -123,7 +123,7 @@ async function StudyScheduleContent({
 
     supabase
       .from('study_logs')
-      .select('*')
+      .select('*, course_schedule_id, course_assignment_id')
       .eq('user_id', userId),
     supabase
       .from("user_workouts")
@@ -221,7 +221,11 @@ async function StudyScheduleContent({
 
   const plans = allPlans.filter((plan) => enrolledCourseIds.has(plan.course_id));
   const validPlanIds = new Set(plans.map((plan) => plan.id));
-  const filteredLogs = (logs || []).filter((log: { plan_id: number }) => validPlanIds.has(log.plan_id));
+  const filteredLogs = (logs || []).filter((log) => {
+    if (log.plan_id) return validPlanIds.has(log.plan_id);
+    if (log.course_schedule_id || log.course_assignment_id) return true;
+    return false;
+  });
   const workouts: NormalizedWorkout[] = rawWorkouts
     .map((row: Record<string, unknown>) => {
       const raw = Array.isArray(row.workouts) ? row.workouts[0] : row.workouts;

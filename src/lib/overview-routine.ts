@@ -16,7 +16,7 @@ type OverviewStudyPlan = {
 };
 
 type OverviewStudyLog = {
-  plan_id: number;
+  plan_id: number | null;
   log_date: string;
   is_completed: boolean | null;
 };
@@ -82,7 +82,7 @@ export type OverviewRoutineItem = {
   startsAtSort: string;
   isDone: boolean;
   action:
-    | { type: "toggle_complete"; planId: number; date: string }
+    | { type: "toggle_complete"; planId: number | null; date: string; scheduleId?: number; assignmentId?: number }
     | { type: "toggle_attended"; workoutId: number; date: string }
     | null;
 };
@@ -139,7 +139,7 @@ export function buildOverviewRoutineItems({
 }: {
   date: string;
   plans: OverviewStudyPlan[];
-  logs: OverviewStudyLog[];
+  logs: Array<OverviewStudyLog & { course_schedule_id?: number | null; course_assignment_id?: number | null }>;
   workouts: OverviewWorkout[];
   workoutLogs: OverviewWorkoutLog[];
   assignments: OverviewAssignment[];
@@ -147,8 +147,21 @@ export function buildOverviewRoutineItems({
 }): OverviewRoutineItem[] {
   const targetDay = new Date(date).getDay();
   const logMap = new Map(
-    logs.map((log) => [`${log.plan_id}:${toDateOnly(log.log_date)}`, Boolean(log.is_completed)])
+    logs
+      .filter(log => log.plan_id)
+      .map((log) => [`${log.plan_id}:${toDateOnly(log.log_date)}`, Boolean(log.is_completed)])
   );
+  const taskLogMap = new Map(
+    logs
+      .filter(log => log.course_schedule_id)
+      .map((log) => [log.course_schedule_id!, Boolean(log.is_completed)])
+  );
+  const assignmentLogMap = new Map(
+    logs
+      .filter(log => log.course_assignment_id)
+      .map((log) => [log.course_assignment_id!, Boolean(log.is_completed)])
+  );
+  
   const workoutLogMap = new Map(
     workoutLogs.map((log) => [`${log.workout_id}:${toDateOnly(log.log_date)}`, Boolean(log.is_attended)])
   );
@@ -158,12 +171,13 @@ export function buildOverviewRoutineItems({
     .filter((sch) => toDateOnly(sch.schedule_date) === date)
     .map((sch) => {
       coursesWithTasksToday.add(sch.course_id);
+      const isDone = Boolean(taskLogMap.get(sch.id));
       const metaBits = [
         sch.courses?.course_code || sch.courses?.title || "Task",
         sch.courses?.university || null,
       ].filter(Boolean);
       
-      const startMin = 600; // 10:00
+      const startMin = 600; // Default 10:00
       const duration = sch.duration_minutes || 60;
       const endMin = startMin + duration;
       const timeLabel = `${Math.floor(startMin/60).toString().padStart(2, "0")}:00 - ${Math.floor(endMin/60).toString().padStart(2, "0")}:${(endMin%60).toString().padStart(2, "0")}`;
@@ -174,13 +188,13 @@ export function buildOverviewRoutineItems({
         title: sch.task_title,
         meta: metaBits.join(" · "),
         timeLabel,
-        statusLabel: sch.task_kind || "task",
+        statusLabel: isDone ? "Completed" : "Mark complete",
         kind: sch.task_kind || "task",
         location: sch.focus,
         href: null,
         startsAtSort: "10:00",
-        isDone: false,
-        action: null,
+        isDone,
+        action: { type: "toggle_complete" as const, planId: null, date, scheduleId: sch.id },
       };
     });
 
@@ -242,6 +256,7 @@ export function buildOverviewRoutineItems({
   const assignmentItems = assignments
     .filter((assignment) => toDateOnly(assignment.due_on) === date)
     .map((assignment) => {
+      const isDone = Boolean(assignmentLogMap.get(assignment.id));
       const metaBits = [
         assignment.courses?.course_code || assignment.courses?.title || "Assignment",
         assignment.courses?.university || null,
@@ -252,13 +267,13 @@ export function buildOverviewRoutineItems({
         title: assignment.label,
         meta: metaBits.join(" · "),
         timeLabel: "Due today",
-        statusLabel: assignment.kind,
+        statusLabel: isDone ? "Completed" : "Mark complete",
         kind: assignment.kind,
         location: null,
         href: assignment.url,
         startsAtSort: "98:00",
-        isDone: false,
-        action: null,
+        isDone,
+        action: { type: "toggle_complete" as const, planId: null, date, assignmentId: assignment.id },
       };
     });
 

@@ -51,6 +51,8 @@ export default function OverviewRoutineList({
           ? {
               action: "toggle_complete",
               planId: item.action.planId,
+              scheduleId: item.action.scheduleId,
+              assignmentId: item.action.assignmentId,
               date: item.action.date,
             }
           : {

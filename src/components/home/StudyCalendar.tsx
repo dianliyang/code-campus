@@ -46,7 +46,9 @@ interface StudyPlan {
 
 interface StudyLog {
   id: number;
-  plan_id: number;
+  plan_id: number | null;
+  course_schedule_id?: number | null;
+  course_assignment_id?: number | null;
   log_date: string;
   is_completed: boolean | null;
   notes: string | null;
@@ -68,6 +70,8 @@ interface WorkoutSchedule {
 interface CalendarEvent {
   key: string;
   planId: number | null;
+  scheduleId?: number | null;
+  assignmentId?: number | null;
   courseId: number | null;
   date: string;
   dayOfWeek: number;
@@ -226,9 +230,12 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
       const cursor = new Date(date);
       if (cursor < dateStart || cursor > dateEnd) continue;
 
+      const log = localLogs.find((entry) => entry.course_assignment_id === ass.id);
+
       items.push({
         key: `assignment:${ass.id}`,
         planId: null,
+        assignmentId: ass.id,
         courseId: ass.course_id,
         date,
         dayOfWeek: cursor.getDay(),
@@ -236,7 +243,7 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
         endTime: "10:00:00",
         startMinutes: 540,
         endMinutes: 600,
-        isCompleted: false,
+        isCompleted: Boolean(log?.is_completed),
         title: ass.label,
         courseCode: ass.courses?.course_code || "Assignment",
         university: ass.courses?.university || "",
@@ -257,6 +264,8 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
         coursesWithTasksToday.add(sch.course_id);
       }
 
+      const log = localLogs.find((entry) => entry.course_schedule_id === sch.id);
+
       const startMin = 600; 
       const duration = sch.duration_minutes || 60;
       const endMin = startMin + duration;
@@ -264,6 +273,7 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
       items.push({
         key: `task:${sch.id}`,
         planId: null,
+        scheduleId: sch.id,
         courseId: sch.course_id,
         date,
         dayOfWeek: cursor.getDay(),
@@ -271,7 +281,7 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
         endTime: "11:00:00",
         startMinutes: startMin,
         endMinutes: endMin,
-        isCompleted: false,
+        isCompleted: Boolean(log?.is_completed),
         title: sch.task_title,
         courseCode: sch.courses?.course_code || "Task",
         university: sch.courses?.university || "",
@@ -430,10 +440,16 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
     container.scrollTo({ top: nextScrollTop, behavior: "smooth" });
   }, [currentTimeTop, isTodayVisibleInWeek, weekStart]);
 
-  const setOptimisticCompletion = (planId: number, date: string, isCompleted: boolean) => {
+  const setOptimisticCompletion = (planId: number | null, date: string, isCompleted: boolean, scheduleId?: number | null, assignmentId?: number | null) => {
     setLocalLogs((current) => {
       const next = [...current];
-      const existingIndex = next.findIndex((entry) => entry.plan_id === planId && toDateOnly(entry.log_date) === date);
+      const existingIndex = next.findIndex((entry) => {
+        if (planId && entry.plan_id === planId && toDateOnly(entry.log_date) === date) return true;
+        if (scheduleId && entry.course_schedule_id === scheduleId) return true;
+        if (assignmentId && entry.course_assignment_id === assignmentId) return true;
+        return false;
+      });
+
       if (existingIndex >= 0) {
         next[existingIndex] = {
           ...next[existingIndex],
@@ -444,6 +460,8 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
       next.push({
         id: -Date.now(),
         plan_id: planId,
+        course_schedule_id: scheduleId,
+        course_assignment_id: assignmentId,
         log_date: date,
         is_completed: isCompleted,
         notes: null,
@@ -453,10 +471,10 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
   };
 
   const handleToggleComplete = async (event: CalendarEvent) => {
-    if (event.sourceType !== "study_plan" || event.planId == null) return;
+    if (event.sourceType !== "study_plan") return;
     const previous = event.isCompleted;
     setPendingEventKeys((current) => ({ ...current, [event.key]: true }));
-    setOptimisticCompletion(event.planId, event.date, !previous);
+    setOptimisticCompletion(event.planId, event.date, !previous, event.scheduleId, event.assignmentId);
 
     try {
       const response = await fetch("/api/schedule", {
@@ -467,6 +485,8 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
         body: JSON.stringify({
           action: "toggle_complete",
           planId: event.planId,
+          scheduleId: event.scheduleId,
+          assignmentId: event.assignmentId,
           date: event.date,
         }),
       });
@@ -479,7 +499,7 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
       setOpenWeekPopoverKey(null);
       router.refresh();
     } catch {
-      setOptimisticCompletion(event.planId, event.date, previous);
+      setOptimisticCompletion(event.planId, event.date, previous, event.scheduleId, event.assignmentId);
     } finally {
       setPendingEventKeys((current) => {
         const next = { ...current };

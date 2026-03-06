@@ -75,7 +75,7 @@ async function OverviewContent({ userId }: { userId: string }) {
       .eq("user_id", userId),
     supabase
       .from("study_logs")
-      .select("plan_id, log_date, is_completed")
+      .select("plan_id, log_date, is_completed, course_schedule_id, course_assignment_id")
       .eq("user_id", userId),
     supabase
       .from("user_workouts")

@@ -176,9 +176,9 @@ async function CourseDetailData({ id, dict }: {id: string;dict: Dictionary['dash
   }));
   const studyPlanIds = new Set(editableStudyPlans.map((plan) => plan.id));
   const courseStudyLogs = (studyLogRows || [])
-  .filter((log) => studyPlanIds.has(log.plan_id))
+  .filter((log) => log.plan_id != null && studyPlanIds.has(log.plan_id))
   .map((log) => ({
-    planId: log.plan_id,
+    planId: log.plan_id!,
     logDate: log.log_date,
     isCompleted: Boolean(log.is_completed),
   }));

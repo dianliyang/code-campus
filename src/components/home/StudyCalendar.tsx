@@ -603,37 +603,37 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
                     }}
                   >
                     <Card size="small" className={`w-full transition-colors border-border shadow-none ${getTodayRowClassName(event)}`}>
-                      <CardContent className="flex items-start gap-1.5">
+                      <CardContent className="flex items-start gap-2 p-2.5">
                         {event.sourceType === "study_plan" ? (
                           <span
                             aria-hidden="true"
-                            className={`mt-0.5 inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-sm border ${
+                            className={`mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
                               event.isCompleted ? "border-stone-400 bg-stone-400 text-white" : "border-stone-300 bg-white"
                             }`}
                           >
-                            {event.isCompleted ? <span className="text-[8px] leading-none">✓</span> : ""}
+                            {event.isCompleted ? <span className="text-[10px] leading-none">✓</span> : ""}
                           </span>
                         ) : (
                           <span
                             aria-hidden="true"
-                            className="mt-0.5 inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-sm border border-stone-300 bg-white text-[#64748b]"
+                            className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-stone-300 bg-white text-[#64748b]"
                           >
-                            <Coffee className="h-2 w-2" />
+                            <Coffee className="h-2.5 w-2.5" />
                           </span>
                         )}
                         <Item size="sm" className="w-full px-0 py-0 bg-transparent border-0 shadow-none h-auto min-h-0">
-                          <ItemContent className="gap-0">
-                            <p className={`text-[8px] font-medium uppercase tracking-wider leading-none mb-0.5 ${event.isCompleted ? "text-stone-400" : "text-muted-foreground/80"}`}>
+                          <ItemContent className="gap-0.5">
+                            <p className={`text-[10px] font-medium uppercase tracking-wider leading-none mb-1 ${event.isCompleted ? "text-stone-400" : "text-muted-foreground/80"}`}>
                               {event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}
                             </p>
-                            <ItemTitle className={`w-full whitespace-normal break-words text-[12px] font-medium tracking-tight leading-[1.1] ${event.isCompleted ? "text-stone-500 line-through" : "text-[#0f172a]"}`}>
+                            <ItemTitle className={`w-full whitespace-normal break-words text-[14px] font-medium tracking-tight leading-tight ${event.isCompleted ? "text-stone-500 line-through" : "text-[#0f172a]"}`}>
                               {event.title}
                             </ItemTitle>
-                            <div className={`w-full flex flex-wrap items-center gap-x-1 text-[9px] font-medium uppercase tracking-wider mt-0.5 ${event.isCompleted ? "text-stone-400" : "text-muted-foreground/70"}`}>
+                            <div className={`w-full flex flex-wrap items-center gap-x-1.5 text-[11px] font-medium uppercase tracking-wider mt-1 ${event.isCompleted ? "text-stone-400" : "text-muted-foreground/70"}`}>
                               <span>{getEventMetaLine(event).split(' · ')[0]}</span>
                               {event.location && (
                                 <>
-                                  <span className="text-muted-foreground/30 text-[7px] tracking-normal">·</span>
+                                  <span className="text-muted-foreground/30 text-[8px] tracking-normal">·</span>
                                   <span>{event.location}</span>
                                 </>
                               )}
@@ -667,6 +667,10 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
               }
             </div>
           </section>
+
+          <div className="px-2 my-2">
+            <div className="h-px bg-[#f5f5f5] w-full" />
+          </div>
 
           <div className="mt-auto rounded-lg px-0 pt-1" data-testid="mini-calendar-section">
             <div className="flex items-center justify-between mb-2">

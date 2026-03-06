@@ -602,8 +602,8 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
                       }
                     }}
                   >
-                    <Card className={`w-full transition-colors border-border shadow-none ${getTodayRowClassName(event)}`}>
-                      <CardContent className="flex items-start gap-1.5 p-1.5">
+                    <Card size="small" className={`w-full transition-colors border-border shadow-none ${getTodayRowClassName(event)}`}>
+                      <CardContent className="flex items-start gap-1.5">
                         {event.sourceType === "study_plan" ? (
                           <span
                             aria-hidden="true"
@@ -881,11 +881,11 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
                                 setOpenWeekPopoverKey(event.key);
                               }}
                               style={{ top, height }}>
-                                <Card className={cn(
+                                <Card size="small" className={cn(
                                   "h-full w-full overflow-hidden transition-all border-border shadow-none",
                                   isSelected ? "bg-[#111111] text-white border-transparent" : "bg-[#f8fafc] text-[#0f172a] hover:bg-[#eef2f7]"
                                 )}>
-                                  <CardContent className="p-1.5 relative h-full w-full">
+                                  <CardContent className="relative h-full w-full">
                                     {event.isCompleted ? (
                                       <span
                                         className={`absolute right-1 top-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full ${

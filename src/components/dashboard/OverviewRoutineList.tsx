@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, ChevronRight, Dumbbell, ExternalLink, Loader2, NotebookPen } from "lucide-react";
+import { CheckCircle2, ChevronRight, Dumbbell, ExternalLink, Loader2, NotebookPen, Coffee } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { OverviewRoutineItem } from "@/lib/overview-routine";
@@ -101,9 +101,12 @@ export default function OverviewRoutineList({
 
   if (sortedItems.length === 0) {
     return (
-      <div className="flex min-h-[240px] items-center justify-center px-6 text-center">
-        <div className="space-y-2 text-muted-foreground">
-          <p className="text-sm font-medium">Routine is clear today.</p>
+      <div className="flex min-h-[240px] flex-col items-center justify-center px-6 text-center">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-border">
+          <Coffee className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <div className="space-y-1 text-muted-foreground">
+          <p className="text-sm font-medium text-foreground">Routine is clear today.</p>
           <p className="text-sm">No scheduled tasks, workouts, or due items.</p>
         </div>
       </div>

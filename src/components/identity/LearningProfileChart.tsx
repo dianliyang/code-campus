@@ -25,7 +25,7 @@ export default function LearningProfileChart({
 
   if (items.length === 0 || total === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border px-5 py-8">
+      <div className="px-5 py-12">
         <div className="mx-auto flex max-w-sm flex-col items-center text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border">
             <Orbit className="h-5 w-5 text-muted-foreground" />

@@ -107,14 +107,14 @@ function SidebarLinkItem({
         asChild
         isActive={active}
         tooltip={title}
-        className={active ? "bg-sidebar-accent/90 font-semibold text-sidebar-foreground" : ""}
+        className={active ? "bg-sidebar-accent text-sidebar-accent-foreground font-bold shadow-sm" : ""}
       >
         <Link
           href={href}
           prefetch={false}
-          className={active ? "font-semibold text-foreground" : ""}
+          className={active ? "font-bold text-sidebar-accent-foreground" : ""}
         >
-          <Icon />
+          <Icon className={active ? "text-sidebar-accent-foreground" : ""} />
           <span>{title}</span>
           {trailingSpin ? <Loader2 className="ml-auto animate-spin" /> : null}
         </Link>
@@ -212,9 +212,11 @@ export default function LeftRail({ labels }: LeftRailProps) {
       <SidebarFooter className={`sticky bottom-0 z-10 bg-sidebar ${collapsed ? "px-0" : "px-2"}`}>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Help">
-              <CircleHelp />
-              <span>Help</span>
+            <SidebarMenuButton tooltip="Help" asChild isActive={pathname === "/help"}>
+              <Link href="/help">
+                <CircleHelp />
+                <span>Help</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

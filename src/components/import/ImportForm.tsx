@@ -185,9 +185,8 @@ export default function ImportForm({ dict }: ImportFormProps) {
   return (
     <div className="w-full space-y-4 pb-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{dict.label}</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-          {dict.title_main} <span className="text-muted-foreground">{dict.title_sub}</span>
+          {dict.title_main}
         </h1>
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles, Cpu, History } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 type UsageStats = {
@@ -158,7 +158,10 @@ export default function UsageStatisticsPanel() {
       <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
         <Card>
           <CardContent>
-          <h4 className="text-sm font-semibold">By Feature</h4>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <h4 className="text-sm font-semibold">By Feature</h4>
+          </div>
           <div className="mt-2 space-y-2">
             {featureRows.length > 0 ? (
               featureRows.slice(0, 10).map(([feature, row]) => (
@@ -178,7 +181,10 @@ export default function UsageStatisticsPanel() {
 
         <Card>
           <CardContent>
-          <h4 className="text-sm font-semibold">By Model</h4>
+          <div className="flex items-center gap-2">
+            <Cpu className="h-4 w-4 text-muted-foreground" />
+            <h4 className="text-sm font-semibold">By Model</h4>
+          </div>
           <div className="mt-2 space-y-2">
             {modelRows.length > 0 ? (
               modelRows.slice(0, 10).map(([model, row]) => (
@@ -199,7 +205,10 @@ export default function UsageStatisticsPanel() {
 
       <Card>
         <CardContent>
-        <h4 className="text-sm font-semibold">Recent AI Responses</h4>
+        <div className="flex items-center gap-2">
+          <History className="h-4 w-4 text-muted-foreground" />
+          <h4 className="text-sm font-semibold">Recent AI Responses</h4>
+        </div>
         {stats.recentResponses.length > 0 ? (
           <div className="mt-2 overflow-x-auto">
             <table className="w-full text-xs">

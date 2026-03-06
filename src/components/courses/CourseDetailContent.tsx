@@ -105,6 +105,7 @@ interface CourseDetailContentProps {
     description: string | null;
   }>;
   scheduleItems?: Array<{
+    id: number;
     date: string;
     title: string | null;
     kind: string | null;
@@ -112,7 +113,9 @@ interface CourseDetailContentProps {
     durationMinutes: number | null;
   }>;
   studyLogs?: Array<{
-    planId: number;
+    planId?: number;
+    scheduleId?: number;
+    assignmentId?: number;
     logDate: string;
     isCompleted: boolean;
   }>;
@@ -554,12 +557,32 @@ export default function CourseDetailContent({
   const completionByDate = useMemo(() => {
     const next = new Map<string, boolean>();
     for (const log of studyLogs || []) {
-      if (!log.isCompleted) continue;
+      if (!log.isCompleted || log.scheduleId || log.assignmentId) continue;
       const dateIso = String(log.logDate || "").includes("T")
         ? String(log.logDate).split("T")[0]
         : String(log.logDate || "");
       if (!dateIso) continue;
       next.set(dateIso, true);
+    }
+    return next;
+  }, [studyLogs]);
+
+  const scheduleCompletion = useMemo(() => {
+    const next = new Map<number, boolean>();
+    for (const log of studyLogs || []) {
+      if (log.isCompleted && log.scheduleId) {
+        next.set(log.scheduleId, true);
+      }
+    }
+    return next;
+  }, [studyLogs]);
+
+  const assignmentCompletion = useMemo(() => {
+    const next = new Map<number, boolean>();
+    for (const log of studyLogs || []) {
+      if (log.isCompleted && log.assignmentId) {
+        next.set(log.assignmentId, true);
+      }
     }
     return next;
   }, [studyLogs]);
@@ -576,8 +599,18 @@ export default function CourseDetailContent({
       scheduleItems,
       studyPlans: editablePlans,
       completionByDate,
+      scheduleCompletion,
+      assignmentCompletion,
     });
-  }, [assignments, completionByDate, course.title, editablePlans, scheduleItems]);
+  }, [
+    assignments,
+    completionByDate,
+    course.title,
+    editablePlans,
+    scheduleItems,
+    scheduleCompletion,
+    assignmentCompletion,
+  ]);
 
   useEffect(() => {
     if (!studyPlanCalendar.range) {
@@ -2158,6 +2191,14 @@ export default function CourseDetailContent({
                     {categoryLabel || "-"}
                   </dd>
                 </div>
+                {(course.prerequisites || course.details?.prerequisites) && (
+                  <div className="flex flex-col py-1 gap-1">
+                    <dt className="text-[#666] shrink-0">Prerequisites</dt>
+                    <dd className="text-[13px] text-[#444] leading-relaxed">
+                      {course.prerequisites || course.details?.prerequisites}
+                    </dd>
+                  </div>
+                )}
                 <div className="flex flex-col py-1 gap-2">
                   <dt className="text-[#666]">Available Terms</dt>
                   <dd className="font-medium text-[#222] flex flex-wrap gap-1.5 justify-end">

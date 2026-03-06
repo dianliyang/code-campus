@@ -520,7 +520,8 @@ export default function CourseDetailTopSection({
                 <label className="text-xs font-medium text-[#666]">Semesters</label>
                 <Input
                 value={formData.semestersText}
-                onChange={(e) => setFormData((p) => ({ ...p, semestersText: e.target.value }))}
+                readOnly
+                className="bg-gray-50 text-gray-500 cursor-not-allowed opacity-70"
                 placeholder={semestersPlaceholder} />
               
               </div>

@@ -90,7 +90,7 @@ async function CourseDetailData({ id, dict }: {id: string;dict: Dictionary['dash
   const studyLogsPromise = user ?
   supabase.
   from("study_logs").
-  select("plan_id, log_date, is_completed").
+  select("plan_id, log_date, is_completed, course_schedule_id, course_assignment_id").
   eq("user_id", user.id) :
   Promise.resolve({ data: [] });
 
@@ -109,7 +109,7 @@ async function CourseDetailData({ id, dict }: {id: string;dict: Dictionary['dash
 
   const courseSchedulesPromise = (supabase as any // eslint-disable-line @typescript-eslint/no-explicit-any
   ).from("course_schedules").
-  select("schedule_date, task_title, task_kind, focus, duration_minutes").
+  select("id, schedule_date, task_title, task_kind, focus, duration_minutes").
   eq("course_id", Number(id)).
   order("schedule_date", { ascending: true }).
   order("id", { ascending: true });
@@ -176,9 +176,10 @@ async function CourseDetailData({ id, dict }: {id: string;dict: Dictionary['dash
   }));
   const studyPlanIds = new Set(editableStudyPlans.map((plan) => plan.id));
   const courseStudyLogs = (studyLogRows || [])
-  .filter((log) => log.plan_id != null && studyPlanIds.has(log.plan_id))
   .map((log) => ({
-    planId: log.plan_id!,
+    planId: log.plan_id || undefined,
+    scheduleId: log.course_schedule_id || undefined,
+    assignmentId: log.course_assignment_id || undefined,
     logDate: log.log_date,
     isCompleted: Boolean(log.is_completed),
   }));
@@ -211,12 +212,14 @@ async function CourseDetailData({ id, dict }: {id: string;dict: Dictionary['dash
         description: item.description
       }))}
       scheduleItems={(courseScheduleRows || []).map((row: {
+        id: number;
         schedule_date: string;
         task_title: string | null;
         task_kind: string | null;
         focus: string | null;
         duration_minutes: number | null;
       }) => ({
+        id: row.id,
         date: row.schedule_date,
         title: row.task_title,
         kind: row.task_kind,

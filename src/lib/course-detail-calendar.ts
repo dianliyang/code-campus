@@ -8,6 +8,7 @@ export interface CourseDetailCalendarAssignment {
 }
 
 export interface CourseDetailCalendarScheduleItem {
+  id: number;
   date: string;
   title: string | null;
   kind: string | null;
@@ -72,13 +73,13 @@ function inferCalendarKind(input: Array<string | null | undefined>): string {
     .toLowerCase();
 
   if (!text.trim()) return "task";
+  if (/\b(lecture|watch|video|recitation)\b/.test(text)) return "lecture";
   if (/\b(read|reading|chapter|notes|textbook)\b/.test(text)) return "reading";
   if (/\b(lab|studio|workshop)\b/.test(text)) return "lab";
   if (/\b(project|milestone)\b/.test(text)) return "project";
   if (/\b(exam|midterm|final)\b/.test(text)) return "exam";
   if (/\b(quiz)\b/.test(text)) return "quiz";
   if (/\b(assignment|homework|hw\b|pset|problem set)\b/.test(text)) return "assignment";
-  if (/\b(lecture|watch|video|recitation)\b/.test(text)) return "lecture";
   return "task";
 }
 
@@ -100,12 +101,16 @@ export function buildCourseDetailCalendar({
   scheduleItems,
   studyPlans: _studyPlans,
   completionByDate = new Map<string, boolean>(),
+  scheduleCompletion = new Map<number, boolean>(),
+  assignmentCompletion = new Map<number, boolean>(),
 }: {
   courseTitle: string;
   assignments: CourseDetailCalendarAssignment[];
   scheduleItems: CourseDetailCalendarScheduleItem[];
   studyPlans: CourseDetailCalendarStudyPlan[];
   completionByDate?: Map<string, boolean>;
+  scheduleCompletion?: Map<number, boolean>;
+  assignmentCompletion?: Map<number, boolean>;
 }): CourseDetailCalendarResult {
   const scheduleRows = scheduleItems
     .map((item) => {
@@ -126,7 +131,7 @@ export function buildCourseDetailCalendar({
         kind,
         badgeLabel: kind,
         timeLabel: duration || null,
-        isCompleted: completionByDate.get(dateIso) ?? false,
+        isCompleted: scheduleCompletion.get(item.id) ?? completionByDate.get(dateIso) ?? false,
       };
     })
     .filter((row): row is { dateIso: string; label: string; meta: string; kind: string; badgeLabel: string; timeLabel: string | null; isCompleted: boolean } => row !== null);
@@ -146,13 +151,13 @@ export function buildCourseDetailCalendar({
         kind,
         badgeLabel: kind,
         timeLabel: null,
-        isCompleted: completionByDate.get(dateIso) ?? false,
+        isCompleted: assignmentCompletion.get(item.id) ?? completionByDate.get(dateIso) ?? false,
       };
     })
     .filter((row): row is { dateIso: string; label: string; meta: string; kind: string; badgeLabel: string; timeLabel: null; isCompleted: boolean } => row !== null);
 
-  const rows = [...scheduleRows, ...deadlineRows];
-  if (rows.length === 0) {
+  const rawRows = [...scheduleRows, ...deadlineRows];
+  if (rawRows.length === 0) {
     return {
       range: null,
       months: [],
@@ -160,14 +165,30 @@ export function buildCourseDetailCalendar({
     };
   }
 
-  const datedSorted = rows.map((row) => row.dateIso).sort();
-  const rangeStart = parseIsoDate(datedSorted[0])!;
-  const rangeEnd = parseIsoDate(datedSorted[datedSorted.length - 1])!;
-  const rangeStartIso = toIsoDateUtc(rangeStart);
-  const rangeEndIso = toIsoDateUtc(rangeEnd);
+  // Deduplicate and group by date
   const eventsByDate = new Map<string, CourseDetailCalendarEvent[]>();
-  for (const row of rows) {
+  for (const row of rawRows) {
     const list = eventsByDate.get(row.dateIso) || [];
+    
+    // Check if an event with the same label already exists on this day
+    const existingIndex = list.findIndex(e => e.label === row.label);
+    if (existingIndex >= 0) {
+      const existing = list[existingIndex];
+      // Merge completion: if any is completed, the merged one is completed
+      existing.isCompleted = existing.isCompleted || row.isCompleted;
+      
+      // Prefer row with timeLabel (duration)
+      if (!existing.timeLabel && row.timeLabel) {
+        existing.timeLabel = row.timeLabel;
+      }
+      
+      // Update meta if the new one is more descriptive (has duration)
+      if (row.timeLabel && !existing.meta.includes('m')) {
+        existing.meta = row.meta;
+        existing.kind = row.kind;
+        existing.badgeLabel = row.badgeLabel;
+      }
+    } else {
       list.push({
         label: row.label,
         meta: row.meta,
@@ -176,8 +197,15 @@ export function buildCourseDetailCalendar({
         timeLabel: row.timeLabel,
         isCompleted: row.isCompleted,
       });
+    }
     eventsByDate.set(row.dateIso, list);
   }
+
+  const datedSorted = Array.from(eventsByDate.keys()).sort();
+  const rangeStart = parseIsoDate(datedSorted[0])!;
+  const rangeEnd = parseIsoDate(datedSorted[datedSorted.length - 1])!;
+  const rangeStartIso = toIsoDateUtc(rangeStart);
+  const rangeEndIso = toIsoDateUtc(rangeEnd);
 
   const months: CourseDetailCalendarResult["months"] = [];
   for (

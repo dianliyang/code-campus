@@ -18,33 +18,31 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="w-full max-w-lg space-y-6 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center text-muted-foreground">
-          <AlertCircle className="h-5 w-5" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-            Something interrupted the dashboard
-          </h2>
-          <p className="text-sm leading-6 text-muted-foreground">
-            The page could not finish loading. Try again, or return to your courses and continue from there.
-          </p>
-        </div>
-        {error.digest ? (
-          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground/70">
-            Ref {error.digest}
-          </p>
-        ) : null}
-        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button onClick={reset}>
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Try again
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/courses">Back to Courses</Link>
-          </Button>
-        </div>
+    <div className="flex h-full min-h-[400px] flex-col items-center justify-center px-6 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-rose-100 bg-rose-50/10">
+        <AlertCircle className="h-5 w-5 text-rose-600" />
+      </div>
+      <h3 className="mt-4 text-base font-semibold tracking-[-0.02em] text-foreground">
+        Something went wrong
+      </h3>
+      <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-rose-600/70">
+        Fatal sequence error
+      </p>
+      <p className="mt-3 max-w-[280px] text-sm leading-6 text-muted-foreground">
+        An unexpected error occurred. Our team has been notified. Ref: {error.digest || "unknown"}
+      </p>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <Button 
+          variant="outline" 
+          onClick={reset}
+          className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+        >
+          <RotateCcw className="mr-2 h-3.5 w-3.5" />
+          Try Again
+        </Button>
+        <Button variant="ghost" asChild>
+          <Link href="/overview">Return Home</Link>
+        </Button>
       </div>
     </div>
   );

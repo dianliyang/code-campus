@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Clock,
   ExternalLink,
+  Loader2,
   MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -125,9 +126,11 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
   );
 
   const allEvents = useMemo(() => {
-    return scheduleRows.map((row) => {
-      const startMinutes = parseMinutes(row.start_time);
-      const endMinutes = parseMinutes(row.end_time);
+    return scheduleRows
+      .filter((row) => !(row.source_type === "study_plan" && row.plan_id && !row.schedule_id && !row.assignment_id))
+      .map((row) => {
+        const startMinutes = parseMinutes(row.start_time);
+        const endMinutes = parseMinutes(row.end_time);
       
       let uiSourceType: "study_plan" | "workout" | "assignment" = "study_plan";
       if (row.source_type === 'workout') uiSourceType = 'workout';
@@ -223,15 +226,6 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
     setSelectedSmallDateKey(nowKey);
     setMonthCursor(new Date(now.getFullYear(), now.getMonth(), 1));
   };
-  const getEventMetaLine = (event: CalendarEvent) => {
-    const parts: string[] = [];
-    if (typeof event.credit === "number") parts.push(`${event.credit}`);
-    parts.push(event.courseCode);
-    if (event.kind && event.kind !== "task" && event.kind !== "study") {
-      parts.push(event.kind);
-    }
-    return parts.join(" · ");
-  };
   const getEventDurationLabel = (event: CalendarEvent) => {
     const durationMinutes = Math.max(0, event.endMinutes - event.startMinutes);
     if (!durationMinutes) return "0m";
@@ -251,16 +245,16 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
     setPendingEventKeys((prev) => ({ ...prev, [event.key]: true }));
     try {
       const isWorkout = event.sourceType === "workout";
-      const endpoint = isWorkout ? "/api/workouts/attendance" : "/api/study-plans/update";
+      const endpoint = isWorkout ? "/api/workouts/attendance" : "/api/schedule";
       
       const payload = isWorkout 
-        ? { workout_id: event.workoutId, date: event.date, is_attended: !event.isCompleted }
+        ? { workoutId: event.workoutId, date: event.date }
         : {
-            plan_id: event.planId,
-            schedule_id: event.scheduleId,
-            assignment_id: event.assignmentId,
+            action: "toggle_complete",
+            planId: event.planId,
+            scheduleId: event.scheduleId,
+            assignmentId: event.assignmentId,
             date: event.date,
-            is_completed: !event.isCompleted
           };
 
       const res = await fetch(endpoint, {
@@ -352,29 +346,41 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                 {todayEvents.map((event) => (
                   <Card
                     key={event.key}
+                    size="small"
                     className={cn(
                       "group relative transition-all hover:shadow-md border-border/50",
                       event.isCompleted && "opacity-60 grayscale-[0.5]"
                     )}
                   >
                     <CardContent className="p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <p className="line-clamp-1 text-[13px] font-bold text-foreground leading-tight">{event.title}</p>
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground/80 font-medium">
-                            <span className="shrink-0">{event.courseCode}</span>
-                            <span className="shrink-0 text-muted-foreground/30">•</span>
-                            <span className="shrink-0">{getEventDurationLabel(event)}</span>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1 space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">
+                              {event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}
+                            </span>
                             {event.kind && (
+                              <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-bold uppercase leading-none tracking-tight bg-muted/50 text-muted-foreground border-none">
+                                {event.kind}
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          <p className="line-clamp-2 text-[13px] font-bold text-foreground leading-snug">
+                            {event.title}
+                          </p>
+                          
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground/80 font-medium">
+                            <span className="shrink-0 uppercase">{event.courseCode}</span>
+                            {event.location && (
                               <>
-                                <span className="shrink-0 text-muted-foreground/30">•</span>
-                                <Badge variant="secondary" className="h-4 px-1 text-[9px] font-bold uppercase leading-none tracking-tight">
-                                  {event.kind}
-                                </Badge>
+                                <span className="text-muted-foreground/30">•</span>
+                                <span className="truncate uppercase">{event.location}</span>
                               </>
                             )}
                           </div>
                         </div>
+                        
                         <button
                           onClick={() => toggleEventCompletion(event)}
                           disabled={pendingEventKeys[event.key]}
@@ -385,11 +391,13 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                               : "border-muted-foreground/20 hover:border-primary/50 bg-background"
                           )}
                         >
-                          {event.isCompleted && (
+                          {pendingEventKeys[event.key] ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                          ) : event.isCompleted ? (
                             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
-                          )}
+                          ) : null}
                         </button>
                       </div>
                     </CardContent>
@@ -459,22 +467,25 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                           onOpenChange={(open) => setOpenWeekPopoverKey(open ? event.key : null)}
                         >
                           <PopoverTrigger asChild>
-                            <button
+                            <Card
+                              size="small"
                               style={getEventStyle(event)}
                               className={cn(
-                                "absolute left-1 right-1 rounded-md border-l-4 px-2 py-1 text-left transition-all hover:z-20 hover:scale-[1.02] hover:shadow-lg",
+                                "absolute left-1 right-1 rounded-md border-l-4 p-0 text-left transition-all hover:z-20 hover:scale-[1.02] hover:shadow-lg cursor-pointer",
                                 event.sourceType === "workout"
-                                  ? "border-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20"
-                                  : "border-blue-500 bg-blue-500/10 hover:bg-blue-500/20",
+                                  ? "border-emerald-500 bg-emerald-500/10"
+                                  : "border-blue-500 bg-blue-500/10",
                                 event.isCompleted && "opacity-60 grayscale-[0.3]"
                               )}
                             >
-                              <p className="truncate text-[11px] font-bold leading-tight text-foreground">{event.title}</p>
-                              <div className="mt-0.5 flex items-center gap-1.5 opacity-70">
-                                <Clock className="h-2.5 w-2.5" />
-                                <span className="text-[9px] font-bold uppercase leading-none">{event.startTime.slice(0, 5)}</span>
-                              </div>
-                            </button>
+                              <CardContent className="p-2 h-full">
+                                <p className="truncate text-[11px] font-bold leading-tight text-foreground">{event.title}</p>
+                                <div className="mt-0.5 flex items-center gap-1.5 opacity-70">
+                                  <Clock className="h-2.5 w-2.5" />
+                                  <span className="text-[9px] font-bold uppercase leading-none">{event.startTime.slice(0, 5)}</span>
+                                </div>
+                              </CardContent>
+                            </Card>
                           </PopoverTrigger>
                           <PopoverContent className="w-72 p-0 shadow-2xl" side="right" align="start" sideOffset={8}>
                             <div className={cn("h-1.5 w-full rounded-t-lg", event.sourceType === "workout" ? "bg-emerald-500" : "bg-blue-500")} />
@@ -485,27 +496,35 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                                   <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-tight">
                                     {event.courseCode}
                                   </Badge>
-                                  {event.kind && (
-                                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-tight">
-                                      {event.kind}
-                                    </Badge>
-                                  )}
+                                  <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">
+                                    {event.university}
+                                  </span>
                                 </div>
                               </div>
 
                               <div className="space-y-2 border-t border-border pt-3">
                                 <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted/50">
+                                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
                                     <Clock className="h-3.5 w-3.5" />
                                   </div>
-                                  <span>{event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}</span>
+                                  <span className="leading-none">{event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}</span>
                                 </div>
                                 {event.location && (
                                   <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted/50">
+                                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
                                       <MapPin className="h-3.5 w-3.5" />
                                     </div>
-                                    <span className="line-clamp-1">{event.location}</span>
+                                    <span className="line-clamp-1 leading-none">{event.location}</span>
+                                  </div>
+                                )}
+                                {event.kind && (
+                                  <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+                                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground/70">
+                                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                                      </svg>
+                                    </div>
+                                    <span className="uppercase tracking-wide leading-none">{event.kind}</span>
                                   </div>
                                 )}
                               </div>
@@ -517,6 +536,9 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                                   onClick={() => toggleEventCompletion(event)}
                                   disabled={pendingEventKeys[event.key]}
                                 >
+                                  {pendingEventKeys[event.key] ? (
+                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                  ) : null}
                                   {event.isCompleted ? "Undo" : event.sourceType === "workout" ? "Mark attended" : "Mark complete"}
                                 </Button>
                                 {event.courseId && (

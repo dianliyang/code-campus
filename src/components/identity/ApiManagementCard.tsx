@@ -172,10 +172,23 @@ export default function ApiManagementCard() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.error || "Failed to save");
+      
+      // Update local items state instead of calling load()
+      setItems((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, isActive: draft.isActive, isReadOnly: draft.isReadOnly } : it))
+      );
+      
       showSaved("Updated.");
-      await load();
     } catch (error) {
       showSaved(error instanceof Error ? error.message : "Failed to save");
+      // Rollback draft on error
+      const item = items.find(it => it.id === id);
+      if (item) {
+        setDrafts(prev => ({
+          ...prev,
+          [id]: { isActive: item.isActive, isReadOnly: item.isReadOnly }
+        }));
+      }
     } finally {
       setWorkingId(null);
     }
@@ -189,8 +202,16 @@ export default function ApiManagementCard() {
       const response = await fetch(`/api/settings/api-key?id=${id}`, { method: "DELETE" });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.error || "Failed to delete key");
+      
+      // Remove from local state
+      setItems((prev) => prev.filter((it) => it.id !== id));
+      setDrafts((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      
       showSaved("API key deleted.");
-      await load();
     } catch (error) {
       showSaved(error instanceof Error ? error.message : "Failed to delete key");
     } finally {

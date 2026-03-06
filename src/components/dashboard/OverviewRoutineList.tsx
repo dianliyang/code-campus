@@ -109,13 +109,13 @@ export default function OverviewRoutineList({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-black/10">
+    <div className="space-y-1">
       {sortedItems.map((item) => {
         const isPending = Boolean(pendingKeys[item.key]);
         return (
           <div
             key={item.key}
-            className="grid gap-3 border-b border-black/5 px-4 py-3 last:border-b-0 sm:grid-cols-[96px_minmax(0,1fr)_auto] sm:items-center"
+            className="grid gap-3 border-b border-border/50 pb-4 last:border-b-0 last:pb-0 sm:grid-cols-[96px_minmax(0,1fr)_auto] sm:items-center"
           >
               <div className="space-y-1">
                 <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">{item.timeLabel}</p>

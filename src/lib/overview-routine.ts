@@ -173,8 +173,8 @@ export function buildOverviewRoutineItems({
       coursesWithTasksToday.add(sch.course_id);
       const isDone = Boolean(taskLogMap.get(sch.id));
       const metaBits = [
-        sch.courses?.course_code || sch.courses?.title || "Task",
-        sch.courses?.university || null,
+        sch.courses?.course_code || "Task",
+        sch.courses?.title || null,
       ].filter(Boolean);
       
       const startMin = 600; // Default 10:00
@@ -208,8 +208,8 @@ export function buildOverviewRoutineItems({
     .map((plan) => {
       const isDone = Boolean(logMap.get(`${plan.id}:${date}`));
       const metaBits = [
-        plan.courses?.course_code || plan.courses?.title || "Study plan",
-        plan.courses?.university || null,
+        plan.courses?.course_code || "Study plan",
+        plan.courses?.title || null,
       ].filter(Boolean);
       return {
         key: `study:${plan.id}:${date}`,
@@ -258,8 +258,8 @@ export function buildOverviewRoutineItems({
     .map((assignment) => {
       const isDone = Boolean(assignmentLogMap.get(assignment.id));
       const metaBits = [
-        assignment.courses?.course_code || assignment.courses?.title || "Assignment",
-        assignment.courses?.university || null,
+        assignment.courses?.course_code || "Assignment",
+        assignment.courses?.title || null,
       ].filter(Boolean);
       return {
         key: `assignment:${assignment.id}`,

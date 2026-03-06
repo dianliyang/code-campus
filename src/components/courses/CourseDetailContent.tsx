@@ -1125,6 +1125,7 @@ export default function CourseDetailContent({
                     editablePlans.map((plan, idx) => (
                       <WeeklyScheduleCard
                         key={plan.id ?? idx}
+                        size="small"
                         title={
                           editingPlanIndex !== idx ? (
                             <div className="flex flex-col gap-1">
@@ -1889,30 +1890,31 @@ export default function CourseDetailContent({
                               ).map((event, idx) => (
                                 <li
                                   key={`${selectedCalendarDate}-${event.label}-${idx}`}
-                                  className="rounded-md border border-black/10 bg-[#fafafa] p-2"
                                 >
-                                  <div className="space-y-2">
-                                    <p className="text-[13px] font-medium text-[#2f2f2f]">
-                                      {event.label}
-                                    </p>
-                                    {event.timeLabel ? (
-                                      <div className="flex items-center gap-1 text-[11px] text-[#666]">
-                                        <Clock className="h-3 w-3" />
-                                        <span>{event.timeLabel}</span>
+                                  <Card size="small" className="bg-transparent shadow-none border-border/50">
+                                    <CardContent className="space-y-2 p-2.5">
+                                      <p className="text-[13px] font-medium text-[#2f2f2f]">
+                                        {event.label}
+                                      </p>
+                                      {event.timeLabel ? (
+                                        <div className="flex items-center gap-1 text-[11px] text-[#666]">
+                                          <Clock className="h-3 w-3" />
+                                          <span>{event.timeLabel}</span>
+                                        </div>
+                                      ) : null}
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-[11px] font-medium text-[#666]">
+                                          {event.isCompleted ? "Completed" : "Not completed"}
+                                        </span>
+                                        <Badge
+                                          variant="secondary"
+                                          className={`h-5 px-1.5 text-[9px] uppercase ${getEventKindBadgeClass(event.kind)}`}
+                                        >
+                                          {event.badgeLabel || "task"}
+                                        </Badge>
                                       </div>
-                                    ) : null}
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className="text-[11px] font-medium text-[#666]">
-                                        {event.isCompleted ? "Completed" : "Not completed"}
-                                      </span>
-                                      <Badge
-                                        variant="secondary"
-                                        className={`h-5 px-1.5 text-[9px] uppercase ${getEventKindBadgeClass(event.kind)}`}
-                                      >
-                                        {event.badgeLabel || "task"}
-                                      </Badge>
-                                    </div>
-                                  </div>
+                                    </CardContent>
+                                  </Card>
                                 </li>
                               ))}
                             </ul>

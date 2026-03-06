@@ -41,27 +41,38 @@ export default function CourseMomentumCard({
         </div>
       </div>
 
-      <div className="grid flex-1 border-b border-border grid-cols-3 divide-x divide-border">
-        <div className="flex flex-col items-center justify-center gap-2 p-5 text-center transition-colors hover:bg-muted/5">
-          <CalendarClock className="h-4 w-4 text-muted-foreground" />
-          <div className="min-w-0">
-            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/80 truncate">Today</p>
-            <p className="text-xl font-bold text-foreground leading-none mt-1">{routineItems.length}</p>
+      <div className="flex flex-1 border-b border-border p-5 items-end justify-between gap-4">
+        <div className="flex-1 flex flex-col items-center gap-2 group cursor-default">
+          <div className="w-full relative flex flex-col items-center justify-end h-24">
+            <div 
+              className="w-full max-w-[40px] rounded-t-sm bg-stone-100 transition-colors group-hover:bg-stone-200" 
+              style={{ height: `${Math.min(100, (routineItems.length / 15) * 100)}%` }}
+            />
+            <p className="absolute bottom-2 text-lg font-bold text-stone-900">{routineItems.length}</p>
           </div>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80">Today</p>
         </div>
-        <div className="flex flex-col items-center justify-center gap-2 p-5 text-center transition-colors hover:bg-muted/5">
-          <Activity className="h-4 w-4 text-muted-foreground" />
-          <div className="min-w-0">
-            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/80 truncate">In Progress</p>
-            <p className="text-xl font-bold text-foreground leading-none mt-1">{inProgressCount}</p>
+
+        <div className="flex-1 flex flex-col items-center gap-2 group cursor-default">
+          <div className="w-full relative flex flex-col items-center justify-end h-24">
+            <div 
+              className="w-full max-w-[40px] rounded-t-sm bg-blue-50 transition-colors group-hover:bg-blue-100" 
+              style={{ height: `${Math.min(100, (inProgressCount / 15) * 100)}%` }}
+            />
+            <p className="absolute bottom-2 text-lg font-bold text-blue-900">{inProgressCount}</p>
           </div>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80">In Progress</p>
         </div>
-        <div className="flex flex-col items-center justify-center gap-2 p-5 text-center transition-colors hover:bg-muted/5">
-          <Dumbbell className="h-4 w-4 text-muted-foreground" />
-          <div className="min-w-0">
-            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/80 truncate">Checked In</p>
-            <p className="text-xl font-bold text-foreground leading-none mt-1">{attendedToday}</p>
+
+        <div className="flex-1 flex flex-col items-center gap-2 group cursor-default">
+          <div className="w-full relative flex flex-col items-center justify-end h-24">
+            <div 
+              className="w-full max-w-[40px] rounded-t-sm bg-emerald-50 transition-colors group-hover:bg-emerald-100" 
+              style={{ height: `${Math.min(100, (attendedToday / 15) * 100 || 5)}%` }}
+            />
+            <p className="absolute bottom-2 text-lg font-bold text-emerald-900">{attendedToday}</p>
           </div>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80 whitespace-nowrap">Checked In</p>
         </div>
       </div>
 

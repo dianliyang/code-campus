@@ -138,16 +138,16 @@ export default function OverviewRoutineList({
               </div>
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <p className={`text-sm font-bold tracking-tight ${item.isDone ? "text-muted-foreground line-through" : "text-[#0f172a]"}`}>
+                  <p className={`text-sm font-medium tracking-tight ${item.isDone ? "text-muted-foreground line-through" : "text-[#0f172a]"}`}>
                     {item.title}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                  <span>{item.meta.split(' · ')[0]}</span>
+                  <span className="truncate max-w-[240px]">{item.meta}</span>
                   {item.location && (
                     <>
                       <span className="text-muted-foreground/30 text-[8px] tracking-normal">·</span>
-                      <span>{item.location}</span>
+                      <span className="truncate max-w-[120px]">{item.location}</span>
                     </>
                   )}
                 </div>

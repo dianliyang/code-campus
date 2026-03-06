@@ -14,6 +14,7 @@ interface WeeklyScheduleCardProps {
   headerRight?: ReactNode;
   children?: ReactNode;
   footer?: ReactNode;
+  size?: "default" | "small";
 }
 
 export default function WeeklyScheduleCard({
@@ -21,9 +22,10 @@ export default function WeeklyScheduleCard({
   headerRight,
   children,
   footer,
+  size = "default",
 }: WeeklyScheduleCardProps) {
   return (
-    <Card>
+    <Card size={size}>
       <CardHeader className="px-4 py-2">
         <div className="flex items-start justify-between">
           <CardTitle className="min-w-0">{title}</CardTitle>

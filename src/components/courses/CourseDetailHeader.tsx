@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Course } from "@/types";
 import UniversityIcon from "@/components/common/UniversityIcon";
+import CourseCodeHoverCard from "@/components/common/CourseCodeHoverCard";
 import { deleteCourse } from "@/actions/courses";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PenSquare, Loader2, Trash2, ArrowUpRight, Sparkles, Plus, X, ChevronDown, ChevronUp, Check } from "lucide-react";
@@ -373,52 +374,12 @@ export default function CourseDetailHeader({
             {course.title}
           </h1>
           <div className="flex items-center gap-1.5" data-testid="course-detail-meta">
-            {codeBreakdown.length > 0 ? (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button type="button" className="inline-flex items-center gap-1.5 text-left">
-                    <span className="text-[11px] font-medium text-[#555] truncate">
-                      {course.university}
-                    </span>
-                    <span className="text-[11px] font-medium text-[#555]">•</span>
-                    <span className="text-[11px] font-medium text-[#555] truncate">
-                      {course.courseCode}
-                    </span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="start">
-                  <PopoverHeader>
-                    <PopoverTitle>Course Code Breakdown</PopoverTitle>
-                    <PopoverDescription>
-                      Structure and meaning of this course code.
-                    </PopoverDescription>
-                  </PopoverHeader>
-                  <dl className="mt-2 space-y-1.5 text-[11px]">
-                    {codeBreakdown.map((item, idx) => (
-                      <div key={`${item.label}-${idx}`} className="flex justify-between gap-3">
-                        <dt className="text-[#666]">{item.label}</dt>
-                        <dd className="text-right">
-                          <p className="font-medium text-[#222]">{item.value}</p>
-                          {item.detail ? (
-                            <p className="text-[10px] text-[#777]">{item.detail}</p>
-                          ) : null}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </PopoverContent>
-              </Popover>
-            ) : (
-              <>
-                <span className="text-[11px] font-medium text-[#555] truncate">
-                  {course.university}
-                </span>
-                <span className="text-[11px] font-medium text-[#555]">•</span>
-                <span className="text-[11px] font-medium text-[#555] truncate">
-                  {course.courseCode}
-                </span>
-              </>
-            )}
+            <CourseCodeHoverCard
+              university={course.university}
+              courseCode={course.courseCode}
+              title={course.title}
+              className="text-[11px] font-medium text-[#555]"
+            />
             {course.isInternal &&
             <span className="text-[11px] font-medium text-[#333] px-1 shrink-0">
                 Internal

@@ -1,14 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { toast } from "sonner";
-import { Copy, BookOpen, GraduationCap, MapPin } from "lucide-react";
+import { Copy, BookOpen, GraduationCap, MapPin, Layers } from "lucide-react";
 import UniversityIcon from "@/components/common/UniversityIcon";
+import { getCourseCodeBreakdown } from "@/lib/course-code-breakdown";
 
 interface CourseCodeHoverCardProps {
   university: string;
@@ -34,6 +35,11 @@ export default function CourseCodeHoverCard({
       duration: 2000,
     });
   };
+
+  const breakdown = useMemo(
+    () => getCourseCodeBreakdown(university, courseCode),
+    [university, courseCode]
+  );
 
   return (
     <HoverCard openDelay={200} closeDelay={100}>
@@ -96,6 +102,30 @@ export default function CourseCodeHoverCard({
               <p className="mt-0.5 text-xs font-semibold uppercase text-emerald-600">Active</p>
             </div>
           </div>
+
+          {breakdown.length > 0 && (
+            <div className="space-y-2 border-t pt-3">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+                <Layers className="h-3 w-3" />
+                <span>Registry Breakdown</span>
+              </div>
+              <div className="grid grid-cols-1 gap-1.5">
+                {breakdown.map((item, idx) => (
+                  <div key={idx} className="flex flex-col gap-0.5 rounded-md bg-muted/30 px-2 py-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-tight text-muted-foreground/60 leading-none">
+                      {item.label}
+                    </p>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[11px] font-bold text-foreground leading-none">{item.value}</span>
+                      {item.detail && (
+                        <span className="text-[10px] text-muted-foreground leading-none truncate italic text-right max-w-[160px]">{item.detail}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <p className="text-[10px] text-muted-foreground italic border-t pt-2">
             Click code to copy to clipboard.

@@ -551,8 +551,8 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
     setMonthCursor(new Date(now.getFullYear(), now.getMonth(), 1));
   };
   const getEventMetaLine = (event: CalendarEvent) => {
-    if (typeof event.credit === "number") return `${event.credit} · ${event.university}`;
-    return `${event.courseCode} · ${event.university}`;
+    if (typeof event.credit === "number") return `${event.credit} · ${event.title}`;
+    return `${event.courseCode} · ${event.title}`;
   };
   const getEventDurationLabel = (event: CalendarEvent) => {
     const durationMinutes = Math.max(0, event.endMinutes - event.startMinutes);
@@ -630,11 +630,11 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
                               {event.title}
                             </ItemTitle>
                             <div className={`w-full flex flex-wrap items-center gap-x-1.5 text-[11px] font-medium uppercase tracking-wider mt-1 ${event.isCompleted ? "text-stone-400" : "text-muted-foreground/70"}`}>
-                              <span>{getEventMetaLine(event).split(' · ')[0]}</span>
+                              <span className="truncate max-w-[180px]">{getEventMetaLine(event)}</span>
                               {event.location && (
                                 <>
                                   <span className="text-muted-foreground/30 text-[8px] tracking-normal">·</span>
-                                  <span>{event.location}</span>
+                                  <span className="truncate max-w-[80px]">{event.location}</span>
                                 </>
                               )}
                             </div>
@@ -876,7 +876,7 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
                           >
                             <PopoverTrigger asChild>
                               <Button variant="ghost"
-                              className="absolute left-1 right-1 p-0 h-auto"
+                              className="absolute left-1 right-1 p-0 h-auto items-start text-left justify-start"
                               data-testid={`week-event-${event.key}`}
                               data-selected={isSelected ? "true" : "false"}
                               type="button"
@@ -889,7 +889,7 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
                                   "h-full w-full overflow-hidden transition-all border-border shadow-none",
                                   isSelected ? "bg-[#111111] text-white border-transparent" : "bg-[#f8fafc] text-[#0f172a] hover:bg-[#eef2f7]"
                                 )}>
-                                  <CardContent className="relative h-full w-full">
+                                  <CardContent className="relative h-full w-full p-1.5 text-left flex flex-col items-start">
                                     {event.isCompleted ? (
                                       <span
                                         className={`absolute right-1 top-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full ${
@@ -913,7 +913,7 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
                                         </p>
                                       </div>
                                       <p className={`truncate text-[9px] font-medium uppercase tracking-wider ${isSelected ? "text-[#e5e7eb]" : "text-[#334155]"}`}>
-                                        {getEventMetaLine(event).split(' · ')[0]}
+                                        {getEventMetaLine(event)}
                                       </p>
                                     </div>
                                   </CardContent>

@@ -265,7 +265,7 @@ async function OverviewContent({ userId }: { userId: string }) {
           <div className="border-b border-border px-6 py-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 space-y-1">
-                <h2 className="text-lg font-bold tracking-tight text-foreground">Today&apos;s Routine</h2>
+                <h2 className="text-lg font-medium tracking-tight text-foreground">Today&apos;s Routine</h2>
                 <p className="text-sm text-muted-foreground">
                   Specific tasks and routine items, ordered by time.
                 </p>

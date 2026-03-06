@@ -574,7 +574,7 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
                 className="text-xl font-medium tracking-tight text-[#1f2937]"
                 data-testid="today-header-title"
               >
-                Today
+                Today&apos;s Routine
               </h3>
             </div>
             <div className="min-h-0 flex-1 space-y-2 overflow-auto pb-4 pr-1" data-testid="today-events-list">
@@ -629,7 +629,7 @@ export default function StudyCalendar({ courses, plans, workouts = [], schedules
                             <ItemTitle className={`w-full whitespace-normal break-words text-[14px] font-medium tracking-tight leading-tight ${event.isCompleted ? "text-stone-500 line-through" : "text-[#0f172a]"}`}>
                               {event.title}
                             </ItemTitle>
-                            <div className={`w-full flex flex-wrap items-center gap-x-1.5 text-[11px] font-medium uppercase tracking-wider mt-1 ${event.isCompleted ? "text-stone-400" : "text-muted-foreground/70"}`}>
+                            <div className={`w-full flex flex-wrap items-center gap-x-1.5 text-[11px] font-medium text-muted-foreground/70 mt-1`}>
                               <span className="truncate max-w-[180px]">{getEventMetaLine(event)}</span>
                               {event.location && (
                                 <>

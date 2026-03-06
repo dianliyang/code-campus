@@ -102,6 +102,7 @@ export function transformExternalCourse(course: Record<string, unknown>) {
     code: course.course_code,
     name: course.title,
     university: course.university,
+    status: typeof userCourse?.status === 'string' ? userCourse.status : null,
     units: course.units,
     credit: parseNum(course.credit),
     department: course.department,

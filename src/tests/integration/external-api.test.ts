@@ -96,6 +96,7 @@ describe('GET /api/external/courses', () => {
         code: 'C1',
         name: 'Course 1',
         university: 'Uni',
+        status: 'in_progress',
         credit: null,
         department: 'CS',
         category: 'Computer Science',

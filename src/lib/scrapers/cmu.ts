@@ -42,6 +42,9 @@ export class CMU extends BaseScraper {
       try {
         console.log(`[${this.name}] Fetching ${url} (attempt ${attempt})...`);
         const response = await fetch(url, { dispatcher: this.agent });
+        if (!response) {
+          throw new Error("No response received");
+        }
         if (!response.ok) {
           throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }
@@ -130,6 +133,10 @@ export class CMU extends BaseScraper {
         body: body,
         dispatcher: this.agent,
       });
+
+      if (!response) {
+        throw new Error(`Failed to fetch ${url}: empty response`);
+      }
 
       if (!response.ok) {
         throw new Error(

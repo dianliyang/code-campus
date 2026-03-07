@@ -31,7 +31,35 @@ interface EnrolledCourse {
 
 interface StudyCalendarProps {
   courses: EnrolledCourse[];
-  scheduleRows: DatabaseScheduleRow[];
+  scheduleRows?: DatabaseScheduleRow[];
+  plans?: Array<{
+    id: number;
+    course_id: number | null;
+    start_time: string | null;
+    end_time: string | null;
+    location?: string | null;
+    kind?: string;
+    courses?: { course_code?: string; university?: string; title?: string };
+  }>;
+  logs?: Array<{ plan_id: number; log_date: string; is_completed: boolean }>;
+  workouts?: Array<{
+    id: number;
+    title: string;
+    category?: string | null;
+    source?: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
+    location?: string | null;
+  }>;
+  workoutLogs?: Array<{ workout_id: number; log_date: string; is_attended: boolean }>;
+  assignments?: Array<{
+    id: number;
+    course_id: number | null;
+    label: string;
+    kind?: string;
+    due_on: string;
+    courses?: { course_code?: string; university?: string };
+  }>;
   dict: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   initialDate?: Date;
 }
@@ -161,7 +189,17 @@ function positionEvents(events: CalendarEvent[]): PositionedEvent[] {
   return positioned;
 }
 
-export default function StudyCalendar({ courses, scheduleRows, dict, initialDate }: StudyCalendarProps) {
+export default function StudyCalendar({
+  courses,
+  scheduleRows,
+  plans,
+  logs,
+  workouts,
+  workoutLogs,
+  assignments,
+  dict,
+  initialDate,
+}: StudyCalendarProps) {
   const router = useRouter();
   const anchorToday = useMemo(() => initialDate ?? new Date(), [initialDate]);
   const timelineScrollRef = useRef<HTMLDivElement | null>(null);
@@ -186,8 +224,78 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
     [courses]
   );
 
+  const normalizedScheduleRows = useMemo(() => {
+    if (Array.isArray(scheduleRows)) {
+      return scheduleRows;
+    }
+
+    const dateKey = formatDateKey(anchorToday);
+    const logsByPlan = new Map((logs || []).map((item) => [`${item.plan_id}:${item.log_date}`, item.is_completed]));
+    const logsByWorkout = new Map(
+      (workoutLogs || []).map((item) => [`${item.workout_id}:${item.log_date}`, item.is_attended])
+    );
+
+    const planRows: DatabaseScheduleRow[] = (plans || []).map((plan) => ({
+      event_date: dateKey,
+      course_id: plan.course_id,
+      title: plan.courses?.title || 'Study Session',
+      course_code: plan.courses?.course_code || '',
+      university: plan.courses?.university || '',
+      kind: plan.kind || 'study',
+      start_time: plan.start_time,
+      end_time: plan.end_time,
+      location: plan.location || null,
+      is_completed: Boolean(logsByPlan.get(`${plan.id}:${dateKey}`)),
+      plan_id: plan.id,
+      schedule_id: null,
+      assignment_id: null,
+      workout_id: null,
+      source_type: 'study_plan',
+    }));
+
+    const workoutRows: DatabaseScheduleRow[] = (workouts || []).map((workout) => ({
+      event_date: dateKey,
+      course_id: null,
+      title: workout.title,
+      course_code: workout.category || '',
+      university: workout.source || '',
+      kind: 'workout',
+      start_time: workout.start_time || null,
+      end_time: workout.end_time || null,
+      location: workout.location || null,
+      is_completed: Boolean(logsByWorkout.get(`${workout.id}:${dateKey}`)),
+      plan_id: null,
+      schedule_id: null,
+      assignment_id: null,
+      workout_id: workout.id,
+      source_type: 'workout',
+    }));
+
+    const assignmentRows: DatabaseScheduleRow[] = (assignments || [])
+      .filter((assignment) => assignment.due_on === dateKey)
+      .map((assignment) => ({
+        event_date: dateKey,
+        course_id: assignment.course_id,
+        title: assignment.label,
+        course_code: assignment.courses?.course_code || '',
+        university: assignment.courses?.university || '',
+        kind: assignment.kind || 'assignment',
+        start_time: null,
+        end_time: null,
+        location: null,
+        is_completed: false,
+        plan_id: null,
+        schedule_id: null,
+        assignment_id: assignment.id,
+        workout_id: null,
+        source_type: 'assignment',
+      }));
+
+    return [...planRows, ...workoutRows, ...assignmentRows];
+  }, [scheduleRows, anchorToday, logs, workoutLogs, plans, workouts, assignments]);
+
   const allEvents = useMemo(() => {
-    return scheduleRows.map((row) => {
+    return normalizedScheduleRows.map((row) => {
       const startMinutes = parseMinutes(row.start_time);
       const endMinutes = parseMinutes(row.end_time);
       
@@ -218,7 +326,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
         sourceType: uiSourceType,
       } as CalendarEvent;
     });
-  }, [scheduleRows, courseMap]);
+  }, [normalizedScheduleRows, courseMap]);
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();

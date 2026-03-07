@@ -727,7 +727,8 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                                   <button
                                     style={adjustedStyle}
                                     className={cn(
-                                      "absolute rounded-md px-1.5 py-1 text-left transition-all hover:z-20 hover:scale-[1.02] hover:shadow-lg overflow-hidden flex flex-col",
+                                      "absolute rounded-md border px-1.5 py-1 text-left transition-all hover:z-20 hover:scale-[1.02] hover:shadow-lg overflow-hidden flex flex-col",
+                                      colors.border,
                                       colors.bg.replace('/10', '/30'),
                                       `hover:${colors.bg.replace('/10', '/40')}`,
                                       colors.text,

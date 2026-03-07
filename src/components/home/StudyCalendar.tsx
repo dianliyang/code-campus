@@ -131,8 +131,8 @@ function getEventColorClass(kind: string, sourceType: string): { border: string,
 function positionEvents(events: CalendarEvent[]): PositionedEvent[] {
   if (events.length === 0) return [];
 
-  const instantEvents = events.filter(e => e.startMinutes === e.endMinutes);
-  const durationEvents = events.filter(e => e.startMinutes !== e.endMinutes);
+  const instantEvents = events.filter(e => (e.endMinutes - e.startMinutes) < 30);
+  const durationEvents = events.filter(e => (e.endMinutes - e.startMinutes) >= 30);
 
   // 1. Position duration events using columns
   const sortedDuration = [...durationEvents].sort((a, b) => a.startMinutes - b.startMinutes || (b.endMinutes - b.startMinutes) - (a.endMinutes - a.startMinutes));
@@ -329,21 +329,24 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
 
   const getEventStyle = (event: PositionedEvent) => {
     const totalMinutesInDay = (HOUR_END - HOUR_START) * 60;
-    let startOffset = event.startMinutes - HOUR_START * 60;
     
     // If it's an instant event, calculate stack offset
-    const isInstant = event.startMinutes === event.endMinutes;
+    const isInstant = (event.endMinutes - event.startMinutes) < 30;
     const cardHeightPx = 22; // Height for stacked instant events
     const minHeightMinutes = (cardHeightPx / PIXELS_PER_HOUR) * 60;
     
+    let startOffset = event.startMinutes - HOUR_START * 60;
     const duration = isInstant ? minHeightMinutes : Math.max(minHeightMinutes, event.endMinutes - event.startMinutes);
-    
-    if (isInstant && event.stackCount > 1) {
-      // Offset the top based on stack index
-      startOffset += event.stackIndex * minHeightMinutes;
+
+    if (isInstant) {
+      // The entire stack's height shouldn't exceed the bottom of the grid
+      const totalStackHeightMinutes = event.stackCount * minHeightMinutes;
+      const stackBaseStart = Math.min(startOffset, totalMinutesInDay - totalStackHeightMinutes);
+      
+      startOffset = stackBaseStart + (event.stackIndex * minHeightMinutes);
     }
 
-    // Clamp startOffset and height to prevent exceeding 24:00
+    // Clamp startOffset and height to prevent exceeding 24:00 (mainly for duration events now)
     const clampedStart = Math.min(startOffset, totalMinutesInDay - minHeightMinutes);
     const clampedHeight = Math.min(duration, totalMinutesInDay - clampedStart);
 
@@ -707,7 +710,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                         <>
                           {visibleEvents.map((event) => {
                             const pe = event as PositionedEvent;
-                            const isInstant = pe.startMinutes === pe.endMinutes;
+                            const isInstant = (pe.endMinutes - pe.startMinutes) < 30;
                             const durationMinutes = isInstant ? 30 : pe.endMinutes - pe.startMinutes;
                             const visualHeightPx = (durationMinutes / 60) * PIXELS_PER_HOUR;
                             const visualWidthPct = isInstant ? 100 : (100 / pe.totalColumns);
@@ -841,11 +844,11 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                             return (
                               <div
                                 key={`more-${startMinutes}`}
-                                className="absolute right-0 w-8 flex justify-center pointer-events-none z-30"
-                                style={{ top: `${top + 4}px` }}
+                                className="absolute right-0 w-auto flex justify-end pointer-events-none z-30 pr-1"
+                                style={{ top: `${top + 2}px` }}
                               >
-                                <span className="text-[9px] font-bold text-muted-foreground/80 bg-background/90 px-1 rounded shadow-sm border border-border/50">
-                                  +{count}
+                                <span className="text-[9px] font-bold text-muted-foreground/80 bg-background/95 px-1.5 py-0.5 rounded shadow-sm border border-border/50">
+                                  +{count} more...
                                 </span>
                               </div>
                             );

@@ -126,60 +126,39 @@ function getEventColorClass(kind: string, sourceType: string): { border: string,
 
 /**
  * Calculates column positions for overlapping events within a day.
- * Special handling for "instant" events (deadlines) to stack vertically at full width.
  */
 function positionEvents(events: CalendarEvent[]): PositionedEvent[] {
   if (events.length === 0) return [];
 
-  const instantEvents = events.filter(e => (e.endMinutes - e.startMinutes) < 30);
-  const durationEvents = events.filter(e => (e.endMinutes - e.startMinutes) >= 30);
-
-  // 1. Position duration events using columns
-  const sortedDuration = [...durationEvents].sort((a, b) => a.startMinutes - b.startMinutes || (b.endMinutes - b.startMinutes) - (a.endMinutes - a.startMinutes));
+  // Sort all events by start time, then by duration (longest first)
+  const sortedEvents = [...events].sort((a, b) => a.startMinutes - b.startMinutes || (b.endMinutes - b.startMinutes) - (a.endMinutes - a.startMinutes));
   const columns: CalendarEvent[][] = [];
-  const durationPositioned: PositionedEvent[] = [];
+  const positioned: PositionedEvent[] = [];
 
-  for (const event of sortedDuration) {
+  for (const event of sortedEvents) {
     let placed = false;
     for (let i = 0; i < columns.length; i++) {
       const lastInCol = columns[i][columns[i].length - 1];
-      if (event.startMinutes >= lastInCol.endMinutes) {
+      
+      // Calculate visual end times to prevent overlapping of very short/instant events
+      const lastVisualEnd = Math.max(lastInCol.endMinutes, lastInCol.startMinutes + 30);
+      
+      if (event.startMinutes >= lastVisualEnd) {
         columns[i].push(event);
-        durationPositioned.push({ ...event, column: i, totalColumns: 0, stackIndex: 0, stackCount: 0 });
+        positioned.push({ ...event, column: i, totalColumns: 0, stackIndex: 0, stackCount: 0 });
         placed = true;
         break;
       }
     }
     if (!placed) {
       columns.push([event]);
-      durationPositioned.push({ ...event, column: columns.length - 1, totalColumns: 0, stackIndex: 0, stackCount: 0 });
+      positioned.push({ ...event, column: columns.length - 1, totalColumns: 0, stackIndex: 0, stackCount: 0 });
     }
   }
   
-  durationPositioned.forEach(e => e.totalColumns = columns.length);
+  positioned.forEach(e => e.totalColumns = columns.length);
 
-  // 2. Position instant events (stack vertically at full width)
-  const timeGroups = new Map<number, CalendarEvent[]>();
-  for (const event of instantEvents) {
-    const list = timeGroups.get(event.startMinutes) || [];
-    list.push(event);
-    timeGroups.set(event.startMinutes, list);
-  }
-
-  const instantPositioned: PositionedEvent[] = [];
-  for (const group of timeGroups.values()) {
-    group.forEach((event, idx) => {
-      instantPositioned.push({
-        ...event,
-        column: 0,
-        totalColumns: 1,
-        stackIndex: idx,
-        stackCount: group.length
-      });
-    });
-  }
-
-  return [...durationPositioned, ...instantPositioned];
+  return positioned;
 }
 
 export default function StudyCalendar({ courses, scheduleRows, dict, initialDate }: StudyCalendarProps) {
@@ -226,7 +205,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
         date: row.event_date,
         dayOfWeek: new Date(`${row.event_date}T00:00:00Z`).getUTCDay(),
         startTime: row.start_time || "00:00:00",
-        endTime: row.end_time || "00:00:00",
+        endTime: row.end_time || row.start_time || "00:00:00",
         startMinutes,
         endMinutes,
         isCompleted: row.is_completed,
@@ -261,7 +240,10 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
   const activeDateKey = selectedSmallDateKey || todayKey;
   const todayEvents = useMemo(() => {
     const list = eventsByDate.get(activeDateKey) || [];
-    return [...list].sort((a, b) => {
+    // Filter out generic study plans that don't have a specific task or assignment attached
+    const filtered = list.filter(event => !(event.sourceType === "study_plan" && event.planId && !event.scheduleId && !event.assignmentId));
+    
+    return [...filtered].sort((a, b) => {
       if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
       return a.startMinutes - b.startMinutes || a.endMinutes - b.endMinutes;
     });
@@ -329,33 +311,21 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
 
   const getEventStyle = (event: PositionedEvent) => {
     const totalMinutesInDay = (HOUR_END - HOUR_START) * 60;
+    const startOffset = event.startMinutes - HOUR_START * 60;
     
-    // If it's an instant event, calculate stack offset
-    const isInstant = (event.endMinutes - event.startMinutes) < 30;
-    const cardHeightPx = 22; // Height for stacked instant events
+    const cardHeightPx = 22; // Minimum height for any event
     const minHeightMinutes = (cardHeightPx / PIXELS_PER_HOUR) * 60;
-    
-    let startOffset = event.startMinutes - HOUR_START * 60;
-    const duration = isInstant ? minHeightMinutes : Math.max(minHeightMinutes, event.endMinutes - event.startMinutes);
+    const duration = Math.max(minHeightMinutes, event.endMinutes - event.startMinutes);
 
-    if (isInstant) {
-      // The entire stack's height shouldn't exceed the bottom of the grid
-      const totalStackHeightMinutes = event.stackCount * minHeightMinutes;
-      const stackBaseStart = Math.min(startOffset, totalMinutesInDay - totalStackHeightMinutes);
-      
-      startOffset = stackBaseStart + (event.stackIndex * minHeightMinutes);
-    }
-
-    // Clamp startOffset and height to prevent exceeding 24:00 (mainly for duration events now)
+    // Clamp startOffset and height to prevent exceeding 24:00
     const clampedStart = Math.min(startOffset, totalMinutesInDay - minHeightMinutes);
     const clampedHeight = Math.min(duration, totalMinutesInDay - clampedStart);
 
     const top = (clampedStart / 60) * PIXELS_PER_HOUR;
     const height = (clampedHeight / 60) * PIXELS_PER_HOUR;
     
-    // Instant events stack vertically and take full width
-    const widthPct = isInstant ? 100 : 100 / event.totalColumns;
-    const leftPct = isInstant ? 0 : (100 / event.totalColumns) * event.column;
+    const widthPct = 100 / event.totalColumns;
+    const leftPct = (100 / event.totalColumns) * event.column;
 
     // Apply a 2px inset gap for visual padding
     return {
@@ -405,7 +375,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
         {/* Top: Selected Day's Events */}
         <div className="flex flex-col p-4 flex-1 min-h-0">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground">
               {activeDateKey === todayKey ? "Today's Routine" : `Routine for ${activeDateKey}`}
             </h2>
             <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-tight">
@@ -552,7 +522,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
         {/* Bottom: Small Calendar */}
         <div className="p-4 border-t border-border">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">{smallCalendarLabel}</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground">{smallCalendarLabel}</h2>
             <div className="flex items-center gap-1 border border-border/40 rounded-lg p-0.5">
               <Button variant="ghost" size="icon-sm" onClick={prevMonth} aria-label="Previous month">
                 <ChevronLeft className="h-4 w-4" />
@@ -710,10 +680,10 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                         <>
                           {visibleEvents.map((event) => {
                             const pe = event as PositionedEvent;
-                            const isInstant = (pe.endMinutes - pe.startMinutes) < 30;
-                            const durationMinutes = isInstant ? 30 : pe.endMinutes - pe.startMinutes;
+                            // All events are treated equally. Minimum duration of 30 mins for visual height.
+                            const durationMinutes = Math.max(30, pe.endMinutes - pe.startMinutes);
                             const visualHeightPx = (durationMinutes / 60) * PIXELS_PER_HOUR;
-                            const visualWidthPct = isInstant ? 100 : (100 / pe.totalColumns);
+                            const visualWidthPct = 100 / pe.totalColumns;
                             
                             const isSlimHeight = visualHeightPx < 30;
                             const isSlimWidth = visualWidthPct <= 35; // e.g., 3 columns or more
@@ -724,7 +694,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                             
                             // Adjust totalColumns constraint visually so cards don't shrink past maxColumns
                             const adjustedStyle = { ...eventStyle };
-                            if (pe.totalColumns > maxColumns && !isInstant) {
+                            if (pe.totalColumns > maxColumns) {
                                 adjustedStyle.width = `calc(${100 / maxColumns}% - 2px)`;
                                 adjustedStyle.left = `calc(${(100 / maxColumns) * pe.column}% + 1px)`;
                             }
@@ -768,16 +738,15 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                                   </button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-72 p-0 shadow-2xl" side="right" align="start" sideOffset={8}>
-                                  <div className={cn("h-1.5 w-full rounded-t-lg", colors.solidBg)} />
                                   <div className="p-4 space-y-4">
                                     <div className="space-y-1.5">
-                                      <h3 className="text-sm font-bold text-foreground leading-tight">{event.title}</h3>
+                                      <h3 className="text-sm font-bold text-foreground leading-tight">{pe.title}</h3>
                                       <div className="flex flex-wrap items-center gap-2">
                                         <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-tight">
-                                          {event.courseCode}
+                                          {pe.courseCode}
                                         </Badge>
                                         <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">
-                                          {event.university}
+                                          {pe.university}
                                         </span>
                                       </div>
                                     </div>
@@ -787,24 +756,28 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
                                           <Clock className="h-3.5 w-3.5" />
                                         </div>
-                                        <span className="leading-none">{event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}</span>
+                                        <span className="leading-none">
+                                          {pe.startMinutes === pe.endMinutes || pe.endTime.startsWith("23:59")
+                                            ? pe.startTime.slice(0, 5) 
+                                            : `${pe.startTime.slice(0, 5)} - ${pe.endTime.slice(0, 5)}`}
+                                        </span>
                                       </div>
-                                      {event.location && (
+                                      {pe.location && (
                                         <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
                                           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
                                             <MapPin className="h-3.5 w-3.5" />
                                           </div>
-                                          <span className="line-clamp-1 leading-none uppercase">{event.location}</span>
+                                          <span className="line-clamp-1 leading-none uppercase">{pe.location}</span>
                                         </div>
                                       )}
-                                      {event.kind && (
+                                      {pe.kind && (
                                         <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
                                           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground/70">
                                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                               <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
                                             </svg>
                                           </div>
-                                          <span className="uppercase tracking-wide leading-none">{event.kind}</span>
+                                          <Badge variant="outline" className="font-bold uppercase tracking-wide leading-none text-[9px] shadow-none text-muted-foreground/70 border-muted-foreground/20">{pe.kind}</Badge>
                                         </div>
                                       )}
                                     </div>

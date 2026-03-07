@@ -184,8 +184,9 @@ function positionEvents(events: CalendarEvent[]): PositionedEvent[] {
 
 export default function StudyCalendar({ courses, scheduleRows, dict, initialDate }: StudyCalendarProps) {
   const router = useRouter();
-  const anchorToday = initialDate ?? new Date();
+  const anchorToday = useMemo(() => initialDate ?? new Date(), [initialDate]);
   const timelineScrollRef = useRef<HTMLDivElement | null>(null);
+  const hasScrolledRef = useRef(false);
   const [monthCursor, setMonthCursor] = useState(new Date(anchorToday.getFullYear(), anchorToday.getMonth(), 1));
   const [weekStart, setWeekStart] = useState(startOfWeek(anchorToday));
   const [openWeekPopoverKey, setOpenWeekPopoverKey] = useState<string | null>(null);
@@ -296,12 +297,18 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
 
   useEffect(() => {
     if (!isTodayVisibleInWeek || !timelineScrollRef.current) return;
+    
+    // Only scroll once per initialization of this specific week view
+    const currentWeekKey = weekDates[0].toISOString();
+    if (hasScrolledRef.current === currentWeekKey as any) return; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     const container = timelineScrollRef.current;
     const maxScrollTop = Math.max(container.scrollHeight - container.clientHeight, 0);
     const nextScrollTop = Math.min(Math.max((currentTimeTop + 44) - container.clientHeight / 2, 0), maxScrollTop);
     container.scrollTo({ top: nextScrollTop, behavior: "smooth" });
-  }, [isTodayVisibleInWeek, currentTimeTop]);
+    
+    hasScrolledRef.current = currentWeekKey as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  }, [isTodayVisibleInWeek, currentTimeTop, weekDates]);
 
   const nextMonth = () => setMonthCursor(new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1));
   const prevMonth = () => setMonthCursor(new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1));
@@ -705,7 +712,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                             
                             const isSlimHeight = heightNum < 30;
                             const isSlimWidth = widthPctNum <= 35;
-                            const showVerticalTitle = isSlimWidth && !isSlimHeight;
+                            const showVerticalTitle = isSlimWidth && heightNum >= 60;
 
                             const colors = getEventColorClass(event.kind, event.sourceType);
                             

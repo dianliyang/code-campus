@@ -79,14 +79,12 @@ export default function CourseMomentumCard({
         <MomentumBar 
           label="Completed" 
           count={studyDoneToday} 
-          max={Math.max(studyCount, 1)}
           colorClass="bg-blue-50" 
           activeColorClass="bg-blue-600" 
         />
         <MomentumBar 
           label="Attended" 
           count={attendedToday} 
-          max={Math.max(workoutCount, 1)}
           colorClass="bg-emerald-50" 
           activeColorClass="bg-emerald-600" 
         />

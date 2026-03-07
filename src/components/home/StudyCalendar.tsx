@@ -108,6 +108,22 @@ function formatTimeLabel(date: Date) {
   return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
+function getEventColorClass(kind: string, sourceType: string): { border: string, bg: string, hoverBg: string } {
+  if (sourceType === "workout") return { border: "border-emerald-500", bg: "bg-emerald-500/10", hoverBg: "hover:bg-emerald-500/20" };
+  if (sourceType === "assignment") return { border: "border-rose-500", bg: "bg-rose-500/10", hoverBg: "hover:bg-rose-500/20" };
+  
+  const k = kind.toLowerCase();
+  if (k.includes("lecture")) return { border: "border-blue-500", bg: "bg-blue-500/10", hoverBg: "hover:bg-blue-500/20" };
+  if (k.includes("lab")) return { border: "border-purple-500", bg: "bg-purple-500/10", hoverBg: "hover:bg-purple-500/20" };
+  if (k.includes("recitation") || k.includes("seminar")) return { border: "border-indigo-500", bg: "bg-indigo-500/10", hoverBg: "hover:bg-indigo-500/20" };
+  if (k.includes("project")) return { border: "border-amber-500", bg: "bg-amber-500/10", hoverBg: "hover:bg-amber-500/20" };
+  if (k.includes("exam") || k.includes("quiz")) return { border: "border-rose-500", bg: "bg-rose-500/10", hoverBg: "hover:bg-rose-500/20" };
+  if (k.includes("reading")) return { border: "border-teal-500", bg: "bg-teal-500/10", hoverBg: "hover:bg-teal-500/20" };
+  
+  // Default for standard study sessions
+  return { border: "border-slate-500", bg: "bg-slate-500/10", hoverBg: "hover:bg-slate-500/20" };
+}
+
 /**
  * Calculates column positions for overlapping events within a day.
  * Special handling for "instant" events (deadlines) to stack vertically at full width.
@@ -389,13 +405,16 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
           <div className="min-h-0 flex-1 space-y-2 overflow-auto pr-1 no-scrollbar">
             {todayEvents.length > 0 ? (
               <div className="space-y-2 pb-2">
-                {todayEvents.map((event) => (
+                {todayEvents.map((event) => {
+                  const colors = getEventColorClass(event.kind, event.sourceType);
+                  return (
                   <Popover key={event.key}>
                     <PopoverTrigger asChild>
                       <Card
                         size="small"
                         className={cn(
-                          "group relative transition-all hover:shadow-md border-border/50 cursor-pointer hover:bg-muted/5",
+                          "group relative transition-all hover:shadow-md border-border/50 cursor-pointer hover:bg-muted/5 border-l-4",
+                          colors.border,
                           event.isCompleted && "opacity-60 grayscale-[0.5]"
                         )}
                         onClick={(e) => {
@@ -442,7 +461,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                       </Card>
                     </PopoverTrigger>
                     <PopoverContent className="w-72 p-0 shadow-2xl" side="right" align="start" sideOffset={12}>
-                      <div className={cn("h-1.5 w-full rounded-t-lg", event.sourceType === "workout" ? "bg-emerald-500" : "bg-blue-500")} />
+                      <div className={cn("h-1.5 w-full rounded-t-lg", colors.bg.replace('/10', '').replace('bg-', 'bg-'))} style={{ backgroundColor: `var(--${colors.border.replace('border-', '')})` }} />
                       <div className="p-4 space-y-4">
                         <div className="space-y-1.5">
                           <h3 className="text-sm font-bold text-foreground leading-tight">{event.title}</h3>
@@ -509,7 +528,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
                       </div>
                     </PopoverContent>
                   </Popover>
-                ))}
+                );})}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -615,7 +634,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
             {/* Current Time Indicator - Spans full width, on top of grid lines but under popovers */}
             {isTodayVisibleInWeek && (
               <div
-                className="pointer-events-none absolute left-0 right-0 z-20 flex items-center"
+                className="pointer-events-none absolute left-0 right-0 z-50 flex items-center"
                 style={{ top: `${currentTimeTop + 44}px`, transform: 'translateY(-50%)' }}
               >
                 <div className="w-12 flex justify-end pr-1">
@@ -632,7 +651,7 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
               <div className="h-11 border-b border-border bg-muted/5 sticky top-0 z-40" /> {/* Empty header spacer */}
               <div className="relative" style={{ height: `${timelineHeight}px` }}>
                 {Array.from({ length: HOUR_END - HOUR_START }).map((_, i) => (
-                  <div key={`label-${i}`} className="absolute w-full pr-2 text-right" style={{ top: `${i * PIXELS_PER_HOUR}px`, transform: 'translateY(-50%)' }}>
+                  <div key={`label-${i}`} className="absolute w-full pr-2 text-right" style={{ top: `${i * PIXELS_PER_HOUR}px`, transform: 'translateY(-40%)' }}>
                     <span className="text-[10px] font-bold text-muted-foreground/50">{(HOUR_START + i).toString().padStart(2, "0")}:00</span>
                   </div>
                 ))}

@@ -2,6 +2,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { load } from "cheerio";
 import { createAdminClient } from "@/lib/supabase/server";
+import { expandStudyPlanDays } from "@/lib/study-plan-persistence";
 import { resolveModelForProvider } from "@/lib/ai/models";
 import { parseLenientJson } from "@/lib/ai/parse-json";
 import { logAiUsage } from "@/lib/ai/log-usage";
@@ -2105,15 +2106,18 @@ export async function runCourseIntel(
     if (clearError) throw new Error(clearError.message);
     const { error: insertError } = await admin
       .from("study_plans")
-      .insert({
+      .insert(expandStudyPlanDays({
         user_id: userId,
         course_id: courseId,
         start_date: startDate,
         end_date: endDate,
         days_of_week: daysOfWeek.length > 0 ? daysOfWeek : [1, 2, 3, 4, 5],
+        start_time: null,
+        end_time: null,
+        location: null,
         kind: "generated",
         timezone: "UTC",
-      });
+      }));
     if (insertError) throw new Error(insertError.message);
     return 1;
   };

@@ -29,8 +29,11 @@ BEGIN
 
     -- 2. Create Study Plans (Recurring)
     INSERT INTO study_plans (user_id, course_id, start_date, end_date, days_of_week, start_time, end_time, location, kind, timezone) VALUES
-    (target_user_id, course_id_1, CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '60 days', ARRAY[1, 3, 5], '09:00:00', '10:30:00', 'Stata Center', 'Lecture', 'UTC'),
-    (target_user_id, course_id_2, CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '60 days', ARRAY[2, 4], '14:00:00', '15:30:00', 'Gates B01', 'Lecture', 'UTC'),
+    (target_user_id, course_id_1, CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '60 days', ARRAY[1], '09:00:00', '10:30:00', 'Stata Center', 'Lecture', 'UTC'),
+    (target_user_id, course_id_1, CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '60 days', ARRAY[3], '09:00:00', '10:30:00', 'Stata Center', 'Lecture', 'UTC'),
+    (target_user_id, course_id_1, CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '60 days', ARRAY[5], '09:00:00', '10:30:00', 'Stata Center', 'Lecture', 'UTC'),
+    (target_user_id, course_id_2, CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '60 days', ARRAY[2], '14:00:00', '15:30:00', 'Gates B01', 'Lecture', 'UTC'),
+    (target_user_id, course_id_2, CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '60 days', ARRAY[4], '14:00:00', '15:30:00', 'Gates B01', 'Lecture', 'UTC'),
     (target_user_id, course_id_3, CURRENT_DATE - INTERVAL '7 days', CURRENT_DATE + INTERVAL '90 days', ARRAY[5], '11:00:00', '12:30:00', 'Nvidia Aud', 'Lecture', 'UTC')
     ON CONFLICT DO NOTHING;
 

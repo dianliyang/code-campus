@@ -5,6 +5,7 @@ import { ChevronRight, Loader2, Coffee } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { OverviewRoutineItem } from "@/lib/overview-routine";
+import { getRoutineChildContainerClassName } from "@/lib/routine-layout";
 import { buildTodayRoutineGroups } from "@/lib/week-calendar";
 import Link from "next/link";
 
@@ -186,7 +187,7 @@ export default function OverviewRoutineList({
         <div key={parent.key} className="space-y-1">
           {renderItem(parent)}
           {children.length > 0 ? (
-            <div className="ml-4 border-l border-border/60 pl-3 space-y-1">
+            <div className={getRoutineChildContainerClassName()}>
               {children.map((child) => renderItem(child, true))}
             </div>
           ) : null}

@@ -132,4 +132,8 @@ describe("getWeekCalendarEventColor", () => {
   test("can differentiate different course codes", () => {
     expect(getWeekCalendarEventColor("CS 336")).not.toEqual(getWeekCalendarEventColor("CS 229"));
   });
+
+  test("avoids collisions for distinct course codes that previously matched", () => {
+    expect(getWeekCalendarEventColor("15-113")).not.toEqual(getWeekCalendarEventColor("CS 145"));
+  });
 });

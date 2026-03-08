@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createClient, getUser } from "@/lib/supabase/server";
+import { expandStudyPlanDays, normalizeStudyPlanDays } from "@/lib/study-plan-persistence";
 
 export async function POST(request: Request) {
   const user = await getUser();
@@ -20,23 +21,25 @@ export async function POST(request: Request) {
     };
 
     const courseId = Number(body.courseId);
-    if (!courseId || !body.startDate || !body.endDate || !Array.isArray(body.daysOfWeek)) {
+    const normalizedDays = normalizeStudyPlanDays(Array.isArray(body.daysOfWeek) ? body.daysOfWeek : []);
+    if (!courseId || !body.startDate || !body.endDate || normalizedDays.length === 0) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const supabase = await createClient();
-    const { error } = await supabase.from("study_plans").insert({
+    const rows = expandStudyPlanDays({
       user_id: user.id,
       course_id: courseId,
       start_date: body.startDate,
       end_date: body.endDate,
-      days_of_week: body.daysOfWeek,
+      days_of_week: normalizedDays,
       start_time: body.startTime || "09:00:00",
       end_time: body.endTime || "11:00:00",
       location: body.location || "",
       kind: body.kind || null,
       timezone: body.timezone || 'UTC',
     });
+    const { error } = await supabase.from("study_plans").insert(rows);
 
     if (error) {
       console.error("Failed to create study plan:", error);

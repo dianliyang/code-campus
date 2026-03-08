@@ -4,6 +4,7 @@ import type { Json } from "@/lib/supabase/database.types";
 import { createAdminClient } from "@/lib/supabase/server";
 import { authorizeExternalRequest } from "@/lib/external-api-auth";
 import { buildAssignmentsFromDailyPlan, buildCourseSchedulesFromDailyPlan, type DailyPlan } from "@/lib/ai/course-intel-plan";
+import { expandStudyPlanDays, normalizeStudyPlanDays } from "@/lib/study-plan-persistence";
 
 type BodyShape = {
   userId?: string;
@@ -214,21 +215,21 @@ export async function POST(
           .eq("user_id", effectiveUserId);
         if (error) throw new Error(`DB:${error.message}`);
       }
-      const insertRow = {
+      const insertRows = expandStudyPlanDays({
         course_id: courseId,
         user_id: effectiveUserId,
         start_date: startDate,
         end_date: endDate,
-        days_of_week: Array.isArray(body.studyPlan.daysOfWeek) ? body.studyPlan.daysOfWeek : [1, 2, 3, 4, 5],
+        days_of_week: normalizeStudyPlanDays(Array.isArray(body.studyPlan.daysOfWeek) ? body.studyPlan.daysOfWeek : [1, 2, 3, 4, 5]),
         start_time: normalizeString(body.studyPlan.startTime) || "19:00:00",
         end_time: normalizeString(body.studyPlan.endTime) || "21:00:00",
         location: normalizeString(body.studyPlan.location),
         kind: normalizeString(body.studyPlan.kind) || "generated",
         timezone: normalizeString(body.studyPlan.timezone) || "UTC",
-      };
-      const { error } = await supabase.from("study_plans").insert(insertRow);
+      });
+      const { error } = await supabase.from("study_plans").insert(insertRows);
       if (error) throw new Error(`DB:${error.message}`);
-      studyPlanRows = 1;
+      studyPlanRows = insertRows.length;
     }
 
     // 3) course_syllabi update

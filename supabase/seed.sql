@@ -95,12 +95,24 @@ BEGIN
   -- Create study plans
   INSERT INTO study_plans (user_id, course_id, start_date, end_date, days_of_week, start_time, end_time, location, type)
   SELECT p_user_id, c.id, CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days',
-    ARRAY[1, 3, 5], '09:00', '10:30', 'Room 32-123', 'Lecture'
+    ARRAY[1], '09:00', '10:30', 'Room 32-123', 'Lecture'
+  FROM courses c WHERE c.course_code = '6.006';
+  INSERT INTO study_plans (user_id, course_id, start_date, end_date, days_of_week, start_time, end_time, location, type)
+  SELECT p_user_id, c.id, CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days',
+    ARRAY[3], '09:00', '10:30', 'Room 32-123', 'Lecture'
+  FROM courses c WHERE c.course_code = '6.006';
+  INSERT INTO study_plans (user_id, course_id, start_date, end_date, days_of_week, start_time, end_time, location, type)
+  SELECT p_user_id, c.id, CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days',
+    ARRAY[5], '09:00', '10:30', 'Room 32-123', 'Lecture'
   FROM courses c WHERE c.course_code = '6.006';
 
   INSERT INTO study_plans (user_id, course_id, start_date, end_date, days_of_week, start_time, end_time, location, type)
   SELECT p_user_id, c.id, CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days',
-    ARRAY[2, 4], '14:00', '15:30', 'Gates B01', 'Lecture'
+    ARRAY[2], '14:00', '15:30', 'Gates B01', 'Lecture'
+  FROM courses c WHERE c.course_code = 'CS106B';
+  INSERT INTO study_plans (user_id, course_id, start_date, end_date, days_of_week, start_time, end_time, location, type)
+  SELECT p_user_id, c.id, CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days',
+    ARRAY[4], '14:00', '15:30', 'Gates B01', 'Lecture'
   FROM courses c WHERE c.course_code = 'CS106B';
 
   INSERT INTO study_plans (user_id, course_id, start_date, end_date, days_of_week, start_time, end_time, location, type)

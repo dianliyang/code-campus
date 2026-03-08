@@ -9,72 +9,41 @@ export interface WeekCalendarScheduleRowLike {
   start_time?: string | null;
 }
 
-const COURSE_TINTS = [
-  {
-    border: "border-blue-500",
-    bg: "bg-blue-500/20",
-    hoverBg: "hover:bg-blue-500/30",
-    solidBg: "bg-blue-500",
-    text: "text-blue-950",
-  },
-  {
-    border: "border-emerald-500",
-    bg: "bg-emerald-500/20",
-    hoverBg: "hover:bg-emerald-500/30",
-    solidBg: "bg-emerald-500",
-    text: "text-emerald-950",
-  },
-  {
-    border: "border-amber-500",
-    bg: "bg-amber-500/20",
-    hoverBg: "hover:bg-amber-500/30",
-    solidBg: "bg-amber-500",
-    text: "text-amber-950",
-  },
-  {
-    border: "border-violet-500",
-    bg: "bg-violet-500/20",
-    hoverBg: "hover:bg-violet-500/30",
-    solidBg: "bg-violet-500",
-    text: "text-violet-950",
-  },
-  {
-    border: "border-rose-500",
-    bg: "bg-rose-500/20",
-    hoverBg: "hover:bg-rose-500/30",
-    solidBg: "bg-rose-500",
-    text: "text-rose-950",
-  },
-  {
-    border: "border-cyan-500",
-    bg: "bg-cyan-500/20",
-    hoverBg: "hover:bg-cyan-500/30",
-    solidBg: "bg-cyan-500",
-    text: "text-cyan-950",
-  },
-  {
-    border: "border-lime-500",
-    bg: "bg-lime-500/20",
-    hoverBg: "hover:bg-lime-500/30",
-    solidBg: "bg-lime-500",
-    text: "text-lime-950",
-  },
-  {
-    border: "border-slate-500",
-    bg: "bg-slate-500/20",
-    hoverBg: "hover:bg-slate-500/30",
-    solidBg: "bg-slate-500",
-    text: "text-slate-950",
-  },
-] as const;
+export interface WeekCalendarEventColor {
+  borderColor: string;
+  backgroundColor: string;
+  textColor: string;
+}
+
+function deriveCourseHue(courseCode: string) {
+  const normalized = courseCode.trim().toUpperCase();
+  const letters = normalized.replace(/[^A-Z]/g, "");
+  const digits = normalized.replace(/\D/g, "");
+  const symbols = normalized.replace(/[A-Z0-9]/g, "");
+
+  const letterValue = [...letters].reduce(
+    (sum, letter, index) => sum + (letter.charCodeAt(0) - 64) * (index + 1),
+    0,
+  );
+  const digitValue = [...digits].reduce(
+    (sum, digit, index) => sum + Number(digit) * (index + 3),
+    0,
+  );
+  const symbolValue = [...symbols].reduce(
+    (sum, symbol, index) => sum + symbol.charCodeAt(0) * (index + 5),
+    0,
+  );
+
+  return (letterValue * 11 + digitValue * 17 + symbolValue * 23 + normalized.length * 29) % 360;
+}
 
 export function getWeekCalendarEventColor(courseCode: string | null | undefined) {
-  const seed = (courseCode || "unknown").trim().toUpperCase();
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  }
-  return COURSE_TINTS[hash % COURSE_TINTS.length];
+  const hue = deriveCourseHue(courseCode || "unknown");
+  return {
+    borderColor: `hsl(${hue} 70% 45%)`,
+    backgroundColor: `hsl(${hue} 85% 92%)`,
+    textColor: `hsl(${hue} 55% 20%)`,
+  };
 }
 
 export function shouldIncludeWeekCalendarRow(row: WeekCalendarScheduleRowLike): boolean {

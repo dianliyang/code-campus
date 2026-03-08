@@ -8,6 +8,7 @@ import { logAiUsage } from "@/lib/ai/log-usage";
 import { parseLenientJson } from "@/lib/ai/parse-json";
 import { upstashSetString } from "@/lib/cache/upstash";
 import { buildResourceBlacklistKey } from "@/lib/resources/blacklist";
+import { expandStudyPlanDays, normalizeStudyPlanDays } from "@/lib/study-plan-persistence";
 import { Course } from "@/types";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
@@ -625,16 +626,17 @@ export async function confirmGeneratedStudyPlans(courseId: number, selectedPlans
 
   const dedupe = new Set<string>();
   const toInsert = selectedPlans
-    .map((p) => ({
+    .flatMap((p) => expandStudyPlanDays({
       user_id: user.id,
       course_id: courseId,
       start_date: p.startDate,
       end_date: p.endDate,
-      days_of_week: p.daysOfWeek,
+      days_of_week: normalizeStudyPlanDays(p.daysOfWeek),
       start_time: p.startTime,
       end_time: p.endTime,
       location: p.location,
       kind: p.kind,
+      timezone: null,
     }))
     .filter((plan) => {
       const key = planKey({
@@ -1019,12 +1021,15 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
   );
 
   for (const plan of input.studyPlans) {
+    const normalizedDays = normalizeStudyPlanDays(plan.daysOfWeek);
+    if (normalizedDays.length === 0) continue;
+
     const payload = {
       user_id: user.id,
       course_id: courseId,
       start_date: plan.startDate,
       end_date: plan.endDate,
-      days_of_week: [...plan.daysOfWeek].sort((a, b) => a - b),
+      days_of_week: [normalizedDays[0]],
       start_time: normalizeTimeWithSeconds(plan.startTime),
       end_time: normalizeTimeWithSeconds(plan.endTime),
       location: plan.location,
@@ -1038,7 +1043,7 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
         ? {
             start_date: existing.start_date,
             end_date: existing.end_date,
-            days_of_week: [...(existing.days_of_week || [])].sort((a, b) => a - b),
+            days_of_week: normalizeStudyPlanDays(existing.days_of_week || []),
             start_time: normalizeTimeWithSeconds(existing.start_time),
             end_time: normalizeTimeWithSeconds(existing.end_time),
             location: existing.location || "",
@@ -1068,10 +1073,30 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
         }
         didChange = true;
       }
+
+      const extraDays = normalizedDays.slice(1);
+      if (extraDays.length > 0) {
+        const extraRows = expandStudyPlanDays({
+          ...payload,
+          days_of_week: extraDays,
+        });
+        const { error: insertExtraPlansError } = await supabase
+          .from("study_plans")
+          .insert(extraRows);
+        if (insertExtraPlansError) {
+          console.error("Failed to create expanded study plans:", insertExtraPlansError);
+          throw new Error("Failed to update study plans");
+        }
+        didChange = true;
+      }
     } else {
+      const rows = expandStudyPlanDays({
+        ...payload,
+        days_of_week: normalizedDays,
+      });
       const { error: insertPlanError } = await supabase
         .from("study_plans")
-        .insert(payload);
+        .insert(rows);
       if (insertPlanError) {
         console.error("Failed to create study plan:", insertPlanError);
         throw new Error("Failed to update study plans");

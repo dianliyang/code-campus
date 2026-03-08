@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getUser, createClient } from '@/lib/supabase/server';
+import { expandStudyPlanDays, normalizeStudyPlanDays } from '@/lib/study-plan-persistence';
 
 interface ScheduleRequest {
   action: 'generate' | 'add_plan' | 'update_plan' | 'remove_plan' | 'toggle_complete' | 'get';
@@ -81,9 +82,9 @@ export async function POST(request: Request) {
         { days: [0],       start: '14:00:00', end: '17:00:00' }, // Sun Afternoon
       ];
 
-      const newPlans = userCourses.map((uc, index) => {
+      const newPlans = userCourses.flatMap((uc, index) => {
         const pattern = patterns[index % patterns.length];
-        return {
+        return expandStudyPlanDays({
           user_id: userId,
           course_id: uc.course_id,
           start_date: startDate,
@@ -92,7 +93,9 @@ export async function POST(request: Request) {
           start_time: pattern.start,
           end_time: pattern.end,
           location: 'Home',
-        };
+          kind: null,
+          timezone: 'UTC',
+        });
       });
 
       if (newPlans.length > 0) {
@@ -132,53 +135,60 @@ export async function POST(request: Request) {
     // Add a manual plan
     if (action === 'add_plan') {
       const { courseId, startDate, endDate, daysOfWeek, startTime, endTime, kind, location, timezone } = body;
+      const normalizedDays = normalizeStudyPlanDays(Array.isArray(daysOfWeek) ? daysOfWeek : []);
       
-      if (!courseId || !startDate || !endDate || !daysOfWeek) {
+      if (!courseId || !startDate || !endDate || normalizedDays.length === 0) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
 
-      const { data: inserted, error } = await supabase
+      const rows = expandStudyPlanDays({
+        user_id: userId,
+        course_id: courseId,
+        start_date: startDate,
+        end_date: endDate,
+        days_of_week: normalizedDays,
+        start_time: startTime || '09:00:00',
+        end_time: endTime || '11:00:00',
+        kind: kind || 'Study',
+        location: location || 'Home',
+        timezone: timezone || 'UTC',
+      });
+
+      const { data: insertedRows, error } = await supabase
         .from('study_plans')
-        .insert({
-          user_id: userId,
-          course_id: courseId,
-          start_date: startDate,
-          end_date: endDate,
-          days_of_week: daysOfWeek,
-          start_time: startTime || '09:00:00',
-          end_time: endTime || '11:00:00',
-          kind: kind || 'Study',
-          location: location || 'Home',
-          timezone: timezone || 'UTC',
-        })
-        .select()
-        .single();
+        .insert(rows)
+        .select();
 
       if (error) throw error;
       revalidatePath('/roadmap');
-      return NextResponse.json(inserted);
+      return NextResponse.json(insertedRows?.[0] || null);
     }
 
     // Update a plan
     if (action === 'update_plan') {
       const { planId, startDate, endDate, daysOfWeek, startTime, endTime, kind, location, timezone } = body;
+      const normalizedDays = normalizeStudyPlanDays(Array.isArray(daysOfWeek) ? daysOfWeek : []);
       
-      if (!planId || !startDate || !endDate || !daysOfWeek) {
+      if (!planId || !startDate || !endDate || normalizedDays.length === 0) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
+
+      const basePayload = {
+        start_date: startDate,
+        end_date: endDate,
+        start_time: startTime,
+        end_time: endTime,
+        kind: kind || 'Study',
+        location: location,
+        timezone: timezone || 'UTC',
+        updated_at: new Date().toISOString()
+      };
 
       const { data: updated, error } = await supabase
         .from('study_plans')
         .update({
-          start_date: startDate,
-          end_date: endDate,
-          days_of_week: daysOfWeek,
-          start_time: startTime,
-          end_time: endTime,
-          kind: kind || 'Study',
-          location: location,
-          timezone: timezone || 'UTC',
-          updated_at: new Date().toISOString()
+          ...basePayload,
+          days_of_week: [normalizedDays[0]],
         })
         .eq('id', planId)
         .eq('user_id', userId)
@@ -186,6 +196,25 @@ export async function POST(request: Request) {
         .single();
 
       if (error) throw error;
+
+      const extraDays = normalizedDays.slice(1);
+      if (extraDays.length > 0) {
+        const extraRows = expandStudyPlanDays({
+          user_id: userId,
+          course_id: updated.course_id,
+          start_date: startDate,
+          end_date: endDate,
+          days_of_week: extraDays,
+          start_time: startTime || '09:00:00',
+          end_time: endTime || '11:00:00',
+          kind: kind || 'Study',
+          location: location || 'Home',
+          timezone: timezone || 'UTC',
+          updated_at: basePayload.updated_at,
+        });
+        const { error: insertExtraError } = await supabase.from('study_plans').insert(extraRows);
+        if (insertExtraError) throw insertExtraError;
+      }
       revalidatePath('/roadmap');
       return NextResponse.json(updated);
     }

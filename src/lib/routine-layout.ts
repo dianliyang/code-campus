@@ -15,7 +15,7 @@ export function getCalendarRoutineListClassName() {
 }
 
 export function getCalendarTimelineScrollerClassName() {
-  return "relative bg-background lg:flex-1 lg:overflow-auto lg:no-scrollbar";
+  return "relative overflow-x-auto bg-background lg:flex-1 lg:overflow-auto lg:no-scrollbar";
 }
 
 export function getWeekCalendarHeaderTypography() {

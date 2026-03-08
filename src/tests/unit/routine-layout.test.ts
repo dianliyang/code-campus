@@ -22,7 +22,7 @@ describe("routine layout helpers", () => {
       "space-y-2 pr-1 pb-4 lg:min-h-0 lg:flex-1 lg:overflow-auto lg:no-scrollbar",
     );
     expect(getCalendarTimelineScrollerClassName()).toBe(
-      "relative bg-background lg:flex-1 lg:overflow-auto lg:no-scrollbar",
+      "relative overflow-x-auto bg-background lg:flex-1 lg:overflow-auto lg:no-scrollbar",
     );
   });
 });

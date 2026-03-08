@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Workout } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
 import { cn } from "@/lib/utils";
+import { getWorkoutDurationUrl } from "@/lib/workout-links";
 import WorkoutCard from "./WorkoutCard";
 import WorkoutListHeader from "./WorkoutListHeader";
 import { Check, ChevronDown, ExternalLink, Plus, RefreshCw } from "lucide-react";
@@ -396,6 +397,7 @@ export default function WorkoutList({
                               : w.startDate && w.endDate
                                 ? `${w.startDate} - ${w.endDate}`
                                 : "-";
+                          const durationHref = getWorkoutDurationUrl(w);
                           const bookingHref = w.bookingUrl || w.url;
                           const isEnrolled = enrolledIds.includes(w.id);
 
@@ -421,22 +423,51 @@ export default function WorkoutList({
                               </div>
 
                               <div className="text-sm">
-                                <p className="font-medium">
-                                  <span className="text-muted-foreground">
-                                    {w.dayOfWeek || "-"}
-                                  </span>{" "}
-                                  {w.startTime ? w.startTime.slice(0, 5) : ""}
-                                  {w.endTime ? `-${w.endTime.slice(0, 5)}` : ""}
-                                </p>
-                                {typeof w.details?.totalSessions === "number" && w.details.totalSessions > 0 && (
-                                  <p className="text-xs mt-0.5">
-                                    <span className="font-medium text-foreground">{w.details.totalSessions}</span>
-                                    <span className="text-muted-foreground/70 ml-1">sessions</span>
-                                  </p>
+                                {durationHref ? (
+                                  <a
+                                    href={durationHref}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block rounded-sm transition-colors hover:text-foreground"
+                                    title="Open schedule details"
+                                  >
+                                    <p className="font-medium">
+                                      <span className="text-muted-foreground">
+                                        {w.dayOfWeek || "-"}
+                                      </span>{" "}
+                                      {w.startTime ? w.startTime.slice(0, 5) : ""}
+                                      {w.endTime ? `-${w.endTime.slice(0, 5)}` : ""}
+                                    </p>
+                                    {typeof w.details?.totalSessions === "number" && w.details.totalSessions > 0 && (
+                                      <p className="text-xs mt-0.5">
+                                        <span className="font-medium text-foreground">{w.details.totalSessions}</span>
+                                        <span className="text-muted-foreground/70 ml-1">sessions</span>
+                                      </p>
+                                    )}
+                                    <p className="text-xs text-muted-foreground/70 mt-0.5">
+                                      {duration}
+                                    </p>
+                                  </a>
+                                ) : (
+                                  <>
+                                    <p className="font-medium">
+                                      <span className="text-muted-foreground">
+                                        {w.dayOfWeek || "-"}
+                                      </span>{" "}
+                                      {w.startTime ? w.startTime.slice(0, 5) : ""}
+                                      {w.endTime ? `-${w.endTime.slice(0, 5)}` : ""}
+                                    </p>
+                                    {typeof w.details?.totalSessions === "number" && w.details.totalSessions > 0 && (
+                                      <p className="text-xs mt-0.5">
+                                        <span className="font-medium text-foreground">{w.details.totalSessions}</span>
+                                        <span className="text-muted-foreground/70 ml-1">sessions</span>
+                                      </p>
+                                    )}
+                                    <p className="text-xs text-muted-foreground/70 mt-0.5">
+                                      {duration}
+                                    </p>
+                                  </>
                                 )}
-                                <p className="text-xs text-muted-foreground/70 mt-0.5">
-                                  {duration}
-                                </p>
                               </div>
 
                               <div className="text-sm lg:text-right space-y-0.5">

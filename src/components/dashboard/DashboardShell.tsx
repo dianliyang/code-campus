@@ -72,7 +72,7 @@ export default function DashboardShell({ labels, children }: DashboardShellProps
       <SidebarInset className="h-svh min-w-0 overflow-hidden overscroll-none">
         <div
           id="dashboard-scroll"
-          className="h-full w-full overflow-y-auto overflow-x-hidden overscroll-contain"
+          className="h-full w-full overflow-y-auto overflow-x-hidden overscroll-contain pb-[calc(88px+env(safe-area-inset-bottom,0px))] lg:pb-0"
         >
           {children}
         </div>

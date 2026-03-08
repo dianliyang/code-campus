@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Sparkles, Cpu, History } from "lucide-react";
+import { ArrowUpRight, Cpu, DollarSign, History, Loader2, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 type UsageStats = {
@@ -23,15 +23,39 @@ type UsageStats = {
   daily: Record<string, { requests: number; cost_usd: number }>;
 };
 
-function StatBlock({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function formatRecentSummary(value: string, isZero: boolean) {
+  return isZero ? "in last 7 days" : `${value} in last 7 days`;
+}
+
+function StatBlock({
+  label,
+  value,
+  sub,
+  icon,
+  iconTestId,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  icon: React.ReactNode;
+  iconTestId?: string;
+}) {
   return (
-    <Card className="h-full">
-      <CardContent>
-        <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-2xl font-semibold tracking-tight">{value}</p>
+    <Card className="h-full min-w-[200px]">
+      <CardContent className="flex h-24 flex-col justify-between px-4 py-3">
+        <div className="flex items-start gap-2">
+          <span
+            className="mt-0.5 text-muted-foreground"
+            data-testid={iconTestId}
+          >
+            {icon}
+          </span>
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
         </div>
-      {sub ? <p className="mt-1 text-xs text-muted-foreground">{sub}</p> : <span />}
+        <div className="mt-auto">
+          <p className="text-2xl font-semibold tracking-tight">{value}</p>
+          {sub ? <p className="mt-1 text-xs text-muted-foreground">{sub}</p> : null}
+        </div>
       </CardContent>
     </Card>
   );
@@ -104,25 +128,43 @@ export default function UsageStatisticsPanel() {
         <p className="mt-1 text-sm text-muted-foreground">Requests, token usage, cost trends, and recent AI responses.</p>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto">
-        <div className="min-w-[190px] flex-1">
+      <div className="flex gap-4 overflow-x-auto px-1 pb-1" data-testid="usage-summary-row">
+        <div className="min-w-[216px] shrink-0 flex-1">
           <StatBlock
             label="Requests"
             value={stats.totals.requests.toLocaleString()}
-            sub={`${stats.recentTotals.requests.toLocaleString()} in last 7 days`}
+            sub={formatRecentSummary(
+              stats.recentTotals.requests.toLocaleString(),
+              stats.recentTotals.requests === 0,
+            )}
+            icon={<History className="h-4 w-4" />}
+            iconTestId="usage-stat-requests-icon"
           />
         </div>
-        <div className="min-w-[190px] flex-1">
-          <StatBlock label="Input Tokens" value={stats.totals.tokens_input.toLocaleString()} />
+        <div className="min-w-[216px] shrink-0 flex-1">
+          <StatBlock
+            label="Input Tokens"
+            value={stats.totals.tokens_input.toLocaleString()}
+            icon={<Sparkles className="h-4 w-4" />}
+            iconTestId="usage-stat-input-tokens-icon"
+          />
         </div>
-        <div className="min-w-[190px] flex-1">
-          <StatBlock label="Output Tokens" value={stats.totals.tokens_output.toLocaleString()} />
+        <div className="min-w-[216px] shrink-0 flex-1">
+          <StatBlock
+            label="Output Tokens"
+            value={stats.totals.tokens_output.toLocaleString()}
+            icon={<ArrowUpRight className="h-4 w-4" />}
+          />
         </div>
-        <div className="min-w-[190px] flex-1">
+        <div className="min-w-[216px] shrink-0 flex-1">
           <StatBlock
             label="Total Cost (USD)"
             value={`$${Number(stats.totals.cost_usd || 0).toFixed(4)}`}
-            sub={`$${Number(stats.recentTotals.cost_usd || 0).toFixed(4)} in last 7 days`}
+            sub={formatRecentSummary(
+              `$${Number(stats.recentTotals.cost_usd || 0).toFixed(4)}`,
+              Number(stats.recentTotals.cost_usd || 0) === 0,
+            )}
+            icon={<DollarSign className="h-4 w-4" />}
           />
         </div>
       </div>

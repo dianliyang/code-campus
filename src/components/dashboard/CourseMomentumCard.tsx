@@ -14,7 +14,13 @@ function MomentumBar({ label, count, colorClass, activeColorClass, max = 15 }: {
   const activeCount = Math.min(10, Math.ceil((count / max) * 10));
 
   return (
-    <div className="flex-1 flex flex-col items-center gap-3 group cursor-default">
+    <div
+      className="flex flex-1 flex-col justify-between gap-3 group cursor-default"
+      data-testid={`momentum-metric-${label.toLowerCase()}`}
+    >
+      <div className="text-center space-y-1">
+        <p className="text-[10px] font-semibold tracking-wide text-muted-foreground/80 whitespace-nowrap">{label}</p>
+      </div>
       <div className="w-full flex flex-col-reverse items-center gap-1 h-28 justify-start">
         {squares.map((_, i) => (
           <div 
@@ -27,9 +33,8 @@ function MomentumBar({ label, count, colorClass, activeColorClass, max = 15 }: {
           />
         ))}
       </div>
-      <div className="text-center space-y-1">
+      <div className="text-center">
         <p className="text-xl font-bold text-foreground leading-none">{count}</p>
-        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80 whitespace-nowrap">{label}</p>
       </div>
     </div>
   );

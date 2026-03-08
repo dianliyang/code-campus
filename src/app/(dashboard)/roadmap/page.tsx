@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
+import { getDashboardPageHeaderClassName } from "@/lib/dashboard-layout";
 import { calculateAttendance } from "@/lib/attendance";
 import { groupRoadmapCoursesByPlan } from "@/lib/roadmap-groups";
 import { ExternalLink, Ghost } from "lucide-react";
@@ -56,7 +57,7 @@ export default async function StudyPlanPage() {
 
   return (
     <main className="min-h-full w-full px-4 py-4">
-      <div className="sticky top-0 z-20 -mx-4 -mt-4 bg-background/95 px-4 pb-5 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className={getDashboardPageHeaderClassName("-mt-4")}>
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Roadmap

@@ -1031,9 +1031,15 @@ export default function CourseDetailContent({
   };
 
   return (
-    <div className="h-full min-h-0 overflow-hidden px-4">
-      <div className="grid h-full min-h-0 overflow-hidden grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-0 lg:divide-x lg:divide-[#F5F5F5]">
-        <div className="no-scrollbar min-h-0 space-y-5 overflow-x-hidden overflow-y-auto lg:pr-5">
+    <div className="px-4 lg:h-full lg:min-h-0 lg:overflow-hidden">
+      <div
+        className="grid grid-cols-1 gap-5 lg:h-full lg:min-h-0 lg:overflow-hidden lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-0 lg:divide-x lg:divide-[#F5F5F5]"
+        data-testid="course-detail-layout"
+      >
+        <div
+          className="no-scrollbar space-y-5 overflow-x-hidden lg:min-h-0 lg:overflow-y-auto lg:pr-5"
+          data-testid="course-detail-main-column"
+        >
           <CourseDetailHeader
             course={course}
             isEditing={isEditing}
@@ -1970,7 +1976,10 @@ export default function CourseDetailContent({
           ) : null}
         </div>
 
-        <aside className="no-scrollbar min-h-0 space-y-5 overflow-x-hidden overflow-y-auto lg:pl-5">
+        <aside
+          className="no-scrollbar space-y-5 overflow-x-hidden lg:min-h-0 lg:overflow-y-auto lg:pl-5"
+          data-testid="course-detail-side-column"
+        >
           <div className="space-y-5">
             <div>
               <div className="flex items-center justify-between mb-4">

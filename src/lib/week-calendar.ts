@@ -70,7 +70,10 @@ export interface TodayRoutineGroup<T extends TodayRoutineEventLike> {
 }
 
 export function buildTodayRoutineGroups<T extends TodayRoutineEventLike>(events: T[]): TodayRoutineGroup<T>[] {
-  const sorted = [...events].sort((a, b) => a.startTime.localeCompare(b.startTime) || a.key.localeCompare(b.key));
+  const getRoutineSortTime = (event: T) =>
+    event.sourceType === "assignment" ? "98:00:00" : event.startTime;
+
+  const sorted = [...events].sort((a, b) => getRoutineSortTime(a).localeCompare(getRoutineSortTime(b)) || a.key.localeCompare(b.key));
   const parentByCourseDate = new Map<string, T>();
 
   for (const event of sorted) {
@@ -85,6 +88,7 @@ export function buildTodayRoutineGroups<T extends TodayRoutineEventLike>(events:
   for (const event of sorted) {
     const isParentStudyPlan = event.sourceType === "study_plan" && event.planId && !event.scheduleId && !event.assignmentId;
     const isCourseScheduleChild = event.sourceType === "study_plan" && event.scheduleId != null;
+    const isCourseAssignmentChild = event.sourceType === "assignment" && event.assignmentId != null;
 
     if (isParentStudyPlan || event.sourceType === "workout") {
       const group = { parent: event, children: [] };
@@ -93,7 +97,7 @@ export function buildTodayRoutineGroups<T extends TodayRoutineEventLike>(events:
       continue;
     }
 
-    if (isCourseScheduleChild) {
+    if (isCourseScheduleChild || isCourseAssignmentChild) {
       const parent = parentByCourseDate.get(`${event.courseId ?? "none"}::${event.date}`);
       if (parent) {
         const group = groupByParentKey.get(parent.key);

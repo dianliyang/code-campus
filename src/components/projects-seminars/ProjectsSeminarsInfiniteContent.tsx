@@ -45,6 +45,7 @@ export default function ProjectsSeminarsInfiniteContent({
   const [gridItems, setGridItems] = useState<GridItem[]>(initialGridItems);
   const [page, setPage] = useState(initialPage);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -54,6 +55,15 @@ export default function ProjectsSeminarsInfiniteContent({
     setGridItems(initialGridItems);
     setPage(initialPage);
   }, [initialRows, initialGridItems, initialPage, totalPages, view]);
+
+  useEffect(() => {
+    const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
+
+  const effectiveView = isMobileViewport ? "grid" : view;
 
   const baseQuery = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -128,7 +138,7 @@ export default function ProjectsSeminarsInfiniteContent({
 
   return (
     <div ref={scrollContainerRef} className="h-full overflow-auto">
-      {view === "list" ? (
+      {effectiveView === "list" ? (
         <ProjectsSeminarsDataTable rows={rows} />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">

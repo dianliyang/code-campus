@@ -3,50 +3,59 @@ import { buildOverviewRoutineItems, buildWeeklyActivity } from "@/lib/overview-r
 
 describe("buildOverviewRoutineItems", () => {
   test("merges study plans, workouts, and assignments into a sorted daily routine", () => {
-    const items = buildOverviewRoutineItems({
-      date: "2026-03-10",
-      plans: [
-        {
-          id: 10,
-          course_id: 1,
-          start_date: "2026-03-01",
-          end_date: "2026-03-31",
-          days_of_week: [2],
-          start_time: "09:00:00",
-          end_time: "11:00:00",
-          kind: "lecture",
-          location: "Room 101",
-          courses: { title: "Deep Learning", course_code: "CS 230", university: "Stanford" },
-        },
-      ],
-      logs: [{ plan_id: 10, log_date: "2026-03-10", is_completed: true }],
-      workouts: [
-        {
-          id: 7,
-          title: "Campus Run",
-          category: "Cardio",
-          source: "Uni Sport",
-          day_of_week: "Tuesday",
-          start_date: "2026-03-01",
-          end_date: "2026-03-31",
-          start_time: "18:00:00",
-          end_time: "19:00:00",
-          location: "Track",
-        },
-      ],
-      workoutLogs: [{ workout_id: 7, log_date: "2026-03-10", is_attended: false }],
-      assignments: [
-        {
-          id: 3,
-          course_id: 1,
-          label: "Assignment 2",
-          kind: "assignment",
-          due_on: "2026-03-10",
-          url: null,
-          courses: { title: "Deep Learning", course_code: "CS 230", university: "Stanford" },
-        },
-      ],
-    });
+    const items = buildOverviewRoutineItems([
+      {
+        event_date: "2026-03-10",
+        course_id: 1,
+        title: "Deep Learning",
+        course_code: "CS 230",
+        university: "Stanford",
+        kind: "lecture",
+        start_time: "09:00:00",
+        end_time: "11:00:00",
+        location: "Room 101",
+        is_completed: true,
+        plan_id: 10,
+        schedule_id: null,
+        assignment_id: null,
+        workout_id: null,
+        source_type: "study_plan",
+      },
+      {
+        event_date: "2026-03-10",
+        course_id: null,
+        title: "Campus Run",
+        course_code: "Cardio",
+        university: "Uni Sport",
+        kind: "workout",
+        start_time: "18:00:00",
+        end_time: "19:00:00",
+        location: "Track",
+        is_completed: false,
+        plan_id: null,
+        schedule_id: null,
+        assignment_id: null,
+        workout_id: 7,
+        source_type: "workout",
+      },
+      {
+        event_date: "2026-03-10",
+        course_id: 1,
+        title: "Assignment 2",
+        course_code: "CS 230",
+        university: "Stanford",
+        kind: "assignment",
+        start_time: null,
+        end_time: null,
+        location: null,
+        is_completed: false,
+        plan_id: null,
+        schedule_id: null,
+        assignment_id: 3,
+        workout_id: null,
+        source_type: "assignment",
+      },
+    ]);
 
     expect(items).toHaveLength(3);
     expect(items.map((item) => item.sourceType)).toEqual(["study_plan", "workout", "assignment"]);
@@ -63,7 +72,12 @@ describe("buildOverviewRoutineItems", () => {
     expect(items[2]).toMatchObject({
       title: "Assignment 2",
       timeLabel: "Due today",
-      action: null,
+      action: {
+        type: "toggle_complete",
+        planId: null,
+        date: "2026-03-10",
+        assignmentId: 3,
+      },
     });
   });
 });

@@ -63,6 +63,7 @@ describe("DashboardShell padding", () => {
     expect(scrollContainer).toBeDefined();
     expect(scrollContainer?.className).not.toContain("px-4");
     expect(scrollContainer?.className).not.toContain("pb-8");
+    expect(scrollContainer?.className).toContain("pb-[calc(88px+env(safe-area-inset-bottom,0px))]");
   });
 
   test("keeps calendar page free of shared horizontal shell padding", () => {

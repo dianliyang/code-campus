@@ -5,6 +5,7 @@ import { Course } from "@/types";
 import { getUser, createClient, mapCourseFromRow, formatUniversityName } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
+import { getDashboardPageHeaderClassName } from "@/lib/dashboard-layout";
 
 interface PageProps {
   searchParams: Promise<{[key: string]: string | string[] | undefined;}>;
@@ -19,7 +20,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
 
   return (
     <div className="h-full min-h-0 flex flex-col px-4 pb-4">
-      <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pb-5 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className={getDashboardPageHeaderClassName()}>
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Courses

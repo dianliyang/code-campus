@@ -27,7 +27,7 @@ export const metadata: Metadata = {
       { url: "/favicon.ico", type: "image/x-icon" },
       { url: "/athena.svg", type: "image/svg+xml" },
     ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon", sizes: "180x180", type: "image/png" }],
   },
   appleWebApp: {
     capable: true,
@@ -50,14 +50,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=MuseoModerno:ital,wght@0,100..900;1,100..900&display=swap"
-          rel="stylesheet"
-        />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-        <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon" sizes="180x180" />
+        <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/athena.svg" type="image/svg+xml" />
       </head>

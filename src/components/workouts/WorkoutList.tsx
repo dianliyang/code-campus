@@ -174,13 +174,21 @@ export default function WorkoutList({
   );
   const [enrolledIds, setEnrolledIds] = useState<number[]>(initialEnrolledIds);
   const [pendingIds, setPendingIds] = useState<Record<number, boolean>>({});
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshingCategory, setRefreshingCategory] = useState<string | null | undefined>(undefined);
   const { showToast } = useAppToast();
 
+  useEffect(() => {
+    const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
+
   const workouts: Workout[] = initialWorkouts;
-  const effectiveViewMode: "list" | "grid" = viewMode;
+  const effectiveViewMode: "list" | "grid" = isMobileViewport ? "grid" : viewMode;
 
   const refreshList = async (category?: string) => {
     if (isRefreshing) return;
@@ -386,6 +394,7 @@ export default function WorkoutList({
                       <div className="divide-y">
                         {selectedGroup.items.map((w) => {
                           const title = w.titleEn || w.title;
+                          const isSemesterFeeChoice = selectedCategory === "Semester Fee";
                           const statusClass =
                             w.bookingStatus && statusStyle[w.bookingStatus]
                               ? statusStyle[w.bookingStatus]
@@ -404,13 +413,14 @@ export default function WorkoutList({
                           return (
                             <div
                               key={w.id}
+                              data-testid={`workout-row-${w.id}`}
                               className={`grid gap-3 px-4 py-3 lg:items-center ${
-                                selectedCategory === "Semester Fee"
-                                  ? "lg:grid-cols-[minmax(0,1fr)_200px_120px_100px_auto]"
+                                isSemesterFeeChoice
+                                  ? "lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_200px_120px_100px_auto]"
                                   : "lg:grid-cols-[minmax(0,1fr)_200px_120px_100px]"
                               }`}
                             >
-                              <div className="min-w-0">
+                              <div className={`min-w-0 ${isSemesterFeeChoice ? "xl:col-span-1" : ""}`}>
                                 <p className="truncate text-sm font-medium text-foreground mb-1">
                                   {title}
                                 </p>
@@ -422,7 +432,7 @@ export default function WorkoutList({
                                 </div>
                               </div>
 
-                              <div className="text-sm">
+                              <div className={`text-sm ${isSemesterFeeChoice ? "xl:col-span-1" : ""}`}>
                                 {durationHref ? (
                                   <a
                                     href={durationHref}
@@ -470,14 +480,14 @@ export default function WorkoutList({
                                 )}
                               </div>
 
-                              <div className="text-sm lg:text-right space-y-0.5">
+                              <div className={`text-sm space-y-0.5 ${isSemesterFeeChoice ? "lg:text-left xl:text-right" : "lg:text-right"}`}>
                                 <p className="text-muted-foreground font-medium">Student: €{formatPrice(w.priceStudent)}</p>
                                 <p className="text-muted-foreground/60 text-[10px]">
                                   Staff: €{formatPrice(w.priceStaff)}
                                 </p>
                               </div>
 
-                              <div className="flex justify-end">
+                              <div className={`flex ${isSemesterFeeChoice ? "justify-start xl:justify-end" : "justify-end"}`}>
                                 <IconActionGroup
                                   isEnrolled={isEnrolled}
                                   isEnrollmentPending={Boolean(pendingIds[w.id])}

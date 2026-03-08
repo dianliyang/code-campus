@@ -132,7 +132,7 @@ export default async function ProjectsSeminarsDetailPage({ params }: PageProps) 
 
   return (
     <div className="h-full overflow-hidden px-4 py-4">
-      <header className="sticky top-0 z-10 border-b bg-background">
+      <header className="z-10 border-b bg-background md:sticky md:top-0">
         <div className="flex items-start justify-between gap-4 py-3">
           <div className="min-w-0">
             <h1 className="break-words text-3xl font-semibold tracking-tight text-foreground">

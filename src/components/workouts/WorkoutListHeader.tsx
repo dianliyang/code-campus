@@ -9,8 +9,15 @@ import {
   RefreshCw,
   Search,
   SlidersHorizontal,
+  ArrowDownWideNarrow,
   X,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -51,6 +58,14 @@ export default function WorkoutListHeader({
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const lastPushedQuery = useRef(searchParams.get("q") || "");
   const isComposing = useRef(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
 
   const handleSortChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -98,26 +113,59 @@ export default function WorkoutListHeader({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
-          <Tabs
-            value={viewMode}
-            onValueChange={(value) => setViewMode(value as "list" | "grid")}
-            className="shrink-0"
-          >
-            <TabsList className="w-full sm:w-auto">
-              <TabsTrigger value="list" aria-label="List view" className="flex-1 sm:flex-none">
-                <List className="h-3.5 w-3.5" />
-                List
-              </TabsTrigger>
-              <TabsTrigger value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Grid
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+      <div className="flex items-center justify-between gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-2 flex-1 min-w-0" data-testid="workout-toolbar-leading">
+          {!isMobileViewport ? (
+            <Tabs
+              value={viewMode}
+              onValueChange={(value) => setViewMode(value as "list" | "grid")}
+              className="shrink-0"
+            >
+              <TabsList className="w-full sm:w-auto">
+                <TabsTrigger value="list" aria-label="List view" className="flex-1 sm:flex-none">
+                  <List className="h-3.5 w-3.5" />
+                  List
+                </TabsTrigger>
+                <TabsTrigger value="grid" aria-label="Grid view" className="flex-1 sm:flex-none">
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Grid
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          ) : null}
 
-          <div className="flex-1 min-w-0 sm:max-w-[360px]">
+          {isMobileViewport ? (
+            <InputGroup className="w-full" data-testid="workout-mobile-search">
+              <InputGroupInput
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onCompositionStart={() => {
+                  isComposing.current = true;
+                }}
+                onCompositionEnd={(e) => {
+                  isComposing.current = false;
+                  setQuery(e.currentTarget.value);
+                }}
+                placeholder="Search workouts..."
+              />
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+              <InputGroupAddon align="inline-end">
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  aria-label="Clear search"
+                  title="Clear search"
+                >
+                  <X className="size-4" />
+                </button>
+              </InputGroupAddon>
+            </InputGroup>
+          ) : null}
+
+          <div className={`${isMobileViewport ? "hidden" : "flex-1 min-w-0 sm:max-w-[360px]"}`}>
             <InputGroup>
               <InputGroupInput
                 type="text"
@@ -142,7 +190,7 @@ export default function WorkoutListHeader({
                     onClick={() => setQuery("")}
                     aria-label="Clear search"
                   >
-                    <X />
+                    <X className="size-4" />
                   </button>
                 ) : null}
               </InputGroupAddon>
@@ -150,28 +198,67 @@ export default function WorkoutListHeader({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0" data-testid="workout-toolbar-trailing">
+          {isMobileViewport ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  type="button"
+                  className="size-9 p-0"
+                  aria-label="Sort"
+                  title="Sort"
+                >
+                  <ArrowDownWideNarrow className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleSortChange("title")}>
+                  {dict?.sort_title || "Title (A-Z)"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSortChange("price")}>
+                  {dict?.sort_price || "Price (Low-High)"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSortChange("day")}>
+                  {dict?.sort_day || "Day of Week"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSortChange("newest")}>
+                  {dict?.sort_newest || "Newest"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               onClick={() => refreshList()}
               disabled={isRefreshing}
-              className="flex-1 sm:flex-none"
+              className={isMobileViewport ? "size-9 p-0" : "flex-1 sm:flex-none"}
               title="Refresh all workout categories"
+              aria-label="Refresh all workout categories"
             >
               <RefreshCw
                 className={`h-3.5 w-3.5 ${refreshingCategory === null ? "animate-spin" : ""}`}
               />
-              {isRefreshing && refreshingCategory === null ? "Refreshing..." : "Refresh All"}
+              <span className={isMobileViewport ? "sr-only" : ""}>
+                {isRefreshing && refreshingCategory === null ? "Refreshing..." : "Refresh All"}
+              </span>
             </Button>
-            <Button variant="outline" onClick={openFilters} className="flex-1 sm:flex-none">
+            <Button
+              variant="outline"
+              onClick={openFilters}
+              className={isMobileViewport ? "size-9 p-0" : "flex-1 sm:flex-none"}
+              aria-label="Filter"
+              title="Filter"
+            >
               <SlidersHorizontal />
-              Filter
+              <span className={isMobileViewport ? "sr-only" : ""}>Filter</span>
             </Button>
           </div>
 
           <Select value={sortBy} onValueChange={handleSortChange}>
-            <SelectTrigger className="w-full sm:w-[160px]">
+            <SelectTrigger className={`${isMobileViewport ? "hidden" : "w-full sm:w-[160px]"}`}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

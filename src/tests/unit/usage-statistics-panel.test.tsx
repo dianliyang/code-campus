@@ -12,6 +12,11 @@ const statsPayload = {
   daily: { "2026-03-01": { requests: 2, cost_usd: 0.1 } },
 };
 
+const zeroRecentStatsPayload = {
+  ...statsPayload,
+  recentTotals: { requests: 0, cost_usd: 0 },
+};
+
 describe("UsageStatisticsPanel", () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -34,5 +39,29 @@ describe("UsageStatisticsPanel", () => {
 
     expect(root.className).toContain("space-y-3");
     expect(root.className).not.toContain("px-4");
+  });
+
+  test("uses a scrollable summary row with icons and avoids redundant zero-value recent text", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => zeroRecentStatsPayload,
+    }));
+
+    render(<UsageStatisticsPanel />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Usage Statistics")).toBeDefined();
+    });
+
+    expect(screen.getAllByTestId("usage-summary-row").at(-1)?.className).toContain("overflow-x-auto");
+    expect(screen.getAllByTestId("usage-summary-row").at(-1)?.className).toContain("gap-4");
+    expect(screen.getAllByTestId("usage-summary-row").at(-1)?.textContent).toContain("Requests");
+    const summaryCards = screen.getAllByTestId("usage-summary-row").at(-1)?.querySelectorAll(":scope > div") || [];
+    expect(Array.from(summaryCards).every((card) => card.className.includes("shrink-0"))).toBe(true);
+    expect(screen.getAllByTestId("usage-stat-requests-icon").at(-1)).toBeDefined();
+    expect(screen.getAllByTestId("usage-stat-input-tokens-icon").at(-1)).toBeDefined();
+    expect(screen.getAllByText("in last 7 days").at(-1)).toBeDefined();
+    expect(screen.queryByText("0 in last 7 days")).toBeNull();
+    expect(screen.queryByText("$0.0000 in last 7 days")).toBeNull();
   });
 });

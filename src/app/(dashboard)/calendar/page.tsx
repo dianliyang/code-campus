@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getUser, createClient, mapCourseFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
+import { getDashboardPageHeaderClassName } from "@/lib/dashboard-layout";
 import { getCalendarPageShellClassName } from "@/lib/routine-layout";
 import type { CalendarStudyPlanRecord } from "@/lib/week-calendar-drag";
 import { Button } from "@/components/ui/button";
@@ -27,8 +28,8 @@ export default async function StudySchedulePage() {
   }
 
   return (
-    <main className="flex h-full min-h-0 w-full flex-col px-4 py-4">
-      <div className="sticky top-0 z-20 -mx-4 -mt-4 bg-background/95 px-4 pb-4 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <main className="w-full px-4 py-4 lg:flex lg:h-full lg:min-h-0 lg:flex-col">
+      <div className={getDashboardPageHeaderClassName("-mt-4 pb-4")}>
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Calendar</h1>
           <p className="text-sm text-muted-foreground">

@@ -34,6 +34,8 @@ export function DataTable<TData, TValue>({
   getRowId,
   meta
 }: DataTableProps<TData, TValue>) {
+  // TanStack Table exposes instance methods that React Compiler intentionally skips memoizing.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,

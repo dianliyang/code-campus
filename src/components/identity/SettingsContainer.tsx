@@ -57,7 +57,7 @@ const NAV_GROUPS: Array<{label: string;items: NavItem[];}> = [
 {
   label: "Synchronization",
   items: [
-  { id: "sync", label: "Data Synchronization", icon: Database },
+  { id: "sync", label: "Synchronization", icon: Database },
   { id: "api-management", label: "API Control", icon: KeyRound }]
 
 },
@@ -84,7 +84,7 @@ const SECTION_META: Record<SectionId, {title: string;desc: string;}> = {
     desc: "AI call history, token usage, and cost breakdown."
   },
   sync: {
-    title: "Data Synchronization",
+    title: "Synchronization",
     desc: "Synchronize course catalogs from institution scrapers."
   },
   import: {
@@ -250,7 +250,7 @@ export default function SettingsContainer({
         }
 
         {/* Section header */}
-        <div className="sticky top-0 z-20 -mx-4 shrink-0 bg-background/95 px-4 pb-5 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="z-20 -mx-4 shrink-0 bg-background/95 px-4 pb-5 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:sticky md:top-0">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-2xl font-semibold tracking-tight text-[#1f1f1f]">

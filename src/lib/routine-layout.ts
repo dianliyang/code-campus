@@ -3,11 +3,19 @@ export function getRoutineChildContainerClassName() {
 }
 
 export function getCalendarRootCardClassName() {
-  return "h-full min-h-0 w-full overflow-hidden border border-border bg-background shadow-sm rounded-2xl flex flex-col lg:flex-row gap-0";
+  return "w-full overflow-clip border border-border bg-background shadow-sm rounded-2xl flex flex-col gap-0 lg:h-full lg:min-h-0 lg:overflow-hidden lg:flex-row";
 }
 
 export function getCalendarPageShellClassName() {
-  return "flex flex-1 min-h-0 overflow-hidden";
+  return "w-full lg:flex lg:flex-1 lg:min-h-0 lg:overflow-hidden";
+}
+
+export function getCalendarRoutineListClassName() {
+  return "space-y-2 pr-1 pb-4 lg:min-h-0 lg:flex-1 lg:overflow-auto lg:no-scrollbar";
+}
+
+export function getCalendarTimelineScrollerClassName() {
+  return "relative bg-background lg:flex-1 lg:overflow-auto lg:no-scrollbar";
 }
 
 export function getWeekCalendarHeaderTypography() {

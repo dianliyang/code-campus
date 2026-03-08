@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ApiResponse, ImportRequest } from "@/types";
 import { Loader2, LogIn, CloudUpload, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -184,12 +185,6 @@ export default function ImportForm({ dict }: ImportFormProps) {
 
   return (
     <div className="w-full space-y-4 pb-4">
-      <div>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-          {dict.title_main}
-        </h1>
-      </div>
-
       {message.text ? (
         <div
           className={`rounded-sm border px-3 py-2 text-sm ${
@@ -210,67 +205,67 @@ export default function ImportForm({ dict }: ImportFormProps) {
           <CardContent className="space-y-3">
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Field label={dict.form_uni} required>
+            <FormField label={dict.form_uni} required>
               <Input
                 required
                 value={formData.university}
                 onChange={(e) => setFormData({ ...formData, university: e.target.value })}
               />
-            </Field>
-            <Field label={dict.form_code} required>
+            </FormField>
+            <FormField label={dict.form_code} required>
               <Input
                 required
                 value={formData.courseCode}
                 onChange={(e) => setFormData({ ...formData, courseCode: e.target.value })}
               />
-            </Field>
+            </FormField>
           </div>
 
-          <Field label={dict.form_title} required>
+          <FormField label={dict.form_title} required>
             <Input
               required
               placeholder={dict.form_title_placeholder}
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             />
-          </Field>
+          </FormField>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Field label={dict.form_dept}>
+            <FormField label={dict.form_dept}>
               <Input
                 placeholder={dict.form_dept_placeholder}
                 value={formData.department}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
               />
-            </Field>
-            <Field label="Credits">
+            </FormField>
+            <FormField label="Credits">
               <Input
                 placeholder="e.g. 3.0"
                 value={formData.credit}
                 onChange={(e) => setFormData({ ...formData, credit: e.target.value })}
               />
-            </Field>
+            </FormField>
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Field label={dict.form_url}>
+            <FormField label={dict.form_url}>
               <Input
                 placeholder="https://..."
                 value={formData.url}
                 onChange={(e) => setFormData({ ...formData, url: e.target.value })}
               />
-            </Field>
-            <Field label={dict.form_level}>
+            </FormField>
+            <FormField label={dict.form_level}>
               <Tabs value={formData.level} onValueChange={(level) => setFormData({ ...formData, level: level as "undergraduate" | "graduate" })}>
                 <TabsList className="w-full">
                   <TabsTrigger value="undergraduate" className="flex-1">{dict.level_undergraduate || "undergraduate"}</TabsTrigger>
                   <TabsTrigger value="graduate" className="flex-1">{dict.level_graduate || "graduate"}</TabsTrigger>
                 </TabsList>
               </Tabs>
-            </Field>
+            </FormField>
           </div>
 
-          <Field label={dict.form_internal}>
+          <FormField label={dict.form_internal}>
             <Tabs
               value={formData.isInternal ? "internal" : "public"}
               onValueChange={(value) => setFormData({ ...formData, isInternal: value === "internal" })}
@@ -280,16 +275,16 @@ export default function ImportForm({ dict }: ImportFormProps) {
                 <TabsTrigger value="internal" className="flex-1">{dict.internal_private || "Internal"}</TabsTrigger>
               </TabsList>
             </Tabs>
-          </Field>
+          </FormField>
 
-          <Field label={dict.form_desc}>
+          <FormField label={dict.form_desc}>
             <Textarea
               rows={5}
               placeholder={dict.form_desc_placeholder}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
-          </Field>
+          </FormField>
 
           <div className="flex items-center justify-end gap-2 pt-2">
             {stagedBulkData ? (
@@ -432,7 +427,7 @@ export default function ImportForm({ dict }: ImportFormProps) {
   );
 }
 
-function Field({
+function FormField({
   label,
   required,
   children,
@@ -442,12 +437,12 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex w-full flex-col items-start gap-1.5">
-      <span className="text-sm font-medium leading-none">
+    <Field className="gap-2">
+      <FieldLabel className="text-sm font-medium leading-none">
         {label}
         {required ? <span className="ml-0.5 text-destructive">*</span> : null}
-      </span>
+      </FieldLabel>
       <div className="w-full">{children}</div>
-    </label>
+    </Field>
   );
 }

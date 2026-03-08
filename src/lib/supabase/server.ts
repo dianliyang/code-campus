@@ -544,14 +544,7 @@ export class SupabaseDatabase {
       return timeStr + ":00";
     };
 
-    const formatShortDateWithYear = (dateStr: string, semester: string): string | null => {
-      const parsed = parseWorkoutDateForDb(dateStr, semester);
-      if (!parsed) return null;
-      const [, year, month, day] = parsed.match(/^(\d{4})-(\d{2})-(\d{2})$/) || [];
-      if (!year || !month || !day) return null;
-      return `${day}.${month}.${year}`;
-    };
-    const normalizeWorkoutDetails = (rawDetails: unknown, semester: string): Json => {
+    const normalizeWorkoutDetails = (rawDetails: unknown): Json => {
       const details = rawDetails && typeof rawDetails === "object" && !Array.isArray(rawDetails)
         ? { ...(rawDetails as Record<string, unknown>) }
         : {};
@@ -592,7 +585,7 @@ export class SupabaseDatabase {
       booking_url: w.bookingUrl || null,
       url: w.url || null,
       semester: w.semester || null,
-      details: normalizeWorkoutDetails(w.details, w.semester || ""),
+      details: normalizeWorkoutDetails(w.details),
       updated_at: new Date().toISOString(),
     }));
 

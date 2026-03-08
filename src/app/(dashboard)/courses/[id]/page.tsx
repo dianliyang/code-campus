@@ -38,7 +38,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const dict = await getDictionary(lang);
 
   return (
-    <div className="h-full min-h-0 px-4 py-4">
+    <div className="px-4 py-4 lg:h-full lg:min-h-0">
       <Suspense fallback={null}>
         <CourseDetailData id={id} dict={dict.dashboard} />
       </Suspense>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Copy, Loader2, Trash2, WandSparkles } from "lucide-react";
+import { Activity, CheckCircle2, Copy, KeyRound, Loader2, ShieldCheck, Trash2, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -53,6 +53,7 @@ export default function ApiManagementCard() {
   const [newLimit, setNewLimit] = useState("");
   const [newReadOnly, setNewReadOnly] = useState(false);
   const [nameError, setNameError] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const load = async () => {
     setIsLoading(true);
@@ -81,6 +82,13 @@ export default function ApiManagementCard() {
     void load();
   }, []);
 
+  useEffect(() => {
+    const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
+
   const hasRows = useMemo(() => items.length > 0, [items.length]);
   const activeCount = useMemo(() => items.filter((item) => item.isActive).length, [items]);
   const totalRequestsUsed = useMemo(() => items.reduce((acc, item) => acc + (item.requestsUsed || 0), 0), [items]);
@@ -98,6 +106,30 @@ export default function ApiManagementCard() {
     }
     return n;
   };
+
+  const renderStatCard = ({
+    label,
+    value,
+    icon,
+    iconTestId,
+  }: {
+    label: string;
+    value: number;
+    icon: React.ReactNode;
+    iconTestId: string;
+  }) => (
+    <Card className="min-w-[160px] flex-1">
+      <CardContent className="flex h-24 flex-col justify-between px-4 py-3">
+        <div className="flex items-start gap-2">
+          <span className="mt-0.5 text-muted-foreground" data-testid={iconTestId}>
+            {icon}
+          </span>
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        </div>
+        <p className="mt-auto text-2xl font-semibold leading-none">{value}</p>
+      </CardContent>
+    </Card>
+  );
 
   const copyLatestKey = async () => {
     if (!latestKey) return;
@@ -217,25 +249,27 @@ export default function ApiManagementCard() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Card>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">Total Keys</p>
-            <p className="mt-1 text-2xl font-semibold">{items.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">Active Keys</p>
-            <p className="mt-1 text-2xl font-semibold">{activeCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">Requests Used</p>
-            <p className="mt-1 text-2xl font-semibold">{totalRequestsUsed}</p>
-          </CardContent>
-        </Card>
+      <div className="overflow-x-auto pb-1" data-testid="api-stats-row">
+        <div className="flex min-w-max gap-2.5 sm:gap-3">
+          {renderStatCard({
+            label: "Total Keys",
+            value: items.length,
+            icon: <KeyRound className="h-4 w-4" />,
+            iconTestId: "api-total-keys-icon",
+          })}
+          {renderStatCard({
+            label: "Active Keys",
+            value: activeCount,
+            icon: <ShieldCheck className="h-4 w-4" />,
+            iconTestId: "api-active-keys-icon",
+          })}
+          {renderStatCard({
+            label: "Requests Used",
+            value: totalRequestsUsed,
+            icon: <Activity className="h-4 w-4" />,
+            iconTestId: "api-requests-used-icon",
+          })}
+        </div>
       </div>
 
       <Card>
@@ -322,6 +356,109 @@ export default function ApiManagementCard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+        {isMobileViewport ? (
+          <div className="space-y-3" data-testid="api-keys-mobile-cards">
+            {isLoading ? (
+              <Card className="border-dashed">
+                <CardContent className="py-4 text-sm text-muted-foreground">Loading...</CardContent>
+              </Card>
+            ) : !hasRows ? (
+              <Card className="border-dashed">
+                <CardContent className="py-4 text-sm text-muted-foreground">No API keys yet.</CardContent>
+              </Card>
+            ) : (
+              items.map((item) => {
+                const fallbackDraft = {
+                  isActive: item.isActive,
+                  isReadOnly: item.isReadOnly,
+                };
+                const draft = drafts[item.id] || fallbackDraft;
+                const busy = workingId === item.id;
+                return (
+                  <Card key={item.id} data-testid={`api-key-card-${item.id}`}>
+                    <CardContent className="space-y-3 py-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">{item.name || "API Key"}</p>
+                        <p className="text-xs text-muted-foreground">{toMaskedKey(item.keyPrefix)}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">Limit</p>
+                          <p className="font-medium text-foreground">{item.requestsLimit ?? "Unlimited"}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">Usage</p>
+                          <p className="font-medium text-foreground">
+                            {item.requestsUsed}
+                            {item.requestsLimit != null ? ` / ${item.requestsLimit}` : ""}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">Last Used</p>
+                          <p className="font-medium text-foreground">
+                            {item.lastUsedAt ? new Date(item.lastUsedAt).toLocaleString() : "Never"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Toggle
+                          pressed={draft.isActive}
+                          onPressedChange={(pressed) => {
+                            triggerShake(item.id);
+                            const nextDraft = { ...draft, isActive: pressed };
+                            setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
+                            void persistRow(item.id, nextDraft);
+                          }}
+                          disabled={busy}
+                          size="sm"
+                          variant="outline"
+                          className={cn(
+                            "h-7 px-2 text-[10px] font-bold tracking-wide data-[state=on]:bg-emerald-50 data-[state=on]:text-emerald-700 data-[state=on]:border-emerald-200",
+                            shakingId === item.id && "animate-shake"
+                          )}
+                        >
+                          {draft.isActive ? "Active" : "Paused"}
+                        </Toggle>
+                        <Toggle
+                          pressed={draft.isReadOnly}
+                          onPressedChange={(pressed) => {
+                            triggerShake(item.id);
+                            const nextDraft = { ...draft, isReadOnly: pressed };
+                            setDrafts((prev) => ({ ...prev, [item.id]: nextDraft }));
+                            void persistRow(item.id, nextDraft);
+                          }}
+                          disabled={busy}
+                          size="sm"
+                          variant="outline"
+                          className={cn(
+                            "h-7 px-2 text-[10px] font-bold tracking-wide data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 data-[state=on]:border-amber-200",
+                            shakingId === item.id && "animate-shake"
+                          )}
+                        >
+                          {draft.isReadOnly ? "Read-Only" : "Full-Access"}
+                        </Toggle>
+                        <Button
+                          variant="ghost"
+                          type="button"
+                          onClick={() => {
+                            triggerShake(item.id);
+                            void deleteRow(item.id);
+                          }}
+                          disabled={busy}
+                          aria-label="Delete API key"
+                          title="Delete API key"
+                          className={cn("ml-auto", shakingId === item.id && "animate-shake")}
+                        >
+                          <Trash2 />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
@@ -435,6 +572,7 @@ export default function ApiManagementCard() {
             </tbody>
           </table>
         </div>
+        )}
         </CardContent>
       </Card>
 

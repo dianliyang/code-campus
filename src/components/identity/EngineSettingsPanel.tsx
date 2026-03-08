@@ -427,7 +427,7 @@ export default function EngineSettingsPanel({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 mb-2">Persistence Info</p>
+                <p className="mb-2 text-xs font-semibold text-muted-foreground">Persistence Info</p>
                 <div className="space-y-1 text-xs text-muted-foreground">
                   <div className="flex items-center justify-between gap-3">
                     <span>Provider</span>
@@ -445,7 +445,7 @@ export default function EngineSettingsPanel({
               </div>
 
               <div className="pt-2 border-t border-border/40">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 mb-3">Service Availability</p>
+                <p className="mb-3 text-xs font-semibold text-muted-foreground">Service Availability</p>
                 <ServiceHealthStatus />
               </div>
 

@@ -23,6 +23,8 @@ import {
 import { DatabaseScheduleRow } from "@/lib/overview-routine";
 import {
   getCalendarRootCardClassName,
+  getCalendarRoutineListClassName,
+  getCalendarTimelineScrollerClassName,
   getWeekCalendarCardContentLayout,
   getCurrentTimeIndicatorLayout,
   getRoutineChildContainerClassName,
@@ -329,6 +331,7 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
     setMonthCursor(new Date(now.getFullYear(), now.getMonth(), 1));
   };
   const getEventDurationLabel = (event: CalendarEvent) => {
+    if (event.sourceType === "assignment") return "Due today";
     const durationMinutes = Math.max(0, event.endMinutes - event.startMinutes);
     if (!durationMinutes) return "0m";
     return `${durationMinutes}m`;
@@ -599,9 +602,9 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
   return (
     <Card className={cn(getCalendarRootCardClassName(), "p-0")}>
       {/* Left Column */}
-      <aside className="w-full shrink-0 flex flex-col border-b border-border lg:w-[300px] lg:border-b-0 lg:border-r">
+      <aside className="flex w-full shrink-0 flex-col border-b border-border lg:min-h-0 lg:w-[300px] lg:border-b-0 lg:border-r">
         {/* Top: Selected Day's Events */}
-        <div className="flex flex-col p-4 flex-1 min-h-0">
+        <div className="flex flex-col p-4 lg:flex-1 lg:min-h-0">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground">
               {activeDateKey === todayKey ? "Today's Routine" : `Routine for ${activeDateKey}`}
@@ -610,7 +613,7 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
               {todayEvents.length} items
             </Badge>
           </div>
-          <div className="min-h-0 flex-1 space-y-2 overflow-auto pr-1 no-scrollbar">
+          <div className={getCalendarRoutineListClassName()}>
               {todayRoutineGroups.length > 0 ? (
               <div className="space-y-2 pb-2">
                 {todayRoutineGroups.map(({ parent, children }) => {
@@ -757,8 +760,6 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
                                 <div className="min-w-0 flex-1 space-y-1">
                                   <p className="line-clamp-1 text-[12px] font-semibold text-foreground leading-tight">{child.title}</p>
                                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-muted-foreground/80 font-medium">
-                                    <span className="shrink-0 uppercase">{child.courseCode}</span>
-                                    <span className="shrink-0 text-muted-foreground/30">•</span>
                                     <span className="shrink-0">{getEventDurationLabel(child)}</span>
                                     {child.kind && (
                                       <>
@@ -863,7 +864,7 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
       </aside>
 
       {/* Right Column: Week Timeline */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden relative">
+      <div className="relative flex min-w-0 flex-1 flex-col lg:overflow-hidden">
         <header className="flex shrink-0 items-center justify-between border-b border-border bg-muted/5 p-4 lg:px-6">
           <div className="space-y-1">
             <h1 className={weekHeaderTypography.titleClassName}>{weekLabel}</h1>
@@ -886,7 +887,10 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
           </div>
         </header>
 
-        <div ref={timelineScrollRef} className="flex-1 overflow-auto relative no-scrollbar bg-background">
+        <div
+          ref={timelineScrollRef}
+          className={getCalendarTimelineScrollerClassName()}
+        >
           <div ref={weekGridRef} className="flex min-w-[800px] relative">
             
             {/* Horizontal Grid Lines - Spans entire width behind columns */}

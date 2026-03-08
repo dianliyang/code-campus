@@ -2,13 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { Dictionary } from "@/lib/dictionary";
 import {
-  ArrowUpDown,
+  ArrowDownWideNarrow,
   LayoutGrid,
   List,
-  Plus,
   Search,
   SlidersHorizontal,
   X,
@@ -64,7 +62,7 @@ export default function CourseListHeader({
   const sortBy = searchParams.get("sort") || "title";
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const lastPushedQuery = useRef(searchParams.get("q") || "");
   const isComposing = useRef(false);
 
@@ -105,6 +103,13 @@ export default function CourseListHeader({
       : [...list, value];
 
   const handleSortChange = (value: string) => pushWith({ sort: value });
+
+  useEffect(() => {
+    const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
 
   useEffect(() => {
     const urlQuery = searchParams.get("q") || "";
@@ -155,41 +160,72 @@ export default function CourseListHeader({
 
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="flex w-full items-center justify-between gap-2 md:flex-row md:items-center md:justify-between">
         <div
           className="flex min-w-0 flex-1 items-center gap-2"
           data-testid="course-toolbar-leading"
         >
-          <Tabs
-            value={viewMode}
-            onValueChange={(value) => setViewMode(value as "list" | "grid")}
-            className="hidden md:block md:w-auto"
-          >
-            <TabsList>
-              <TabsTrigger value="list" aria-label="List view">
-                <List className="size-4 shrink-0" />
-                <span className="hidden xl:inline">List</span>
-              </TabsTrigger>
-              <TabsTrigger value="grid" aria-label="Grid view">
-                <LayoutGrid className="size-4 shrink-0" />
-                <span className="hidden xl:inline">Grid</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <ButtonGroup className="xl:hidden">
-            <Button
-              variant="outline"
-              size="icon"
-              type="button"
-              className="size-9"
-              aria-label="Search courses"
-              title="Search courses"
-              onClick={() => setMobileSearchOpen((prev) => !prev)}
+          {!isMobileViewport ? (
+            <Tabs
+              value={viewMode}
+              onValueChange={(value) => setViewMode(value as "list" | "grid")}
+              className="md:w-auto"
             >
-              <Search className="size-4 shrink-0" />
-            </Button>
-          </ButtonGroup>
+              <TabsList>
+                <TabsTrigger value="list" aria-label="List view">
+                  <List className="size-4 shrink-0" />
+                  <span className="hidden xl:inline">List</span>
+                </TabsTrigger>
+                <TabsTrigger value="grid" aria-label="Grid view">
+                  <LayoutGrid className="size-4 shrink-0" />
+                  <span className="hidden xl:inline">Grid</span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          ) : null}
+
+          {isMobileViewport ? (
+            <InputGroup className="w-full xl:hidden" data-testid="course-mobile-search">
+              <InputGroupInput
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onCompositionStart={() => {
+                  isComposing.current = true;
+                }}
+                onCompositionEnd={(e) => {
+                  isComposing.current = false;
+                  setQuery(e.currentTarget.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitSearch(query);
+                  if (e.key === "Escape" && query) {
+                    setQuery("");
+                    commitSearch("");
+                  }
+                }}
+                placeholder="Search courses..."
+              />
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+              <InputGroupAddon align="inline-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (query) {
+                      setQuery("");
+                      commitSearch("");
+                    }
+                  }}
+                  aria-label="Clear search"
+                  title="Clear search"
+                >
+                  <X className="size-4" />
+                </button>
+              </InputGroupAddon>
+            </InputGroup>
+          ) : null}
 
           <ButtonGroup className="hidden xl:flex">
             <InputGroup className="w-full min-w-[220px] md:w-[220px] lg:w-[280px]">
@@ -236,11 +272,11 @@ export default function CourseListHeader({
         </div>
 
         <div
-          className="flex items-center justify-end gap-2"
+          className="flex shrink-0 items-center justify-end gap-2"
           data-testid="course-toolbar-trailing"
         >
-          <ButtonGroup className="w-auto text-[13px] text-[#6a6a6a]">
-            <ButtonGroup>
+          <div className="flex items-center gap-2 text-[13px] text-[#6a6a6a]">
+            <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -250,7 +286,7 @@ export default function CourseListHeader({
                     aria-label="Sort"
                     title="Sort"
                   >
-                    <ArrowUpDown className="size-4 shrink-0" />
+                    <ArrowDownWideNarrow className="size-4 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -266,11 +302,10 @@ export default function CourseListHeader({
                     {dict?.sort_newest || "Newest"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
-              <div className="hidden xl:block">
-                <Select value={sortBy} onValueChange={handleSortChange}>
+                </DropdownMenu>
+                <div className="hidden xl:block">
+                  <Select value={sortBy} onValueChange={handleSortChange}>
                   <SelectTrigger className="w-[150px]">
-                    <ArrowUpDown className="size-4 shrink-0" />
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent align="end">
@@ -284,24 +319,15 @@ export default function CourseListHeader({
                       {dict?.sort_newest || "Newest"}
                     </SelectItem>
                   </SelectContent>
-                </Select>
-              </div>
-            </ButtonGroup>
+                  </Select>
+                </div>
+            </div>
 
-            <ButtonGroup>
-              <Button variant="outline" asChild>
-                <Link href="/settings/import" aria-label="New course" title="New course">
-                  <Plus className="size-4 shrink-0" />
-                  <span className="hidden xl:inline">New course</span>
-                </Link>
-              </Button>
-            </ButtonGroup>
-
-            <ButtonGroup>
-              <Drawer direction="right" open={filtersOpen} onOpenChange={setFiltersOpen}>
-                <ButtonGroup className="group">
+            <div>
+              <Drawer direction={isMobileViewport ? "bottom" : "right"} open={filtersOpen} onOpenChange={setFiltersOpen}>
+                <div className="flex items-center gap-2">
                   <DrawerTrigger asChild>
-                    <Button variant="outline" type="button" aria-label="Filter" title="Filter">
+                    <Button variant="outline" type="button" aria-label="Filter" title="Filter" className="size-9 p-0 xl:h-9 xl:w-auto xl:px-3">
                       <SlidersHorizontal className="size-4 shrink-0" />
                       <span className="hidden xl:inline">Filter</span>
                       {activeFilterCount > 0 ? (
@@ -322,7 +348,7 @@ export default function CourseListHeader({
                       <X />
                     </Button>
                   ) : null}
-                </ButtonGroup>
+                </div>
                 <DrawerContent>
                   <DrawerHeader>
                     <DrawerTitle>Filters</DrawerTitle>
@@ -394,56 +420,10 @@ export default function CourseListHeader({
                   </div>
                 </DrawerContent>
               </Drawer>
-            </ButtonGroup>
-          </ButtonGroup>
+            </div>
+          </div>
         </div>
       </div>
-      {mobileSearchOpen ? (
-        <div className="xl:hidden">
-          <InputGroup className="w-full">
-            <InputGroupInput
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onCompositionStart={() => {
-                isComposing.current = true;
-              }}
-              onCompositionEnd={(e) => {
-                isComposing.current = false;
-                setQuery(e.currentTarget.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitSearch(query);
-                if (e.key === "Escape" && query) {
-                  setQuery("");
-                  commitSearch("");
-                }
-              }}
-              placeholder="Search courses..."
-            />
-            <InputGroupAddon>
-              <Search />
-            </InputGroupAddon>
-            <InputGroupAddon align="inline-end">
-              <button
-                type="button"
-                onClick={() => {
-                  if (query) {
-                    setQuery("");
-                    commitSearch("");
-                  } else {
-                    setMobileSearchOpen(false);
-                  }
-                }}
-                aria-label={query ? "Clear search" : "Close search"}
-                title={query ? "Clear search" : "Close search"}
-              >
-                <X className="size-4" />
-              </button>
-            </InputGroupAddon>
-          </InputGroup>
-        </div>
-      ) : null}
     </div>
   );
 }

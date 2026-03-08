@@ -6,6 +6,7 @@ import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { getWorkoutLastUpdateTime } from "@/actions/scrapers";
 import { buildVisibleWorkoutCategoryState } from "@/lib/workout-category-filtering";
+import { getDashboardPageHeaderClassName } from "@/lib/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
 
 interface PageProps {
@@ -30,7 +31,7 @@ export default async function WorkoutsPage({ searchParams }: PageProps) {
 
   return (
     <div className="h-full flex flex-col gap-4 px-4 pb-4">
-      <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pb-5 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className={getDashboardPageHeaderClassName()}>
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">

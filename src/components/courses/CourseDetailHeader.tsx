@@ -98,7 +98,6 @@ export default function CourseDetailHeader({
   const [aiJob, setAiJob] = useState<CourseIntelJob | null>(null);
   const [liveActivity, setLiveActivity] = useState<ActivityItem[]>([]);
   const [aiSourceMode, setAiSourceMode] = useState<AiSyncSourceMode>("auto");
-  const [isAiMenuOpen, setIsAiMenuOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const { showToast } = useAppToast();
   const previousJobRef = useRef<{id: number;status: string;} | null>(null);
@@ -379,12 +378,10 @@ export default function CourseDetailHeader({
             </Button>
           ) : (
             <>
-              <DropdownMenu open={isAiMenuOpen} onOpenChange={setIsAiMenuOpen}>
+              <DropdownMenu open={isActionsMenuOpen} onOpenChange={setIsActionsMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" type="button">
-                    {isAiUpdating ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                    <span className="uppercase">{aiSourceMode}</span>
-                    {isAiMenuOpen ? <ChevronUp /> : <ChevronDown />}
+                  <Button variant="outline" size="icon-sm" type="button" title="More actions" aria-label="More actions">
+                    {isActionsMenuOpen ? <ChevronUp /> : <ChevronDown />}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -415,19 +412,10 @@ export default function CourseDetailHeader({
                   <DropdownMenuGroup>
                     <DropdownMenuItem onClick={handleAiUpdate} disabled={isAiUpdating}>
                       {isAiUpdating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                      Run AI Sync
+                      <span>Run AI Sync</span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu open={isActionsMenuOpen} onOpenChange={setIsActionsMenuOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon-sm" type="button" title="More actions" aria-label="More actions">
-                    {isActionsMenuOpen ? <ChevronUp /> : <ChevronDown />}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                  <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem onClick={handleToggleEnroll} disabled={isEnrolling}>
                       {isEnrolling ? <Loader2 className="h-3 w-3 animate-spin" /> : enrolled ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}

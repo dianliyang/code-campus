@@ -62,7 +62,7 @@ export async function renderSettingsPage(initialSection?: SectionId) {
   }
 
   return (
-    <div className="h-full px-4 pb-4">
+    <div className="h-full px-4 pb-[calc(132px+env(safe-area-inset-bottom,0px))] lg:pb-4">
       <SettingsContainer
         key={`settings-${initialSection || "engine"}`}
         profile={profile}

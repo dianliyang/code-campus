@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LayoutGrid, List, Search, SlidersHorizontal } from "lucide-react";
+import { LayoutGrid, List, Search, SlidersHorizontal, ArrowDownWideNarrow, X } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -39,6 +40,14 @@ export default function ProjectsSeminarsToolbar({
   searchParams.get("semester")?.split(",").filter(Boolean) || [];
   const sort = searchParams.get("sort") || "title";
   const lastPushedQuery = useRef(searchParams.get("q") || "");
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
 
   const pushWith = (patch: Record<string, string | string[] | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -87,22 +96,52 @@ export default function ProjectsSeminarsToolbar({
   }, [query]);
 
   return (
-    <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
-        <Tabs value={view} onValueChange={(next) => pushWith({ view: next })} className="shrink-0">
-          <TabsList className="w-full sm:w-auto">
-            <TabsTrigger value="list" className="flex-1 sm:flex-none">
-              <List className="h-3.5 w-3.5" />
-              List
-            </TabsTrigger>
-            <TabsTrigger value="grid" className="flex-1 sm:flex-none">
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Grid
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+    <div className="mb-4 flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+      <div
+        className="flex w-full flex-nowrap items-center gap-2"
+        data-testid="projects-toolbar-row"
+      >
+      <div className="flex items-center gap-2 flex-1 min-w-0" data-testid="projects-toolbar-leading">
+        {!isMobileViewport ? (
+          <Tabs value={view} onValueChange={(next) => pushWith({ view: next })} className="shrink-0">
+            <TabsList className="w-full sm:w-auto">
+              <TabsTrigger value="list" className="flex-1 sm:flex-none">
+                <List className="h-3.5 w-3.5" />
+                List
+              </TabsTrigger>
+              <TabsTrigger value="grid" className="flex-1 sm:flex-none">
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Grid
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        ) : null}
 
-        <div className="flex-1 min-w-0 sm:max-w-[360px]">
+        {isMobileViewport ? (
+          <InputGroup className="w-full" data-testid="projects-mobile-search">
+            <InputGroupInput
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search seminars..."
+            />
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+            <InputGroupAddon align="inline-end">
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                title="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </InputGroupAddon>
+          </InputGroup>
+        ) : null}
+
+        <div className={`${isMobileViewport ? "hidden" : "flex-1 min-w-0 sm:max-w-[360px]"}`}>
           <InputGroup>
             <InputGroupInput
               type="text"
@@ -117,13 +156,48 @@ export default function ProjectsSeminarsToolbar({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0" data-testid="projects-toolbar-trailing">
+        {isMobileViewport ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                type="button"
+                className="size-9 p-0"
+                aria-label="Sort"
+                title="Sort"
+              >
+                <ArrowDownWideNarrow className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => pushWith({ sort: "title" })}>
+                Sort by Title
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => pushWith({ sort: "category" })}>
+                Sort by Category
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => pushWith({ sort: "credit" })}>
+                Sort by Credit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => pushWith({ sort: "newest" })}>
+                Sort by Newest
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" type="button" className="flex-1 sm:flex-none">
+              <Button
+                variant="outline"
+                type="button"
+                className={isMobileViewport ? "size-9 p-0" : "flex-1 sm:flex-none"}
+                aria-label="Filter"
+                title="Filter"
+              >
                 <SlidersHorizontal />
-                Filters
+                <span className={isMobileViewport ? "sr-only" : ""}>Filters</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
@@ -167,7 +241,7 @@ export default function ProjectsSeminarsToolbar({
             </DropdownMenuContent>
           </DropdownMenu>
           <Select value={sort} onValueChange={(next) => pushWith({ sort: next })}>
-            <SelectTrigger className="w-full sm:w-[160px]">
+            <SelectTrigger className={`${isMobileViewport ? "hidden" : "w-full sm:w-[160px]"}`}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -181,6 +255,7 @@ export default function ProjectsSeminarsToolbar({
             </SelectContent>
           </Select>
         </div>
+      </div>
       </div>
     </div>);
 

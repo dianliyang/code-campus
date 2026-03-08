@@ -83,6 +83,68 @@ describe("buildTodayRoutineGroups", () => {
     expect(groups[0].children.map((item) => item.key)).toEqual(["child"]);
   });
 
+  test("groups same-course assignments under the same-day study plan parent after scheduled children", () => {
+    const groups = buildTodayRoutineGroups([
+      {
+        key: "assignment-child",
+        sourceType: "assignment" as const,
+        courseId: 1,
+        date: "2026-03-08",
+        planId: null,
+        scheduleId: null,
+        assignmentId: 30,
+        workoutId: null,
+        startTime: "00:00:00",
+      },
+      {
+        key: "parent",
+        sourceType: "study_plan" as const,
+        courseId: 1,
+        date: "2026-03-08",
+        planId: 10,
+        scheduleId: null,
+        assignmentId: null,
+        workoutId: null,
+        startTime: "09:00:00",
+      },
+      {
+        key: "schedule-child",
+        sourceType: "study_plan" as const,
+        courseId: 1,
+        date: "2026-03-08",
+        planId: null,
+        scheduleId: 20,
+        assignmentId: null,
+        workoutId: null,
+        startTime: "10:00:00",
+      },
+    ]);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].parent.key).toBe("parent");
+    expect(groups[0].children.map((item) => item.key)).toEqual(["schedule-child", "assignment-child"]);
+  });
+
+  test("keeps assignments standalone when no same-day study plan parent exists", () => {
+    const groups = buildTodayRoutineGroups([
+      {
+        key: "assignment-only",
+        sourceType: "assignment" as const,
+        courseId: 1,
+        date: "2026-03-08",
+        planId: null,
+        scheduleId: null,
+        assignmentId: 30,
+        workoutId: null,
+        startTime: "00:00:00",
+      },
+    ]);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].parent.key).toBe("assignment-only");
+    expect(groups[0].children).toEqual([]);
+  });
+
   test("keeps workouts as standalone groups", () => {
     const groups = buildTodayRoutineGroups([
       {

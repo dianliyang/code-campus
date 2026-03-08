@@ -73,7 +73,7 @@ export default function OverviewClientContent() {
   }
 
   return (
-    <div className="min-h-full space-y-6 pb-4">
+    <div className="min-h-full space-y-6 pb-24 md:pb-4">
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <section className="overflow-hidden rounded-2xl border border-border bg-background flex flex-col h-full">
           <div className="border-b border-border px-6 py-5 min-h-[110px]">

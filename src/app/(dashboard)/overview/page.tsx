@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import { getUser } from "@/lib/supabase/server";
+import { getDashboardPageHeaderClassName } from "@/lib/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import OverviewClientContent from "@/components/dashboard/OverviewClientContent";
 
@@ -24,7 +25,7 @@ export default async function OverviewPage() {
 
   return (
     <main className="h-full w-full px-4 py-4">
-      <div className="sticky top-0 z-20 -mx-4 -mt-4 bg-background/95 px-4 pb-5 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className={getDashboardPageHeaderClassName("-mt-4")}>
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Overview</h1>
           <p className="text-sm text-muted-foreground">

@@ -207,34 +207,36 @@ export default function SystemMaintenanceCard() {
 
   return (
     <div className="space-y-4 pb-12">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Card className="overflow-hidden">
-          <CardContent className="px-4 py-3 flex flex-col justify-between h-20">
-            <div className="flex items-center gap-2">
-              <Landmark className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Institutions</p>
-            </div>
-            <p className="mt-auto text-xl font-bold tracking-tight leading-none">{selectedUnis.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="overflow-hidden">
-          <CardContent className="px-4 py-3 flex flex-col justify-between h-20">
-            <div className="flex items-center gap-2">
-              <CalendarRange className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Years</p>
-            </div>
-            <p className="mt-auto text-xl font-bold tracking-tight leading-none">{selectedYears.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="overflow-hidden">
-          <CardContent className="px-4 py-3 flex flex-col justify-between h-20">
-            <div className="flex items-center gap-2">
-              <Zap className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Execution Mode</p>
-            </div>
-            <p className="mt-auto text-sm font-bold capitalize leading-none">{executionMode}</p>
-          </CardContent>
-        </Card>
+      <div className="overflow-x-auto pb-1" data-testid="sync-stats-row">
+        <div className="flex min-w-max gap-2.5 sm:gap-3">
+          <Card className="min-w-[170px] flex-1 overflow-hidden">
+            <CardContent className="flex h-24 flex-col justify-between px-4 py-3">
+              <div className="flex items-start gap-2">
+                <Landmark className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium text-muted-foreground">Institutions</p>
+              </div>
+              <p className="mt-auto text-2xl font-bold tracking-tight leading-none">{selectedUnis.length}</p>
+            </CardContent>
+          </Card>
+          <Card className="min-w-[170px] flex-1 overflow-hidden">
+            <CardContent className="flex h-24 flex-col justify-between px-4 py-3">
+              <div className="flex items-start gap-2">
+                <CalendarRange className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium text-muted-foreground">Years</p>
+              </div>
+              <p className="mt-auto text-2xl font-bold tracking-tight leading-none">{selectedYears.length}</p>
+            </CardContent>
+          </Card>
+          <Card className="min-w-[170px] flex-1 overflow-hidden">
+            <CardContent className="flex h-24 flex-col justify-between px-4 py-3">
+              <div className="flex items-start gap-2">
+                <Zap className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium text-muted-foreground">Execution Mode</p>
+              </div>
+              <p className="mt-auto text-base font-bold capitalize leading-none">{executionMode}</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.65fr]">

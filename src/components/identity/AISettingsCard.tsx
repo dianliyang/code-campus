@@ -10,7 +10,7 @@ import {
 "@/actions/identity";
 import { AI_PROVIDERS, type AIProvider } from "@/lib/ai/models-client";
 import { useAppToast } from "@/components/common/AppToastProvider";
-import { Loader2, BarChart2, Trash2, Plus } from "lucide-react";
+import { ArrowUpRight, BarChart2, DollarSign, History, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
@@ -93,6 +93,10 @@ const PROVIDER_HINTS: Record<AIProvider, string> = {
   gemini: "Fast general-purpose generation",
   openai: "Strong structured output quality"
 };
+
+function formatRecentSummary(value: string, isZero: boolean) {
+  return isZero ? "in last 7 days" : `${value} in last 7 days`;
+}
 
 export default function AISettingsCard({
   section,
@@ -343,26 +347,60 @@ export default function AISettingsCard({
           <p className="text-sm text-[#666] text-center py-6">No AI calls tracked yet.</p> :
 
           <div className="space-y-4">
-              <Card aria-label="Usage summary">
-                <Card>
-                  <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Requests</p>
-                  <p className="text-xl font-semibold text-[#111] mt-1">{usageStats.totals.requests.toLocaleString()}</p>
-                  <p className="text-xs text-[#666] mt-1">{usageStats.recentTotals.requests.toLocaleString()} in last 7 days</p>
+              <div aria-label="Usage summary" className="flex gap-2 overflow-x-auto pb-1">
+                <Card className="min-w-[200px] flex-1">
+                  <div className="flex h-24 flex-col justify-between px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <History className="h-4 w-4 text-[#777]" />
+                      <p className="text-sm font-medium text-[#5a5a5a]">Requests</p>
+                    </div>
+                    <div className="mt-auto">
+                      <p className="text-xl font-semibold text-[#111]">{usageStats.totals.requests.toLocaleString()}</p>
+                      <p className="mt-1 text-xs text-[#666]">
+                        {formatRecentSummary(
+                          usageStats.recentTotals.requests.toLocaleString(),
+                          usageStats.recentTotals.requests === 0,
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 </Card>
-                <Card>
-                  <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Input Tokens</p>
-                  <p className="text-xl font-semibold text-[#111] mt-1">{usageStats.totals.tokens_input.toLocaleString()}</p>
+                <Card className="min-w-[200px] flex-1">
+                  <div className="flex h-24 flex-col justify-between px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="h-4 w-4 text-[#777]" />
+                      <p className="text-sm font-medium text-[#5a5a5a]">Input Tokens</p>
+                    </div>
+                    <p className="mt-auto text-xl font-semibold text-[#111]">{usageStats.totals.tokens_input.toLocaleString()}</p>
+                  </div>
                 </Card>
-                <Card>
-                  <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Output Tokens</p>
-                  <p className="text-xl font-semibold text-[#111] mt-1">{usageStats.totals.tokens_output.toLocaleString()}</p>
+                <Card className="min-w-[200px] flex-1">
+                  <div className="flex h-24 flex-col justify-between px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <ArrowUpRight className="h-4 w-4 text-[#777]" />
+                      <p className="text-sm font-medium text-[#5a5a5a]">Output Tokens</p>
+                    </div>
+                    <p className="mt-auto text-xl font-semibold text-[#111]">{usageStats.totals.tokens_output.toLocaleString()}</p>
+                  </div>
                 </Card>
-                <Card>
-                  <p className="text-[11px] font-semibold text-[#5a5a5a] uppercase tracking-wide">Total Cost (USD)</p>
-                  <p className="text-xl font-semibold text-[#111] mt-1">${usageStats.totals.cost_usd.toFixed(4)}</p>
-                  <p className="text-xs text-[#666] mt-1">${usageStats.recentTotals.cost_usd.toFixed(4)} in last 7 days</p>
+                <Card className="min-w-[200px] flex-1">
+                  <div className="flex h-24 flex-col justify-between px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <DollarSign className="h-4 w-4 text-[#777]" />
+                      <p className="text-sm font-medium text-[#5a5a5a]">Total Cost (USD)</p>
+                    </div>
+                    <div className="mt-auto">
+                      <p className="text-xl font-semibold text-[#111]">${usageStats.totals.cost_usd.toFixed(4)}</p>
+                      <p className="mt-1 text-xs text-[#666]">
+                        {formatRecentSummary(
+                          `$${usageStats.recentTotals.cost_usd.toFixed(4)}`,
+                          usageStats.recentTotals.cost_usd === 0,
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 </Card>
-              </Card>
+              </div>
 
               {usageStats.daily &&
             <section aria-label="Last 7 days activity chart">

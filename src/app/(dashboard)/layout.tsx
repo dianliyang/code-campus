@@ -50,9 +50,19 @@ export default async function DashboardLayout({
           overview: dict.navbar?.overview || "Overview",
           courses: dict.navbar?.courses || "Courses",
           studyPlan: dict.navbar?.roadmap || "Roadmap",
+          studySchedule: dict.navbar?.calendar || "Calendar",
           workouts: dict.navbar?.workouts || "Workouts",
-          profile: dict.navbar?.identity || "Identity",
+          smartPlanner: dict.navbar?.assist || "Assist",
+          identity: dict.navbar?.identity || "Identity",
+          projectsSeminars: dict.navbar?.projects_seminars || "S&P",
           settings: dict.navbar?.settings || "Settings",
+          settingsEngine: dict.navbar?.settings_engine || dict.navbar?.settings_intelligence || "Engine",
+          settingsUsage: dict.navbar?.settings_usage || "Usage Statistics",
+          settingsSystem: dict.navbar?.settings_system || "Synchronization",
+          settingsApiControl: dict.navbar?.settings_api_control || "API Control",
+          import: dict.dashboard?.import?.label || "Import",
+          docs: "Doc",
+          settingsApiReference: dict.navbar?.settings_api_reference || "API Reference",
         }}
       />
       <OfflineIndicator />

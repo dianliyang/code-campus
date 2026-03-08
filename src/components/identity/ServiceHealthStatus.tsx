@@ -32,6 +32,12 @@ export type AIHealthStats = {
 const AI_HEALTH_CACHE_KEY = "cc:ai-health-cache";
 const AI_HEALTH_CACHE_TTL_MS = 5 * 60 * 1000;
 
+const PROVIDER_LABELS: Record<AIProvider, string> = {
+  openai: "OpenAI",
+  gemini: "Gemini",
+  perplexity: "Perplexity",
+};
+
 export default function ServiceHealthStatus() {
   const [healthStats, setHealthStats] = useState<AIHealthStats | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
@@ -112,7 +118,7 @@ export default function ServiceHealthStatus() {
           ) : (
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
           )}
-          <span className={`text-[12px] font-medium ${healthStats.healthy ? "text-emerald-600" : "text-amber-600"}`}>
+          <span className={`text-sm font-medium ${healthStats.healthy ? "text-emerald-600" : "text-amber-600"}`}>
             {healthStats.healthy ? "Systems Online" : "Configuration Needed"}
           </span>
         </div>
@@ -137,30 +143,30 @@ export default function ServiceHealthStatus() {
             }`}
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider">{item.provider}</span>
+              <span className="text-sm font-medium text-foreground">{PROVIDER_LABELS[item.provider] || item.provider}</span>
               <div className="flex items-center gap-1.5">
                 <div className={`h-1.5 w-1.5 rounded-full ${item.healthy && item.probe?.ok !== false ? "bg-emerald-500" : "bg-amber-500"}`} />
-                <span className={`text-[10px] font-bold uppercase tracking-wider ${item.healthy && item.probe?.ok !== false ? "text-emerald-600" : "text-amber-600"}`}>
+                <span className={`text-xs font-medium ${item.healthy && item.probe?.ok !== false ? "text-emerald-600" : "text-amber-600"}`}>
                   {item.healthy && item.probe?.ok !== false ? "Healthy" : "Attention"}
                 </span>
               </div>
             </div>
 
             {!item.healthy && item.missing.length > 0 && (
-              <p className="text-[10px] text-amber-700/80 leading-relaxed font-medium">
+              <p className="text-[11px] text-amber-700/75 leading-relaxed">
                 Missing: <span className="font-mono">{item.missing.join(", ")}</span>
               </p>
             )}
 
             {item.probe && !item.probe.ok && (
-              <p className="text-[10px] text-amber-700/80 leading-relaxed italic">
+              <p className="text-[11px] text-amber-700/75 leading-relaxed">
                 {item.probe.reason || "Probe failed"} 
                 {item.probe.status ? ` (HTTP ${item.probe.status})` : ""}
               </p>
             )}
 
             {item.healthy && item.probe?.ok !== false && (
-              <p className="text-[10px] text-muted-foreground/60">
+              <p className="text-[11px] text-muted-foreground/80">
                 Connection verified
               </p>
             )}
@@ -168,7 +174,7 @@ export default function ServiceHealthStatus() {
         ))}
       </div>
       
-      <p className="text-[9px] text-muted-foreground/60 italic text-right">
+      <p className="text-xs text-muted-foreground text-right">
         Verified: {new Date(healthStats.checked_at).toLocaleTimeString()}
       </p>
     </div>

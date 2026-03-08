@@ -5,6 +5,7 @@ import {
 import { getUser, createClient } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
+import { getDashboardPageHeaderClassName } from "@/lib/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
 import SecurityIdentitySection from "@/components/identity/SecurityIdentitySection";
 
@@ -58,7 +59,7 @@ export default async function IdentityPage() {
 
   return (
     <main className="w-full space-y-6 px-4 pb-4">
-      <section className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pb-5 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <section className={getDashboardPageHeaderClassName()}>
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Identity</h1>
           <p className="text-sm text-muted-foreground">

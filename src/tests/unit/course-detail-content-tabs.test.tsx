@@ -156,6 +156,44 @@ describe("CourseDetailContent tabs", () => {
     expect(screen.getAllByText("Course Facts").length).toBeGreaterThan(0);
   });
 
+  test("uses page-level scrolling on mobile instead of independent column scroll regions", async () => {
+    const { default: CourseDetailContent } = await import("@/components/courses/CourseDetailContent");
+    mockSearchParams = new URLSearchParams();
+
+    const { container } = render(
+      <CourseDetailContent
+        course={baseCourse}
+        isEnrolled={false}
+        descriptionEmptyText="No description"
+        availableTopics={[]}
+        availableSemesters={[]}
+        studyPlans={[]}
+      />,
+    );
+
+    const mainColumn = screen.getAllByTestId("course-detail-main-column").at(-1)!;
+    const sideColumn = screen.getAllByTestId("course-detail-side-column").at(-1)!;
+    const root = container.firstElementChild as HTMLElement;
+    const layout = screen.getAllByTestId("course-detail-layout").at(-1)!;
+
+    const rootTokens = root.className.split(/\s+/);
+    const layoutTokens = layout.className.split(/\s+/);
+    const mainTokens = mainColumn.className.split(/\s+/);
+    const sideTokens = sideColumn.className.split(/\s+/);
+
+    expect(rootTokens).not.toContain("h-full");
+    expect(rootTokens).not.toContain("overflow-hidden");
+    expect(rootTokens).toContain("lg:h-full");
+    expect(layoutTokens).not.toContain("h-full");
+    expect(layoutTokens).not.toContain("overflow-hidden");
+    expect(layoutTokens).toContain("lg:h-full");
+    expect(layoutTokens).toContain("lg:overflow-hidden");
+    expect(mainTokens).not.toContain("overflow-y-auto");
+    expect(sideTokens).not.toContain("overflow-y-auto");
+    expect(mainTokens).toContain("lg:overflow-y-auto");
+    expect(sideTokens).toContain("lg:overflow-y-auto");
+  });
+
   test("does not render the schedule calendar for generated study plans alone", async () => {
     const { default: CourseDetailContent } = await import("@/components/courses/CourseDetailContent");
     mockSearchParams = new URLSearchParams();

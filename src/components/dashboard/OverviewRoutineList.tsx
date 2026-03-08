@@ -64,15 +64,19 @@ export default function OverviewRoutineList({
               {item.title}
             </p>
           </div>
-          <div className={`flex items-center gap-x-2 font-medium text-muted-foreground/60 leading-tight ${child ? "text-[10px]" : "text-[11px]"}`}>
-            <span className="truncate">{item.meta}</span>
-            {item.location && (
-              <>
-                <span className="text-muted-foreground/30 text-[8px] tracking-normal shrink-0">·</span>
-                <span className="truncate">{item.location}</span>
-              </>
-            )}
-          </div>
+          {(!child && item.meta) || item.location ? (
+            <div className={`flex items-center gap-x-2 font-medium text-muted-foreground/60 leading-tight ${child ? "text-[10px]" : "text-[11px]"}`}>
+              {!child && item.meta ? <span className="truncate">{item.meta}</span> : null}
+              {item.location ? (
+                <>
+                  {!child && item.meta ? (
+                    <span className="text-muted-foreground/30 text-[8px] tracking-normal shrink-0">·</span>
+                  ) : null}
+                  <span className="truncate">{item.location}</span>
+                </>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <div className="flex items-center gap-3 sm:justify-self-end">
           {item.action ? (

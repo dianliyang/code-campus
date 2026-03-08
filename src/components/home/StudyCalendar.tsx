@@ -20,6 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DatabaseScheduleRow } from "@/lib/overview-routine";
+import { buildTodayRoutineGroups, shouldIncludeWeekCalendarRow } from "@/lib/week-calendar";
 
 interface EnrolledCourse {
   id: number;
@@ -220,9 +221,20 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
     });
   }, [scheduleRows, courseMap]);
 
+  const weekCalendarEvents = useMemo(
+    () => allEvents.filter((event) => shouldIncludeWeekCalendarRow({
+      source_type: event.sourceType,
+      plan_id: event.planId,
+      schedule_id: event.scheduleId,
+      assignment_id: event.assignmentId,
+      workout_id: event.workoutId,
+    })),
+    [allEvents],
+  );
+
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
-    for (const event of allEvents) {
+    for (const event of weekCalendarEvents) {
       const list = map.get(event.date) || [];
       list.push(event);
       map.set(event.date, list);
@@ -234,26 +246,37 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
       );
     }
     return map;
-  }, [allEvents]);
+  }, [weekCalendarEvents]);
 
   const todayKey = formatDateKey(anchorToday);
   const activeDateKey = selectedSmallDateKey || todayKey;
   const todayEvents = useMemo(() => {
-    const list = eventsByDate.get(activeDateKey) || [];
-    // Filter out generic study plans that don't have a specific task or assignment attached
-    const filtered = list.filter(event => !(event.sourceType === "study_plan" && event.planId && !event.scheduleId && !event.assignmentId));
-    
-    return [...filtered].sort((a, b) => {
+    const list = allEvents.filter((event) => event.date === activeDateKey);
+    return [...list].sort((a, b) => {
       if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
       return a.startMinutes - b.startMinutes || a.endMinutes - b.endMinutes;
     });
-  }, [eventsByDate, activeDateKey]);
+  }, [allEvents, activeDateKey]);
+
+  const todayRoutineGroups = useMemo(
+    () => buildTodayRoutineGroups(
+      todayEvents.map((event) => ({
+        ...event,
+        date: event.date,
+        planId: event.planId,
+        scheduleId: event.scheduleId,
+        assignmentId: event.assignmentId,
+        workoutId: event.workoutId,
+        startTime: event.startTime,
+      })),
+    ),
+    [todayEvents],
+  );
 
   const timelineEventsByDate = useMemo(() => {
     const positionedMap = new Map<string, PositionedEvent[]>();
     for (const [date, list] of eventsByDate.entries()) {
-      const filtered = list.filter(event => !(event.sourceType === "study_plan" && event.planId && !event.scheduleId && !event.assignmentId));
-      positionedMap.set(date, positionEvents(filtered));
+      positionedMap.set(date, positionEvents(list));
     }
     return positionedMap;
   }, [eventsByDate]);
@@ -383,129 +406,188 @@ export default function StudyCalendar({ courses, scheduleRows, dict, initialDate
             </Badge>
           </div>
           <div className="min-h-0 flex-1 space-y-2 overflow-auto pr-1 no-scrollbar">
-            {todayEvents.length > 0 ? (
+              {todayRoutineGroups.length > 0 ? (
               <div className="space-y-2 pb-2">
-                {todayEvents.map((event) => {
+                {todayRoutineGroups.map(({ parent, children }) => {
+                  const event = parent;
                   return (
-                  <Popover key={event.key}>
-                    <PopoverTrigger asChild>
-                      <Card
-                        size="small"
-                        className={cn(
-                          "group relative transition-all hover:shadow-md border-border/50 cursor-pointer hover:bg-muted/5",
-                          event.isCompleted && "opacity-60 grayscale-[0.5]"
-                        )}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          toggleEventCompletion(event);
-                        }}
-                      >
-                        <CardContent className="p-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <p className="line-clamp-1 text-[13px] font-bold text-foreground leading-tight">{event.title}</p>
-                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground/80 font-medium">
-                                <span className="shrink-0 uppercase">{event.courseCode}</span>
-                                <span className="shrink-0 text-muted-foreground/30">•</span>
-                                <span className="shrink-0">{getEventDurationLabel(event)}</span>
-                                {event.kind && (
-                                  <>
-                                    <span className="shrink-0 text-muted-foreground/30">•</span>
-                                    <Badge variant="secondary" className="h-4 px-1 text-[9px] font-bold uppercase leading-none tracking-tight">
-                                      {event.kind}
-                                    </Badge>
-                                  </>
+                  <div key={event.key} className="space-y-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Card
+                          size="small"
+                          className={cn(
+                            "group relative transition-all hover:shadow-md border-border/50 cursor-pointer hover:bg-muted/5",
+                            event.isCompleted && "opacity-60 grayscale-[0.5]"
+                          )}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleEventCompletion(event);
+                          }}
+                        >
+                          <CardContent className="p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <p className="line-clamp-1 text-[13px] font-bold text-foreground leading-tight">{event.title}</p>
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground/80 font-medium">
+                                  <span className="shrink-0 uppercase">{event.courseCode}</span>
+                                  <span className="shrink-0 text-muted-foreground/30">•</span>
+                                  <span className="shrink-0">{getEventDurationLabel(event)}</span>
+                                  {event.kind && (
+                                    <>
+                                      <span className="shrink-0 text-muted-foreground/30">•</span>
+                                      <Badge variant="secondary" className="h-4 px-1 text-[9px] font-bold uppercase leading-none tracking-tight">
+                                        {event.kind}
+                                      </Badge>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <div
+                                className={cn(
+                                  "mt-0.5 h-5 w-5 rounded-md border-2 transition-all flex items-center justify-center shrink-0",
+                                  event.isCompleted
+                                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                                    : "border-muted-foreground/20 group-hover:border-primary/50 bg-background"
                                 )}
+                              >
+                                {pendingEventKeys[event.key] ? (
+                                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                                ) : event.isCompleted ? (
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                ) : null}
                               </div>
                             </div>
-                            <div
-                              className={cn(
-                                "mt-0.5 h-5 w-5 rounded-md border-2 transition-all flex items-center justify-center shrink-0",
-                                event.isCompleted
-                                  ? "bg-primary border-primary text-primary-foreground shadow-sm"
-                                  : "border-muted-foreground/20 group-hover:border-primary/50 bg-background"
-                              )}
-                            >
-                              {pendingEventKeys[event.key] ? (
-                                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                              ) : event.isCompleted ? (
-                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              ) : null}
+                          </CardContent>
+                        </Card>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 p-0 shadow-2xl" side="right" align="start" sideOffset={12}>
+                        <div className={cn("h-1.5 w-full rounded-t-lg", event.sourceType === "workout" ? "bg-emerald-500" : "bg-blue-500")} />
+                        <div className="p-4 space-y-4">
+                          <div className="space-y-1.5">
+                            <h3 className="text-sm font-bold text-foreground leading-tight">{event.title}</h3>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-tight">
+                                {event.courseCode}
+                              </Badge>
+                              <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">
+                                {event.university}
+                              </span>
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-72 p-0 shadow-2xl" side="right" align="start" sideOffset={12}>
-                      <div className={cn("h-1.5 w-full rounded-t-lg", event.sourceType === "workout" ? "bg-emerald-500" : "bg-blue-500")} />
-                      <div className="p-4 space-y-4">
-                        <div className="space-y-1.5">
-                          <h3 className="text-sm font-bold text-foreground leading-tight">{event.title}</h3>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-tight">
-                              {event.courseCode}
-                            </Badge>
-                            <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">
-                              {event.university}
-                            </span>
-                          </div>
-                        </div>
 
-                        <div className="space-y-2 border-t border-border pt-3">
-                          <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
-                              <Clock className="h-3.5 w-3.5" />
-                            </div>
-                            <span className="leading-none">{event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}</span>
-                          </div>
-                          {event.location && (
+                          <div className="space-y-2 border-t border-border pt-3">
                             <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
                               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
-                                <MapPin className="h-3.5 w-3.5" />
+                                <Clock className="h-3.5 w-3.5" />
                               </div>
-                              <span className="line-clamp-1 leading-none uppercase">{event.location}</span>
+                              <span className="leading-none">{event.startTime.slice(0, 5)} - {event.endTime.slice(0, 5)}</span>
                             </div>
-                          )}
-                          {event.kind && (
-                            <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground/70">
-                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
-                                </svg>
+                            {event.location && (
+                              <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
+                                  <MapPin className="h-3.5 w-3.5" />
+                                </div>
+                                <span className="line-clamp-1 leading-none uppercase">{event.location}</span>
                               </div>
-                              <span className="uppercase tracking-wide leading-none">{event.kind}</span>
-                            </div>
-                          )}
-                        </div>
+                            )}
+                            {event.kind && (
+                              <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground/70">
+                                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                                  </svg>
+                                </div>
+                                <span className="uppercase tracking-wide leading-none">{event.kind}</span>
+                              </div>
+                            )}
+                          </div>
 
-                        <div className="flex gap-2 pt-2">
-                          <Button
-                            variant={event.isCompleted ? "outline" : "default"}
-                            className="flex-1 text-xs font-bold uppercase tracking-wide h-9"
+                          <div className="flex gap-2 pt-2">
+                            <Button
+                              variant={event.isCompleted ? "outline" : "default"}
+                              className="flex-1 text-xs font-bold uppercase tracking-wide h-9"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleEventCompletion(event);
+                              }}
+                              disabled={pendingEventKeys[event.key]}
+                            >
+                              {pendingEventKeys[event.key] ? (
+                                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                              ) : null}
+                              {event.isCompleted ? "Undo" : event.sourceType === "workout" ? "Mark attended" : "Mark complete"}
+                            </Button>
+                            {event.courseId && (
+                              <Button variant="outline" size="icon-sm" className="h-9 w-9 shrink-0" asChild>
+                                <a href={`/courses/${event.courseId}`} title="Go to course">
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+
+                    {children.length > 0 ? (
+                      <div className="-mt-1 ml-4 border-l border-border/60 pl-3 space-y-2">
+                        {children.map((child) => (
+                          <Card
+                            key={child.key}
+                            size="small"
+                            className={cn(
+                              "transition-all border-border/40 bg-muted/20 hover:bg-muted/30 cursor-pointer",
+                              child.isCompleted && "opacity-60 grayscale-[0.4]"
+                            )}
                             onClick={(e) => {
                               e.preventDefault();
-                              toggleEventCompletion(event);
+                              toggleEventCompletion(child);
                             }}
-                            disabled={pendingEventKeys[event.key]}
                           >
-                            {pendingEventKeys[event.key] ? (
-                              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                            ) : null}
-                            {event.isCompleted ? "Undo" : event.sourceType === "workout" ? "Mark attended" : "Mark complete"}
-                          </Button>
-                          {event.courseId && (
-                            <Button variant="outline" size="icon-sm" className="h-9 w-9 shrink-0" asChild>
-                              <a href={`/courses/${event.courseId}`} title="Go to course">
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            </Button>
-                          )}
-                        </div>
+                            <CardContent className="p-2.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0 flex-1 space-y-1">
+                                  <p className="line-clamp-1 text-[12px] font-semibold text-foreground leading-tight">{child.title}</p>
+                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-muted-foreground/80 font-medium">
+                                    <span className="shrink-0 uppercase">{child.courseCode}</span>
+                                    <span className="shrink-0 text-muted-foreground/30">•</span>
+                                    <span className="shrink-0">{getEventDurationLabel(child)}</span>
+                                    {child.kind && (
+                                      <>
+                                        <span className="shrink-0 text-muted-foreground/30">•</span>
+                                        <Badge variant="secondary" className="h-4 px-1 text-[9px] font-bold uppercase leading-none tracking-tight">
+                                          {child.kind}
+                                        </Badge>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                                <div
+                                  className={cn(
+                                    "mt-0.5 h-4.5 w-4.5 rounded-sm border transition-all flex items-center justify-center shrink-0",
+                                    child.isCompleted
+                                      ? "bg-primary border-primary text-primary-foreground"
+                                      : "border-muted-foreground/20 bg-background"
+                                  )}
+                                >
+                                  {pendingEventKeys[child.key] ? (
+                                    <Loader2 className="h-2.5 w-2.5 animate-spin text-muted-foreground" />
+                                  ) : child.isCompleted ? (
+                                    <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
                       </div>
-                    </PopoverContent>
-                  </Popover>
+                    ) : null}
+                  </div>
                 );})}
               </div>
             ) : (

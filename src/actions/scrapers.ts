@@ -10,6 +10,7 @@ import { BaseScraper } from "@/lib/scrapers/BaseScraper";
 import { SupabaseDatabase, createAdminClient, createClient, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getUser } from "@/lib/supabase/server";
 import { aggregateWorkoutsByName } from "@/lib/workouts";
+import { partitionStaleWorkoutIds } from "@/lib/workout-refresh";
 import { revalidatePath } from "next/cache";
 import { completeScraperJob, failScraperJob, startScraperJob } from "@/lib/scrapers/scraper-jobs";
 
@@ -339,18 +340,70 @@ export async function refreshCauSportWorkoutsAction() {
 
     const supabase = createAdminClient();
     const source = "CAU Kiel Sportzentrum";
-    const { error: deleteError } = await supabase
-      .from("workouts")
-      .delete()
-      .eq("source", source);
-
-    if (deleteError) {
-      console.error("[refreshCauSportWorkoutsAction] Failed to clear old workouts:", deleteError);
-      return { success: false, error: deleteError.message };
-    }
 
     if (workouts.length > 0) {
       await db.saveWorkouts(workouts);
+    }
+
+    const latestCodes = new Set(workouts.map((workout) => workout.courseCode));
+    const { data: sourceRows, error: sourceRowsError } = await supabase
+      .from("workouts")
+      .select("id, course_code")
+      .eq("source", source);
+
+    if (sourceRowsError) {
+      console.error("[refreshCauSportWorkoutsAction] Failed to load source workouts:", sourceRowsError);
+      return { success: false, error: sourceRowsError.message };
+    }
+
+    const staleWorkoutIds = (sourceRows || [])
+      .filter((row) => !latestCodes.has(String(row.course_code || "")))
+      .map((row) => Number(row.id))
+      .filter((id) => Number.isFinite(id));
+
+    if (staleWorkoutIds.length > 0) {
+      const [{ data: enrollments, error: enrollmentsError }, { data: logs, error: logsError }] = await Promise.all([
+        supabase
+          .from("user_workouts")
+          .select("workout_id")
+          .in("workout_id", staleWorkoutIds),
+        supabase
+          .from("user_workout_logs")
+          .select("workout_id")
+          .in("workout_id", staleWorkoutIds),
+      ]);
+
+      if (enrollmentsError) {
+        console.error("[refreshCauSportWorkoutsAction] Failed to load workout enrollments:", enrollmentsError);
+        return { success: false, error: enrollmentsError.message };
+      }
+
+      if (logsError) {
+        console.error("[refreshCauSportWorkoutsAction] Failed to load workout attendance logs:", logsError);
+        return { success: false, error: logsError.message };
+      }
+
+      const referencedIds = new Set<number>([
+        ...((enrollments || []).map((row) => Number(row.workout_id))),
+        ...((logs || []).map((row) => Number(row.workout_id))),
+      ]);
+      const { deletableIds, preservedIds } = partitionStaleWorkoutIds(staleWorkoutIds, referencedIds);
+
+      if (preservedIds.length > 0) {
+        console.log(`[refreshCauSportWorkoutsAction] Preserving ${preservedIds.length} stale workouts with user history.`);
+      }
+
+      if (deletableIds.length > 0) {
+        const { error: cleanupError } = await supabase
+          .from("workouts")
+          .delete()
+          .in("id", deletableIds);
+
+        if (cleanupError) {
+          console.error("[refreshCauSportWorkoutsAction] Failed to delete stale workouts:", cleanupError);
+          return { success: false, error: cleanupError.message };
+        }
+      }
     }
 
     revalidatePath("/workouts");

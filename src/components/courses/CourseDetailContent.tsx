@@ -1133,6 +1133,139 @@ export default function CourseDetailContent({
                     </Button>
                   </div>
                 </div>
+                {planPreview && (
+                  <div className="mb-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <Card className="border-primary/20 bg-primary/5">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                          <div className="space-y-1">
+                            <h3 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
+                              <WandSparkles className="w-5 h-5 text-primary" />
+                              Study Plan Preview
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              Generated from course schedule. Select plans to save into your roadmap.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="default"
+                              type="button"
+                              onClick={handleConfirmPlans}
+                              disabled={isConfirmingPlans || selectedPlanIds.length === 0}
+                              className="h-9 font-semibold"
+                            >
+                              {isConfirmingPlans ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <Check className="mr-2 h-4 w-4" />
+                              )}
+                              Save Selected Plans
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleDiscardPlans}
+                              disabled={isConfirmingPlans}
+                              className="h-9"
+                            >
+                              <X className="mr-2 h-4 w-4" />
+                              Discard
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                          <div className="lg:col-span-2 space-y-4">
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-semibold text-muted-foreground">Original Schedule</h4>
+                              <div className="rounded-xl border border-border bg-background/50 p-4">
+                                <ul className="space-y-2.5">
+                                  {planPreview.originalSchedule.map((item, idx) => (
+                                    <li key={`${item.type}-${idx}`} className="text-sm flex flex-col gap-0.5">
+                                      <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground">{item.type}</span>
+                                      <span className="text-foreground/90 font-medium leading-relaxed">{item.line}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="hidden lg:flex items-center justify-center">
+                            <Separator orientation="vertical" className="h-full bg-border/50" />
+                          </div>
+
+                          <div className="lg:col-span-2 space-y-4">
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-semibold text-muted-foreground">AI Generated Plans</h4>
+                              <div className="space-y-2.5">
+                                {planPreview.generatedPlans.map((plan, idx) => {
+                                  const id = String(idx);
+                                  const daysText = plan.daysOfWeek
+                                    .map((d) => dayLabels[d] || String(d))
+                                    .join(", ");
+                                  return (
+                                    <div
+                                      key={id}
+                                      data-testid={`generated-plan-card-${id}`}
+                                      className="relative flex items-start gap-4 rounded-xl border border-border bg-muted/30 p-4"
+                                    >
+                                      <div className="pt-0.5">
+                                        <Checkbox
+                                          id={`plan-${id}`}
+                                          checked={selectedPlanIds.includes(id)}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedPlanIds((prev) =>
+                                              checked
+                                                ? [...prev, id]
+                                                : prev.filter((v) => v !== id),
+                                            );
+                                          }}
+                                          disabled={isConfirmingPlans}
+                                        />
+                                      </div>
+                                      <label
+                                        htmlFor={`plan-${id}`}
+                                        className="flex-1 cursor-pointer select-none space-y-1.5"
+                                      >
+                                        <div className="flex items-center justify-between gap-2">
+                                          <span className="font-bold text-sm tracking-tight text-foreground">
+                                            {daysText} • {plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}
+                                          </span>
+                                          <Badge variant="secondary" className="bg-background border font-bold text-[10px] h-5 px-1.5">
+                                            {plan.kind || "Session"}
+                                          </Badge>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                          <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                            <MapPin className="w-3 h-3" />
+                                            {plan.location}
+                                            {plan.alreadyExists && (
+                                              <span className="text-amber-600 font-bold ml-1">(Replaces existing)</span>
+                                            )}
+                                          </span>
+                                          {plan.startDate && plan.endDate && (
+                                            <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1.5 font-medium">
+                                              <Clock className="w-3 h-3" />
+                                              {formatDateForUser(plan.startDate, { month: "short", day: "numeric" })}
+                                              {" - "}
+                                              {formatDateForUser(plan.endDate, { month: "short", day: "numeric", year: "numeric" })}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </label>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
                 <div
                   className={
                     hasStudyPlans
@@ -1575,142 +1708,6 @@ export default function CourseDetailContent({
                   </div>
                 )}
               </div>
-              {planPreview && (
-                <div className="py-6 animate-in fade-in slide-in-from-top-4 duration-500">
-                  <Card className="border-primary/20 bg-primary/5">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                        <div className="space-y-1">
-                          <h3 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
-                            <WandSparkles className="w-5 h-5 text-primary" />
-                            Study Plan Preview
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Generated from course schedule. Select plans to save into your roadmap.
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="default"
-                            type="button"
-                            onClick={handleConfirmPlans}
-                            disabled={isConfirmingPlans || selectedPlanIds.length === 0}
-                            className="h-9 font-semibold"
-                          >
-                            {isConfirmingPlans ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <Check className="mr-2 h-4 w-4" />
-                            )}
-                            Save Selected Plans
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleDiscardPlans}
-                            disabled={isConfirmingPlans}
-                            className="h-9"
-                          >
-                            <X className="mr-2 h-4 w-4" />
-                            Discard
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <div className="lg:col-span-2 space-y-4">
-                          <div className="space-y-3">
-                            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">Original Schedule</h4>
-                            <div className="rounded-xl border border-border bg-background/50 p-4">
-                              <ul className="space-y-2.5">
-                                {planPreview.originalSchedule.map((item, idx) => (
-                                  <li key={`${item.type}-${idx}`} className="text-sm flex flex-col gap-0.5">
-                                    <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground">{item.type}</span>
-                                    <span className="text-foreground/90 font-medium leading-relaxed">{item.line}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="hidden lg:flex items-center justify-center">
-                          <Separator orientation="vertical" className="h-full bg-border/50" />
-                        </div>
-
-                        <div className="lg:col-span-2 space-y-4">
-                          <div className="space-y-3">
-                            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">AI Generated Plans</h4>
-                            <div className="space-y-2.5">
-                              {planPreview.generatedPlans.map((plan, idx) => {
-                                const id = String(idx);
-                                const daysText = plan.daysOfWeek
-                                  .map((d) => dayLabels[d] || String(d))
-                                  .join(", ");
-                                return (
-                                  <div 
-                                    key={id} 
-                                    className={`relative flex items-start gap-4 rounded-xl border p-4 transition-all ${
-                                      selectedPlanIds.includes(id) 
-                                        ? "border-primary bg-primary/10 shadow-sm" 
-                                        : "border-border bg-background hover:border-primary/30"
-                                    }`}
-                                  >
-                                    <div className="pt-0.5">
-                                      <Checkbox
-                                        id={`plan-${id}`}
-                                        checked={selectedPlanIds.includes(id)}
-                                        onCheckedChange={(checked) => {
-                                          setSelectedPlanIds((prev) =>
-                                            checked
-                                              ? [...prev, id]
-                                              : prev.filter((v) => v !== id),
-                                          );
-                                        }}
-                                        disabled={isConfirmingPlans}
-                                      />
-                                    </div>
-                                    <label
-                                      htmlFor={`plan-${id}`}
-                                      className="flex-1 cursor-pointer select-none space-y-1.5"
-                                    >
-                                      <div className="flex items-center justify-between gap-2">
-                                        <span className="font-bold text-sm tracking-tight text-foreground">
-                                          {daysText} • {plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}
-                                        </span>
-                                        <Badge variant="secondary" className="bg-background border font-bold text-[10px] h-5 px-1.5">
-                                          {plan.kind || "Session"}
-                                        </Badge>
-                                      </div>
-                                      <div className="flex flex-col gap-1">
-                                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                                          <MapPin className="w-3 h-3" />
-                                          {plan.location}
-                                          {plan.alreadyExists && (
-                                            <span className="text-amber-600 font-bold ml-1">(Replaces existing)</span>
-                                          )}
-                                        </span>
-                                        {plan.startDate && plan.endDate && (
-                                          <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1.5 font-medium">
-                                            <Clock className="w-3 h-3" />
-                                            {formatDateForUser(plan.startDate, { month: "short", day: "numeric" })}
-                                            {" - "}
-                                            {formatDateForUser(plan.endDate, { month: "short", day: "numeric", year: "numeric" })}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </label>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
             </div>
           </section>
 

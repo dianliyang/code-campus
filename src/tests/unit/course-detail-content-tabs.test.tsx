@@ -2,6 +2,7 @@ import React from "react";
 import { describe, expect, test, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Course } from "@/types";
+import { previewStudyPlansFromCourseSchedule } from "@/actions/courses";
 
 let mockSearchParams = new URLSearchParams();
 
@@ -82,6 +83,59 @@ const baseCourse: Course = {
 };
 
 describe("CourseDetailContent tabs", () => {
+  test("renders study plan preview headings in title case and uses plain muted cards for generated plans", async () => {
+    const { default: CourseDetailContent } = await import("@/components/courses/CourseDetailContent");
+    vi.mocked(previewStudyPlansFromCourseSchedule).mockResolvedValue({
+      originalSchedule: [{ type: "Lecture", line: "Mon 10:00-11:30" }],
+      generatedPlans: [
+        {
+          daysOfWeek: [1, 3],
+          startTime: "10:00:00",
+          endTime: "11:30:00",
+          location: "Room 101",
+          kind: "Session",
+          startDate: "2026-03-01",
+          endDate: "2026-03-31",
+          alreadyExists: false,
+        },
+      ],
+    });
+    mockSearchParams = new URLSearchParams();
+
+    render(
+      <CourseDetailContent
+        course={baseCourse}
+        isEnrolled={true}
+        descriptionEmptyText="No description"
+        availableTopics={[]}
+        availableSemesters={[]}
+        studyPlans={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByTitle("Generate study plan preview"));
+
+    const weeklyScheduleHeading = screen.getByText("Weekly Schedule");
+    const previewTitle = await screen.findByText("Study Plan Preview");
+    const originalHeading = await screen.findByText("Original Schedule");
+    const generatedHeading = screen.getByText("AI Generated Plans");
+    const generatedCard = screen.getByTestId("generated-plan-card-0");
+
+    expect(
+      weeklyScheduleHeading.compareDocumentPosition(previewTitle) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      previewTitle.compareDocumentPosition(generatedCard) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(originalHeading.className).not.toContain("uppercase");
+    expect(generatedHeading.className).not.toContain("uppercase");
+    expect(generatedCard.className).toContain("bg-muted/30");
+    expect(generatedCard.className).not.toContain("bg-primary/10");
+    expect(generatedCard.className).not.toContain("hover:border-primary/30");
+  });
+
   test("renders the current course detail sections", { timeout: 10000 }, async () => {
     const { default: CourseDetailContent } = await import("@/components/courses/CourseDetailContent");
     mockSearchParams = new URLSearchParams();
@@ -96,10 +150,10 @@ describe("CourseDetailContent tabs", () => {
       />,
     );
 
-    expect(screen.getByText("Description")).toBeDefined();
-    expect(screen.getByText("Logistics")).toBeDefined();
-    expect(screen.getByText("Resources")).toBeDefined();
-    expect(screen.getByText("Course Facts")).toBeDefined();
+    expect(screen.getAllByText("Description").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Logistics").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Resources").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Course Facts").length).toBeGreaterThan(0);
   });
 
   test("does not render the schedule calendar for generated study plans alone", async () => {

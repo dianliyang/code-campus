@@ -189,6 +189,7 @@ export default function WorkoutList({
 
   const workouts: Workout[] = initialWorkouts;
   const effectiveViewMode: "list" | "grid" = isMobileViewport ? "grid" : viewMode;
+  const isListMode = effectiveViewMode === "list";
 
   const refreshList = async (category?: string) => {
     if (isRefreshing) return;
@@ -286,7 +287,10 @@ export default function WorkoutList({
   };
 
   return (
-    <main className="h-full min-w-0 flex flex-col">
+    <main
+      className={isListMode ? "h-full min-w-0 flex flex-col" : "min-w-0 flex flex-col"}
+      data-testid="workout-list-root"
+    >
       <WorkoutListHeader
         viewMode={effectiveViewMode}
         setViewMode={handleViewModeChange}
@@ -296,7 +300,10 @@ export default function WorkoutList({
         refreshList={refreshList}
       />
 
-      <div className={`mt-3 min-h-0 flex-1 ${effectiveViewMode === "grid" ? "overflow-y-auto" : "overflow-hidden"}`}>
+      <div
+        className={`mt-3 ${isListMode ? "min-h-0 flex-1 overflow-hidden" : "overflow-visible"}`}
+        data-testid="workout-list-content"
+      >
         {effectiveViewMode === "list" ? (
           <>
             <Card className="hidden h-full min-h-0 overflow-hidden md:grid md:grid-cols-[360px_minmax(0,1fr)] py-0 gap-0">

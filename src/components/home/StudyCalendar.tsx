@@ -14,6 +14,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -169,7 +177,15 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
   const [pendingEventKeys, setPendingEventKeys] = useState<Record<string, boolean>>({});
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const suppressPopoverKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
 
   const weekdays =
   (dict.calendar_weekdays as string[] | undefined)?.length === 7 &&
@@ -264,6 +280,7 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
     () => buildTodayRoutineGroups(
       todayEvents.map((event) => ({
         ...event,
+        groupKey: event.courseCode,
         date: event.date,
         planId: event.planId,
         scheduleId: event.scheduleId,
@@ -1002,7 +1019,222 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
                               color: colors.textColor,
                             };
 
-                            return (
+                            const eventTrigger = (
+                              <button
+                                style={{ ...adjustedStyle, ...colorStyle }}
+                                className={cn(
+                                  "absolute rounded-md border px-1.5 text-left transition-all hover:z-20 hover:scale-[1.02] hover:shadow-lg hover:brightness-95 overflow-hidden flex flex-col items-start",
+                                  isDraggableStudyPlan(pe) && "cursor-grab active:cursor-grabbing",
+                                  isSlimHeight ? "py-0 justify-center" : "py-1",
+                                  (isDraggingThisEvent || isResizingThisEvent) && "opacity-25",
+                                  pe.isCompleted && "opacity-60 grayscale-[0.3]"
+                                )}
+                                onClick={(e) => {
+                                  if (suppressPopoverKeyRef.current === pe.key) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    suppressPopoverKeyRef.current = null;
+                                  }
+                                }}
+                                onPointerDown={(e) => {
+                                  if (!isDraggableStudyPlan(pe) || e.button !== 0) return;
+                                  if ((e.target as HTMLElement).dataset.resizeHandle === "true") return;
+                                  const targetRect = e.currentTarget.getBoundingClientRect();
+                                  const pointerOffsetMinutes = Math.max(
+                                    0,
+                                    Math.min(
+                                      pe.endMinutes - pe.startMinutes,
+                                      ((e.clientY - targetRect.top) / PIXELS_PER_HOUR) * 60,
+                                    ),
+                                  );
+                                  setDragState({
+                                    eventKey: pe.key,
+                                    originalEvent: pe,
+                                    pointerOffsetMinutes,
+                                    previewDayOfWeek: pe.dayOfWeek,
+                                    previewDate: pe.date,
+                                    previewStartMinutes: pe.startMinutes,
+                                    previewEndMinutes: pe.endMinutes,
+                                    hasMoved: false,
+                                  });
+                                }}
+                              >
+                                {isDraggableStudyPlan(pe) ? (
+                                  <>
+                                    <div
+                                      data-resize-handle="true"
+                                      className="absolute inset-x-1 top-0 h-1.5 cursor-ns-resize"
+                                      onPointerDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (e.button !== 0) return;
+                                        setResizeState({
+                                          eventKey: pe.key,
+                                          originalEvent: pe,
+                                          edge: "top",
+                                          previewStartMinutes: pe.startMinutes,
+                                          previewEndMinutes: pe.endMinutes,
+                                          hasMoved: false,
+                                        });
+                                      }}
+                                    />
+                                    <div
+                                      data-resize-handle="true"
+                                      className="absolute inset-x-1 bottom-0 h-1.5 cursor-ns-resize"
+                                      onPointerDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (e.button !== 0) return;
+                                        setResizeState({
+                                          eventKey: pe.key,
+                                          originalEvent: pe,
+                                          edge: "bottom",
+                                          previewStartMinutes: pe.startMinutes,
+                                          previewEndMinutes: pe.endMinutes,
+                                          hasMoved: false,
+                                        });
+                                      }}
+                                    />
+                                  </>
+                                ) : null}
+                                {showVerticalTitle ? (
+                                  <div className="flex-1 w-full flex justify-center pt-1 overflow-hidden">
+                                    <p className="text-[10px] font-bold leading-tight truncate" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                                      {pe.title}
+                                    </p>
+                                  </div>
+                                ) : detailLevel === "compact" ? (
+                                  <p className="truncate whitespace-nowrap text-[10px] font-bold leading-none w-full">{pe.title}</p>
+                                ) : (
+                                  <>
+                                    {contentLayout.showMetaAboveTitle ? (
+                                      <p className="truncate text-[8px] font-bold leading-none uppercase opacity-70 w-full">
+                                        {pe.courseCode} · {pe.university}
+                                      </p>
+                                    ) : null}
+                                    <p className="truncate text-[11px] font-bold leading-tight w-full">{pe.title}</p>
+                                    {contentLayout.showTimeRow ? (
+                                      <div className="mt-0.5 flex items-center gap-1 opacity-70 truncate w-full">
+                                        <Clock className="h-2.5 w-2.5 shrink-0" />
+                                        <span className="text-[9px] font-bold leading-none truncate">
+                                          {detailLevel === "time" ? pe.startTime.slice(0, 5) : `${pe.startTime.slice(0, 5)} - ${pe.endTime.slice(0, 5)}`}
+                                        </span>
+                                      </div>
+                                    ) : null}
+                                    {contentLayout.showLocationRow && pe.location ? (
+                                      <div className="mt-0.5 flex items-center gap-1 opacity-65 truncate w-full">
+                                        <MapPin className="h-2.5 w-2.5 shrink-0" />
+                                        <span className="text-[9px] leading-none truncate">{pe.location}</span>
+                                      </div>
+                                    ) : null}
+                                    {contentLayout.showKindRow && pe.kind ? (
+                                      <div className="mt-0.5 flex items-center gap-1 opacity-65 truncate w-full">
+                                        <svg className="h-2.5 w-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                                        </svg>
+                                        <span className="text-[9px] leading-none truncate">{pe.kind}</span>
+                                      </div>
+                                    ) : null}
+                                  </>
+                                )}
+                              </button>
+                            );
+
+                            const eventDetailsContent = (
+                              <div className="p-4 space-y-4">
+                                <div className="space-y-1.5">
+                                  <h3 className="text-sm font-bold text-foreground leading-tight">{pe.title}</h3>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-tight">
+                                      {pe.courseCode}
+                                    </Badge>
+                                    <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">
+                                      {pe.university}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2 border-t border-border pt-3">
+                                  <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+                                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
+                                      <Clock className="h-3.5 w-3.5" />
+                                    </div>
+                                    <span className="leading-none">
+                                      {pe.startMinutes === pe.endMinutes || pe.endTime.startsWith("23:59")
+                                        ? pe.startTime.slice(0, 5)
+                                        : `${pe.startTime.slice(0, 5)} - ${pe.endTime.slice(0, 5)}`}
+                                    </span>
+                                  </div>
+                                  {pe.location && (
+                                    <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+                                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
+                                        <MapPin className="h-3.5 w-3.5" />
+                                      </div>
+                                      <span className="line-clamp-1 leading-none uppercase">{pe.location}</span>
+                                    </div>
+                                  )}
+                                  {pe.kind && (
+                                    <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+                                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground/70">
+                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                                        </svg>
+                                      </div>
+                                      <Badge variant="outline" className="font-bold uppercase tracking-wide leading-none text-[9px] shadow-none text-muted-foreground/70 border-muted-foreground/20">{pe.kind}</Badge>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex gap-2 pt-2">
+                                  <Button
+                                    variant={event.isCompleted ? "outline" : "default"}
+                                    className="flex-1 text-xs font-bold uppercase tracking-wide h-9"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      toggleEventCompletion(event);
+                                    }}
+                                    disabled={pendingEventKeys[event.key]}
+                                  >
+                                    {pendingEventKeys[event.key] ? (
+                                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                    ) : null}
+                                    {event.isCompleted ? "Undo" : event.sourceType === "workout" ? "Mark attended" : "Mark complete"}
+                                  </Button>
+                                  {event.courseId && (
+                                    <Button variant="outline" size="icon-sm" className="h-9 w-9 shrink-0" asChild>
+                                      <a href={`/courses/${event.courseId}`} title="Go to course">
+                                        <ExternalLink className="h-4 w-4" />
+                                      </a>
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+
+                            return isMobileViewport ? (
+                              <Drawer
+                                key={pe.key}
+                                direction="bottom"
+                                open={openWeekPopoverKey === pe.key}
+                                onOpenChange={(open) => {
+                                  if (suppressPopoverKeyRef.current === pe.key || dragState?.eventKey === pe.key) return;
+                                  setOpenWeekPopoverKey(open ? pe.key : null);
+                                }}
+                              >
+                                <DrawerTrigger asChild>
+                                  {eventTrigger}
+                                </DrawerTrigger>
+                                <DrawerContent className="max-h-[78vh] rounded-t-3xl">
+                                  <DrawerHeader className="text-left">
+                                    <DrawerTitle>{pe.title}</DrawerTitle>
+                                    <DrawerDescription>
+                                      {pe.courseCode} · {pe.university}
+                                    </DrawerDescription>
+                                  </DrawerHeader>
+                                  {eventDetailsContent}
+                                </DrawerContent>
+                              </Drawer>
+                            ) : (
                               <Popover
                                 key={pe.key}
                                 open={openWeekPopoverKey === pe.key}
@@ -1012,194 +1244,10 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
                                 }}
                               >
                                 <PopoverTrigger asChild>
-                                  <button
-                                    style={{ ...adjustedStyle, ...colorStyle }}
-                                    className={cn(
-                                      "absolute rounded-md border px-1.5 text-left transition-all hover:z-20 hover:scale-[1.02] hover:shadow-lg hover:brightness-95 overflow-hidden flex flex-col items-start",
-                                      isDraggableStudyPlan(pe) && "cursor-grab active:cursor-grabbing",
-                                      isSlimHeight ? "py-0 justify-center" : "py-1",
-                                      (isDraggingThisEvent || isResizingThisEvent) && "opacity-25",
-                                      pe.isCompleted && "opacity-60 grayscale-[0.3]"
-                                    )}
-                                    onClick={(e) => {
-                                      if (suppressPopoverKeyRef.current === pe.key) {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        suppressPopoverKeyRef.current = null;
-                                      }
-                                    }}
-                                    onPointerDown={(e) => {
-                                      if (!isDraggableStudyPlan(pe) || e.button !== 0) return;
-                                      if ((e.target as HTMLElement).dataset.resizeHandle === "true") return;
-                                      const targetRect = e.currentTarget.getBoundingClientRect();
-                                      const pointerOffsetMinutes = Math.max(
-                                        0,
-                                        Math.min(
-                                          pe.endMinutes - pe.startMinutes,
-                                          ((e.clientY - targetRect.top) / PIXELS_PER_HOUR) * 60,
-                                        ),
-                                      );
-                                      setDragState({
-                                        eventKey: pe.key,
-                                        originalEvent: pe,
-                                        pointerOffsetMinutes,
-                                        previewDayOfWeek: pe.dayOfWeek,
-                                        previewDate: pe.date,
-                                        previewStartMinutes: pe.startMinutes,
-                                        previewEndMinutes: pe.endMinutes,
-                                        hasMoved: false,
-                                      });
-                                    }}
-                                  >
-                                    {isDraggableStudyPlan(pe) ? (
-                                      <>
-                                        <div
-                                          data-resize-handle="true"
-                                          className="absolute inset-x-1 top-0 h-1.5 cursor-ns-resize"
-                                          onPointerDown={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            if (e.button !== 0) return;
-                                            setResizeState({
-                                              eventKey: pe.key,
-                                              originalEvent: pe,
-                                              edge: "top",
-                                              previewStartMinutes: pe.startMinutes,
-                                              previewEndMinutes: pe.endMinutes,
-                                              hasMoved: false,
-                                            });
-                                          }}
-                                        />
-                                        <div
-                                          data-resize-handle="true"
-                                          className="absolute inset-x-1 bottom-0 h-1.5 cursor-ns-resize"
-                                          onPointerDown={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            if (e.button !== 0) return;
-                                            setResizeState({
-                                              eventKey: pe.key,
-                                              originalEvent: pe,
-                                              edge: "bottom",
-                                              previewStartMinutes: pe.startMinutes,
-                                              previewEndMinutes: pe.endMinutes,
-                                              hasMoved: false,
-                                            });
-                                          }}
-                                        />
-                                      </>
-                                    ) : null}
-                                    {showVerticalTitle ? (
-                                      <div className="flex-1 w-full flex justify-center pt-1 overflow-hidden">
-                                        <p className="text-[10px] font-bold leading-tight truncate" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-                                          {pe.title}
-                                        </p>
-                                      </div>
-                                    ) : detailLevel === "compact" ? (
-                                      <p className="truncate whitespace-nowrap text-[10px] font-bold leading-none w-full">{pe.title}</p>
-                                    ) : (
-                                      <>
-                                        {contentLayout.showMetaAboveTitle ? (
-                                          <p className="truncate text-[8px] font-bold leading-none uppercase opacity-70 w-full">
-                                            {pe.courseCode} · {pe.university}
-                                          </p>
-                                        ) : null}
-                                        <p className="truncate text-[11px] font-bold leading-tight w-full">{pe.title}</p>
-                                        {contentLayout.showTimeRow ? (
-                                          <div className="mt-0.5 flex items-center gap-1 opacity-70 truncate w-full">
-                                            <Clock className="h-2.5 w-2.5 shrink-0" />
-                                            <span className="text-[9px] font-bold leading-none truncate">
-                                              {detailLevel === "time" ? pe.startTime.slice(0, 5) : `${pe.startTime.slice(0, 5)} - ${pe.endTime.slice(0, 5)}`}
-                                            </span>
-                                          </div>
-                                        ) : null}
-                                        {contentLayout.showLocationRow && pe.location ? (
-                                          <div className="mt-0.5 flex items-center gap-1 opacity-65 truncate w-full">
-                                            <MapPin className="h-2.5 w-2.5 shrink-0" />
-                                            <span className="text-[9px] leading-none truncate">{pe.location}</span>
-                                          </div>
-                                        ) : null}
-                                        {contentLayout.showKindRow && pe.kind ? (
-                                          <div className="mt-0.5 flex items-center gap-1 opacity-65 truncate w-full">
-                                            <svg className="h-2.5 w-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
-                                            </svg>
-                                            <span className="text-[9px] leading-none truncate">{pe.kind}</span>
-                                          </div>
-                                        ) : null}
-                                      </>
-                                    )}
-                                  </button>
+                                  {eventTrigger}
                                 </PopoverTrigger>
                                 <PopoverContent className="w-72 p-0 shadow-2xl" side="right" align="start" sideOffset={8}>
-                                  <div className="p-4 space-y-4">
-                                    <div className="space-y-1.5">
-                                      <h3 className="text-sm font-bold text-foreground leading-tight">{pe.title}</h3>
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-tight">
-                                          {pe.courseCode}
-                                        </Badge>
-                                        <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">
-                                          {pe.university}
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    <div className="space-y-2 border-t border-border pt-3">
-                                      <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
-                                          <Clock className="h-3.5 w-3.5" />
-                                        </div>
-                                        <span className="leading-none">
-                                          {pe.startMinutes === pe.endMinutes || pe.endTime.startsWith("23:59")
-                                            ? pe.startTime.slice(0, 5) 
-                                            : `${pe.startTime.slice(0, 5)} - ${pe.endTime.slice(0, 5)}`}
-                                        </span>
-                                      </div>
-                                      {pe.location && (
-                                        <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50">
-                                            <MapPin className="h-3.5 w-3.5" />
-                                          </div>
-                                          <span className="line-clamp-1 leading-none uppercase">{pe.location}</span>
-                                        </div>
-                                      )}
-                                      {pe.kind && (
-                                        <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground/70">
-                                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
-                                            </svg>
-                                          </div>
-                                          <Badge variant="outline" className="font-bold uppercase tracking-wide leading-none text-[9px] shadow-none text-muted-foreground/70 border-muted-foreground/20">{pe.kind}</Badge>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    <div className="flex gap-2 pt-2">
-                                      <Button
-                                        variant={event.isCompleted ? "outline" : "default"}
-                                        className="flex-1 text-xs font-bold uppercase tracking-wide h-9"
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          toggleEventCompletion(event);
-                                        }}
-                                        disabled={pendingEventKeys[event.key]}
-                                      >
-                                        {pendingEventKeys[event.key] ? (
-                                          <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                                        ) : null}
-                                        {event.isCompleted ? "Undo" : event.sourceType === "workout" ? "Mark attended" : "Mark complete"}
-                                      </Button>
-                                      {event.courseId && (
-                                        <Button variant="outline" size="icon-sm" className="h-9 w-9 shrink-0" asChild>
-                                          <a href={`/courses/${event.courseId}`} title="Go to course">
-                                            <ExternalLink className="h-4 w-4" />
-                                          </a>
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </div>
+                                  {eventDetailsContent}
                                 </PopoverContent>
                               </Popover>
                             );

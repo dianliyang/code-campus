@@ -35,6 +35,7 @@ export default function OverviewRoutineList({
       buildTodayRoutineGroups(
         sortedItems.map((item) => ({
           ...item,
+          groupKey: item.courseCode,
           date: item.action?.date || "",
           planId: item.action?.type === "toggle_complete" ? item.action.planId ?? null : null,
           scheduleId: item.action?.type === "toggle_complete" ? item.action.scheduleId ?? null : null,

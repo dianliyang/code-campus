@@ -56,6 +56,7 @@ export interface TodayRoutineEventLike {
   key: string;
   sourceType: "study_plan" | "workout" | "assignment";
   courseId: number | null;
+  groupKey?: string | null;
   date: string;
   planId: number | null;
   scheduleId: number | null;
@@ -69,6 +70,10 @@ export interface TodayRoutineGroup<T extends TodayRoutineEventLike> {
   children: T[];
 }
 
+function getRoutineParentKey<T extends TodayRoutineEventLike>(event: T) {
+  return `${event.courseId ?? "none"}::${event.groupKey ?? "none"}::${event.date}`;
+}
+
 export function buildTodayRoutineGroups<T extends TodayRoutineEventLike>(events: T[]): TodayRoutineGroup<T>[] {
   const getRoutineSortTime = (event: T) =>
     event.sourceType === "assignment" ? "98:00:00" : event.startTime;
@@ -78,7 +83,7 @@ export function buildTodayRoutineGroups<T extends TodayRoutineEventLike>(events:
 
   for (const event of sorted) {
     if (event.sourceType === "study_plan" && event.planId && !event.scheduleId && !event.assignmentId) {
-      parentByCourseDate.set(`${event.courseId ?? "none"}::${event.date}`, event);
+      parentByCourseDate.set(getRoutineParentKey(event), event);
     }
   }
 
@@ -98,7 +103,18 @@ export function buildTodayRoutineGroups<T extends TodayRoutineEventLike>(events:
     }
 
     if (isCourseScheduleChild || isCourseAssignmentChild) {
-      const parent = parentByCourseDate.get(`${event.courseId ?? "none"}::${event.date}`);
+      const parent =
+        parentByCourseDate.get(getRoutineParentKey(event)) ||
+        (event.groupKey != null
+          ? sorted.find((candidate) =>
+              candidate.sourceType === "study_plan" &&
+              candidate.planId != null &&
+              candidate.scheduleId == null &&
+              candidate.assignmentId == null &&
+              candidate.groupKey === event.groupKey &&
+              candidate.date === event.date,
+            )
+          : undefined);
       if (parent) {
         const group = groupByParentKey.get(parent.key);
         if (group) {

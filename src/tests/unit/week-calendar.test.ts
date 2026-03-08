@@ -184,6 +184,51 @@ describe("buildTodayRoutineGroups", () => {
     expect(groups[0].parent.key).toBe("child-only");
     expect(groups[0].children).toEqual([]);
   });
+
+  test("falls back to a shared group key when a child is missing course id on the same day", () => {
+    const groups = buildTodayRoutineGroups([
+      {
+        key: "child-task",
+        sourceType: "study_plan" as const,
+        courseId: null,
+        groupKey: "6.1060",
+        date: "2026-03-08",
+        planId: null,
+        scheduleId: 20,
+        assignmentId: null,
+        workoutId: null,
+        startTime: "10:00:00",
+      },
+      {
+        key: "child-assignment",
+        sourceType: "assignment" as const,
+        courseId: null,
+        groupKey: "6.1060",
+        date: "2026-03-08",
+        planId: null,
+        scheduleId: null,
+        assignmentId: 30,
+        workoutId: null,
+        startTime: "23:59:59",
+      },
+      {
+        key: "parent",
+        sourceType: "study_plan" as const,
+        courseId: 42,
+        groupKey: "6.1060",
+        date: "2026-03-08",
+        planId: 10,
+        scheduleId: null,
+        assignmentId: null,
+        workoutId: null,
+        startTime: "09:00:00",
+      },
+    ]);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].parent.key).toBe("parent");
+    expect(groups[0].children.map((item) => item.key)).toEqual(["child-task", "child-assignment"]);
+  });
 });
 
 describe("getWeekCalendarEventColor", () => {

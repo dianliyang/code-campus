@@ -2,6 +2,7 @@ export type OverviewRoutineItem = {
   key: string;
   sourceType: "study_plan" | "workout" | "assignment";
   courseId: number | null;
+  courseCode: string | null;
   title: string;
   meta: string;
   timeLabel: string;
@@ -79,6 +80,7 @@ export function buildOverviewRoutineItems(rows: DatabaseScheduleRow[]): Overview
       key: `${row.source_type}:${row.plan_id || row.schedule_id || row.assignment_id || row.workout_id}:${row.event_date}:${row.start_time}`,
       sourceType: uiSourceType,
       courseId: row.course_id,
+      courseCode: row.course_code || null,
       title: row.title,
       meta: metaBits.join(" · "),
       timeLabel: getTimeLabel(row.start_time, row.end_time, row.source_type),

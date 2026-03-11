@@ -55,6 +55,7 @@ agent-skills/
 
 # Claude / AI tooling
 .claude/
+.worktrees/
 docs/plans/
 
 

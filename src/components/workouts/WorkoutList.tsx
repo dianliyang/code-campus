@@ -318,6 +318,14 @@ export default function WorkoutList({
   const selectedProviders = Array.from(
     new Set(selectedGroup.items.map((item) => item.source).filter(Boolean)),
   );
+  const providerOptions = Array.from(
+    workouts.reduce((map, workout) => {
+      if (!workout.source) return map;
+      map.set(workout.source, (map.get(workout.source) || 0) + 1);
+      return map;
+    }, new Map<string, number>()),
+    ([name, count]) => ({ name, count }),
+  ).sort((a, b) => a.name.localeCompare(b.name));
 
   const formatPrice = (value: number | null) =>
     value == null ? "-" : Number(value).toFixed(2);
@@ -446,6 +454,7 @@ export default function WorkoutList({
         isRefreshing={isRefreshing}
         refreshingCategory={refreshingCategory}
         refreshList={(options) => refreshSources(options?.sources ?? ["cau-sport"])}
+        providers={providerOptions}
       />
 
       <div

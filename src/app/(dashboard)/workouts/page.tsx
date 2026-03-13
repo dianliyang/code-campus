@@ -1,11 +1,9 @@
 import { Suspense } from "react";
-import WorkoutSidebar from "@/components/workouts/WorkoutSidebar";
 import WorkoutList from "@/components/workouts/WorkoutList";
 import { createClient, getUser, mapWorkoutFromRow } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { getWorkoutLastUpdateTime } from "@/actions/scrapers";
-import { buildVisibleWorkoutCategoryState } from "@/lib/workout-category-filtering";
 import { getDashboardPageHeaderClassName } from "@/lib/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
 import type { WorkoutTrackingState } from "@/types";
@@ -49,9 +47,6 @@ export default async function WorkoutsPage({ searchParams }: PageProps) {
           ) : null}
         </div>
       </div>
-      <Suspense fallback={null}>
-        <SidebarData dict={dict.dashboard.workouts} />
-      </Suspense>
       <div className="flex-1 min-h-0">
         <Suspense fallback={null}>
           <WorkoutListData params={params} dict={dict.dashboard.workouts} />
@@ -60,33 +55,6 @@ export default async function WorkoutsPage({ searchParams }: PageProps) {
     </div>);
 
 }
-
-async function SidebarData({ dict
-
-}: {dict: Dictionary['dashboard']['workouts'];}) {
-  const supabase = await createClient();
-
-  const { data: workoutsData, error } = await supabase.
-  from('workouts').
-  select('id, source, category, category_en, booking_status, price_student, location, location_en, title, title_en, day_of_week, start_time, end_time, start_date, end_date, booking_url, url, semester, details');
-
-  if (error) {
-    console.error("[Supabase] Fetch sidebar workouts error:", error);
-    return <WorkoutSidebar providers={[]} statuses={[]} dict={dict} />;
-  }
-
-  const workouts = (workoutsData || []).map((row: any) => mapWorkoutFromRow(row)); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const visibleState = buildVisibleWorkoutCategoryState(workouts, [], "", "");
-
-  return (
-    <WorkoutSidebar
-      providers={visibleState.providerGroups.map((group) => ({ name: group.provider, count: group.count }))}
-      statuses={visibleState.statusGroups.map((group) => ({ name: group.status, count: group.count }))}
-      dict={dict}
-    />
-  );
-}
-
 async function WorkoutListData({ params, dict
 
 

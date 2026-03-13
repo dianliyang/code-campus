@@ -70,6 +70,17 @@ export interface TodayRoutineGroup<T extends TodayRoutineEventLike> {
   children: T[];
 }
 
+function isExplicitRoutineParent<T extends TodayRoutineEventLike>(event: T) {
+  return event.sourceType === "study_plan" && event.planId != null && event.scheduleId == null && event.assignmentId == null;
+}
+
+function isRoutineChildEvent<T extends TodayRoutineEventLike>(event: T) {
+  return (
+    (event.sourceType === "study_plan" && event.scheduleId != null) ||
+    (event.sourceType === "assignment" && event.assignmentId != null)
+  );
+}
+
 function getRoutineParentKey<T extends TodayRoutineEventLike>(event: T) {
   return `${event.courseId ?? "none"}::${event.groupKey ?? "none"}::${event.date}`;
 }
@@ -80,18 +91,27 @@ export function buildTodayRoutineGroups<T extends TodayRoutineEventLike>(events:
 
   const sorted = [...events].sort((a, b) => getRoutineSortTime(a).localeCompare(getRoutineSortTime(b)) || a.key.localeCompare(b.key));
   const parentByCourseDate = new Map<string, T>();
+  const eventsByParentKey = new Map<string, T[]>();
 
   for (const event of sorted) {
-    if (event.sourceType === "study_plan" && event.planId && !event.scheduleId && !event.assignmentId) {
+    const parentKey = getRoutineParentKey(event);
+    const groupedEvents = eventsByParentKey.get(parentKey);
+    if (groupedEvents) groupedEvents.push(event);
+    else eventsByParentKey.set(parentKey, [event]);
+
+    if (isExplicitRoutineParent(event)) {
       parentByCourseDate.set(getRoutineParentKey(event), event);
     }
   }
 
   const groups: TodayRoutineGroup<T>[] = [];
   const groupByParentKey = new Map<string, TodayRoutineGroup<T>>();
+  const consumedKeys = new Set<string>();
 
   for (const event of sorted) {
-    const isParentStudyPlan = event.sourceType === "study_plan" && event.planId && !event.scheduleId && !event.assignmentId;
+    if (consumedKeys.has(event.key)) continue;
+
+    const isParentStudyPlan = isExplicitRoutineParent(event);
     const isCourseScheduleChild = event.sourceType === "study_plan" && event.scheduleId != null;
     const isCourseAssignmentChild = event.sourceType === "assignment" && event.assignmentId != null;
 
@@ -99,10 +119,12 @@ export function buildTodayRoutineGroups<T extends TodayRoutineEventLike>(events:
       const group = { parent: event, children: [] };
       groups.push(group);
       groupByParentKey.set(event.key, group);
+      consumedKeys.add(event.key);
       continue;
     }
 
     if (isCourseScheduleChild || isCourseAssignmentChild) {
+      const siblingEvents = eventsByParentKey.get(getRoutineParentKey(event)) || [];
       const parent =
         parentByCourseDate.get(getRoutineParentKey(event)) ||
         (event.groupKey != null
@@ -119,12 +141,37 @@ export function buildTodayRoutineGroups<T extends TodayRoutineEventLike>(events:
         const group = groupByParentKey.get(parent.key);
         if (group) {
           group.children.push(event);
+          consumedKeys.add(event.key);
           continue;
         }
+      }
+
+      const syntheticChildren = siblingEvents.filter((candidate) => isRoutineChildEvent(candidate));
+      const shouldSynthesizeParent =
+        syntheticChildren.length > 1 &&
+        siblingEvents.every((candidate) => candidate.sourceType !== "workout") &&
+        !siblingEvents.some((candidate) => isExplicitRoutineParent(candidate));
+
+      if (shouldSynthesizeParent) {
+        const base = syntheticChildren[0];
+        const syntheticParent = {
+          ...base,
+          key: `synthetic-parent:${getRoutineParentKey(base)}`,
+          planId: null,
+          scheduleId: null,
+          assignmentId: null,
+          workoutId: null,
+          sourceType: "study_plan" as T["sourceType"],
+          startTime: syntheticChildren[0]?.startTime || base.startTime,
+        } as T;
+        groups.push({ parent: syntheticParent, children: syntheticChildren });
+        syntheticChildren.forEach((child) => consumedKeys.add(child.key));
+        continue;
       }
     }
 
     groups.push({ parent: event, children: [] });
+    consumedKeys.add(event.key);
   }
 
   return groups;

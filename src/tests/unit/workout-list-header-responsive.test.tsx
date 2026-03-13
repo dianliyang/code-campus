@@ -3,18 +3,21 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import WorkoutListHeader from "@/components/workouts/WorkoutListHeader";
 
+const pushMock = vi.fn();
 const searchParamsState = {
   value: "",
 };
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: pushMock }),
   useSearchParams: () => new URLSearchParams(searchParamsState.value),
 }));
 
 describe("WorkoutListHeader responsive behavior", () => {
   beforeEach(() => {
     searchParamsState.value = "";
+    pushMock.mockReset();
+    Element.prototype.scrollIntoView = vi.fn();
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
       writable: true,
@@ -31,6 +34,10 @@ describe("WorkoutListHeader responsive behavior", () => {
         isRefreshing={false}
         refreshingCategory={undefined}
         refreshList={vi.fn(async () => {})}
+        providers={[
+          { name: "CAU Kiel Sportzentrum", count: 12 },
+          { name: "Urban Apes", count: 2 },
+        ]}
       />,
     );
 
@@ -52,6 +59,10 @@ describe("WorkoutListHeader responsive behavior", () => {
         isRefreshing={false}
         refreshingCategory={undefined}
         refreshList={refreshList}
+        providers={[
+          { name: "CAU Kiel Sportzentrum", count: 12 },
+          { name: "Urban Apes", count: 2 },
+        ]}
       />,
     );
 
@@ -68,7 +79,8 @@ describe("WorkoutListHeader responsive behavior", () => {
     expect(within(leading).queryByLabelText(/search workouts/i)).toBeNull();
     expect(within(trailing).getByRole("button", { name: /sort/i })).toBeDefined();
     expect(within(trailing).queryByRole("combobox", { name: /sort/i })).toBeNull();
-    expect(within(trailing).getByLabelText(/filter/i)).toBeDefined();
+    expect(within(trailing).queryByLabelText(/filter/i)).toBeNull();
+    expect(within(trailing).getByRole("combobox", { name: /provider/i })).toBeDefined();
 
     fireEvent.click(within(trailing).getByLabelText(/refresh all workout categories/i));
     fireEvent.click(screen.getByRole("menuitemcheckbox", { name: /urban apes/i }));
@@ -77,8 +89,8 @@ describe("WorkoutListHeader responsive behavior", () => {
     expect(refreshList).toHaveBeenCalledWith({ sources: ["cau-sport", "urban-apes"] });
   });
 
-  test("shows the active filter count on the filter button", async () => {
-    searchParamsState.value = "provider=Urban+Apes&days=Mon,Tue&status=available";
+  test("shows the selected provider in the dropdown trigger", async () => {
+    searchParamsState.value = "provider=Urban+Apes";
 
     render(
       <WorkoutListHeader
@@ -88,6 +100,10 @@ describe("WorkoutListHeader responsive behavior", () => {
         isRefreshing={false}
         refreshingCategory={undefined}
         refreshList={vi.fn(async () => {})}
+        providers={[
+          { name: "CAU Kiel Sportzentrum", count: 12 },
+          { name: "Urban Apes", count: 2 },
+        ]}
       />,
     );
 
@@ -96,7 +112,57 @@ describe("WorkoutListHeader responsive behavior", () => {
     });
 
     const trailing = screen.getAllByTestId("workout-toolbar-trailing").at(-1)!;
-    expect(within(trailing).getByLabelText("Filter").textContent).toContain("4");
+    expect(within(trailing).getByRole("combobox", { name: /provider/i }).textContent).toContain("Urban Apes");
+  });
+
+  test("writes and clears the provider query param from the dropdown", async () => {
+    const view = render(
+      <WorkoutListHeader
+        viewMode="list"
+        setViewMode={vi.fn()}
+        dict={{} as never}
+        isRefreshing={false}
+        refreshingCategory={undefined}
+        refreshList={vi.fn(async () => {})}
+        providers={[
+          { name: "CAU Kiel Sportzentrum", count: 12 },
+          { name: "Urban Apes", count: 2 },
+        ]}
+      />,
+    );
+
+    const providerSelect = screen.getAllByRole("combobox", { name: /provider/i }).at(-1)!;
+    fireEvent.click(providerSelect);
+    fireEvent.click(screen.getByRole("option", { name: "Urban Apes" }));
+
+    expect(pushMock).toHaveBeenLastCalledWith(
+      expect.stringContaining("provider=Urban+Apes"),
+      { scroll: false },
+    );
+
+    searchParamsState.value = "provider=Urban+Apes";
+    view.rerender(
+      <WorkoutListHeader
+        viewMode="list"
+        setViewMode={vi.fn()}
+        dict={{} as never}
+        isRefreshing={false}
+        refreshingCategory={undefined}
+        refreshList={vi.fn(async () => {})}
+        providers={[
+          { name: "CAU Kiel Sportzentrum", count: 12 },
+          { name: "Urban Apes", count: 2 },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole("combobox", { name: /provider/i }).at(-1)!);
+    fireEvent.click(screen.getByRole("option", { name: /all providers/i }));
+
+    expect(pushMock).toHaveBeenLastCalledWith(
+      expect.not.stringContaining("provider="),
+      { scroll: false },
+    );
   });
 
   test("uses the same compact clear icon sizing as courses", async () => {
@@ -108,6 +174,10 @@ describe("WorkoutListHeader responsive behavior", () => {
         isRefreshing={false}
         refreshingCategory={undefined}
         refreshList={vi.fn(async () => {})}
+        providers={[
+          { name: "CAU Kiel Sportzentrum", count: 12 },
+          { name: "Urban Apes", count: 2 },
+        ]}
       />,
     );
 

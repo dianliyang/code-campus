@@ -8,7 +8,6 @@ import {
   List,
   RefreshCw,
   Search,
-  SlidersHorizontal,
   ArrowDownWideNarrow,
   X,
 } from "lucide-react";
@@ -37,7 +36,6 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { Badge } from "@/components/ui/badge";
 
 interface WorkoutListHeaderProps {
   viewMode: "list" | "grid";
@@ -46,6 +44,7 @@ interface WorkoutListHeaderProps {
   isRefreshing: boolean;
   refreshingCategory: string | null | undefined;
   refreshList: (options?: { sources?: Array<"cau-sport" | "urban-apes"> }) => Promise<void>;
+  providers: Array<{ name: string; count: number }>;
 }
 
 const DEFAULT_REFRESH_SOURCES: Array<"cau-sport" | "urban-apes"> = ["cau-sport"];
@@ -57,6 +56,7 @@ export default function WorkoutListHeader({
   isRefreshing,
   refreshingCategory,
   refreshList,
+  providers,
 }: WorkoutListHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -70,10 +70,6 @@ export default function WorkoutListHeader({
     DEFAULT_REFRESH_SOURCES,
   );
   const selectedProvider = searchParams.get("provider") || "";
-  const selectedDays = searchParams.get("days")?.split(",").filter(Boolean) || [];
-  const selectedStatuses = searchParams.get("status")?.split(",").filter(Boolean) || [];
-  const activeFilterCount =
-    (selectedProvider ? 1 : 0) + selectedDays.length + selectedStatuses.length;
 
   useEffect(() => {
     const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
@@ -105,9 +101,12 @@ export default function WorkoutListHeader({
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
-  const openFilters = () => {
+  const handleProviderChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("filters", "open");
+    if (value) params.set("provider", value);
+    else params.delete("provider");
+    params.delete("filters");
+    params.set("page", "1");
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
@@ -308,30 +307,30 @@ export default function WorkoutListHeader({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button
-              variant={activeFilterCount > 0 ? "default" : "outline"}
-              onClick={openFilters}
-              className={isMobileViewport ? "relative size-9 p-0" : "flex-1 sm:flex-none"}
-              aria-label="Filter"
-              title="Filter"
-            >
-              <SlidersHorizontal />
-              {activeFilterCount > 0 ? (
-                isMobileViewport ? (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-semibold leading-none text-white">
-                    {activeFilterCount}
-                  </span>
-                ) : (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center px-1.5">
-                    {activeFilterCount}
-                  </Badge>
-                )
-              ) : null}
-              <span className={isMobileViewport ? "sr-only" : ""}>
-                {activeFilterCount > 0 ? `Filter (${activeFilterCount})` : "Filter"}
-              </span>
-            </Button>
           </div>
+
+          <Select
+            value={selectedProvider || "__all__"}
+            onValueChange={(value) => handleProviderChange(value === "__all__" ? "" : value)}
+          >
+            <SelectTrigger
+              aria-label="Provider"
+              className={isMobileViewport ? "w-[150px]" : "w-full sm:w-[190px]"}
+            >
+              <SelectValue placeholder="All providers" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Provider</SelectLabel>
+                <SelectItem value="__all__">All providers</SelectItem>
+                {providers.map((provider) => (
+                  <SelectItem key={provider.name} value={provider.name}>
+                    {provider.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
 
           <Select value={sortBy} onValueChange={handleSortChange}>
             <SelectTrigger className={`${isMobileViewport ? "hidden" : "w-full sm:w-[160px]"}`}>

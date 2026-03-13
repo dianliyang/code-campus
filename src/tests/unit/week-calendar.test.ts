@@ -165,7 +165,7 @@ describe("buildTodayRoutineGroups", () => {
     expect(groups[0].children).toEqual([]);
   });
 
-  test("keeps course schedule rows standalone when no parent study plan exists", () => {
+  test("synthesizes a parent when same-course items share a day without an explicit study plan parent", () => {
     const groups = buildTodayRoutineGroups([
       {
         key: "child-only",
@@ -178,11 +178,22 @@ describe("buildTodayRoutineGroups", () => {
         workoutId: null,
         startTime: "10:00:00",
       },
+      {
+        key: "assignment-only",
+        sourceType: "assignment" as const,
+        courseId: 1,
+        date: "2026-03-08",
+        planId: null,
+        scheduleId: null,
+        assignmentId: 30,
+        workoutId: null,
+        startTime: "23:59:59",
+      },
     ]);
 
     expect(groups).toHaveLength(1);
-    expect(groups[0].parent.key).toBe("child-only");
-    expect(groups[0].children).toEqual([]);
+    expect(groups[0].parent.key).not.toBe("child-only");
+    expect(groups[0].children.map((item) => item.key)).toEqual(["child-only", "assignment-only"]);
   });
 
   test("falls back to a shared group key when a child is missing course id on the same day", () => {

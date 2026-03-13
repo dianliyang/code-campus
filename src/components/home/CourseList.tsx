@@ -62,7 +62,7 @@ export default function CourseList({
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
   const [actionLoadingIds, setActionLoadingIds] = useState<Record<number, boolean>>({});
 
-  const LIST_ROW_HEIGHT = 88;
+  const LIST_ROW_HEIGHT = 64;
   const GRID_CARD_HEIGHT = 260;
   const GRID_GAP = 24;
 
@@ -295,9 +295,9 @@ export default function CourseList({
         {effectiveViewMode === "list" ? (
           <div className="min-w-full inline-block align-middle">
             <div className="">
-              <Table className="border-none shadow-none">
-                <TableHeader className="bg-transparent border-none">
-                  <TableRow className="flex items-center border-none hover:bg-transparent">
+              <Table>
+                <TableHeader className="bg-slate-50/50">
+                  <TableRow className="hover:bg-transparent">
                     <TableHead className={`${COLUMNS[0].width} flex items-center justify-center`}>
                       <Checkbox
                         checked={
@@ -337,7 +337,7 @@ export default function CourseList({
                     </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody className="relative border-none" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+                <TableBody className="relative" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
                   {virtualItems.map((virtualRow) => {
                     const course = courses[virtualRow.index];
                     if (!course) return null;
@@ -358,7 +358,7 @@ export default function CourseList({
                           height: `${virtualRow.size}px`,
                           transform: `translateY(${virtualRow.start}px)`,
                         }}
-                        className="flex items-center hover:bg-slate-50/50 border-none"
+                        className="flex items-center hover:bg-slate-50/50"
                       >
                         <TableCell className={`${COLUMNS[0].width} flex items-center justify-center`}>
                           <Checkbox

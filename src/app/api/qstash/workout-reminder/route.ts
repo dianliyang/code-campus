@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendWorkoutReminderEmail } from "@/lib/email";
+import { getQstashSafeNotBefore, publishDelayedJsonMessage } from "@/lib/qstash";
 import { createAdminClient } from "@/lib/supabase/server";
 import { formatWorkoutBookingOpensTime } from "@/lib/workout-reminders";
 
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = (await request.json()) as { userId?: string; workoutId?: number };
+    const body = (await request.json()) as { userId?: string; workoutId?: number; reminderAt?: string };
     if (!body.userId || !body.workoutId) {
       return NextResponse.json({ error: "userId and workoutId are required" }, { status: 400 });
     }
@@ -37,6 +38,44 @@ export async function POST(request: NextRequest) {
 
     if (reminderRow.reminder_sent_at) {
       return NextResponse.json({ success: true, skipped: true, alreadySent: true });
+    }
+
+    if (body.reminderAt) {
+      const reminderAt = new Date(body.reminderAt);
+      if (!Number.isNaN(reminderAt.getTime())) {
+        const nextScheduleAt = getQstashSafeNotBefore(reminderAt);
+        if (nextScheduleAt.getTime() > Date.now()) {
+          const messageId = await publishDelayedJsonMessage({
+            destination: `${request.nextUrl.origin}/api/qstash/workout-reminder`,
+            body: {
+              userId: body.userId,
+              workoutId: body.workoutId,
+              reminderAt: reminderAt.toISOString(),
+            },
+            notBefore: nextScheduleAt,
+            deduplicationId: `workout-reminder:${body.userId}:${body.workoutId}:${nextScheduleAt.toISOString()}`,
+          });
+
+          const { error: updateScheduleError } = await supabase
+            .from("user_workouts")
+            .update({
+              reminder_message_id: messageId,
+              updated_at: new Date().toISOString(),
+            })
+            .match({ user_id: body.userId, workout_id: body.workoutId });
+
+          if (updateScheduleError) {
+            return NextResponse.json({ error: updateScheduleError.message }, { status: 500 });
+          }
+
+          return NextResponse.json({
+            success: true,
+            scheduled: true,
+            reminderAt: reminderAt.toISOString(),
+            nextAttemptAt: nextScheduleAt.toISOString(),
+          });
+        }
+      }
     }
 
     const [

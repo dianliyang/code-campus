@@ -116,6 +116,9 @@ describe("SystemMaintenanceCard cache behavior", () => {
 
     const stanfordLogo = screen.getByAltText("Stanford");
     expect(stanfordLogo.getAttribute("src")).toBe("/stanford-text.png");
+    expect(stanfordLogo.className).toContain("h-auto");
+    expect(stanfordLogo.className).toContain("max-h-8");
+    expect(stanfordLogo.className).toContain("max-w-[72%]");
 
     const cmuLogo = screen.getByAltText("CMU");
     expect(cmuLogo.getAttribute("src")).toBe("/cmu-text.svg");

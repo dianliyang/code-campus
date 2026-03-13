@@ -11,7 +11,7 @@ import { buildResourceBlacklistKey } from "@/lib/resources/blacklist";
 import { expandStudyPlanDays, normalizeStudyPlanDays } from "@/lib/study-plan-persistence";
 import { Course } from "@/types";
 import { getWorkoutReminderAtUtc } from "@/lib/workout-reminders";
-import { cancelQstashMessage, publishDelayedJsonMessage } from "@/lib/qstash";
+import { cancelQstashMessage, getQstashSafeNotBefore, publishDelayedJsonMessage } from "@/lib/qstash";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? "");
@@ -1814,14 +1814,16 @@ export async function toggleWorkoutReminderAction(workoutId: number, isReminderS
     }
 
     const destination = `${await getBaseUrl()}/api/qstash/workout-reminder`;
+    const firstScheduleAt = getQstashSafeNotBefore(reminderAt);
     const messageId = await publishDelayedJsonMessage({
       destination,
       body: {
         userId: user.id,
         workoutId,
+        reminderAt: reminderAt.toISOString(),
       },
-      notBefore: reminderAt,
-      deduplicationId: `workout-reminder:${user.id}:${workoutId}:${reminderAt.toISOString()}`,
+      notBefore: firstScheduleAt,
+      deduplicationId: `workout-reminder:${user.id}:${workoutId}:${firstScheduleAt.toISOString()}`,
     });
 
     const { error } = await supabase

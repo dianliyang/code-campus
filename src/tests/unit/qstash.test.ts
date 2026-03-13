@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { publishDelayedJsonMessage } from "@/lib/qstash";
+import {
+  QSTASH_MAX_DELAY_MS,
+  getQstashSafeNotBefore,
+  publishDelayedJsonMessage,
+} from "@/lib/qstash";
 
 const fetchMock = vi.fn();
 
@@ -46,5 +50,19 @@ describe("publishDelayedJsonMessage", () => {
         method: "POST",
       }),
     );
+  });
+
+  test("caps the first qstash schedule hop at the 7 day max delay", () => {
+    const now = new Date("2026-03-13T10:00:00.000Z");
+    const finalReminderAt = new Date(now.getTime() + QSTASH_MAX_DELAY_MS + 3 * 24 * 60 * 60 * 1000);
+
+    expect(getQstashSafeNotBefore(finalReminderAt, now).toISOString()).toBe("2026-03-20T10:00:00.000Z");
+  });
+
+  test("keeps the original reminder time when already within qstash delay limits", () => {
+    const now = new Date("2026-03-13T10:00:00.000Z");
+    const finalReminderAt = new Date("2026-03-18T10:15:00.000Z");
+
+    expect(getQstashSafeNotBefore(finalReminderAt, now)).toEqual(finalReminderAt);
   });
 });

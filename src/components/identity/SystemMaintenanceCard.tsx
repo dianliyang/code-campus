@@ -264,13 +264,13 @@ export default function SystemMaintenanceCard() {
                     title={uni.name}
                     className="h-20 w-full rounded-xl px-0 py-0 data-[state=on]:bg-transparent data-[state=on]:text-foreground data-[state=on]:border-black data-[state=on]:border-2"
                   >
-                    <span className="flex h-full w-full items-center justify-center rounded-lg bg-muted/20">
+                    <span className="flex h-full w-full items-center justify-center rounded-lg bg-muted/20 px-3 py-2.5">
                       <Image
                         src={UNIVERSITY_LOGO_PATHS[uni.id]}
                         alt={uni.name}
                         width={120}
                         height={28}
-                        className="h-5 w-auto max-w-full object-contain"
+                        className="h-auto w-auto max-h-8 max-w-[72%] object-contain"
                         unoptimized
                       />
                     </span>

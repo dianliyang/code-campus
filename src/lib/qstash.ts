@@ -6,6 +6,13 @@ type PublishOptions = {
   forwardHeaders?: Record<string, string>;
 };
 
+export const QSTASH_MAX_DELAY_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function getQstashSafeNotBefore(notBefore: Date, now = new Date()): Date {
+  const cappedTime = Math.min(notBefore.getTime(), now.getTime() + QSTASH_MAX_DELAY_MS);
+  return new Date(cappedTime);
+}
+
 function getQstashConfig() {
   const token = process.env.QSTASH_TOKEN?.trim();
   const configuredBaseUrl = process.env.QSTASH_BASE_URL?.trim();

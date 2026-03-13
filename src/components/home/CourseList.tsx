@@ -65,7 +65,7 @@ export default function CourseList({
     Record<number, boolean>
   >({});
   const [scrollTop, setScrollTop] = useState(0);
-  const [containerSize, setContainerSize] = useState({ height: 0, width: 0 });
+  const [containerSize, setContainerSize] = useState({ height: 0, width: 0, scrollHeight: 0 });
 
   const LIST_ROW_HEIGHT = 88;
   const GRID_CARD_HEIGHT = 260;
@@ -88,6 +88,7 @@ export default function CourseList({
     lastRequestedCourseCountRef.current = 0;
     hasBootstrappedInitialLoadRef.current = false;
     setScrollTop(0);
+    setContainerSize((prev) => ({ ...prev, scrollHeight: 0 }));
     setSelectedCourseIds([]);
   }, [initialCourses, currentPage]);
 
@@ -201,8 +202,11 @@ export default function CourseList({
       const next = {
         height: container.clientHeight,
         width: container.clientWidth,
+        scrollHeight: container.scrollHeight,
       };
-      return prev.height === next.height && prev.width === next.width ? prev : next;
+      return prev.height === next.height && prev.width === next.width && prev.scrollHeight === next.scrollHeight
+        ? prev
+        : next;
     });
   }, []);
 
@@ -213,14 +217,34 @@ export default function CourseList({
     return () => window.removeEventListener("resize", handleResize);
   }, [updateContainerMetrics]);
 
+  useEffect(() => {
+    updateContainerMetrics();
+  }, [courses.length, effectiveViewMode, updateContainerMetrics]);
+
   const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
+    const threshold = effectiveViewMode === "list"
+      ? LIST_ROW_HEIGHT * 2
+      : (GRID_CARD_HEIGHT + GRID_GAP) * 2;
+    const isNearTail = target.scrollTop + target.clientHeight >= target.scrollHeight - threshold;
+
     setScrollTop(target.scrollTop);
     setContainerSize((prev) => {
-      const next = { height: target.clientHeight, width: target.clientWidth };
-      return prev.height === next.height && prev.width === next.width ? prev : next;
+      const next = {
+        height: target.clientHeight,
+        width: target.clientWidth,
+        scrollHeight: target.scrollHeight,
+      };
+      return prev.height === next.height && prev.width === next.width && prev.scrollHeight === next.scrollHeight
+        ? prev
+        : next;
     });
-  }, []);
+    if (!isNearTail) return;
+    if (isLoadingRef.current || pageRef.current >= totalPages) return;
+    if (lastRequestedCourseCountRef.current === courses.length) return;
+    lastRequestedCourseCountRef.current = courses.length;
+    void loadMore();
+  }, [courses.length, effectiveViewMode, loadMore, totalPages]);
 
   const gridColumnCount = effectiveViewMode === "grid"
     ? containerSize.width >= 1280
@@ -254,14 +278,24 @@ export default function CourseList({
   const visibleTailIndex = effectiveViewMode === "list"
     ? virtualListEnd
     : virtualGridEndRow * gridColumnCount;
+  const loadMoreThresholdPx = effectiveViewMode === "list"
+    ? LIST_ROW_HEIGHT * 2
+    : gridRowHeight * 2;
+  const hasMeasuredScrollContainer = containerSize.height > 0 && containerSize.scrollHeight > 0;
+  const isScrollable = hasMeasuredScrollContainer && containerSize.scrollHeight > containerSize.height + 1;
+  const isNearActualTail = hasMeasuredScrollContainer &&
+    scrollTop + containerSize.height >= containerSize.scrollHeight - loadMoreThresholdPx;
 
   useEffect(() => {
     if (isLoadingRef.current || pageRef.current >= totalPages) return;
     if (courses.length === 0) return;
-    if (visibleTailIndex < courses.length - LOAD_MORE_THRESHOLD_ITEMS) return;
+
+    const isNearVirtualTail = visibleTailIndex >= courses.length - LOAD_MORE_THRESHOLD_ITEMS;
+    if (!isNearActualTail && !isNearVirtualTail) return;
 
     const hasScrolled = scrollTop > 0;
     if (!hasScrolled) {
+      if (isScrollable) return;
       if (hasBootstrappedInitialLoadRef.current) return;
       hasBootstrappedInitialLoadRef.current = true;
     }
@@ -269,7 +303,7 @@ export default function CourseList({
     if (lastRequestedCourseCountRef.current === courses.length) return;
     lastRequestedCourseCountRef.current = courses.length;
     void loadMore();
-  }, [courses.length, loadMore, scrollTop, totalPages, visibleTailIndex]);
+  }, [courses.length, isNearActualTail, isScrollable, loadMore, scrollTop, totalPages, visibleTailIndex]);
 
   const refParams = searchParams.toString();
 

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -14,28 +13,22 @@ interface FilterOption {
 
 interface WorkoutSidebarProps {
   providers: FilterOption[];
-  categories: FilterOption[];
   statuses: FilterOption[];
   dict: Dictionary["dashboard"]["workouts"];
 }
 
 const DAY_OPTIONS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const INITIAL_CATEGORY_LIMIT = 8;
 
 export default function WorkoutSidebar({
   providers,
-  categories,
   statuses,
   dict,
 }: WorkoutSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isExpanded, setIsExpanded] = useState(false);
   const filtersOpen = searchParams.get("filters") === "open";
 
   const selectedProvider = searchParams.get("provider") || "";
-  const selectedCategories =
-    searchParams.get("categories")?.split(",").filter(Boolean) || [];
   const selectedDays =
     searchParams.get("days")?.split(",").filter(Boolean) || [];
   const selectedStatuses =
@@ -63,11 +56,8 @@ export default function WorkoutSidebar({
       : [...list, item];
   };
 
-  const displayedCategories = isExpanded
-    ? categories
-    : categories.slice(0, INITIAL_CATEGORY_LIMIT);
   const totalFilters =
-    (selectedProvider ? 1 : 0) + selectedCategories.length + selectedDays.length + selectedStatuses.length;
+    (selectedProvider ? 1 : 0) + selectedDays.length + selectedStatuses.length;
 
   const closeDrawer = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -143,60 +133,6 @@ export default function WorkoutSidebar({
                   </span>
                 </label>
               ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-[12px] font-semibold uppercase tracking-wide text-slate-500 mb-3">
-              {dict?.sidebar_categories || "Category"}
-            </h3>
-            <div className="grid grid-cols-1 gap-2.5">
-              {displayedCategories.map((cat) => (
-                <label
-                  key={cat.name}
-                  className="flex items-center justify-between group cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      checked={selectedCategories.includes(cat.name)}
-                      onCheckedChange={() =>
-                        updateParams(
-                          "categories",
-                          handleToggle(selectedCategories, cat.name),
-                        )
-                      }
-                    />
-
-                    <span
-                      className={`text-[13px] font-medium tracking-tight transition-colors ${selectedCategories.includes(cat.name) ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}
-                    >
-                      {cat.name}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-[12px] font-medium transition-colors ${selectedCategories.includes(cat.name) ? "text-brand-blue" : "text-gray-300"}`}
-                  >
-                    {cat.count}
-                  </span>
-                </label>
-              ))}
-
-              {categories.length > INITIAL_CATEGORY_LIMIT ? (
-                <Button
-                  variant="outline"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                >
-                  {isExpanded ? (
-                    <>
-                      Show less <ChevronUp />
-                    </>
-                  ) : (
-                    <>
-                      Show all ({categories.length}) <ChevronDown />
-                    </>
-                  )}
-                </Button>
-              ) : null}
             </div>
           </div>
 

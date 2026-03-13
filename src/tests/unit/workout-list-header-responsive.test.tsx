@@ -3,13 +3,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import WorkoutListHeader from "@/components/workouts/WorkoutListHeader";
 
+const searchParamsState = {
+  value: "",
+};
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(searchParamsState.value),
 }));
 
 describe("WorkoutListHeader responsive behavior", () => {
   beforeEach(() => {
+    searchParamsState.value = "";
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
       writable: true,
@@ -70,6 +75,28 @@ describe("WorkoutListHeader responsive behavior", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: /refresh selected/i }));
 
     expect(refreshList).toHaveBeenCalledWith({ sources: ["cau-sport", "urban-apes"] });
+  });
+
+  test("shows the active filter count on the filter button", async () => {
+    searchParamsState.value = "provider=Urban+Apes&days=Mon,Tue&status=available";
+
+    render(
+      <WorkoutListHeader
+        viewMode="list"
+        setViewMode={vi.fn()}
+        dict={{} as never}
+        isRefreshing={false}
+        refreshingCategory={undefined}
+        refreshList={vi.fn(async () => {})}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText(/list view/i)).toBeNull();
+    });
+
+    const trailing = screen.getAllByTestId("workout-toolbar-trailing").at(-1)!;
+    expect(within(trailing).getByLabelText("Filter").textContent).toContain("4");
   });
 
   test("uses the same compact clear icon sizing as courses", async () => {

@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Workout } from "@/types";
+import { Workout, WorkoutTrackingState } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
 import { cn } from "@/lib/utils";
 import { getWorkoutDurationUrl } from "@/lib/workout-links";
+import { formatWorkoutBookingOpensTime } from "@/lib/workout-reminders";
 import WorkoutCard from "./WorkoutCard";
 import WorkoutListHeader from "./WorkoutListHeader";
-import { Check, ChevronDown, ExternalLink, Plus, RefreshCw } from "lucide-react";
+import { Bell, Check, ChevronDown, ExternalLink, Plus, RefreshCw } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { toggleWorkoutEnrollmentAction } from "@/actions/courses";
+import { toggleWorkoutEnrollmentAction, toggleWorkoutReminderAction } from "@/actions/courses";
 import { useAppToast } from "@/components/common/AppToastProvider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,7 @@ import {
 
 interface WorkoutListProps {
   initialWorkouts: Workout[];
-  initialEnrolledIds: number[];
+  initialWorkoutTracking: Record<number, WorkoutTrackingState>;
   dict: Dictionary["dashboard"]["workouts"];
   categoryGroups: Array<{
     category: string;
@@ -51,24 +52,51 @@ const statusStyle: Record<string, string> = {
 
 function IconActionGroup({
   isEnrolled,
+  isReminderActive,
+  isReminderSent,
   isEnrollmentPending,
+  isReminderPending,
   onToggleEnroll,
+  onToggleReminder,
   workoutId,
   bookingHref,
+  showReminderAction = false,
   standalone = false,
 }: {
   isEnrolled: boolean;
+  isReminderActive: boolean;
+  isReminderSent: boolean;
   isEnrollmentPending: boolean;
+  isReminderPending: boolean;
   onToggleEnroll: (workoutId: number) => void;
+  onToggleReminder: (workoutId: number) => void;
   workoutId: number;
   bookingHref: string | null;
+  showReminderAction?: boolean;
   standalone?: boolean;
 }) {
   const buttonClass = standalone
     ? "h-8 w-8 rounded-md"
     : "h-7 w-7 rounded-none border-0 px-0 shadow-none first:rounded-l-md last:rounded-r-md";
 
-  const enrollButton = (
+  const primaryButton = showReminderAction ? (
+    <Button
+      variant={isReminderActive || isReminderSent ? "secondary" : "outline"}
+      size="icon"
+      type="button"
+      className={cn(buttonClass, standalone && "border-border")}
+      disabled={isReminderPending || isReminderSent}
+      onClick={() => void onToggleReminder(workoutId)}
+      aria-label={isReminderSent ? "Reminder sent" : isReminderActive ? "Reminder set" : "Reminder"}
+      title={isReminderSent ? "Reminder sent" : isReminderActive ? "Reminder set" : "Reminder"}
+    >
+      {isReminderActive || isReminderSent ? (
+        <Check className="h-3.5 w-3.5" />
+      ) : (
+        <Bell className="h-3.5 w-3.5" />
+      )}
+    </Button>
+  ) : (
     <Button
       variant={isEnrolled ? "secondary" : "outline"}
       size="icon"
@@ -122,7 +150,7 @@ function IconActionGroup({
   if (standalone) {
     return (
       <div className="flex items-center gap-2">
-        {enrollButton}
+        {primaryButton}
         {bookingButton}
       </div>
     );
@@ -130,7 +158,7 @@ function IconActionGroup({
 
   return (
     <div className="inline-flex overflow-hidden rounded-md border border-input bg-background">
-      {enrollButton}
+      {primaryButton}
       <div className="w-px bg-input" />
       {bookingButton}
     </div>
@@ -161,7 +189,7 @@ function getStatusLabel(
 
 export default function WorkoutList({
   initialWorkouts,
-  initialEnrolledIds,
+  initialWorkoutTracking,
   dict,
   categoryGroups,
   selectedCategory,
@@ -179,8 +207,11 @@ export default function WorkoutList({
     selectedCategory || null,
   );
   const [activeCategory, setActiveCategory] = useState(selectedCategory);
-  const [enrolledIds, setEnrolledIds] = useState<number[]>(initialEnrolledIds);
-  const [pendingIds, setPendingIds] = useState<Record<number, boolean>>({});
+  const [trackingByWorkoutId, setTrackingByWorkoutId] = useState<Record<number, WorkoutTrackingState>>(
+    initialWorkoutTracking,
+  );
+  const [pendingEnrollIds, setPendingEnrollIds] = useState<Record<number, boolean>>({});
+  const [pendingReminderIds, setPendingReminderIds] = useState<Record<number, boolean>>({});
   const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -309,8 +340,8 @@ export default function WorkoutList({
   };
 
   useEffect(() => {
-    setEnrolledIds(initialEnrolledIds);
-  }, [initialEnrolledIds]);
+    setTrackingByWorkoutId(initialWorkoutTracking);
+  }, [initialWorkoutTracking]);
 
   useEffect(() => {
     setActiveCategory(selectedCategory);
@@ -326,21 +357,75 @@ export default function WorkoutList({
   }, [searchParams, selectedCategory, pathname]);
 
   const handleToggleEnroll = async (workoutId: number) => {
-    if (pendingIds[workoutId]) return;
-    const isEnrolled = enrolledIds.includes(workoutId);
-    setPendingIds((current) => ({ ...current, [workoutId]: true }));
-    setEnrolledIds((current) =>
-      isEnrolled ? current.filter((id) => id !== workoutId) : [...current, workoutId]
-    );
+    if (pendingEnrollIds[workoutId]) return;
+    const previous = trackingByWorkoutId[workoutId];
+    const isEnrolled = previous?.status === "enrolled";
+    setPendingEnrollIds((current) => ({ ...current, [workoutId]: true }));
+    setTrackingByWorkoutId((current) => {
+      const next = { ...current };
+      if (isEnrolled) delete next[workoutId];
+      else next[workoutId] = { status: "enrolled" };
+      return next;
+    });
 
     try {
       await toggleWorkoutEnrollmentAction(workoutId, isEnrolled);
     } catch {
-      setEnrolledIds((current) =>
-        isEnrolled ? [...current, workoutId] : current.filter((id) => id !== workoutId)
-      );
+      setTrackingByWorkoutId((current) => {
+        const next = { ...current };
+        if (previous) next[workoutId] = previous;
+        else delete next[workoutId];
+        return next;
+      });
     } finally {
-      setPendingIds((current) => {
+      setPendingEnrollIds((current) => {
+        const next = { ...current };
+        delete next[workoutId];
+        return next;
+      });
+    }
+  };
+
+  const handleToggleReminder = async (workoutId: number) => {
+    if (pendingReminderIds[workoutId]) return;
+
+    const workout = workouts.find((item) => item.id === workoutId);
+    if (!workout) return;
+
+    const previous = trackingByWorkoutId[workoutId];
+    const isReminderSet = previous?.status === "reminder";
+    const reminderScheduledFor =
+      workout.details &&
+      typeof workout.details === "object" &&
+      typeof (workout.details as Record<string, unknown>).bookingOpensAt === "string"
+        ? String((workout.details as Record<string, unknown>).bookingOpensAt)
+        : null;
+
+    setPendingReminderIds((current) => ({ ...current, [workoutId]: true }));
+    setTrackingByWorkoutId((current) => {
+      const next = { ...current };
+      if (isReminderSet) delete next[workoutId];
+      else {
+        next[workoutId] = {
+          status: "reminder",
+          reminderScheduledFor,
+          reminderSentAt: null,
+        };
+      }
+      return next;
+    });
+
+    try {
+      await toggleWorkoutReminderAction(workoutId, isReminderSet);
+    } catch {
+      setTrackingByWorkoutId((current) => {
+        const next = { ...current };
+        if (previous) next[workoutId] = previous;
+        else delete next[workoutId];
+        return next;
+      });
+    } finally {
+      setPendingReminderIds((current) => {
         const next = { ...current };
         delete next[workoutId];
         return next;
@@ -484,7 +569,12 @@ export default function WorkoutList({
                                 : "-";
                           const durationHref = getWorkoutDurationUrl(w);
                           const bookingHref = w.bookingUrl || w.url;
-                          const isEnrolled = enrolledIds.includes(w.id);
+                          const tracking = trackingByWorkoutId[w.id];
+                          const isEnrolled = tracking?.status === "enrolled";
+                          const isReminderActive = tracking?.status === "reminder";
+                          const isReminderSent = Boolean(tracking?.reminderSentAt);
+                          const bookingOpenTime = formatWorkoutBookingOpensTime(w.details);
+                          const showReminderAction = w.bookingStatus === "scheduled";
 
                           return (
                             <div
@@ -502,6 +592,11 @@ export default function WorkoutList({
                                 </p>
                                 <div className="flex flex-wrap items-center gap-2">
                                   <Badge className={statusClass}>{statusLabel}</Badge>
+                                  {showReminderAction && bookingOpenTime ? (
+                                    <span className="text-xs font-medium text-foreground">
+                                      Opens {bookingOpenTime}
+                                    </span>
+                                  ) : null}
                                   <span className="truncate text-xs text-muted-foreground/70">
                                     {w.locationEn || w.location || "-"}
                                   </span>
@@ -566,10 +661,15 @@ export default function WorkoutList({
                               <div className={`flex ${isSemesterFeeChoice ? "justify-start xl:justify-end" : "justify-end"}`}>
                                 <IconActionGroup
                                   isEnrolled={isEnrolled}
-                                  isEnrollmentPending={Boolean(pendingIds[w.id])}
+                                  isReminderActive={isReminderActive}
+                                  isReminderSent={isReminderSent}
+                                  isEnrollmentPending={Boolean(pendingEnrollIds[w.id])}
+                                  isReminderPending={Boolean(pendingReminderIds[w.id])}
                                   onToggleEnroll={handleToggleEnroll}
+                                  onToggleReminder={handleToggleReminder}
                                   workoutId={w.id}
                                   bookingHref={bookingHref || null}
+                                  showReminderAction={showReminderAction}
                                   standalone
                                 />
                               </div>
@@ -586,12 +686,16 @@ export default function WorkoutList({
               {selectedGroup.items.map((workout, idx) => (
                 <WorkoutCard
                   key={workout.id}
-                  workout={{ ...workout, enrolled: enrolledIds.includes(workout.id) }}
+                  workout={{ ...workout, enrolled: trackingByWorkoutId[workout.id]?.status === "enrolled" }}
                   viewMode={effectiveViewMode}
                   dict={dict}
                   rowIndex={idx}
                   onToggleEnroll={handleToggleEnroll}
-                  isEnrollmentPending={Boolean(pendingIds[workout.id])}
+                  onToggleReminder={handleToggleReminder}
+                  isReminderActive={trackingByWorkoutId[workout.id]?.status === "reminder"}
+                  reminderSentAt={trackingByWorkoutId[workout.id]?.reminderSentAt || null}
+                  isEnrollmentPending={Boolean(pendingEnrollIds[workout.id])}
+                  isReminderPending={Boolean(pendingReminderIds[workout.id])}
                 />
               ))}
             </div>
@@ -667,7 +771,11 @@ export default function WorkoutList({
                       ? statusStyle[workout.bookingStatus]
                       : "bg-slate-50 text-slate-600 border-slate-100";
                   const statusLabel = getStatusLabel(workout.bookingStatus, dict);
-                  const isEnrolled = enrolledIds.includes(workout.id);
+                  const tracking = trackingByWorkoutId[workout.id];
+                  const isEnrolled = tracking?.status === "enrolled";
+                  const isReminderActive = tracking?.status === "reminder";
+                  const isReminderSent = Boolean(tracking?.reminderSentAt);
+                  const showReminderAction = workout.bookingStatus === "scheduled";
 
                   return (
                     <Card
@@ -692,10 +800,15 @@ export default function WorkoutList({
                         >
                           <IconActionGroup
                             isEnrolled={isEnrolled}
-                            isEnrollmentPending={Boolean(pendingIds[workout.id])}
+                            isReminderActive={isReminderActive}
+                            isReminderSent={isReminderSent}
+                            isEnrollmentPending={Boolean(pendingEnrollIds[workout.id])}
+                            isReminderPending={Boolean(pendingReminderIds[workout.id])}
                             onToggleEnroll={handleToggleEnroll}
+                            onToggleReminder={handleToggleReminder}
                             workoutId={workout.id}
                             bookingHref={bookingHref || null}
+                            showReminderAction={showReminderAction}
                             standalone
                           />
                         </CardAction>

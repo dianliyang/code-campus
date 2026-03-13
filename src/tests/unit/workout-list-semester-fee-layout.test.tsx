@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/actions/courses", () => ({
   toggleWorkoutEnrollmentAction: vi.fn(),
+  toggleWorkoutReminderAction: vi.fn(),
 }));
 
 vi.mock("@/components/common/AppToastProvider", () => ({
@@ -71,7 +72,7 @@ describe("WorkoutList Semester Fee layout", () => {
     render(
       <WorkoutList
         initialWorkouts={[workout]}
-        initialEnrolledIds={[]}
+        initialWorkoutTracking={{}}
         dict={dict}
         categoryGroups={[
           {

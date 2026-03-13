@@ -136,6 +136,12 @@ export interface Workout {
   enrolled?: boolean;
 }
 
+export interface WorkoutTrackingState {
+  status: string;
+  reminderScheduledFor?: string | null;
+  reminderSentAt?: string | null;
+}
+
 export interface CourseRecommendation {
   courseId: number;
   title: string;

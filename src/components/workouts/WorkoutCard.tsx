@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Workout } from "@/types";
-import { Check, ChevronDown, ChevronUp, Clock, ExternalLink, Info, MapPin, Plus } from "lucide-react";
+import { Bell, Check, ChevronDown, ChevronUp, Clock, ExternalLink, Info, MapPin, Plus } from "lucide-react";
 import { Dictionary } from "@/lib/dictionary";
+import { formatWorkoutBookingOpensTime } from "@/lib/workout-reminders";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";import { Card } from "@/components/ui/card";
 
@@ -13,7 +14,11 @@ interface WorkoutCardProps {
   dict: Dictionary["dashboard"]["workouts"];
   rowIndex?: number;
   onToggleEnroll?: (workoutId: number) => void;
+  onToggleReminder?: (workoutId: number) => void;
+  isReminderActive?: boolean;
+  reminderSentAt?: string | null;
   isEnrollmentPending?: boolean;
+  isReminderPending?: boolean;
 }
 
 const statusStyle: Record<string, string> = {
@@ -82,34 +87,59 @@ function getAggregatedEntries(workout: Workout): AggregatedEntry[] {
 
 function ActionButtonGroup({
   isEnrolled,
+  isReminderActive,
+  isReminderSent,
   isEnrollmentPending,
+  isReminderPending,
   onToggleEnroll,
+  onToggleReminder,
   workoutId,
   actionHref,
+  showReminderAction,
 }: {
   isEnrolled: boolean;
+  isReminderActive: boolean;
+  isReminderSent: boolean;
   isEnrollmentPending: boolean;
+  isReminderPending: boolean;
   onToggleEnroll?: (workoutId: number) => void;
+  onToggleReminder?: (workoutId: number) => void;
   workoutId: number;
   actionHref: string | null;
+  showReminderAction: boolean;
 }) {
   const baseButtonClass =
     "h-7 w-7 rounded-none border-0 px-0 shadow-none first:rounded-l-md last:rounded-r-md";
 
   return (
     <div className="inline-flex overflow-hidden rounded-md border border-[#d6d6d6] bg-white">
-      <Button
-        variant={isEnrolled ? "secondary" : "ghost"}
-        size="icon"
-        type="button"
-        className={`${baseButtonClass} ${isEnrolled ? "bg-muted text-foreground" : "text-[#4f4f4f]"}`}
-        disabled={isEnrollmentPending}
-        onClick={() => onToggleEnroll?.(workoutId)}
-        aria-label={isEnrolled ? "Enrolled" : "Enroll"}
-        title={isEnrolled ? "Enrolled" : "Enroll"}
-      >
-        {isEnrolled ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-      </Button>
+      {showReminderAction ? (
+        <Button
+          variant={isReminderActive || isReminderSent ? "secondary" : "ghost"}
+          size="icon"
+          type="button"
+          className={`${baseButtonClass} ${(isReminderActive || isReminderSent) ? "bg-muted text-foreground" : "text-[#4f4f4f]"}`}
+          disabled={isReminderPending || isReminderSent}
+          onClick={() => onToggleReminder?.(workoutId)}
+          aria-label={isReminderSent ? "Reminder sent" : isReminderActive ? "Reminder set" : "Reminder"}
+          title={isReminderSent ? "Reminder sent" : isReminderActive ? "Reminder set" : "Reminder"}
+        >
+          {isReminderActive || isReminderSent ? <Check className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
+        </Button>
+      ) : (
+        <Button
+          variant={isEnrolled ? "secondary" : "ghost"}
+          size="icon"
+          type="button"
+          className={`${baseButtonClass} ${isEnrolled ? "bg-muted text-foreground" : "text-[#4f4f4f]"}`}
+          disabled={isEnrollmentPending}
+          onClick={() => onToggleEnroll?.(workoutId)}
+          aria-label={isEnrolled ? "Enrolled" : "Enroll"}
+          title={isEnrolled ? "Enrolled" : "Enroll"}
+        >
+          {isEnrolled ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+        </Button>
+      )}
       {actionHref ? (
         <a
           href={actionHref}
@@ -140,7 +170,11 @@ export default function WorkoutCard({
   dict,
   rowIndex = 0,
   onToggleEnroll,
+  onToggleReminder,
+  isReminderActive = false,
+  reminderSentAt = null,
   isEnrollmentPending = false,
+  isReminderPending = false,
 }: WorkoutCardProps) {
   const [expanded, setExpanded] = useState(false);
   const displayTitle = workout.titleEn || workout.title;
@@ -158,6 +192,9 @@ export default function WorkoutCard({
   const price = workout.priceStudent == null ? "-" : Number(workout.priceStudent).toFixed(2);
   const actionHref = workout.bookingUrl || workout.url || null;
   const isEnrolled = Boolean(workout.enrolled);
+  const bookingOpenTime = formatWorkoutBookingOpensTime(workout.details);
+  const showReminderAction = workout.bookingStatus === "scheduled";
+  const isReminderSent = Boolean(reminderSentAt);
   const priceDetails = [
   workout.priceStudent != null ? { label: "Student", value: Number(workout.priceStudent).toFixed(2) } : null,
   workout.priceStaff != null ? { label: "Staff", value: Number(workout.priceStaff).toFixed(2) } : null,
@@ -180,6 +217,11 @@ export default function WorkoutCard({
                 <Badge className="bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">{schedule}</Badge>
                 <Badge className="bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">{price}</Badge>
                 <Badge className={`px-1.5 py-0.5 text-[10px] font-medium ${statusClass}`}>{statusLabel}</Badge>
+                {showReminderAction && bookingOpenTime ? (
+                  <Badge className="bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">
+                    Opens {bookingOpenTime}
+                  </Badge>
+                ) : null}
               </div>
             </a> :
 
@@ -190,6 +232,11 @@ export default function WorkoutCard({
                 <Badge className="bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">{schedule}</Badge>
                 <Badge className="bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">{price}</Badge>
                 <Badge className={`px-1.5 py-0.5 text-[10px] font-medium ${statusClass}`}>{statusLabel}</Badge>
+                {showReminderAction && bookingOpenTime ? (
+                  <Badge className="bg-[#efefef] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">
+                    Opens {bookingOpenTime}
+                  </Badge>
+                ) : null}
               </div>
             </div>
           }
@@ -221,10 +268,15 @@ export default function WorkoutCard({
           <div className="flex items-center justify-end pr-0 md:pr-1 self-center">
             <ActionButtonGroup
               isEnrolled={isEnrolled}
+              isReminderActive={isReminderActive}
+              isReminderSent={isReminderSent}
               isEnrollmentPending={isEnrollmentPending}
+              isReminderPending={isReminderPending}
               onToggleEnroll={onToggleEnroll}
+              onToggleReminder={onToggleReminder}
               workoutId={workout.id}
               actionHref={actionHref}
+              showReminderAction={showReminderAction}
             />
           </div>
         </div>
@@ -271,6 +323,9 @@ export default function WorkoutCard({
         </div>
         <span className={`inline-flex px-2 py-0.5 text-[11px] font-medium ${statusClass}`}>{statusLabel}</span>
       </div>
+      {showReminderAction && bookingOpenTime ? (
+        <p className="mt-1 text-xs text-slate-500">Booking opens {bookingOpenTime}</p>
+      ) : null}
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div className=" bg-white px-2 py-1.5 text-[12px] text-[#555]">
@@ -334,19 +389,29 @@ export default function WorkoutCard({
       <div className="mt-auto pt-3">
           <ActionButtonGroup
             isEnrolled={isEnrolled}
+            isReminderActive={isReminderActive}
+            isReminderSent={isReminderSent}
             isEnrollmentPending={isEnrollmentPending}
+            isReminderPending={isReminderPending}
             onToggleEnroll={onToggleEnroll}
+            onToggleReminder={onToggleReminder}
             workoutId={workout.id}
             actionHref={actionHref}
+            showReminderAction={showReminderAction}
           />
         </div> :
       <div className="mt-auto pt-3">
           <ActionButtonGroup
             isEnrolled={isEnrolled}
+            isReminderActive={isReminderActive}
+            isReminderSent={isReminderSent}
             isEnrollmentPending={isEnrollmentPending}
+            isReminderPending={isReminderPending}
             onToggleEnroll={onToggleEnroll}
+            onToggleReminder={onToggleReminder}
             workoutId={workout.id}
             actionHref={actionHref}
+            showReminderAction={showReminderAction}
           />
         </div>}
     </Card>);

@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient, getUser, createClient, mapCourseFromRow, getCachedProfileSettings } from "@/lib/supabase/server";
+import { createAdminClient, getUser, createClient, mapCourseFromRow, getCachedProfileSettings, getBaseUrl } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { resolveModelForProvider } from "@/lib/ai/models";
@@ -10,6 +10,8 @@ import { upstashSetString } from "@/lib/cache/upstash";
 import { buildResourceBlacklistKey } from "@/lib/resources/blacklist";
 import { expandStudyPlanDays, normalizeStudyPlanDays } from "@/lib/study-plan-persistence";
 import { Course } from "@/types";
+import { getWorkoutReminderAtUtc } from "@/lib/workout-reminders";
+import { cancelQstashMessage, publishDelayedJsonMessage } from "@/lib/qstash";
 
 function applyPromptTemplate(template: string, values: Record<string, string>) {
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? "");
@@ -1753,6 +1755,85 @@ export async function toggleWorkoutEnrollmentAction(workoutId: number, isEnrolle
         workout_id: workoutId,
         status: "enrolled",
         updated_at: new Date().toISOString(),
+      });
+    if (error) throw error;
+  }
+
+  revalidatePath("/workouts");
+  revalidatePath("/calendar");
+}
+
+export async function toggleWorkoutReminderAction(workoutId: number, isReminderSet: boolean) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const supabase = await createClient();
+  const nowIso = new Date().toISOString();
+
+  if (isReminderSet) {
+    const { data: existingReminder, error: existingReminderError } = await supabase
+      .from("user_workouts")
+      .select("reminder_message_id")
+      .match({ user_id: user.id, workout_id: workoutId })
+      .maybeSingle();
+
+    if (existingReminderError) throw existingReminderError;
+
+    if (existingReminder?.reminder_message_id) {
+      await cancelQstashMessage(existingReminder.reminder_message_id);
+    }
+
+    const { error } = await supabase
+      .from("user_workouts")
+      .delete()
+      .match({ user_id: user.id, workout_id: workoutId });
+    if (error) throw error;
+  } else {
+    const { data: workout, error: workoutError } = await supabase
+      .from("workouts")
+      .select("id, booking_status, booking_url, url, title, title_en, source, location, details")
+      .eq("id", workoutId)
+      .maybeSingle();
+
+    if (workoutError) throw workoutError;
+    if (!workout) throw new Error("Workout not found");
+    if (String(workout.booking_status || "") !== "scheduled") {
+      throw new Error("Reminder is only available for scheduled workouts");
+    }
+
+    const reminderAt = getWorkoutReminderAtUtc(
+      workout.details && typeof workout.details === "object"
+        ? (workout.details as Record<string, unknown>)
+        : null,
+    );
+    if (!reminderAt) {
+      throw new Error("This workout does not expose a booking opening time");
+    }
+    if (reminderAt.getTime() <= Date.now()) {
+      throw new Error("Booking opens too soon for a reminder");
+    }
+
+    const destination = `${await getBaseUrl()}/api/qstash/workout-reminder`;
+    const messageId = await publishDelayedJsonMessage({
+      destination,
+      body: {
+        userId: user.id,
+        workoutId,
+      },
+      notBefore: reminderAt,
+      deduplicationId: `workout-reminder:${user.id}:${workoutId}:${reminderAt.toISOString()}`,
+    });
+
+    const { error } = await supabase
+      .from("user_workouts")
+      .upsert({
+        user_id: user.id,
+        workout_id: workoutId,
+        status: "reminder",
+        reminder_message_id: messageId,
+        reminder_scheduled_for: reminderAt.toISOString(),
+        reminder_sent_at: null,
+        updated_at: nowIso,
       });
     if (error) throw error;
   }

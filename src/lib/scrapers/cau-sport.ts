@@ -845,17 +845,23 @@ export class CAUSport extends BaseScraper {
       allDates.forEach(d => datesSet.add(d));
     }
 
+    let sawExplicitLocationLabel = false;
+
     $("b, strong, dt, .bs_label").each((_, el) => {
       const labelText = $(el).text().replace(/\s+/g, " ").trim().toLowerCase();
       if (!labelText.startsWith("veranstaltungsort")) return;
+      sawExplicitLocationLabel = true;
 
-      const nextTextBlock = $(el).nextAll(".bs_text").first().text().replace(/\s+/g, " ").trim();
-      if (nextTextBlock) {
-        locationsSet.add(nextTextBlock);
-      }
+      $(el)
+        .nextUntil("b, strong, dt, .bs_label")
+        .filter(".bs_text")
+        .each((_, node) => {
+          const sectionText = $(node).text().replace(/\s+/g, " ").trim();
+          if (sectionText) locationsSet.add(sectionText);
+        });
     });
 
-    if (locationsSet.size === 0) {
+    if (locationsSet.size === 0 && !sawExplicitLocationLabel) {
       const locationMatch = bodyText.match(
         /(?:veranstaltungsorte|veranstaltungsort|locations?|venue)\s*:?\s*(.+?)(?=(?:\b(?:zeitraum|anmeldeschluss|anmeldung|leitung|dozent|kosten|preis|uhrzeit|termine)\b\s*:)|$)/i,
       );

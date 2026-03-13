@@ -803,6 +803,9 @@ export type Database = {
       user_workouts: {
         Row: {
           created_at: string
+          reminder_message_id: string | null
+          reminder_scheduled_for: string | null
+          reminder_sent_at: string | null
           status: string
           updated_at: string
           user_id: string
@@ -810,6 +813,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          reminder_message_id?: string | null
+          reminder_scheduled_for?: string | null
+          reminder_sent_at?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -817,6 +823,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          reminder_message_id?: string | null
+          reminder_scheduled_for?: string | null
+          reminder_sent_at?: string | null
           status?: string
           updated_at?: string
           user_id?: string

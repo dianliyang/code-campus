@@ -8,6 +8,7 @@ import { getWorkoutLastUpdateTime } from "@/actions/scrapers";
 import { buildVisibleWorkoutCategoryState } from "@/lib/workout-category-filtering";
 import { getDashboardPageHeaderClassName } from "@/lib/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
+import type { WorkoutTrackingState } from "@/types";
 
 interface PageProps {
   searchParams: Promise<{[key: string]: string | string[] | undefined;}>;
@@ -71,7 +72,7 @@ async function SidebarData({ dict
 
   if (error) {
     console.error("[Supabase] Fetch sidebar workouts error:", error);
-    return <WorkoutSidebar providers={[]} categories={[]} statuses={[]} dict={dict} />;
+    return <WorkoutSidebar providers={[]} statuses={[]} dict={dict} />;
   }
 
   const workouts = (workoutsData || []).map((row: any) => mapWorkoutFromRow(row)); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -80,7 +81,6 @@ async function SidebarData({ dict
   return (
     <WorkoutSidebar
       providers={visibleState.providerGroups.map((group) => ({ name: group.provider, count: group.count }))}
-      categories={visibleState.categoryGroups.map((group) => ({ name: group.category, count: group.count }))}
       statuses={visibleState.statusGroups.map((group) => ({ name: group.status, count: group.count }))}
       dict={dict}
     />
@@ -114,7 +114,7 @@ async function WorkoutListData({ params, dict
   return (
     <WorkoutList
       initialWorkouts={dbWorkouts.items}
-      initialEnrolledIds={dbWorkouts.enrolledIds}
+      initialWorkoutTracking={dbWorkouts.trackingByWorkoutId}
       dict={dict}
       categoryGroups={dbWorkouts.categoryGroups}
       selectedCategory={dbWorkouts.selectedCategory} />);
@@ -172,23 +172,33 @@ userId: string | null)
     userId
       ? supabase
           .from("user_workouts")
-          .select("workout_id")
+          .select("workout_id, status, reminder_scheduled_for, reminder_sent_at")
           .eq("user_id", userId)
       : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (error) {
     console.error("[Supabase] Fetch workouts error:", error);
-    return { items: [], total: 0, categoryGroups: [], selectedCategory: "", enrolledIds: [] as number[] };
+    return { items: [], total: 0, categoryGroups: [], selectedCategory: "", trackingByWorkoutId: {} as Record<number, WorkoutTrackingState> };
   }
 
-  const enrolledIds = new Set(
-    ((enrolledRes.data || []) as Array<{ workout_id: number }>).map((row) => Number(row.workout_id))
-  );
+  const trackingByWorkoutId = ((enrolledRes.data || []) as Array<{
+    workout_id: number;
+    status: string | null;
+    reminder_scheduled_for: string | null;
+    reminder_sent_at: string | null;
+  }>).reduce<Record<number, WorkoutTrackingState>>((acc, row) => {
+    acc[Number(row.workout_id)] = {
+      status: row.status || "enrolled",
+      reminderScheduledFor: row.reminder_scheduled_for,
+      reminderSentAt: row.reminder_sent_at,
+    };
+    return acc;
+  }, {});
 
   const allItemsRaw = (data || []).map((row: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
     ...mapWorkoutFromRow(row),
-    enrolled: enrolledIds.has(Number(row.id)),
+    enrolled: trackingByWorkoutId[Number(row.id)]?.status === "enrolled",
   }));
   const visibleState = buildVisibleWorkoutCategoryState(allItemsRaw, categories, selectedProvider, selectedCategory);
 
@@ -197,6 +207,6 @@ userId: string | null)
     total: visibleState.allItems.length,
     categoryGroups: visibleState.categoryGroups,
     selectedCategory: visibleState.selectedCategory,
-    enrolledIds: Array.from(enrolledIds),
+    trackingByWorkoutId,
   };
 }

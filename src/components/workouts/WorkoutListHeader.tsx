@@ -37,6 +37,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { Badge } from "@/components/ui/badge";
 
 interface WorkoutListHeaderProps {
   viewMode: "list" | "grid";
@@ -68,6 +69,11 @@ export default function WorkoutListHeader({
   const [refreshSources, setRefreshSources] = useState<Array<"cau-sport" | "urban-apes">>(
     DEFAULT_REFRESH_SOURCES,
   );
+  const selectedProvider = searchParams.get("provider") || "";
+  const selectedDays = searchParams.get("days")?.split(",").filter(Boolean) || [];
+  const selectedStatuses = searchParams.get("status")?.split(",").filter(Boolean) || [];
+  const activeFilterCount =
+    (selectedProvider ? 1 : 0) + selectedDays.length + selectedStatuses.length;
 
   useEffect(() => {
     const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
@@ -303,14 +309,27 @@ export default function WorkoutListHeader({
               </DropdownMenuContent>
             </DropdownMenu>
             <Button
-              variant="outline"
+              variant={activeFilterCount > 0 ? "default" : "outline"}
               onClick={openFilters}
-              className={isMobileViewport ? "size-9 p-0" : "flex-1 sm:flex-none"}
+              className={isMobileViewport ? "relative size-9 p-0" : "flex-1 sm:flex-none"}
               aria-label="Filter"
               title="Filter"
             >
               <SlidersHorizontal />
-              <span className={isMobileViewport ? "sr-only" : ""}>Filter</span>
+              {activeFilterCount > 0 ? (
+                isMobileViewport ? (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-semibold leading-none text-white">
+                    {activeFilterCount}
+                  </span>
+                ) : (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center px-1.5">
+                    {activeFilterCount}
+                  </Badge>
+                )
+              ) : null}
+              <span className={isMobileViewport ? "sr-only" : ""}>
+                {activeFilterCount > 0 ? `Filter (${activeFilterCount})` : "Filter"}
+              </span>
             </Button>
           </div>
 

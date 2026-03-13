@@ -16,6 +16,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/actions/courses", () => ({
   toggleWorkoutEnrollmentAction: vi.fn(),
+  toggleWorkoutReminderAction: vi.fn(),
 }));
 
 vi.mock("@/components/common/AppToastProvider", () => ({
@@ -89,7 +90,7 @@ describe("WorkoutList responsive behavior", () => {
     render(
       <WorkoutList
         initialWorkouts={[workout]}
-        initialEnrolledIds={[]}
+        initialWorkoutTracking={{}}
         dict={dict}
         categoryGroups={[
           {
@@ -123,7 +124,7 @@ describe("WorkoutList responsive behavior", () => {
     const listView = render(
       <WorkoutList
         initialWorkouts={[workout]}
-        initialEnrolledIds={[]}
+        initialWorkoutTracking={{}}
         dict={dict}
         categoryGroups={[
           {
@@ -152,7 +153,7 @@ describe("WorkoutList responsive behavior", () => {
     const gridView = render(
       <WorkoutList
         initialWorkouts={[workout]}
-        initialEnrolledIds={[]}
+        initialWorkoutTracking={{}}
         dict={dict}
         categoryGroups={[
           {
@@ -201,7 +202,7 @@ describe("WorkoutList responsive behavior", () => {
     render(
       <WorkoutList
         initialWorkouts={[workout, boxingWorkout]}
-        initialEnrolledIds={[]}
+        initialWorkoutTracking={{}}
         dict={dict}
         categoryGroups={[
           {
@@ -233,5 +234,48 @@ describe("WorkoutList responsive behavior", () => {
     expect(screen.queryByText("Campus Run")).toBeNull();
     expect(replaceMock).not.toHaveBeenCalled();
     expect(replaceStateMock).toHaveBeenCalled();
+  });
+
+  test("shows reminder instead of enroll for scheduled workouts and displays booking open time", async () => {
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+
+    const { default: WorkoutList } = await import("@/components/workouts/WorkoutList");
+    const scheduledWorkout: Workout = {
+      ...workout,
+      id: 3,
+      bookingStatus: "scheduled",
+      details: {
+        bookingOpensAt: "2026-03-29T18:00:00",
+      },
+    };
+
+    render(
+      <WorkoutList
+        initialWorkouts={[scheduledWorkout]}
+        initialWorkoutTracking={{}}
+        dict={dict}
+        categoryGroups={[
+          {
+            category: "Cardio",
+            count: 1,
+            minStudentPrice: 10,
+            maxStudentPrice: 10,
+          },
+        ]}
+        selectedCategory="Cardio"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("workout-list-header").at(-1)?.textContent).toContain("mode:list");
+    });
+
+    expect(screen.getAllByText("Opens 18:00").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Reminder" }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Enroll" })).toBeNull();
   });
 });

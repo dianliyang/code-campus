@@ -60,4 +60,28 @@ describe("CAUSport duration page parsing", () => {
 
     expect(metadata.locations).toEqual(["Spielhalle"]);
   });
+
+  test("leaves location empty when Veranstaltungsorte has no location block", async () => {
+    const scraper = new CAUSport();
+
+    vi.spyOn(scraper, "fetchPage").mockResolvedValue(`
+      <html><body>
+        <b>Veranstaltungsorte:</b>
+        <br>
+        <br>
+        <br>
+        <b>Preise:</b>
+        <br>
+        <div class="bs_text">
+          30,00 EUR für Studierende
+          <br>
+          70,00 EUR für Beschäftigte/ Verein Alumni und Freunde der CAU
+        </div>
+      </body></html>
+    `);
+
+    const metadata = await scraper.parseDurationPageMetadata("https://example.com/duration");
+
+    expect(metadata.locations).toEqual([]);
+  });
 });

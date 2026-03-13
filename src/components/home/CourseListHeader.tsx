@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Dictionary } from "@/lib/dictionary";
 import {
@@ -8,7 +8,6 @@ import {
   LayoutGrid,
   List,
   Search,
-  SlidersHorizontal,
   X,
 } from "lucide-react";
 import {
@@ -26,21 +25,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface CourseListHeaderProps {
   viewMode: "list" | "grid";
@@ -169,9 +157,45 @@ export default function CourseListHeader({
   };
 
   const activeFilterCount =
-    selectedUniversities.length +
-    selectedSemesters.length +
+    (selectedUniversities.length > 0 ? 1 : 0) +
+    (selectedSemesters.length > 0 ? 1 : 0) +
     (showEnrolledOnly ? 1 : 0);
+
+  // Get latest 4 semesters
+  const latestSemesters = useMemo(() => {
+    const termOrder: Record<string, number> = {
+      spring: 1,
+      summer: 2,
+      fall: 3,
+      winter: 4,
+    };
+
+    const parsed = filterSemesters
+      .map((value) => {
+        const m = value.trim().match(/^([A-Za-z]+)\s+(\d{4})$/);
+        if (!m) return null;
+        const term = m[1].toLowerCase();
+        const year = Number(m[2]);
+        const weight = termOrder[term] || 0;
+        return { label: value, year, weight };
+      })
+      .filter((v): v is { label: string; year: number; weight: number } => v !== null);
+
+    parsed.sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return b.weight - a.weight;
+    });
+
+    return parsed.slice(0, 4).map(p => p.label);
+  }, [filterSemesters]);
+
+  const handleUniversityChange = (value: string) => {
+    pushWith({ universities: value === "__all__" ? null : [value] });
+  };
+
+  const handleSemesterChange = (value: string) => {
+    pushWith({ semesters: value === "__all__" ? null : [value] });
+  };
 
   return (
     <div className="sticky top-0 z-30 flex flex-col gap-2.5 bg-white/95 backdrop-blur-xl py-4 mb-0">
@@ -291,151 +315,72 @@ export default function CourseListHeader({
           data-testid="course-toolbar-trailing"
         >
           <div className="flex items-center gap-2 text-[13px] text-[#6a6a6a]">
-            <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    className="size-9 p-0 xl:hidden"
-                    aria-label="Sort"
-                    title="Sort"
-                  >
-                    <ArrowDownWideNarrow className="size-4 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleSortChange("title")}>
+            <Select
+              value={selectedUniversities[0] || "__all__"}
+              onValueChange={handleUniversityChange}
+            >
+              <SelectTrigger className={isMobileViewport ? "w-[120px]" : "w-[160px]"}>
+                <SelectValue placeholder="All Universities" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="__all__">All Universities</SelectItem>
+                {filterUniversities.map((uni) => (
+                  <SelectItem key={uni} value={uni}>
+                    {uni}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={selectedSemesters[0] || "__all__"}
+              onValueChange={handleSemesterChange}
+            >
+              <SelectTrigger className={isMobileViewport ? "w-[120px]" : "w-[160px]"}>
+                <SelectValue placeholder="All Semesters" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="__all__">All Semesters</SelectItem>
+                {latestSemesters.map((sem) => (
+                  <SelectItem key={sem} value={sem}>
+                    {sem}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="hidden xl:block">
+              <Select value={sortBy} onValueChange={handleSortChange}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="title">
                     {dict?.sort_title || "Title (A-Z)"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleSortChange("popularity")}
-                  >
+                  </SelectItem>
+                  <SelectItem value="popularity">
                     {dict?.sort_popularity || "Popularity"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleSortChange("newest")}>
+                  </SelectItem>
+                  <SelectItem value="newest">
                     {dict?.sort_newest || "Newest"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-                </DropdownMenu>
-                <div className="hidden xl:block">
-                  <Select value={sortBy} onValueChange={handleSortChange}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent align="end">
-                    <SelectItem value="title">
-                      {dict?.sort_title || "Title (A-Z)"}
-                    </SelectItem>
-                    <SelectItem value="popularity">
-                      {dict?.sort_popularity || "Popularity"}
-                    </SelectItem>
-                    <SelectItem value="newest">
-                      {dict?.sort_newest || "Newest"}
-                    </SelectItem>
-                  </SelectContent>
-                  </Select>
-                </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <Drawer direction={isMobileViewport ? "bottom" : "right"} open={filtersOpen} onOpenChange={setFiltersOpen}>
-                <div className="flex items-center gap-2">
-                  <DrawerTrigger asChild>
-                    <Button variant="outline" type="button" aria-label="Filter" title="Filter" className="size-9 p-0 xl:h-9 xl:w-auto xl:px-3">
-                      <SlidersHorizontal className="size-4 shrink-0" />
-                      <span className="hidden xl:inline">Filter</span>
-                      {activeFilterCount > 0 ? (
-                        <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">
-                          {activeFilterCount}
-                        </Badge>
-                      ) : null}
-                    </Button>
-                  </DrawerTrigger>
-                  {activeFilterCount > 0 ? (
-                    <Button
-                      variant="outline"
-                      type="button"
-                      onClick={clearFilters}
-                      title="Clear filters"
-                      aria-label="Clear filters"
-                    >
-                      <X />
-                    </Button>
-                  ) : null}
-                </div>
-                <DrawerContent>
-                  <DrawerHeader>
-                    <DrawerTitle>Filters</DrawerTitle>
-                    <DrawerDescription>Refine course results</DrawerDescription>
-                  </DrawerHeader>
-                  <div className="no-scrollbar overflow-y-auto px-4 pb-2">
-                    <div className="space-y-2">
-                      <p className="text-sm font-semibold text-foreground">
-                        Universities
-                      </p>
-                      <div className="max-h-40 space-y-1.5 overflow-y-auto">
-                        {filterUniversities.map((name) => (
-                          <label
-                            key={name}
-                            className="flex items-center gap-2.5 text-sm text-foreground"
-                          >
-                            <Checkbox
-                              checked={selectedUniversities.includes(name)}
-                              onCheckedChange={() =>
-                                pushWith({
-                                  universities: toggleItem(selectedUniversities, name),
-                                })
-                              }
-                            />
-
-                            <span>{name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="mt-5 space-y-2">
-                      <p className="text-sm font-semibold text-foreground">
-                        Semesters
-                      </p>
-                      <div className="max-h-40 space-y-1.5 overflow-y-auto">
-                        {filterSemesters.map((name) => (
-                          <label
-                            key={name}
-                            className="flex items-center gap-2.5 text-sm text-foreground"
-                          >
-                            <Checkbox
-                              checked={selectedSemesters.includes(name)}
-                              onCheckedChange={() =>
-                                pushWith({
-                                  semesters: toggleItem(selectedSemesters, name),
-                                })
-                              }
-                            />
-
-                            <span>{name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="mt-5 border-t pt-3">
-                      <label className="flex items-center gap-2.5 text-sm text-foreground">
-                        <Checkbox
-                          checked={showEnrolledOnly}
-                          onCheckedChange={(checked) =>
-                            pushWith({ enrolled: checked === true })
-                          }
-                        />
-
-                        <span>{dict?.sidebar_enrolled || "Enrolled Only"}</span>
-                      </label>
-                    </div>
-                  </div>
-                </DrawerContent>
-              </Drawer>
-            </div>
+            {activeFilterCount > 0 && (
+              <Button
+                variant="outline"
+                size="icon"
+                type="button"
+                onClick={clearFilters}
+                title="Clear filters"
+                aria-label="Clear filters"
+                className="size-9"
+              >
+                <X className="size-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>

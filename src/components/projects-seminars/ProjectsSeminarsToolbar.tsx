@@ -1,20 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LayoutGrid, List, Search, SlidersHorizontal, ArrowDownWideNarrow, X } from "lucide-react";
+import { LayoutGrid, List, Search, ArrowDownWideNarrow, X } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   InputGroup,
   InputGroupAddon,
@@ -64,12 +56,15 @@ export default function ProjectsSeminarsToolbar({
     return () => window.removeEventListener("resize", updateViewport);
   }, []);
 
+  const activeFilterCount =
+    (selectedSemesters.length > 0 ? 1 : 0);
+
   const pushWith = (patch: Record<string, string | string[] | null>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(patch).forEach(([key, value]) => {
       if (Array.isArray(value)) {
-        if (value.length === 0) params.delete(key);else
-        params.set(key, value.join(","));
+        if (value.length === 0) params.delete(key);
+        else params.set(key, value.join(","));
       } else if (!value) {
         params.delete(key);
       } else {
@@ -80,35 +75,44 @@ export default function ProjectsSeminarsToolbar({
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
-  const toggleItem = (list: string[], value: string) =>
-  list.includes(value) ?
-  list.filter((item) => item !== value) :
-  [...list, value];
+  // Get latest 4 semesters
+  const latestSemesters = useMemo(() => {
+    const termOrder: Record<string, number> = {
+      spring: 1,
+      summer: 2,
+      fall: 3,
+      winter: 4,
+    };
 
-  useEffect(() => {
-    const urlQuery = searchParams.get("q") || "";
-    if (urlQuery !== query) {
-      setQuery(urlQuery);
-      lastPushedQuery.current = urlQuery;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+    const parsed = semesters
+      .map((value) => {
+        const m = value.trim().match(/^([A-Za-z]+)\s+(\d{4})$/);
+        if (!m) return null;
+        const term = m[1].toLowerCase();
+        const year = Number(m[2]);
+        const weight = termOrder[term] || 0;
+        return { label: value, year, weight };
+      })
+      .filter((v): v is { label: string; year: number; weight: number } => v !== null);
 
-  useEffect(() => {
-    if (query === lastPushedQuery.current) return;
-    const timer = setTimeout(() => {
-      const currentUrlQuery = searchParams.get("q") || "";
-      if (query === currentUrlQuery) {
-        lastPushedQuery.current = query;
-        return;
-      }
+    parsed.sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return b.weight - a.weight;
+    });
 
-      lastPushedQuery.current = query;
-      pushWith({ q: query || null });
-    }, 300);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+    return parsed.slice(0, 4).map(p => p.label);
+  }, [semesters]);
+
+  const handleSemesterChange = (value: string) => {
+    pushWith({ semester: value === "__all__" ? null : [value] });
+  };
+
+  const clearFilters = () => {
+    pushWith({
+      semester: null,
+      category: null,
+    });
+  };
 
   return (
     <div className="mb-4 flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
@@ -172,89 +176,24 @@ export default function ProjectsSeminarsToolbar({
       </div>
 
       <div className="flex items-center gap-2 shrink-0" data-testid="projects-toolbar-trailing">
-        {isMobileViewport ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                type="button"
-                className="size-9 p-0"
-                aria-label="Sort"
-                title="Sort"
-              >
-                <ArrowDownWideNarrow className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => pushWith({ sort: "title" })}>
-                Sort by Title
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => pushWith({ sort: "category" })}>
-                Sort by Category
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => pushWith({ sort: "credit" })}>
-                Sort by Credit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => pushWith({ sort: "newest" })}>
-                Sort by Newest
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                type="button"
-                className={isMobileViewport ? "size-9 p-0" : "flex-1 sm:flex-none"}
-                aria-label="Filter"
-                title="Filter"
-              >
-                <SlidersHorizontal />
-                <span className={isMobileViewport ? "sr-only" : ""}>Filters</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>
-                Category
-              </DropdownMenuLabel>
-              <div className="max-h-40 space-y-1 overflow-y-auto">
-                {categories.map((name) => (
-                  <label key={name} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={selectedCategories.includes(name)}
-                      onCheckedChange={() =>
-                        pushWith({
-                          category: toggleItem(selectedCategories, name),
-                        })
-                      }
-                    />
-                    <span>{name}</span>
-                  </label>
-                ))}
-              </div>
-              <DropdownMenuSeparator className="my-2" />
-              <DropdownMenuLabel>
-                Semesters
-              </DropdownMenuLabel>
-              <div className="max-h-40 space-y-1 overflow-y-auto">
-                {semesters.map((name) => (
-                  <label key={name} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={selectedSemesters.includes(name)}
-                      onCheckedChange={() =>
-                        pushWith({
-                          semester: toggleItem(selectedSemesters, name),
-                        })
-                      }
-                    />
-                    <span>{name}</span>
-                  </label>
-                ))}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Select
+            value={selectedSemesters[0] || "__all__"}
+            onValueChange={handleSemesterChange}
+          >
+            <SelectTrigger className={isMobileViewport ? "w-[120px]" : "w-[160px]"}>
+              <SelectValue placeholder="All Semesters" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="__all__">All Semesters</SelectItem>
+              {latestSemesters.map((sem) => (
+                <SelectItem key={sem} value={sem}>
+                  {sem}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Select value={sort} onValueChange={(next) => pushWith({ sort: next })}>
             <SelectTrigger className={`${isMobileViewport ? "hidden" : "w-full sm:w-[160px]"}`}>
               <SelectValue />
@@ -269,6 +208,23 @@ export default function ProjectsSeminarsToolbar({
               </SelectGroup>
             </SelectContent>
           </Select>
+
+          {(selectedSemesters.length > 0 || query) && (
+            <Button
+              variant="outline"
+              size="icon"
+              type="button"
+              onClick={() => {
+                setQuery("");
+                clearFilters();
+              }}
+              title="Clear filters"
+              aria-label="Clear filters"
+              className="size-9"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
         </div>
       </div>
       </div>

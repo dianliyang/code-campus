@@ -59,7 +59,8 @@ export default function CourseList({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef(currentPage);
   const isLoadingRef = useRef(false);
-  const requiresObserverResetRef = useRef(false);
+  const scrollGenerationRef = useRef(0);
+  const lastLoadScrollGenerationRef = useRef(0);
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
   const [actionLoadingIds, setActionLoadingIds] = useState<
     Record<number, boolean>
@@ -77,7 +78,8 @@ export default function CourseList({
     setPage(currentPage);
     pageRef.current = currentPage;
     isLoadingRef.current = false;
-    requiresObserverResetRef.current = false;
+    scrollGenerationRef.current = 0;
+    lastLoadScrollGenerationRef.current = 0;
     setSelectedCourseIds([]);
   }, [initialCourses, currentPage]);
 
@@ -173,7 +175,6 @@ export default function CourseList({
         });
         pageRef.current += 1;
         setPage(pageRef.current);
-        requiresObserverResetRef.current = true;
       }
     } catch (error) {
       console.error("[CourseList] Failed to load more:", error);
@@ -185,20 +186,37 @@ export default function CourseList({
 
   const effectiveViewMode: "list" | "grid" = isMobileViewport ? "grid" : viewMode;
 
+  const requestNextPage = useCallback(() => {
+    if (
+      isLoadingRef.current ||
+      pageRef.current >= totalPages ||
+      scrollGenerationRef.current <= lastLoadScrollGenerationRef.current
+    ) {
+      return;
+    }
+
+    lastLoadScrollGenerationRef.current = scrollGenerationRef.current;
+    void loadMore();
+  }, [loadMore, totalPages]);
+
+  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.currentTarget;
+    scrollGenerationRef.current += 1;
+
+    const remaining = target.scrollHeight - target.scrollTop - target.clientHeight;
+    if (remaining <= 320) {
+      requestNextPage();
+    }
+  }, [requestNextPage]);
+
   useEffect(() => {
     if (page >= totalPages) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         const isIntersecting = entries[0]?.isIntersecting === true;
-
-        if (!isIntersecting) {
-          requiresObserverResetRef.current = false;
-          return;
-        }
-
-        if (!requiresObserverResetRef.current && !isLoading) {
-          loadMore();
+        if (isIntersecting && scrollGenerationRef.current > 0) {
+          requestNextPage();
         }
       },
       {
@@ -213,7 +231,7 @@ export default function CourseList({
     }
 
     return () => observer.disconnect();
-  }, [loadMore, isLoading, page, totalPages, effectiveViewMode]);
+  }, [requestNextPage, page, totalPages, effectiveViewMode]);
   const refParams = searchParams.toString();
 
   const toggleSelectAll = (checked: boolean) => {
@@ -263,7 +281,12 @@ export default function CourseList({
       />
 
       {effectiveViewMode === "list" ? (
-        <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto">
+        <div
+          ref={scrollContainerRef}
+          className="min-h-0 flex-1 overflow-y-auto"
+          onScroll={handleScroll}
+          data-testid="course-scroll-container"
+        >
           <Table>
             <TableHeader>
               <TableRow>
@@ -396,7 +419,12 @@ export default function CourseList({
           </div>
         </div>
       ) : (
-        <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto py-3">
+        <div
+          ref={scrollContainerRef}
+          className="min-h-0 flex-1 overflow-y-auto py-3"
+          onScroll={handleScroll}
+          data-testid="course-scroll-container"
+        >
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {courses.map((course) => (
               <CourseCard

@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { act, render, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import CourseList from "@/components/home/CourseList";
 
 const searchParams = new URLSearchParams("");
@@ -70,6 +70,26 @@ vi.mock("@/components/home/CourseListHeader", () => ({
   default: () => <div data-testid="course-list-header" />,
 }));
 
+function stubScrollMetrics(element: HTMLElement, metrics: {
+  scrollTop: number;
+  scrollHeight: number;
+  clientHeight: number;
+}) {
+  Object.defineProperty(element, "scrollTop", {
+    configurable: true,
+    writable: true,
+    value: metrics.scrollTop,
+  });
+  Object.defineProperty(element, "scrollHeight", {
+    configurable: true,
+    value: metrics.scrollHeight,
+  });
+  Object.defineProperty(element, "clientHeight", {
+    configurable: true,
+    value: metrics.clientHeight,
+  });
+}
+
 describe("CourseList infinite scroll", () => {
   beforeEach(() => {
     observerInstances.length = 0;
@@ -97,7 +117,7 @@ describe("CourseList infinite scroll", () => {
         }),
     );
 
-    render(
+    const view = render(
       <CourseList
         initialCourses={[
           {
@@ -127,7 +147,15 @@ describe("CourseList infinite scroll", () => {
       expect(observerInstances.length).toBeGreaterThan(0);
     });
 
+    const scrollContainer = view.getAllByTestId("course-scroll-container")[0];
+    stubScrollMetrics(scrollContainer, {
+      scrollTop: 800,
+      scrollHeight: 1200,
+      clientHeight: 300,
+    });
+
     await act(async () => {
+      fireEvent.scroll(scrollContainer);
       observerInstances[0].trigger(true);
       observerInstances[0].trigger(true);
     });
@@ -158,7 +186,7 @@ describe("CourseList infinite scroll", () => {
     });
   });
 
-  test("does not auto-request every remaining page until the sentinel leaves and re-enters view", async () => {
+  test("does not auto-request every remaining page after the first append while the sentinel stays visible", async () => {
     fetchMock
       .mockResolvedValueOnce({
         ok: true,
@@ -181,25 +209,10 @@ describe("CourseList infinite scroll", () => {
       } as Response)
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          items: [
-            {
-              id: 3,
-              title: "Databases",
-              courseCode: "CS-103",
-              university: "Test U",
-              url: "https://example.com/3",
-              description: "Third course",
-              popularity: 1,
-              isHidden: false,
-              fields: [],
-              semesters: ["Spring 2026"],
-            },
-          ],
-        }),
+        json: async () => ({ items: [] }),
       } as Response);
 
-    render(
+    const view = render(
       <CourseList
         initialCourses={[
           {
@@ -229,6 +242,23 @@ describe("CourseList infinite scroll", () => {
       expect(observerInstances.length).toBeGreaterThan(0);
     });
 
+    const scrollContainer = view.getAllByTestId("course-scroll-container")[0];
+    stubScrollMetrics(scrollContainer, {
+      scrollTop: 800,
+      scrollHeight: 1200,
+      clientHeight: 300,
+    });
+
+    await act(async () => {
+      fireEvent.scroll(scrollContainer);
+      observerInstances[0].trigger(true);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(view.getByText("Data Structures")).toBeDefined();
+    });
+
     await act(async () => {
       observerInstances[0].trigger(true);
     });
@@ -240,13 +270,5 @@ describe("CourseList infinite scroll", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-
-    await act(async () => {
-      observerInstances[0].trigger(false);
-      observerInstances[0].trigger(true);
-    });
-
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock).toHaveBeenLastCalledWith("/api/courses?page=3&size=20&q=&sort=title&enrolled=false&universities=&levels=&semesters=");
   });
 });

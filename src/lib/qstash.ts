@@ -8,7 +8,12 @@ type PublishOptions = {
 
 function getQstashConfig() {
   const token = process.env.QSTASH_TOKEN?.trim();
-  const baseUrl = process.env.QSTASH_BASE_URL?.trim() || "https://qstash.upstash.io/v2";
+  const configuredBaseUrl = process.env.QSTASH_BASE_URL?.trim();
+  const baseUrl = configuredBaseUrl
+    ? configuredBaseUrl.replace(/\/+$/, "").endsWith("/v2")
+      ? configuredBaseUrl.replace(/\/+$/, "")
+      : `${configuredBaseUrl.replace(/\/+$/, "")}/v2`
+    : "https://qstash.upstash.io/v2";
   const forwardSecret =
     process.env.QSTASH_WORKOUT_REMINDER_SECRET?.trim() ||
     process.env.CRON_SECRET?.trim() ||
@@ -57,9 +62,20 @@ export async function publishDelayedJsonMessage({
     cache: "no-store",
   });
 
-  const payload = (await response.json().catch(() => ({}))) as { messageId?: string; error?: string };
+  const raw = await response.text().catch(() => "");
+  let payload: { messageId?: string; error?: string; message?: string } = {};
+  try {
+    payload = raw ? JSON.parse(raw) as { messageId?: string; error?: string; message?: string } : {};
+  } catch {
+    payload = {};
+  }
   if (!response.ok || !payload.messageId) {
-    throw new Error(payload.error || "Failed to schedule QStash message");
+    throw new Error(
+      payload.error ||
+      payload.message ||
+      raw ||
+      `Failed to schedule QStash message (HTTP ${response.status})`,
+    );
   }
 
   return payload.messageId;

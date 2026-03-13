@@ -289,15 +289,15 @@ export default function CourseList({
 
       <div
         ref={parentRef}
-        className="min-h-0 flex-1 overflow-y-auto px-4"
+        className="min-h-0 flex-1 overflow-y-auto"
         data-testid="course-scroll-container"
       >
         {effectiveViewMode === "list" ? (
           <div className="min-w-full inline-block align-middle">
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader className="bg-slate-50/50 border-b">
-                  <TableRow className="flex items-center">
+            <div className="">
+              <Table className="border-none shadow-none">
+                <TableHeader className="bg-transparent border-none">
+                  <TableRow className="flex items-center border-none hover:bg-transparent">
                     <TableHead className={`${COLUMNS[0].width} flex items-center justify-center`}>
                       <Checkbox
                         checked={
@@ -337,7 +337,7 @@ export default function CourseList({
                     </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody className="relative" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+                <TableBody className="relative border-none" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
                   {virtualItems.map((virtualRow) => {
                     const course = courses[virtualRow.index];
                     if (!course) return null;
@@ -358,7 +358,7 @@ export default function CourseList({
                           height: `${virtualRow.size}px`,
                           transform: `translateY(${virtualRow.start}px)`,
                         }}
-                        className="flex items-center hover:bg-slate-50/50"
+                        className="flex items-center hover:bg-slate-50/50 border-none"
                       >
                         <TableCell className={`${COLUMNS[0].width} flex items-center justify-center`}>
                           <Checkbox
@@ -416,7 +416,7 @@ export default function CourseList({
           </div>
         ) : (
           <div
-            className="grid gap-3 relative"
+            className="relative"
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
               width: "100%",
@@ -434,7 +434,7 @@ export default function CourseList({
                     top: 0,
                     left: 0,
                     width: "100%",
-                    height: `${virtualRow.size}px`,
+                    height: `${GRID_CARD_HEIGHT}px`,
                     transform: `translateY(${virtualRow.start}px)`,
                     display: "grid",
                     gridTemplateColumns: `repeat(${gridColumnCount}, minmax(0, 1fr))`,

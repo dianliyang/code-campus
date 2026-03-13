@@ -174,7 +174,7 @@ export default function CourseListHeader({
     (showEnrolledOnly ? 1 : 0);
 
   return (
-    <div className="sticky top-0 z-30 flex flex-col gap-2.5 bg-white/95 backdrop-blur-xl px-4 py-4 border-b shadow-sm -mx-4 mb-2">
+    <div className="sticky top-0 z-30 flex flex-col gap-2.5 bg-white/95 backdrop-blur-xl py-4 border-b shadow-sm mb-2">
       <div className="flex w-full items-center justify-between gap-2 md:flex-row md:items-center md:justify-between">
         <div
           className="flex min-w-0 flex-1 items-center gap-2"

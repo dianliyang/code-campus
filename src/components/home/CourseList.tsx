@@ -63,8 +63,8 @@ export default function CourseList({
   const [actionLoadingIds, setActionLoadingIds] = useState<Record<number, boolean>>({});
 
   const LIST_ROW_HEIGHT = 64;
-  const GRID_CARD_HEIGHT = 260;
-  const GRID_GAP = 24;
+  const GRID_CARD_HEIGHT = 200;
+  const GRID_GAP = 16;
 
   useEffect(() => {
     const savedMode = localStorage.getItem("courseViewMode");
@@ -296,7 +296,7 @@ export default function CourseList({
           <div className="min-w-full inline-block align-middle">
             <div className="">
               <Table>
-                <TableHeader className="bg-slate-50/50">
+                <TableHeader>
                   <TableRow className="flex items-center hover:bg-transparent">
                     <TableHead className={`${COLUMNS[0].width} flex items-center justify-center`}>
                       <Checkbox
@@ -358,7 +358,7 @@ export default function CourseList({
                           height: `${virtualRow.size}px`,
                           transform: `translateY(${virtualRow.start}px)`,
                         }}
-                        className="flex items-center hover:bg-slate-50/50"
+                        className="flex items-center hover:bg-muted/50"
                       >
                         <TableCell className={`${COLUMNS[0].width} flex items-center justify-center`}>
                           <Checkbox

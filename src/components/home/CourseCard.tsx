@@ -241,18 +241,12 @@ export default function CourseCard({
 
           <div className="mt-2 grid grid-cols-2 gap-2">
             <div>
-              <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
-                Credit
-              </p>
-              <p className="text-[13px] font-medium text-[#3b3b3b]">
-                {credit ?? "-"}
+              <p className="text-[12px] font-medium text-[#3b3b3b]">
+                {credit ?? "-"} Cr
               </p>
             </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wide text-[#9a9a9a]">
-                Semester
-              </p>
-              <p className="text-[13px] font-medium text-[#3b3b3b]">
+            <div className="text-right">
+              <p className="text-[12px] font-medium text-[#3b3b3b]">
                 {latestSemester ?? "-"}
               </p>
             </div>

@@ -157,7 +157,7 @@ export default function WorkoutListHeader({
   }, [query, router, searchParams]);
 
   return (
-    <div className="sticky top-0 z-30 flex flex-col gap-3 bg-white/95 backdrop-blur-xl px-4 py-4 border-b shadow-sm -mx-4 mb-2">
+    <div className="sticky top-0 z-30 flex flex-col gap-3 bg-white/95 backdrop-blur-xl py-4 mb-0">
       <div className="flex items-center justify-between gap-2 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2 flex-1 min-w-0" data-testid="workout-toolbar-leading">
           {!isMobileViewport ? (

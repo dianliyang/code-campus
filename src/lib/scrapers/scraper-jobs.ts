@@ -134,3 +134,31 @@ export async function failScraperJob(jobId: number | null, error: unknown, durat
   }
 }
 
+export async function getLatestCompletedWorkoutMetaField<T = Record<string, unknown>>(
+  field: string,
+): Promise<T | null> {
+  const supabase = createAdminClient() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const { data, error } = await supabase
+    .from("scraper_jobs")
+    .select("meta")
+    .eq("status", "completed")
+    .eq("job_type", "workouts")
+    .order("completed_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error(`[scraper_jobs] failed to load recent workout meta for ${field}:`, asPlainError(error));
+    return null;
+  }
+
+  for (const row of data || []) {
+    const meta = row?.meta && typeof row.meta === "object"
+      ? (row.meta as Record<string, unknown>)
+      : null;
+    if (!meta || !(field in meta)) continue;
+    return meta[field] as T;
+  }
+
+  return null;
+}

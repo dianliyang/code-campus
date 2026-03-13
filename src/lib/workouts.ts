@@ -27,7 +27,7 @@ function deriveAggregateBookingStatus(statuses: Array<string | null | undefined>
 
   const nonExpired = normalized.filter((status) => status !== "expired");
   const candidates = nonExpired.length > 0 ? nonExpired : normalized;
-  const priority = ["available", "waitlist", "see_text", "fully_booked", "cancelled", "expired", "unknown"];
+  const priority = ["available", "waitlist", "scheduled", "see_text", "tbd", "fully_booked", "cancelled", "expired", "unknown"];
 
   for (const status of priority) {
     if (candidates.includes(status)) return status;

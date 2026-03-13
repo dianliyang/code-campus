@@ -65,18 +65,19 @@ export async function runManualScraperAction({
           jobType: "workouts",
         });
         try {
-          const workoutBatches = await retrieveWorkoutSourceBatches({
+          const retrieval = await retrieveWorkoutSourceBatches({
             semester: sem,
             source: university === "urban-apes" ? "urban-apes" : "cau-sport",
           });
+          const workoutBatches = retrieval.batches;
           const workouts = workoutBatches.flatMap((batch) => batch.workouts);
 
           const supabase = createAdminClient();
           for (const batch of workoutBatches) {
-            const { error: deleteError } = await supabase
-              .from("workouts")
-              .delete()
-              .eq("source", batch.source);
+            const deleteQuery = supabase.from("workouts").delete().eq("source", batch.source);
+            const { error: deleteError } = batch.pageUrl
+              ? await deleteQuery.eq("url", batch.pageUrl)
+              : await deleteQuery;
 
             if (deleteError) {
               throw new Error(deleteError.message);
@@ -90,7 +91,7 @@ export async function runManualScraperAction({
           await completeScraperJob(jobId, {
             courseCount: workouts.length,
             durationMs: Date.now() - startedAtMs,
-            meta: { saved_workouts: workouts.length, semester: sem },
+            meta: { saved_workouts: workouts.length, semester: sem, ...(retrieval.meta || {}) },
           });
           revalidatePath("/workouts");
           return { success: true, count: workouts.length };
@@ -338,7 +339,8 @@ export async function refreshCauSportWorkoutsAction() {
 
   try {
     const db = new SupabaseDatabase();
-  const workoutBatches = await retrieveWorkoutSourceBatches({ source: "cau-sport" });
+    const retrieval = await retrieveWorkoutSourceBatches({ source: "cau-sport" });
+    const workoutBatches = retrieval.batches;
     const workouts = workoutBatches.flatMap((batch) => batch.workouts);
 
     const supabase = createAdminClient();
@@ -349,10 +351,14 @@ export async function refreshCauSportWorkoutsAction() {
 
     for (const batch of workoutBatches) {
       const latestCodes = new Set(batch.workouts.map((workout) => workout.courseCode));
-      const { data: sourceRows, error: sourceRowsError } = await supabase
+      let sourceRowsQuery = supabase
         .from("workouts")
         .select("id, course_code")
         .eq("source", batch.source);
+      if (batch.pageUrl) {
+        sourceRowsQuery = sourceRowsQuery.eq("url", batch.pageUrl);
+      }
+      const { data: sourceRows, error: sourceRowsError } = await sourceRowsQuery;
 
       if (sourceRowsError) {
         console.error("[refreshCauSportWorkoutsAction] Failed to load source workouts:", sourceRowsError);

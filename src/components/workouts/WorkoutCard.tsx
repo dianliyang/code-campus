@@ -22,21 +22,28 @@ const statusStyle: Record<string, string> = {
   expired: "bg-slate-100 text-slate-600",
   waitlist: "bg-amber-100 text-amber-700",
   cancelled: "bg-rose-100 text-rose-700",
-  see_text: "bg-sky-100 text-sky-700"
+  see_text: "bg-sky-100 text-sky-700",
+  scheduled: "bg-indigo-100 text-indigo-700",
+  tbd: "bg-zinc-100 text-zinc-700",
 };
 
 function getStatusLabel(status: string | null, dict: Dictionary["dashboard"]["workouts"]) {
   if (!status) return "-";
-  const statusMap: Record<string, keyof Dictionary["dashboard"]["workouts"]> = {
+  const statusMap: Record<string, string> = {
     available: "status_available",
     fully_booked: "status_full",
     expired: "status_expired",
     waitlist: "status_waitlist",
     cancelled: "status_cancelled",
-    see_text: "status_details"
+    see_text: "status_details",
+    scheduled: "status_scheduled",
+    tbd: "status_tbd",
   };
   const key = statusMap[status];
-  return key && dict[key] ? String(dict[key]) : status;
+  if (key && key in dict) return String(dict[key as keyof Dictionary["dashboard"]["workouts"]]);
+  if (status === "scheduled") return "Scheduled";
+  if (status === "tbd") return "TBD";
+  return status;
 }
 
 interface AggregatedEntry {

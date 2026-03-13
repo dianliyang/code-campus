@@ -45,6 +45,8 @@ const statusStyle: Record<string, string> = {
   waitlist: "bg-amber-50 text-amber-700 border-amber-100",
   cancelled: "bg-rose-50 text-rose-700 border-rose-100",
   see_text: "bg-sky-50 text-sky-700 border-sky-100",
+  scheduled: "bg-indigo-50 text-indigo-700 border-indigo-100",
+  tbd: "bg-zinc-50 text-zinc-700 border-zinc-200",
 };
 
 function IconActionGroup({
@@ -140,19 +142,21 @@ function getStatusLabel(
   dict: Dictionary["dashboard"]["workouts"],
 ) {
   if (!status) return "-";
-  const statusMap: Record<
-    string,
-    keyof Dictionary["dashboard"]["workouts"]
-  > = {
+  const statusMap: Record<string, string> = {
     available: "status_available",
     fully_booked: "status_full",
     expired: "status_expired",
     waitlist: "status_waitlist",
     cancelled: "status_cancelled",
     see_text: "status_details",
+    scheduled: "status_scheduled",
+    tbd: "status_tbd",
   };
   const key = statusMap[status];
-  return key && dict[key] ? String(dict[key]) : status;
+  if (key && key in dict) return String(dict[key as keyof Dictionary["dashboard"]["workouts"]]);
+  if (status === "scheduled") return "Scheduled";
+  if (status === "tbd") return "TBD";
+  return status;
 }
 
 export default function WorkoutList({

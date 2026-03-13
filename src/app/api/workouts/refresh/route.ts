@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { SupabaseDatabase, createAdminClient, getUser } from "@/lib/supabase/server";
-import { completeScraperJob, failScraperJob, startScraperJob } from "@/lib/scrapers/scraper-jobs";
+import { completeScraperJob, failScraperJob, getLatestCompletedWorkoutMetaField, startScraperJob } from "@/lib/scrapers/scraper-jobs";
 import { retrieveWorkoutSourceBatches } from "@/lib/scrapers/workout-sources";
 
 export async function POST(req: Request) {
@@ -40,17 +40,31 @@ export async function POST(req: Request) {
       meta: { endpoint: "/api/workouts/refresh", category, sources: selectedSources },
     });
 
-    const workoutBatches = await retrieveWorkoutSourceBatches({
+    const cauCache = selectedSources.includes("cau-sport")
+      ? await getLatestCompletedWorkoutMetaField<Record<string, unknown>>("cau_cache")
+      : null;
+    const retrieval = await retrieveWorkoutSourceBatches({
       category,
       sources: selectedSources,
+      cacheState: {
+        cau: (cauCache && typeof cauCache === "object") ? (cauCache as any) : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
+      },
     });
+    const workoutBatches = retrieval.batches;
     const workouts = workoutBatches.flatMap((batch) => batch.workouts);
 
     const supabase = createAdminClient();
     for (const batch of workoutBatches) {
       let deleteError: { message: string } | null = null;
 
-      if (category) {
+      if (batch.pageUrl) {
+        const { error } = await supabase
+          .from("workouts")
+          .delete()
+          .eq("source", batch.source)
+          .eq("url", batch.pageUrl);
+        deleteError = error || null;
+      } else if (category) {
         const [r1, r2] = await Promise.all([
           supabase.from("workouts").delete().eq("source", batch.source).eq("category_en", category),
           supabase.from("workouts").delete().eq("source", batch.source).eq("category", category),
@@ -81,6 +95,7 @@ export async function POST(req: Request) {
         saved_workouts: workouts.length,
         sources: workoutBatches.map((batch) => batch.source),
         category,
+        ...(retrieval.meta || {}),
       },
     });
 

@@ -233,19 +233,24 @@ export default function WorkoutSidebar({
             </h3>
             <div className="grid grid-cols-1 gap-2.5">
               {statuses.map((s) => {
-                const statusMap: Record<
-                  string,
-                  keyof Dictionary["dashboard"]["workouts"]
-                > = {
+                const statusMap: Record<string, string> = {
                   available: "status_available",
                   fully_booked: "status_full",
                   expired: "status_expired",
                   waitlist: "status_waitlist",
                   cancelled: "status_cancelled",
                   see_text: "status_details",
+                  scheduled: "status_scheduled",
+                  tbd: "status_tbd",
                 };
                 const key = statusMap[s.name];
-                const label = key && dict[key] ? String(dict[key]) : s.name;
+                const label = key && key in dict
+                  ? String(dict[key as keyof Dictionary["dashboard"]["workouts"]])
+                  : s.name === "scheduled"
+                    ? "Scheduled"
+                    : s.name === "tbd"
+                      ? "TBD"
+                      : s.name;
 
                 return (
                   <label

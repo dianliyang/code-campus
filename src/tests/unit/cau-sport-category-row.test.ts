@@ -176,4 +176,83 @@ describe("CAUSport category page parsing", () => {
     });
     expect(workouts[2].locationEn).toBe("Große Sporthalle, Olshausenstr. 72, 24118 Kiel");
   });
+
+  test("captures plain-text booking states like no booking and dated opening labels", async () => {
+    const scraper = new CAUSport();
+
+    vi.spyOn(scraper, "fetchPage").mockResolvedValue(`
+      <html><body>
+        <div>Zeitraum: 07.04.2026-11.10.2026</div>
+        <b>Veranstaltungsorte:</b>
+        <br>
+        <div class="bs_text">Turnhalle, Olshausenstr. 72, 24118 Kiel</div>
+      </body></html>
+    `);
+
+    const categoryHtml = `
+      <html><body>
+        <div class="bs_head_small" id="bs_top">Sommersemester 2026 (07.04.2026-11.10.2026)</div>
+        <table>
+          <tbody>
+            <tr>
+              <td class="bs_sknr"><span>4000-01</span></td>
+              <td class="bs_sdet"><span><span class="dispmobile">Boxen</span> Freies Training</span></td>
+              <td class="bs_stag">Mo</td>
+              <td class="bs_szeit">18:00-20:00</td>
+              <td class="bs_sort">Turnhalle</td>
+              <td class="bs_szr"><a href="/cgi/webpage.cgi?kursinfo=abc123">07.04.-11.10.</a></td>
+              <td class="bs_skl">Coach</td>
+              <td class="bs_spreis"><span>10,00 / 12,00 / 15,00</span></td>
+              <td class="bs_sbuch">keine Buchung</td>
+            </tr>
+            <tr>
+              <td class="bs_sknr"><span>4000-02</span></td>
+              <td class="bs_sdet"><span><span class="dispmobile">Boxen</span> Aufbaukurs</span></td>
+              <td class="bs_stag">Mi</td>
+              <td class="bs_szeit">18:00-20:00</td>
+              <td class="bs_sort">Turnhalle</td>
+              <td class="bs_szr"><a href="/cgi/webpage.cgi?kursinfo=def456">07.04.-11.10.</a></td>
+              <td class="bs_skl">Coach</td>
+              <td class="bs_spreis"><span>10,00 / 12,00 / 15,00</span></td>
+              <td class="bs_sbuch">ab 29.03., 18:00</td>
+            </tr>
+          </tbody>
+        </table>
+      </body></html>
+    `;
+
+    const workouts = await scraper.parseWorkouts(
+      categoryHtml,
+      "https://server.sportzentrum.uni-kiel.de/angebote/aktueller_zeitraum/_Boxen.html",
+    );
+
+    expect(workouts).toHaveLength(2);
+    expect(workouts[0]).toMatchObject({
+      semester: "Summer 2026",
+      bookingStatus: "tbd",
+    });
+    expect(workouts[0].details).toMatchObject({
+      bookingLabel: "keine Buchung",
+    });
+    expect(workouts[1]).toMatchObject({
+      semester: "Summer 2026",
+      bookingStatus: "scheduled",
+    });
+    expect(workouts[1].details).toMatchObject({
+      bookingLabel: "ab 29.03., 18:00",
+      bookingOpensOn: "2026-03-29",
+      bookingOpensAt: "2026-03-29T18:00:00",
+    });
+  });
+
+  test("parses 4-digit CAU semester class names without truncating the year", () => {
+    const scraper = new CAUSport();
+
+    expect(
+      scraper.parseSemester('<html><body class="bs_sommersemester_2026"></body></html>'),
+    ).toBe("Summer 2026");
+    expect(
+      scraper.parseSemester('<html><body class="bs_wintersemester_2025_2026"></body></html>'),
+    ).toBe("Winter 2025/2026");
+  });
 });

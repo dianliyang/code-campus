@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
 import { BaseScraper } from "./BaseScraper";
 import { Course } from "./types";
 
@@ -238,6 +239,117 @@ const BOOKING_STATUS_MAP: Record<string, string> = {
   bs_btn_storniert: "cancelled",
 };
 
+function parseBookingStatus(bookingTd: cheerio.Cheerio<AnyNode>): {
+  status: string;
+  label: string;
+} {
+  let status = "unknown";
+
+  for (const [cls, mappedStatus] of Object.entries(BOOKING_STATUS_MAP)) {
+    if (bookingTd.find(`.${cls}`).length > 0 || bookingTd.html()?.includes(cls)) {
+      status = mappedStatus;
+      break;
+    }
+  }
+
+  const btnValue = bookingTd
+    .find("input[type='submit'], input[type='button']")
+    .attr("value")
+    ?.replace(/\s+/g, " ")
+    .trim() || "";
+  const textValue = bookingTd.text().replace(/\s+/g, " ").trim();
+  const rawLabel = btnValue || textValue;
+  const normalized = rawLabel.toLowerCase();
+
+  if (normalized.includes("ausgebucht")) status = "fully_booked";
+  else if (normalized.includes("buchen")) status = "available";
+  else if (normalized.includes("warteliste")) status = "waitlist";
+  else if (normalized.includes("gesperrt") || normalized.includes("blocked")) status = "blocked";
+  else if (normalized.includes("storniert") || normalized.includes("cancel")) status = "cancelled";
+  else if (normalized.includes("abgelaufen")) status = "expired";
+  else if (normalized.includes("keine buchung") || normalized.includes("no booking")) status = "tbd";
+  else if (/^ab\b/.test(normalized)) status = "scheduled";
+
+  return {
+    status,
+    label: rawLabel,
+  };
+}
+
+function parseSemesterRelativeDate(dateStr: string, semester: string): string | null {
+  const normalizedDate = String(dateStr).trim().replace(/,$/, "");
+  const fullGermanMatch = String(dateStr).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (fullGermanMatch) {
+    const [, day, month, year] = fullGermanMatch;
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+
+  const shortGermanMatch = normalizedDate.match(/(\d{1,2})\.(\d{1,2})\.?/);
+  if (!shortGermanMatch) return null;
+
+  const day = parseInt(shortGermanMatch[1], 10);
+  const month = parseInt(shortGermanMatch[2], 10);
+  const semStr = String(semester || "").toLowerCase();
+
+  const winterMatch = semStr.match(/(\d{2})\/(\d{2})/);
+  if (winterMatch) {
+    const startYear = 2000 + parseInt(winterMatch[1], 10);
+    const endYear = 2000 + parseInt(winterMatch[2], 10);
+    const year = month >= 8 ? startYear : endYear;
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+
+  const explicitYearMatch = semStr.match(/\b(20\d{2})\b/);
+  if (explicitYearMatch) {
+    return `${explicitYearMatch[1]}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+
+  const summerMatch = semStr.match(/\b(\d{2})\b/);
+  if (summerMatch) {
+    let yearNum = parseInt(summerMatch[1] || summerMatch[2] || "0", 10);
+    if (yearNum < 100) yearNum += 2000;
+    return `${yearNum}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+
+  return null;
+}
+
+function parseBookingAvailability(
+  label: string,
+  semester: string,
+  referenceDate?: string,
+): {
+  bookingOpensOn?: string;
+  bookingOpensAt?: string;
+} {
+  const match = label.match(/^ab\s+(\d{1,2}\.\d{1,2}\.?(?:\d{4})?)(?:,?\s*(\d{1,2}[:.]\d{2}))?/i);
+  if (!match) return {};
+
+  let bookingOpensOn: string | null = null;
+  const shortGermanMatch = match[1].match(/(\d{1,2})\.(\d{1,2})\.?/);
+  if (referenceDate && shortGermanMatch) {
+    const [, dayRaw, monthRaw] = shortGermanMatch;
+    const reference = new Date(`${referenceDate}T12:00:00Z`);
+    if (!Number.isNaN(reference.getTime())) {
+      let year = reference.getUTCFullYear();
+      const month = Number(monthRaw);
+      if (month > reference.getUTCMonth() + 1 && reference.getUTCMonth() + 1 <= 6) {
+        year -= 1;
+      }
+      bookingOpensOn = `${year}-${String(month).padStart(2, "0")}-${String(dayRaw).padStart(2, "0")}`;
+    }
+  }
+  if (!bookingOpensOn) {
+    bookingOpensOn = parseSemesterRelativeDate(match[1], semester);
+  }
+  const normalizedTime = match[2] ? match[2].replace(".", ":") : null;
+
+  return {
+    ...(bookingOpensOn ? { bookingOpensOn } : {}),
+    ...(bookingOpensOn && normalizedTime ? { bookingOpensAt: `${bookingOpensOn}T${normalizedTime}:00` } : {}),
+  };
+}
+
 export interface WorkoutCourse {
   source: string;
   courseCode: string;
@@ -265,7 +377,54 @@ export interface WorkoutCourse {
   duration?: string;
 }
 
+export type CauPageCache = {
+  etag?: string;
+  lastModified?: string;
+  cacheControl?: string;
+  checkedAt?: string;
+};
+
+export type CauIndexCache = CauPageCache & {
+  url?: string;
+  categoryUrls?: string[];
+  semester?: string;
+};
+
+export type CauCacheState = {
+  index?: CauIndexCache;
+  pages?: Record<string, CauPageCache>;
+};
+
+type CauIndexProbeResult = {
+  changed: boolean;
+  url: string;
+  html: string;
+  semester: string;
+  links: string[];
+  cache: CauIndexCache;
+};
+
+type CachedPageEntry = {
+  html: string;
+  etag?: string;
+  lastModified?: string;
+  expiresAt: number;
+  cacheControl?: string;
+};
+
+function getMaxAgeMs(cacheControl: string | null): number {
+  const match = cacheControl?.match(/max-age=(\d+)/i);
+  return match ? Number(match[1]) * 1000 : 0;
+}
+
 export class CAUSport extends BaseScraper {
+  private static pageCache = new Map<string, CachedPageEntry>();
+  private prefetchedIndexHtml: string | null = null;
+
+  static clearPageCacheForTests() {
+    CAUSport.pageCache.clear();
+  }
+
   constructor() {
     super("cau-sport");
   }
@@ -294,10 +453,27 @@ export class CAUSport extends BaseScraper {
     return "aktueller_zeitraum";
   }
 
-  async fetchPage(url: string, retries = 3): Promise<string> {
-    const headers = {
+  private buildHeaders(cache?: CauPageCache): Record<string, string> {
+    const headers: Record<string, string> = {
       "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     };
+    if (cache?.etag) headers["If-None-Match"] = cache.etag;
+    if (cache?.lastModified) headers["If-Modified-Since"] = cache.lastModified;
+    return headers;
+  }
+
+  async fetchPage(url: string, retries = 3): Promise<string> {
+    const cached = CAUSport.pageCache.get(url);
+    if (cached && cached.expiresAt > Date.now()) {
+      console.log(`[${this.name}] Cache hit for ${url}`);
+      return cached.html;
+    }
+
+    const headers: Record<string, string> = {
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    };
+    if (cached?.etag) headers["If-None-Match"] = cached.etag;
+    if (cached?.lastModified) headers["If-Modified-Since"] = cached.lastModified;
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
@@ -309,12 +485,34 @@ export class CAUSport extends BaseScraper {
           return "";
         }
 
+        if (response.status === 304 && cached) {
+          const maxAgeMs = getMaxAgeMs(response.headers.get("cache-control"));
+          CAUSport.pageCache.set(url, {
+            ...cached,
+            expiresAt: Date.now() + maxAgeMs,
+            cacheControl: response.headers.get("cache-control") || cached.cacheControl,
+            etag: response.headers.get("etag") || cached.etag,
+            lastModified: response.headers.get("last-modified") || cached.lastModified,
+          });
+          console.log(`[${this.name}] Not modified ${url}; reusing cached HTML`);
+          return cached.html;
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }
 
         const buffer = await response.arrayBuffer();
-        return new TextDecoder("iso-8859-1").decode(buffer);
+        const html = new TextDecoder("iso-8859-1").decode(buffer);
+        const maxAgeMs = getMaxAgeMs(response.headers.get("cache-control"));
+        CAUSport.pageCache.set(url, {
+          html,
+          etag: response.headers.get("etag") || undefined,
+          lastModified: response.headers.get("last-modified") || undefined,
+          expiresAt: Date.now() + maxAgeMs,
+          cacheControl: response.headers.get("cache-control") || undefined,
+        });
+        return html;
       } catch {
         if (attempt === retries) {
           console.error(`[${this.name}] Failed to fetch ${url} after ${retries} attempts.`);
@@ -330,14 +528,23 @@ export class CAUSport extends BaseScraper {
 
   async links(): Promise<string[]> {
     const sem = this.getSemesterParam();
-    const url = `https://server.sportzentrum.uni-kiel.de/angebote/${sem}/index.html`;
-    const html = await this.fetchPage(url);
+    const url = this.getIndexUrl();
+    const html = this.prefetchedIndexHtml ?? await this.fetchPage(url);
+    this.prefetchedIndexHtml = null;
 
     if (!html) {
       console.log(`[${this.name}] Semester ${sem} not found or not yet published. Skipping.`);
       return [];
     }
 
+    return this.extractLinksFromHtml(html, url);
+  }
+
+  private getIndexUrl(): string {
+    return `https://server.sportzentrum.uni-kiel.de/angebote/${this.getSemesterParam()}/index.html`;
+  }
+
+  private extractLinksFromHtml(html: string, url: string): string[] {
     const $ = cheerio.load(html);
     const categoryLinks: string[] = [];
     const currentSemPath = url.substring(0, url.lastIndexOf("/"));
@@ -346,7 +553,6 @@ export class CAUSport extends BaseScraper {
       const href = $(el).attr("href");
       if (!href || href.startsWith("http") || href.startsWith("mailto") || href.includes("?")) return;
 
-      // Category links end with .html but exclude the index and booking sub-pages
       if (href.endsWith(".html") && href !== "index.html" && !href.startsWith("bs_")) {
         const fullUrl = href.startsWith("/")
           ? `https://server.sportzentrum.uni-kiel.de${href}`
@@ -363,22 +569,160 @@ export class CAUSport extends BaseScraper {
   }
 
   parseSemester(html: string): string {
+    const $ = cheerio.load(html);
+    const headerText = $("#bs_top").first().text().replace(/\s+/g, " ").trim();
+    const headerMatch = headerText.match(/(Sommersemester|Wintersemester)\s+(\d{4})(?:\/(\d{2,4}))?/i);
+
+    if (headerMatch) {
+      const season = headerMatch[1].toLowerCase().includes("winter") ? "Winter" : "Summer";
+      const year = headerMatch[2];
+      const trailing = headerMatch[3];
+
+      if (season === "Winter") {
+        const normalizedTrailing = trailing
+          ? (trailing.length === 2 ? `20${trailing}` : trailing)
+          : String(Number(year) + 1);
+        return `Winter ${year}/${normalizedTrailing}`;
+      }
+
+      return `Summer ${year}`;
+    }
+
     const classMatch =
-      html.match(/bs_((?:winter|sommer)semester_\d{2}_\d{2})/i) ||
-      html.match(/bs_((?:winter|sommer)semester_\d{2})/i);
+      html.match(/bs_((?:winter|sommer)semester_\d{2,4}_\d{2,4})/i) ||
+      html.match(/bs_((?:winter|sommer)semester_\d{2,4})/i);
 
     if (classMatch) {
       const raw = classMatch[1].toLowerCase();
       if (raw.includes("winter")) {
-        const parts = raw.match(/wintersemester_(\d{2})_(\d{2})/);
-        return parts ? `Winter 20${parts[1]}/${parts[2]}` : "Winter";
+        const parts = raw.match(/wintersemester_(\d{2,4})_(\d{2,4})/);
+        if (!parts) return "Winter";
+        const startYear = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
+        const endYear = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+        return `Winter ${startYear}/${endYear}`;
       } else {
-        const parts = raw.match(/sommersemester_(\d{2})/);
-        return parts ? `Summer 20${parts[1]}` : "Summer";
+        const parts = raw.match(/sommersemester_(\d{2,4})/);
+        if (!parts) return "Summer";
+        const year = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
+        return `Summer ${year}`;
       }
     }
 
     return "Current Period";
+  }
+
+  async probeIndexPage(cache?: CauIndexCache): Promise<CauIndexProbeResult> {
+    const url = this.getIndexUrl();
+    const headers = this.buildHeaders(cache);
+
+    const response = await fetch(url, { headers });
+
+    if (response.status === 304) {
+      return {
+        changed: false,
+        url,
+        html: "",
+        semester: cache?.semester || "",
+        links: cache?.categoryUrls || [],
+        cache: {
+          ...cache,
+          etag: response.headers.get("etag") || cache?.etag,
+          lastModified: response.headers.get("last-modified") || cache?.lastModified,
+          cacheControl: response.headers.get("cache-control") || undefined,
+          checkedAt: response.headers.get("date") || new Date().toUTCString(),
+        },
+      };
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} ${response.statusText}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    const html = new TextDecoder("iso-8859-1").decode(buffer);
+    this.prefetchedIndexHtml = html;
+
+    return {
+      changed: true,
+      url,
+      html,
+      semester: this.parseSemester(html),
+      links: this.extractLinksFromHtml(html, url),
+      cache: {
+        etag: response.headers.get("etag") || undefined,
+        lastModified: response.headers.get("last-modified") || undefined,
+        cacheControl: response.headers.get("cache-control") || undefined,
+        checkedAt: response.headers.get("date") || new Date().toUTCString(),
+      },
+    };
+  }
+
+  async fetchConditionalPage(url: string, cache?: CauPageCache): Promise<{
+    notModified: boolean;
+    html: string;
+    cache: CauPageCache;
+  }> {
+    const inMemory = CAUSport.pageCache.get(url);
+    if (inMemory && inMemory.expiresAt > Date.now()) {
+      return {
+        notModified: false,
+        html: inMemory.html,
+        cache: {
+          etag: inMemory.etag,
+          lastModified: inMemory.lastModified,
+          cacheControl: inMemory.cacheControl,
+          checkedAt: new Date().toUTCString(),
+        },
+      };
+    }
+
+    const response = await fetch(url, { headers: this.buildHeaders(cache) });
+    if (response.status === 304) {
+      return {
+        notModified: true,
+        html: "",
+        cache: {
+          etag: response.headers.get("etag") || cache?.etag,
+          lastModified: response.headers.get("last-modified") || cache?.lastModified,
+          cacheControl: response.headers.get("cache-control") || cache?.cacheControl,
+          checkedAt: response.headers.get("date") || new Date().toUTCString(),
+        },
+      };
+    }
+    if (response.status === 404) {
+      return {
+        notModified: false,
+        html: "",
+        cache: {
+          checkedAt: response.headers.get("date") || new Date().toUTCString(),
+        },
+      };
+    }
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} ${response.statusText}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    const html = new TextDecoder("iso-8859-1").decode(buffer);
+    const cacheControl = response.headers.get("cache-control") || undefined;
+    CAUSport.pageCache.set(url, {
+      html,
+      etag: response.headers.get("etag") || undefined,
+      lastModified: response.headers.get("last-modified") || undefined,
+      expiresAt: Date.now() + getMaxAgeMs(cacheControl || null),
+      cacheControl,
+    });
+
+    return {
+      notModified: false,
+      html,
+      cache: {
+        etag: response.headers.get("etag") || undefined,
+        lastModified: response.headers.get("last-modified") || undefined,
+        cacheControl,
+        checkedAt: response.headers.get("date") || new Date().toUTCString(),
+      },
+    };
   }
 
   /**
@@ -616,23 +960,8 @@ export class CAUSport extends BaseScraper {
         }
       }
 
-      // Determine booking status from CSS class, then override with button value
       const bookingTd = row.find("td.bs_sbuch");
-      let bookingStatus = "unknown";
-
-      for (const [cls, status] of Object.entries(BOOKING_STATUS_MAP)) {
-        if (bookingTd.find(`.${cls}`).length > 0 || bookingTd.html()?.includes(cls)) {
-          bookingStatus = status;
-          break;
-        }
-      }
-
-      const btnValue = bookingTd.find("input[type='submit'], input[type='button']").attr("value")?.toLowerCase() || "";
-      if (btnValue.includes("ausgebucht")) bookingStatus = "fully_booked";
-      else if (btnValue.includes("buchen")) bookingStatus = "available";
-      else if (btnValue.includes("warteliste")) bookingStatus = "waitlist";
-      else if (btnValue.includes("gesperrt") || btnValue.includes("blocked")) bookingStatus = "blocked";
-      else if (btnValue.includes("storniert") || btnValue.includes("cancel")) bookingStatus = "cancelled";
+      const { status: bookingStatus, label: bookingLabel } = parseBookingStatus(bookingTd);
 
       const bookingUrl = bookingTd.find("a[href]").attr("href") || "";
       const scheduleEntries = days.map((day, i) => ({
@@ -647,9 +976,11 @@ export class CAUSport extends BaseScraper {
           : { dates: [], locations: [] };
         const plannedDates = durationPageMetadata.dates;
         const segments = this.mergeDatesIntoSegments(plannedDates);
-
         const finalStartDate = segments.length > 0 ? segments[0].start : startDate;
         const finalEndDate   = segments.length > 0 ? segments[segments.length - 1].end : endDate;
+        const bookingAvailability = bookingLabel
+          ? parseBookingAvailability(bookingLabel, semester, finalStartDate || undefined)
+          : {};
 
         const uniqueLocations = [...new Set(scheduleEntries.map(s => s.location))].join(", ");
         const resolvedLocation = durationPageMetadata.locations.length > 0
@@ -682,6 +1013,8 @@ export class CAUSport extends BaseScraper {
           details: {
             ...(scheduleEntries.length > 1 ? { schedule: scheduleEntries } : {}),
             ...(isEntgeltfrei      ? { isEntgeltfrei: true } : {}),
+            ...(bookingLabel        ? { bookingLabel } : {}),
+            ...bookingAvailability,
             ...(plannedDates.length > 0    ? { plannedDates }  : {}),
             ...(segments.length > 0        ? { segments }      : {}),
             ...(durationUrl        ? { durationUrl }   : {}),
@@ -695,14 +1028,54 @@ export class CAUSport extends BaseScraper {
   }
 
   async retrieveWorkouts(categoryName?: string): Promise<WorkoutCourse[]> {
-    const allLinks = await this.links();
-    let targetLinks = allLinks;
+    return (await this.retrieveWorkoutBatch({ categoryName })).batches.flatMap((batch) => batch.workouts);
+  }
+
+  async retrieveWorkoutBatch({
+    categoryName,
+    cacheState,
+  }: {
+    categoryName?: string;
+    cacheState?: CauCacheState;
+  }): Promise<{
+    batches: Array<{ pageUrl: string; workouts: WorkoutCourse[] }>;
+    skipped: boolean;
+    meta?: Record<string, unknown>;
+  }> {
+    let targetLinks = cacheState?.index?.categoryUrls || [];
+    const nextPages: Record<string, CauPageCache> = { ...(cacheState?.pages || {}) };
+    let nextIndex: CauIndexCache | undefined = cacheState?.index
+      ? { ...cacheState.index }
+      : undefined;
+    const batches: Array<{ pageUrl: string; workouts: WorkoutCourse[] }> = [];
+
+    if (!categoryName) {
+      const probe = await this.probeIndexPage(cacheState?.index);
+      nextIndex = {
+        ...probe.cache,
+        url: probe.url,
+        semester: probe.semester || cacheState?.index?.semester,
+        categoryUrls: probe.links,
+      };
+      targetLinks = probe.links;
+
+      const removedLinks = (cacheState?.index?.categoryUrls || []).filter(
+        (url) => !targetLinks.includes(url),
+      );
+      removedLinks.forEach((pageUrl) => {
+        delete nextPages[pageUrl];
+        batches.push({ pageUrl, workouts: [] });
+      });
+    }
 
     if (categoryName) {
+      if (targetLinks.length === 0) {
+        targetLinks = await this.links();
+      }
       const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
       const target = normalize(categoryName);
 
-      targetLinks = allLinks.filter(link => {
+      targetLinks = targetLinks.filter(link => {
         const fileName = link.split("/").pop() || "";
         const germanName = fileName.replace(/^_/, "").replace(/\.html$/, "").replace(/_/g, " ");
         return normalize(germanName) === target || normalize(translateDE(germanName)) === target;
@@ -710,7 +1083,13 @@ export class CAUSport extends BaseScraper {
 
       if (targetLinks.length === 0) {
         console.log(`[${this.name}] No specific link found for category "${categoryName}".`);
-        return [];
+        return {
+          batches: [],
+          skipped: true,
+          meta: nextIndex || nextPages
+            ? { cau_cache: { index: nextIndex, pages: nextPages } }
+            : undefined,
+        };
       }
       console.log(`[${this.name}] Refreshing specific category: ${categoryName} (found ${targetLinks.length} link(s))`);
     }
@@ -719,22 +1098,34 @@ export class CAUSport extends BaseScraper {
 
     const pLimit = (await import("p-limit")).default;
     const limit = pLimit(5);
-    const allWorkouts: WorkoutCourse[] = [];
-
     await Promise.all(
       targetLinks.map(link =>
         limit(async () => {
-          const html = await this.fetchPage(link);
+          const result = await this.fetchConditionalPage(link, nextPages[link]);
+          nextPages[link] = result.cache;
+          if (result.notModified) return;
+
+          const html = result.html;
           if (html) {
             const workouts = await this.parseWorkouts(html, link);
-            allWorkouts.push(...workouts);
+            batches.push({ pageUrl: link, workouts });
           }
         })
       )
     );
 
-    console.log(`[${this.name}] Found ${allWorkouts.length} total workout instances`);
-    return allWorkouts;
+    const totalWorkouts = batches.reduce((sum, batch) => sum + batch.workouts.length, 0);
+    console.log(`[${this.name}] Found ${totalWorkouts} total workout instances across ${batches.length} changed page(s)`);
+    return {
+      batches,
+      skipped: batches.length === 0,
+      meta: {
+        cau_cache: {
+          ...(nextIndex ? { index: nextIndex } : {}),
+          pages: nextPages,
+        },
+      },
+    };
   }
 
   async retrieve(): Promise<Course[]> {

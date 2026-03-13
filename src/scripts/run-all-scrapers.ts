@@ -98,7 +98,8 @@ async function runWorkoutScraper(db: SupabaseDatabase, semester: string) {
   });
   try {
     console.log(`\n=== Running Workout Scrapers ===`);
-    const workoutBatches = await retrieveWorkoutSourceBatches({ semester, source: "cau-sport" });
+    const retrieval = await retrieveWorkoutSourceBatches({ semester, source: "cau-sport" });
+    const workoutBatches = retrieval.batches;
     const workouts = workoutBatches.flatMap((batch) => batch.workouts);
     console.log(`Successfully scraped ${workouts.length} workouts across ${workoutBatches.length} sources.`);
 
@@ -106,8 +107,10 @@ async function runWorkoutScraper(db: SupabaseDatabase, semester: string) {
       const { createAdminClient } = await import('../lib/supabase/server');
       const supabase = createAdminClient();
       for (const batch of workoutBatches) {
-        console.log(`[Supabase] Overriding existing workouts for ${batch.source}...`);
-        await supabase.from('workouts').delete().eq('source', batch.source);
+        console.log(`[Supabase] Overriding existing workouts for ${batch.source}${batch.pageUrl ? ` (${batch.pageUrl})` : ""}...`);
+        const deleteQuery = supabase.from('workouts').delete().eq('source', batch.source);
+        if (batch.pageUrl) await deleteQuery.eq('url', batch.pageUrl);
+        else await deleteQuery;
       }
 
       await db.saveWorkouts(workouts);

@@ -32,6 +32,9 @@ export function getWeekCalendarHeaderTypography() {
 
 export function getWeekCalendarDayHeaderClassNames(isToday: boolean) {
   return {
+    headerClassName: isToday
+      ? "bg-primary/10 ring-1 ring-inset ring-primary/20 shadow-[inset_0_-1px_0_rgba(0,0,0,0.04)]"
+      : "bg-background/95",
     weekdayClassName: isToday ? "text-foreground font-bold" : "text-muted-foreground/60",
     dateNumberClassName: isToday ? "text-foreground font-bold" : "text-foreground",
   };

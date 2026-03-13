@@ -9,9 +9,9 @@ interface CourseMomentumCardProps {
   attendedToday: number;
 }
 
-function MomentumBar({ label, count, colorClass, activeColorClass, max = 15 }: { label: string, count: number, colorClass: string, activeColorClass: string, max?: number }) {
+function MomentumBar({ label, count, colorClass, activeColorClass }: { label: string, count: number, colorClass: string, activeColorClass: string }) {
   const squares = Array.from({ length: 10 });
-  const activeCount = Math.min(10, Math.ceil((count / max) * 10));
+  const activeCount = Math.min(10, Math.max(0, count));
 
   return (
     <div
@@ -25,6 +25,7 @@ function MomentumBar({ label, count, colorClass, activeColorClass, max = 15 }: {
         {squares.map((_, i) => (
           <div 
             key={i}
+            data-testid={i < activeCount ? "momentum-bar-segment-active" : "momentum-bar-segment"}
             className={cn(
               "w-full max-w-[32px] h-1.5 rounded-[1px] transition-all duration-300",
               i < activeCount ? activeColorClass : colorClass

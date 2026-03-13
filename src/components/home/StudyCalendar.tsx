@@ -960,11 +960,13 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
 
               return (
                 <div key={key} className="flex-1 relative border-r border-border/50">
-                  {/* Today Highlight Background */}
-                  {isToday && <div className="absolute inset-0 bg-primary/[0.02] pointer-events-none z-0" />}
-                  
                   {/* Sticky Day Header */}
-                  <div className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur h-11 flex flex-col items-center justify-center">
+                  <div
+                    className={cn(
+                      "sticky top-0 z-30 border-b border-border backdrop-blur h-11 flex flex-col items-center justify-center",
+                      dayHeaderClassNames.headerClassName,
+                    )}
+                  >
                     <span className={cn(
                       "text-[10px] font-bold uppercase tracking-widest",
                       dayHeaderClassNames.weekdayClassName

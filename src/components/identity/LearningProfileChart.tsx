@@ -50,7 +50,10 @@ export default function LearningProfileChart({
       className="space-y-5 px-1"
       data-testid="learning-profile-chart"
     >
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] md:items-end px-1">
+      <div
+        className="grid gap-3 px-1 lg:grid-cols-[minmax(0,1fr)_minmax(220px,auto)] lg:items-end"
+        data-testid="learning-profile-summary"
+      >
         <div className="min-w-0 space-y-2">
           <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             Total Learning Units

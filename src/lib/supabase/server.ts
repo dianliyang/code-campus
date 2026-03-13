@@ -549,6 +549,7 @@ export class SupabaseDatabase {
         ? { ...(rawDetails as Record<string, unknown>) }
         : {};
       delete details.duration;
+      delete details.durationLocations;
 
       if (Array.isArray(details.aggregatedEntries)) {
         details.aggregatedEntries = details.aggregatedEntries.map((entry) => {

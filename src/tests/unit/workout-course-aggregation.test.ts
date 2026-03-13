@@ -63,6 +63,7 @@ describe("aggregateWorkoutCoursesByName", () => {
         { schedule: "Wed 18:00-19:00", duration: "27.10. - 27.01.", location: "Hall B", locationEn: "Hall B" },
       ],
     });
+    expect(output[0]).not.toHaveProperty("duration");
   });
 
   test("prefers an available aggregate status when grouped variants include bookable rows", () => {

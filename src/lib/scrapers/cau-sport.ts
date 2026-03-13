@@ -210,6 +210,7 @@ function translateDE(text: string): string {
 const BOOKING_STATUS_MAP: Record<string, string> = {
   bs_btn_abgelaufen: "expired",
   bs_btn_ausgebucht: "fully_booked",
+  bs_btn_gesperrt: "blocked",
   bs_btn_siehe_text: "see_text",
   bs_btn_buchen: "available",
   bs_btn_warteliste: "waitlist",
@@ -409,13 +410,15 @@ export class CAUSport extends BaseScraper {
     return segments;
   }
 
-  async parsePlannedDates(url: string): Promise<string[]> {
-    if (!url) return [];
+  async parseDurationPageMetadata(url: string): Promise<{ dates: string[]; locations: string[] }> {
+    if (!url) return { dates: [], locations: [] };
     const html = await this.fetchPage(url);
-    if (!html) return [];
+    if (!html) return { dates: [], locations: [] };
 
     const $ = cheerio.load(html);
     const datesSet = new Set<string>();
+    const locationsSet = new Set<string>();
+    const bodyText = $("body").text().replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
 
     // Strategy 1: dedicated "geplante Termine" rows used on CGI detail pages
     // e.g. <div class="bs_geplan_termine_row"><span class="bs_geplan_termine_datum">20.10.2025</span>...</div>
@@ -436,6 +439,15 @@ export class CAUSport extends BaseScraper {
       });
     }
 
+    $("tr").each((_, tr) => {
+      const row = $(tr);
+      const dayText = row.find(".bs_stag").text().trim();
+      const timeText = row.find(".bs_szeit").text().trim();
+      const locationText = row.find(".bs_sort").text().replace(/\s+/g, " ").trim();
+      if (!dayText || !timeText || !locationText) return;
+      locationsSet.add(locationText);
+    });
+
     // Strategy 3: scan "geplante termine" tables for single-date rows
     if (datesSet.size === 0) {
       $("table").each((_, table) => {
@@ -451,13 +463,47 @@ export class CAUSport extends BaseScraper {
       });
     }
 
+    // Strategy 4: explicit "Zeitraum" / "duration" range text on detail pages
+    if (datesSet.size === 0) {
+      const rangeMatch = bodyText.match(
+        /(?:zeitraum|duration)\s*:?\s*(\d{2}\.\d{2}\.\d{4})\s*[-–]\s*(\d{2}\.\d{2}\.\d{4})/i,
+      );
+      if (rangeMatch) {
+        datesSet.add(rangeMatch[1]);
+        datesSet.add(rangeMatch[2]);
+      }
+    }
+
     // Last resort: all dates in body (may include non-session dates — avoid if possible)
     if (datesSet.size === 0) {
       const allDates = $("body").text().match(/\b\d{2}\.\d{2}\.\d{4}\b/g) || [];
       allDates.forEach(d => datesSet.add(d));
     }
 
-    return Array.from(datesSet);
+    $("b, strong, dt, .bs_label").each((_, el) => {
+      const labelText = $(el).text().replace(/\s+/g, " ").trim().toLowerCase();
+      if (!labelText.startsWith("veranstaltungsort")) return;
+
+      const nextTextBlock = $(el).nextAll(".bs_text").first().text().replace(/\s+/g, " ").trim();
+      if (nextTextBlock) {
+        locationsSet.add(nextTextBlock);
+      }
+    });
+
+    if (locationsSet.size === 0) {
+      const locationMatch = bodyText.match(
+        /(?:veranstaltungsorte|veranstaltungsort|locations?|venue)\s*:?\s*(.+?)(?=(?:\b(?:zeitraum|anmeldeschluss|anmeldung|leitung|dozent|kosten|preis|uhrzeit|termine)\b\s*:)|$)/i,
+      );
+      if (locationMatch?.[1]) {
+        locationsSet.add(locationMatch[1].trim());
+      }
+    }
+
+    return { dates: Array.from(datesSet), locations: Array.from(locationsSet) };
+  }
+
+  async parsePlannedDates(url: string): Promise<string[]> {
+    return (await this.parseDurationPageMetadata(url)).dates;
   }
 
   async parseWorkouts(html: string, pageUrl: string): Promise<WorkoutCourse[]> {
@@ -491,30 +537,34 @@ export class CAUSport extends BaseScraper {
         categoryEn = "Semester Fee";
       }
 
-      const parseHtmlLines = (html: string) =>
-        html.split(/<br\s*\/?>/i).map(s => cheerio.load(s).text().trim()).filter(Boolean);
+      const parseCellLines = (cell: ReturnType<typeof row.find>) => {
+        const html = cell.html();
+        if (html && html.trim()) {
+          return html
+            .split(/<br\s*\/?>/i)
+            .map((part) => cheerio.load(part).text().replace(/\s+/g, " ").trim())
+            .filter(Boolean);
+        }
 
-      const days = parseHtmlLines(row.find("td.bs_stag span").html() || "");
-      const times = parseHtmlLines(row.find("td.bs_szeit span").html() || "");
-      const locations = (row.find("td.bs_sort span").html() || "")
-        .split(/<br\s*\/?>/i)
-        .map(l => { const $l = cheerio.load(l); return $l("a").text().trim() || $l.text().trim(); })
-        .filter(Boolean);
+        const text = cell.text().replace(/\s+/g, " ").trim();
+        return text ? [text] : [];
+      };
+
+      const days = parseCellLines(row.find("td.bs_stag")).map((day) => day.replace(/\.$/, ""));
+      const times = parseCellLines(row.find("td.bs_szeit"));
+      const locations = parseCellLines(row.find("td.bs_sort"));
 
       const dateCell = row.find("td.bs_szr");
       const dateCellText = dateCell.text().replace(/\s+/g, " ").trim();
       const dateMatch = dateCellText.replace(/\s+/g, "").match(/([\d.]+)-\s*([\d.]+)/);
       const startDate = dateMatch?.[1] || "";
       const endDate = dateMatch?.[2] || "";
-      const explicitDuration = dateCellText.match(/\(([^)]+)\)/)?.[1]?.trim() || "";
-      const duration = explicitDuration || (startDate && endDate ? `${startDate} - ${endDate}` : "");
-
       const durationUrlRaw = dateCell.find("a").attr("href");
       const durationUrl = durationUrlRaw
         ? (durationUrlRaw.startsWith("http") ? durationUrlRaw : `https://server.sportzentrum.uni-kiel.de${durationUrlRaw}`)
         : null;
 
-      const instructor = row.find("td.bs_skl span").text().trim();
+      const instructor = row.find("td.bs_skl").text().replace(/\s+/g, " ").trim();
 
       // Parse prices
       const priceValues: (number | null)[] = [];
@@ -560,10 +610,8 @@ export class CAUSport extends BaseScraper {
       if (btnValue.includes("ausgebucht")) bookingStatus = "fully_booked";
       else if (btnValue.includes("buchen")) bookingStatus = "available";
       else if (btnValue.includes("warteliste")) bookingStatus = "waitlist";
+      else if (btnValue.includes("gesperrt") || btnValue.includes("blocked")) bookingStatus = "blocked";
       else if (btnValue.includes("storniert") || btnValue.includes("cancel")) bookingStatus = "cancelled";
-
-      // Only skip truly expired courses — show fully booked / waitlist
-      if (bookingStatus === "expired") return;
 
       const bookingUrl = bookingTd.find("a[href]").attr("href") || "";
       const scheduleEntries = days.map((day, i) => ({
@@ -573,13 +621,19 @@ export class CAUSport extends BaseScraper {
       }));
 
       rowPromises.push(detailLimit(async () => {
-        const plannedDates = durationUrl ? await this.parsePlannedDates(durationUrl) : [];
+        const durationPageMetadata = durationUrl
+          ? await this.parseDurationPageMetadata(durationUrl)
+          : { dates: [], locations: [] };
+        const plannedDates = durationPageMetadata.dates;
         const segments = this.mergeDatesIntoSegments(plannedDates);
 
         const finalStartDate = segments.length > 0 ? segments[0].start : startDate;
         const finalEndDate   = segments.length > 0 ? segments[segments.length - 1].end : endDate;
 
         const uniqueLocations = [...new Set(scheduleEntries.map(s => s.location))].join(", ");
+        const resolvedLocation = durationPageMetadata.locations.length > 0
+          ? durationPageMetadata.locations.join("; ")
+          : uniqueLocations;
 
         results.push({
           source: "CAU Kiel Sportzentrum",
@@ -591,8 +645,8 @@ export class CAUSport extends BaseScraper {
           dayOfWeek: scheduleEntries.map(s => s.day).join(", "),
           startTime: scheduleEntries[0]?.time.split("-")[0] || "",
           endTime:   scheduleEntries[0]?.time.split("-")[1] || "",
-          location:   uniqueLocations,
-          locationEn: translateDE(uniqueLocations),
+          location:   resolvedLocation,
+          locationEn: resolvedLocation,
           instructor: translateDE(instructor),
           startDate: finalStartDate,
           endDate:   finalEndDate,
@@ -605,14 +659,12 @@ export class CAUSport extends BaseScraper {
           url: pageUrl,
           semester,
           details: {
-            ...(duration           ? { duration }      : {}),
             ...(scheduleEntries.length > 1 ? { schedule: scheduleEntries } : {}),
             ...(isEntgeltfrei      ? { isEntgeltfrei: true } : {}),
             ...(plannedDates.length > 0    ? { plannedDates }  : {}),
             ...(segments.length > 0        ? { segments }      : {}),
             ...(durationUrl        ? { durationUrl }   : {}),
           },
-          duration,
         });
       }));
     });

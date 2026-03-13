@@ -105,7 +105,12 @@ export default function OverviewRoutineList({
 
     if (item.courseId) {
       return (
-        <Link key={item.key} href={`/courses/${item.courseId}`} className={`block ${child ? "py-0.5" : "py-1"} hover:bg-muted/5 transition-colors`}>
+        <Link
+          key={item.key}
+          href={`/courses/${item.courseId}`}
+          prefetch={false}
+          className={`block ${child ? "py-0.5" : "py-1"} hover:bg-muted/5 transition-colors`}
+        >
           {content}
         </Link>
       );

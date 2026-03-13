@@ -261,14 +261,14 @@ export default function ActiveCourseTrack({
               </Popover>
 
               <Button variant="outline" size="icon-sm" className="h-7 w-7 shadow-none" asChild>
-                <Link href={detailHref} title="Open course">
+                <Link href={detailHref} prefetch={false} title="Open course">
                   <ExternalLink className="h-3.5 w-3.5" />
                 </Link>
               </Button>
             </ButtonGroup>
           </div>
           <CardTitle className="text-lg font-semibold tracking-tight leading-snug line-clamp-2">
-            <Link href={detailHref} className="hover:text-black transition-colors">{course.title}</Link>
+            <Link href={detailHref} prefetch={false} className="hover:text-black transition-colors">{course.title}</Link>
           </CardTitle>
         </div>
       </CardHeader>

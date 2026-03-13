@@ -57,6 +57,8 @@ export default function CourseList({
   const { showToast } = useAppToast();
   const observerTarget = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef(currentPage);
+  const isLoadingRef = useRef(false);
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
   const [actionLoadingIds, setActionLoadingIds] = useState<
     Record<number, boolean>
@@ -72,6 +74,8 @@ export default function CourseList({
   useEffect(() => {
     setCourses(initialCourses);
     setPage(currentPage);
+    pageRef.current = currentPage;
+    isLoadingRef.current = false;
     setSelectedCourseIds([]);
   }, [initialCourses, currentPage]);
 
@@ -130,8 +134,9 @@ export default function CourseList({
   };
 
   const loadMore = useCallback(async () => {
-    if (isLoading || page >= totalPages) return;
+    if (isLoadingRef.current || pageRef.current >= totalPages) return;
 
+    isLoadingRef.current = true;
     setIsLoading(true);
     try {
       const query = searchParams.get("q") || "";
@@ -142,7 +147,7 @@ export default function CourseList({
       const semesters = searchParams.get("semesters") || "";
 
       const params = new URLSearchParams({
-        page: String(page + 1),
+        page: String(pageRef.current + 1),
         size: String(perPage),
         q: query,
         sort: sort,
@@ -164,14 +169,16 @@ export default function CourseList({
           );
           return [...prev, ...newItems];
         });
-        setPage((prev) => prev + 1);
+        pageRef.current += 1;
+        setPage(pageRef.current);
       }
     } catch (error) {
       console.error("[CourseList] Failed to load more:", error);
     } finally {
+      isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [page, totalPages, isLoading, searchParams, perPage]);
+  }, [totalPages, searchParams, perPage]);
 
   const effectiveViewMode: "list" | "grid" = isMobileViewport ? "grid" : viewMode;
 

@@ -4,8 +4,17 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
 
 vi.mock("next/link", () => ({
-  default: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-    <a href={typeof href === "string" ? href : "#"} {...props}>
+  default: ({
+    children,
+    href,
+    prefetch,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { prefetch?: boolean }) => (
+    <a
+      href={typeof href === "string" ? href : "#"}
+      data-prefetch={prefetch == null ? "default" : String(prefetch)}
+      {...props}
+    >
       {children}
     </a>
   ),
@@ -115,5 +124,21 @@ describe("ActiveCourseTrack", () => {
     expect(dayCount.textContent).toBe("10 days");
     expect(within(dayCount).getByText("10").tagName).toBe("STRONG");
     expect(creditSummary.textContent).toBe("No credit");
+  });
+
+  test("disables detail prefetch for course links", () => {
+    render(
+      <ActiveCourseTrack
+        course={course}
+        initialProgress={0}
+        plan={null}
+      />
+    );
+
+    const titleLink = screen.getByRole("link", { name: "Algorithms in Practice" });
+    expect(titleLink.getAttribute("data-prefetch")).toBe("false");
+
+    const openCourseLinks = screen.getAllByRole("link");
+    expect(openCourseLinks.some((link) => link.getAttribute("data-prefetch") === "false")).toBe(true);
   });
 });

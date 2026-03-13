@@ -38,7 +38,7 @@ export async function publishDelayedJsonMessage({
   forwardHeaders = {},
 }: PublishOptions): Promise<string> {
   const { token, baseUrl, forwardSecret } = getQstashConfig();
-  const url = `${baseUrl}/publish/${encodeURIComponent(destination)}`;
+  const url = `${baseUrl}/publish/${destination}`;
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",

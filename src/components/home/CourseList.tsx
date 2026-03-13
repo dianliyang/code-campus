@@ -297,7 +297,7 @@ export default function CourseList({
             <div className="">
               <Table>
                 <TableHeader className="bg-slate-50/50">
-                  <TableRow className="hover:bg-transparent">
+                  <TableRow className="flex items-center hover:bg-transparent">
                     <TableHead className={`${COLUMNS[0].width} flex items-center justify-center`}>
                       <Checkbox
                         checked={

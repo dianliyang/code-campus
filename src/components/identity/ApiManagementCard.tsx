@@ -366,12 +366,12 @@ export default function ApiManagementCard() {
                         <td className="px-3 py-2"><span className="text-muted-foreground">{item.requestsLimit ?? "Unlimited"}</span></td>
                         <td className="px-3 py-2 text-muted-foreground">{item.requestsUsed}{item.requestsLimit != null ? ` / ${item.requestsLimit}` : ""}</td>
                         <td className="px-3 py-2">
-                          <Toggle pressed={draft.isActive} onPressedChange={(pressed) => { triggerShake(item.id); const next = { ...draft, isActive: pressed }; setDrafts(prev => ({ ...prev, [item.id]: next })); void persistRow(item.id, next); }} disabled={busy} size="sm" variant="outline" className={cn("h-7 px-2 text-[10px] uppercase font-bold tracking-wider data-[state=on]:bg-emerald-50 data-[state=on]:text-emerald-700 data-[state=on]:border-emerald-200", shakingId === item.id && "animate-shake")}>
+                          <Toggle pressed={draft.isActive} onPressedChange={(pressed) => { triggerShake(item.id); const next = { ...draft, isActive: pressed }; setDrafts(prev => ({ ...prev, [item.id]: next })); void persistRow(item.id, next); }} disabled={busy} size="sm" variant="outline" className={cn("h-7 px-2 text-[10px] font-bold data-[state=on]:bg-emerald-50 data-[state=on]:text-emerald-700 data-[state=on]:border-emerald-200", shakingId === item.id && "animate-shake")}>
                             {draft.isActive ? "Active" : "Paused"}
                           </Toggle>
                         </td>
                         <td className="px-3 py-2">
-                          <Toggle pressed={draft.isReadOnly} onPressedChange={(pressed) => { triggerShake(item.id); const next = { ...draft, isReadOnly: pressed }; setDrafts(prev => ({ ...prev, [item.id]: next })); void persistRow(item.id, next); }} disabled={busy} size="sm" variant="outline" className={cn("h-7 px-2 text-[10px] uppercase font-bold tracking-wider data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 data-[state=on]:border-amber-200", shakingId === item.id && "animate-shake")}>
+                          <Toggle pressed={draft.isReadOnly} onPressedChange={(pressed) => { triggerShake(item.id); const next = { ...draft, isReadOnly: pressed }; setDrafts(prev => ({ ...prev, [item.id]: next })); void persistRow(item.id, next); }} disabled={busy} size="sm" variant="outline" className={cn("h-7 px-2 text-[10px] font-bold data-[state=on]:bg-amber-50 data-[state=on]:text-amber-700 data-[state=on]:border-amber-200", shakingId === item.id && "animate-shake")}>
                             {draft.isReadOnly ? "Read-Only" : "Full-Access"}
                           </Toggle>
                         </td>

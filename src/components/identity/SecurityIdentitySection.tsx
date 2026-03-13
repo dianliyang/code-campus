@@ -100,7 +100,7 @@ export default function SecurityIdentitySection({
           <CardContent className="mt-auto space-y-4">
             <div className="flex items-center justify-between p-3 rounded-lg border bg-slate-50/50">
               <div className="space-y-0.5">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Provider</p>
+                <p className="text-[10px] text-muted-foreground font-bold">Provider</p>
                 <p className="text-sm font-medium">{normalizeProvider(provider)}</p>
               </div>
               <div className="size-8 rounded-md bg-white border shadow-sm flex items-center justify-center">
@@ -109,7 +109,7 @@ export default function SecurityIdentitySection({
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg border border-emerald-100 bg-emerald-50/30">
               <div className="space-y-0.5">
-                <p className="text-[10px] text-emerald-700/70 uppercase tracking-widest font-bold">Status</p>
+                <p className="text-[10px] text-emerald-700/70 font-bold">Status</p>
                 <p className="text-sm font-semibold text-emerald-700">Verified Access</p>
               </div>
               <ShieldCheck className="h-5 w-5 text-emerald-500" />
@@ -162,7 +162,7 @@ export default function SecurityIdentitySection({
                 )}
 
                 <div className="pt-2 border-t flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-tight">Synced {new Date(githubProfile.updated_at).toLocaleDateString()}</span>
+                  <span className="text-[10px] text-muted-foreground">Synced {new Date(githubProfile.updated_at).toLocaleDateString()}</span>
                   {githubProfile.profile_url && (
                     <Button asChild variant="link" size="sm" className="h-auto p-0 text-brand-blue">
                       <a href={githubProfile.profile_url} target="_blank" rel="noreferrer">
@@ -211,13 +211,13 @@ export default function SecurityIdentitySection({
               Critical system alerts and security protocols are dispatched to your primary anchor.
             </p>
             <div className="flex items-center justify-between p-3 rounded-lg border bg-slate-50/50">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Alert State</span>
+              <span className="text-[10px] font-bold text-stone-500">Alert State</span>
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span className="text-[10px] font-bold uppercase text-emerald-700">Active</span>
+                <span className="text-[10px] font-bold text-emerald-700">Active</span>
               </div>
             </div>
           </CardContent>
@@ -241,7 +241,7 @@ export default function SecurityIdentitySection({
           <div className="space-y-4">
             <div className="flex items-start gap-3 p-4 rounded-xl border border-rose-100 bg-rose-50/30">
               <div className="space-y-1">
-                <p className="text-sm font-bold text-rose-950 uppercase tracking-tight">System Purge</p>
+                <p className="text-sm font-bold text-rose-950">System Purge</p>
                 <p className="text-xs text-rose-900/70 leading-relaxed">
                   Purging your account will immediately delete all enrolled courses, study plans, cognitive fingerprints, and usage history. 
                   <span className="block mt-1 font-bold">This operation is final and irreversible.</span>
@@ -252,12 +252,12 @@ export default function SecurityIdentitySection({
         </div>
         
         <div className="bg-rose-50/30 border-t md:border-t-0 md:border-l border-rose-100 p-6 flex flex-col justify-center items-center gap-4 min-w-[240px]">
-          <p className="text-[10px] font-bold text-rose-900/50 uppercase tracking-[0.2em]">Authorized Access Only</p>
+          <p className="text-[10px] font-bold text-rose-900/50">Authorized Access Only</p>
           <Button 
             variant="outline" 
             onClick={handleDeleteAccount} 
             disabled={isPending}
-            className="w-full border-rose-200 text-rose-600 hover:bg-rose-600 hover:text-white transition-all duration-300 font-bold uppercase tracking-widest text-[10px] h-12 shadow-sm"
+            className="w-full border-rose-200 text-rose-600 hover:bg-rose-600 hover:text-white transition-all duration-300 font-bold h-12 shadow-sm"
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Purge Account

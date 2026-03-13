@@ -18,7 +18,7 @@ export default function CognitiveFingerprintCard({ fields }: Props) {
   if (fields.length === 0) {
     return (
       <Card>
-        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest text-center">
+        <p className="text-[10px] font-bold text-gray-300 text-center">
           No enrolled courses yet
         </p>
       </Card>);
@@ -30,7 +30,7 @@ export default function CognitiveFingerprintCard({ fields }: Props) {
   return (
     <Card>
       <div>
-        <p className="text-[10px] font-bold text-[#9a9a9a] uppercase tracking-widest mb-0.5">
+        <p className="text-[10px] font-bold text-[#9a9a9a] mb-0.5">
           Cognitive Fingerprint
         </p>
         <p className="text-xs text-[#555]">Your learning domain distribution</p>

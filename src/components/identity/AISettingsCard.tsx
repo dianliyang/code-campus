@@ -52,7 +52,7 @@ function UsageBarChart({ daily }: {daily: Record<string, {requests: number;cost_
   const max = Math.max(...entries.map(([, v]) => v.requests), 1);
   return (
     <Card>
-      <p className="text-[10px] font-semibold text-[#888] uppercase tracking-widest mb-3">Last 7 Days</p>
+      <p className="text-[10px] font-semibold text-[#888] mb-3">Last 7 Days</p>
       <div className="flex items-end gap-1.5 h-16">
         {entries.map(([date, val]) => {
           const pct = val.requests / max * 100;

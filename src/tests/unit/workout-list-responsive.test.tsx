@@ -249,7 +249,9 @@ describe("WorkoutList responsive behavior", () => {
       id: 3,
       bookingStatus: "scheduled",
       details: {
+        bookingOpensOn: "2026-03-29",
         bookingOpensAt: "2026-03-29T18:00:00",
+        durationUrl: "https://example.com/schedule/3",
       },
     };
 
@@ -274,8 +276,9 @@ describe("WorkoutList responsive behavior", () => {
       expect(screen.getAllByTestId("workout-list-header").at(-1)?.textContent).toContain("mode:list");
     });
 
-    expect(screen.getAllByText("Opens 18:00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Opens Mar 29, 18:00").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: "Reminder" }).length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: "Enroll" })).toBeNull();
+    expect(screen.getByTestId("workout-schedule-link-3").querySelector("svg")).not.toBeNull();
   });
 });

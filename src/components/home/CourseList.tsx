@@ -59,6 +59,7 @@ export default function CourseList({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef(currentPage);
   const isLoadingRef = useRef(false);
+  const requiresObserverResetRef = useRef(false);
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
   const [actionLoadingIds, setActionLoadingIds] = useState<
     Record<number, boolean>
@@ -76,6 +77,7 @@ export default function CourseList({
     setPage(currentPage);
     pageRef.current = currentPage;
     isLoadingRef.current = false;
+    requiresObserverResetRef.current = false;
     setSelectedCourseIds([]);
   }, [initialCourses, currentPage]);
 
@@ -171,6 +173,7 @@ export default function CourseList({
         });
         pageRef.current += 1;
         setPage(pageRef.current);
+        requiresObserverResetRef.current = true;
       }
     } catch (error) {
       console.error("[CourseList] Failed to load more:", error);
@@ -187,7 +190,14 @@ export default function CourseList({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !isLoading) {
+        const isIntersecting = entries[0]?.isIntersecting === true;
+
+        if (!isIntersecting) {
+          requiresObserverResetRef.current = false;
+          return;
+        }
+
+        if (!requiresObserverResetRef.current && !isLoading) {
           loadMore();
         }
       },

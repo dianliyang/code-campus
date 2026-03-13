@@ -5,7 +5,7 @@ import { Workout, WorkoutTrackingState } from "@/types";
 import { Dictionary } from "@/lib/dictionary";
 import { cn } from "@/lib/utils";
 import { getWorkoutDurationUrl } from "@/lib/workout-links";
-import { formatWorkoutBookingOpensTime } from "@/lib/workout-reminders";
+import { formatWorkoutBookingOpensLabel } from "@/lib/workout-reminders";
 import WorkoutCard from "./WorkoutCard";
 import WorkoutListHeader from "./WorkoutListHeader";
 import { Bell, Check, ChevronDown, ExternalLink, Plus, RefreshCw } from "lucide-react";
@@ -573,7 +573,7 @@ export default function WorkoutList({
                           const isEnrolled = tracking?.status === "enrolled";
                           const isReminderActive = tracking?.status === "reminder";
                           const isReminderSent = Boolean(tracking?.reminderSentAt);
-                          const bookingOpenTime = formatWorkoutBookingOpensTime(w.details);
+                          const bookingOpenLabel = formatWorkoutBookingOpensLabel(w.details);
                           const showReminderAction = w.bookingStatus === "scheduled";
 
                           return (
@@ -592,10 +592,10 @@ export default function WorkoutList({
                                 </p>
                                 <div className="flex flex-wrap items-center gap-2">
                                   <Badge className={statusClass}>{statusLabel}</Badge>
-                                  {showReminderAction && bookingOpenTime ? (
-                                    <span className="text-xs font-medium text-foreground">
-                                      Opens {bookingOpenTime}
-                                    </span>
+                                  {showReminderAction && bookingOpenLabel ? (
+                                    <Badge variant="secondary" className="font-normal text-muted-foreground">
+                                      {bookingOpenLabel}
+                                    </Badge>
                                   ) : null}
                                   <span className="truncate text-xs text-muted-foreground/70">
                                     {w.locationEn || w.location || "-"}
@@ -609,8 +609,9 @@ export default function WorkoutList({
                                     href={durationHref}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="block rounded-sm transition-colors hover:text-foreground"
+                                    className="group/schedule relative block rounded-sm pr-5 transition-colors hover:text-foreground"
                                     title="Open schedule details"
+                                    data-testid={`workout-schedule-link-${w.id}`}
                                   >
                                     <p className="font-medium">
                                       <span className="text-muted-foreground">
@@ -628,6 +629,7 @@ export default function WorkoutList({
                                     <p className="text-xs text-muted-foreground/70 mt-0.5">
                                       {duration}
                                     </p>
+                                    <ExternalLink className="absolute top-0.5 right-0 h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover/schedule:opacity-100" />
                                   </a>
                                 ) : (
                                   <>

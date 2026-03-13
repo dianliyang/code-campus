@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  formatWorkoutBookingOpensLabel,
   formatWorkoutBookingOpensTime,
   getWorkoutReminderAtUtc,
   parseBerlinLocalDateTimeToUtc,
@@ -26,5 +27,14 @@ describe("workout reminder helpers", () => {
         bookingOpensAt: "2026-03-29T18:00:00",
       }),
     ).toBe("18:00");
+  });
+
+  test("formats booking open date and time for scheduled workout labels", () => {
+    expect(
+      formatWorkoutBookingOpensLabel({
+        bookingOpensOn: "2026-03-29",
+        bookingOpensAt: "2026-03-29T18:00:00",
+      }),
+    ).toBe("Opens Mar 29, 18:00");
   });
 });

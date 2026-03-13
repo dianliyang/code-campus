@@ -157,4 +157,96 @@ describe("CourseList infinite scroll", () => {
       } as Response);
     });
   });
+
+  test("does not auto-request every remaining page until the sentinel leaves and re-enters view", async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            {
+              id: 2,
+              title: "Data Structures",
+              courseCode: "CS-102",
+              university: "Test U",
+              url: "https://example.com/2",
+              description: "Second course",
+              popularity: 1,
+              isHidden: false,
+              fields: [],
+              semesters: ["Spring 2026"],
+            },
+          ],
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [
+            {
+              id: 3,
+              title: "Databases",
+              courseCode: "CS-103",
+              university: "Test U",
+              url: "https://example.com/3",
+              description: "Third course",
+              popularity: 1,
+              isHidden: false,
+              fields: [],
+              semesters: ["Spring 2026"],
+            },
+          ],
+        }),
+      } as Response);
+
+    render(
+      <CourseList
+        initialCourses={[
+          {
+            id: 1,
+            title: "Algorithms",
+            courseCode: "CS-101",
+            university: "Test U",
+            url: "https://example.com/1",
+            description: "Intro course",
+            popularity: 1,
+            isHidden: false,
+            fields: [],
+            semesters: ["Spring 2026"],
+          },
+        ]}
+        totalPages={3}
+        currentPage={1}
+        perPage={20}
+        initialEnrolledIds={[]}
+        dict={{} as never}
+        filterUniversities={[]}
+        filterSemesters={[]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(observerInstances.length).toBeGreaterThan(0);
+    });
+
+    await act(async () => {
+      observerInstances[0].trigger(true);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      observerInstances[0].trigger(true);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      observerInstances[0].trigger(false);
+      observerInstances[0].trigger(true);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenLastCalledWith("/api/courses?page=3&size=20&q=&sort=title&enrolled=false&universities=&levels=&semesters=");
+  });
 });

@@ -109,3 +109,25 @@ export function formatWorkoutBookingOpensTime(
   if (!match) return null;
   return `${match[1]}:${match[2]}`;
 }
+
+export function formatWorkoutBookingOpensLabel(
+  details: Record<string, unknown> | null | undefined,
+): string | null {
+  const bookingOpensOn =
+    details && typeof details.bookingOpensOn === "string" ? details.bookingOpensOn : "";
+  const bookingOpensTime = formatWorkoutBookingOpensTime(details);
+
+  if (!bookingOpensOn && !bookingOpensTime) return null;
+  if (!bookingOpensOn) return bookingOpensTime ? `Opens ${bookingOpensTime}` : null;
+
+  const date = new Date(`${bookingOpensOn}T12:00:00Z`);
+  const dateLabel = Number.isNaN(date.getTime())
+    ? bookingOpensOn
+    : new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      }).format(date);
+
+  return bookingOpensTime ? `Opens ${dateLabel}, ${bookingOpensTime}` : `Opens ${dateLabel}`;
+}

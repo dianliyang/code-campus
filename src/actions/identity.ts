@@ -69,15 +69,15 @@ export async function updateAiPreferences(input: {
 }
 
 export async function updateAiApiKeys(input: {
-  openai?: string;
-  perplexity?: string;
-  gemini?: string;
+  openai?: string | null;
+  perplexity?: string | null;
+  gemini?: string | null;
 }) {
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
 
   const supabase = await createClient();
-  const update: Record<string, string> = {
+  const update: Record<string, string | null> = {
     updated_at: new Date().toISOString(),
   };
 

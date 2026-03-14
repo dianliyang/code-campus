@@ -113,7 +113,7 @@ export const courseColumns: ColumnDef<CourseTableRow>[] = [
       const course = row.original;
       const primaryField = course.subdomain || course.fields?.[0];
       return (
-        <div className="min-w-0 flex items-start gap-3">
+        <div className="min-w-0 flex items-center gap-3">
           <UniversityIcon name={course.university} size={26} className="bg-white border border-[#dfdfdf]" />
           <div className="min-w-0">
             <Link href={course.detailHref} prefetch={false} className="block">

@@ -189,7 +189,7 @@ export default async function ProjectsSeminarsPage({
   });
 
   return (
-    <main className="min-h-full w-full px-4 py-4">
+    <main className="flex min-h-full w-full flex-col gap-4 px-4 pb-4">
       <div className={getDashboardPageHeaderClassName()}>
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -204,7 +204,7 @@ export default async function ProjectsSeminarsPage({
         semesters={uniqueSemesters}
       />
 
-      <div>
+      <div className="flex-1 min-h-0">
         {(items || []).length === 0 ? (
           <div className="py-16 text-center">
             <h3 className="text-sm font-semibold text-slate-900">

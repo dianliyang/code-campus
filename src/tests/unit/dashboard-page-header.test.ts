@@ -10,4 +10,13 @@ describe("getDashboardPageHeaderClassName", () => {
     expect(className).toContain("md:sticky");
     expect(className).toContain("md:top-0");
   });
+
+  test("uses unified dashboard padding without extra top padding", () => {
+    const className = getDashboardPageHeaderClassName();
+
+    expect(className).toContain("p-4");
+    expect(className).not.toContain("pt-4");
+    expect(className).not.toContain("pb-5");
+    expect(className).not.toContain("px-4");
+  });
 });

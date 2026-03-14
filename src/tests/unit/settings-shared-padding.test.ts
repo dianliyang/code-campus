@@ -11,4 +11,15 @@ describe("settings shared wrapper", () => {
 
     expect(source).toContain('pb-[calc(132px+env(safe-area-inset-bottom,0px))]');
   });
+
+  test("uses the same compact shell contract as other dashboard pages", () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), "src/components/identity/SettingsContainer.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain('className="h-full flex flex-col gap-4 px-4"');
+    expect(source).toContain('getDashboardPageHeaderClassName("shrink-0")');
+    expect(source).toContain('className="flex-1 min-h-0"');
+  });
 });

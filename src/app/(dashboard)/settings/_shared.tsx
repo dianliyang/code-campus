@@ -1,5 +1,5 @@
 import SettingsContainer, { type SectionId } from "@/components/identity/SettingsContainer";
-import { createAdminClient, getCachedProfileSettings, getUser } from "@/lib/supabase/server";
+import { createAdminClient, getCachedProfileSettingsWithKeys, getUser } from "@/lib/supabase/server";
 import { getLanguage } from "@/actions/language";
 import { getDictionary } from "@/lib/dictionary";
 import Link from "next/link";
@@ -25,7 +25,7 @@ export async function renderSettingsPage(initialSection?: SectionId) {
     );
   }
 
-  let profile = await getCachedProfileSettings(user.id);
+  let profile = await getCachedProfileSettingsWithKeys(user.id);
 
   const rawProvider = String(profile?.ai_provider || "").trim();
   const normalizedProvider: "perplexity" | "gemini" | "openai" =
@@ -62,7 +62,7 @@ export async function renderSettingsPage(initialSection?: SectionId) {
   }
 
   return (
-    <div className="h-full px-4 pb-[calc(132px+env(safe-area-inset-bottom,0px))] lg:pb-4">
+    <div className="h-full flex flex-col gap-4 px-4 pb-[calc(132px+env(safe-area-inset-bottom,0px))] lg:pb-4">
       <SettingsContainer
         key={`settings-${initialSection || "engine"}`}
         profile={profile}

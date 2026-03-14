@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Globe, Sparkles, X } from "lucide-react";
+import { Globe, KeyRound, Loader2, Sparkles, Trash2, X } from "lucide-react";
 import { AI_PROVIDERS, type AIProvider } from "@/lib/ai/models-client";
-import { updateAiPreferences } from "@/actions/identity";
+import { updateAiApiKeys, updateAiPreferences } from "@/actions/identity";
 import { useAppToast } from "@/components/common/AppToastProvider";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -26,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
 import ServiceHealthStatus from "./ServiceHealthStatus";
 
@@ -33,6 +34,7 @@ interface EngineSettingsPanelProps {
   initialProvider: string;
   initialModel: string;
   initialWebSearchEnabled: boolean;
+  initialApiKeyState: Record<AIProvider, boolean>;
   modelCatalog: {
     perplexity: string[];
     gemini: string[];
@@ -91,11 +93,15 @@ export default function EngineSettingsPanel({
   initialProvider,
   initialModel,
   initialWebSearchEnabled,
+  initialApiKeyState,
   modelCatalog,
 }: EngineSettingsPanelProps) {
   const [provider, setProvider] = useState<AIProvider>(normalizeProvider(initialProvider));
   const [defaultModel, setDefaultModel] = useState(initialModel);
   const [webSearchEnabled, setWebSearchEnabled] = useState(initialWebSearchEnabled);
+  const [apiKeyDraft, setApiKeyDraft] = useState("");
+  const [providerKeyState, setProviderKeyState] = useState<Record<AIProvider, boolean>>(initialApiKeyState);
+  const [apiKeySaveState, setApiKeySaveState] = useState<"idle" | "saving" | "deleting">("idle");
   const [removedModels, setRemovedModels] = useState<Record<AIProvider, string[]>>({
     perplexity: [],
     gemini: [],
@@ -140,6 +146,9 @@ export default function EngineSettingsPanel({
     return "Ready";
   }, [saveState, lastSavedAt]);
 
+  const providerApiKeyLabel = useMemo(() => providerLabel(provider), [provider]);
+  const hasSavedProviderKey = providerKeyState[provider];
+
   useEffect(() => {
     if (isFirstSyncRef.current) {
       isFirstSyncRef.current = false;
@@ -179,6 +188,37 @@ export default function EngineSettingsPanel({
       if (saveSeqRef.current !== saveId) return;
       setSaveState("error");
       showToast({ type: "error", message: error instanceof Error ? error.message : "Update failed." });
+    }
+  };
+
+  const persistProviderKey = async () => {
+    const nextValue = apiKeyDraft.trim();
+    if (!nextValue) return;
+
+    setApiKeySaveState("saving");
+    try {
+      await updateAiApiKeys({ [provider]: nextValue });
+      setProviderKeyState((prev) => ({ ...prev, [provider]: true }));
+      setApiKeyDraft("");
+      showToast({ type: "success", message: `${providerApiKeyLabel} API key saved.` });
+    } catch (error) {
+      showToast({ type: "error", message: error instanceof Error ? error.message : "Failed to save API key." });
+    } finally {
+      setApiKeySaveState("idle");
+    }
+  };
+
+  const deleteProviderKey = async () => {
+    setApiKeySaveState("deleting");
+    try {
+      await updateAiApiKeys({ [provider]: null });
+      setProviderKeyState((prev) => ({ ...prev, [provider]: false }));
+      setApiKeyDraft("");
+      showToast({ type: "success", message: `${providerApiKeyLabel} API key deleted.` });
+    } catch (error) {
+      showToast({ type: "error", message: error instanceof Error ? error.message : "Failed to delete API key." });
+    } finally {
+      setApiKeySaveState("idle");
     }
   };
 
@@ -398,6 +438,54 @@ export default function EngineSettingsPanel({
                   </p>
                 </div>
               </label>
+            </section>
+
+            <section className="space-y-3">
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold tracking-tight">Provider API Key</h4>
+                <p className="text-sm text-muted-foreground">
+                  Save a key for {providerApiKeyLabel}. It is stored securely and never exposed back to the UI.
+                </p>
+              </div>
+              <div className="space-y-3 rounded-md border p-4">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <div className="inline-flex items-center gap-2">
+                    <KeyRound className="size-4 text-muted-foreground" />
+                    <span>{providerApiKeyLabel}</span>
+                  </div>
+                  <span className="text-muted-foreground">
+                    {hasSavedProviderKey ? "Saved: ••••••••" : "No API key saved"}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    type="password"
+                    value={apiKeyDraft}
+                    onChange={(event) => setApiKeyDraft(event.target.value)}
+                    placeholder={provider === "openai" ? "sk-..." : provider === "perplexity" ? "pplx-..." : "AIza..."}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={apiKeySaveState !== "idle" || !apiKeyDraft.trim()}
+                    onClick={() => void persistProviderKey()}
+                  >
+                    {apiKeySaveState === "saving" ? <Loader2 className="size-4 animate-spin" /> : "Save API Key"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={apiKeySaveState !== "idle" || !hasSavedProviderKey}
+                    onClick={() => void deleteProviderKey()}
+                  >
+                    {apiKeySaveState === "deleting" ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                    Delete API Key
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Once saved, the full key is never returned to this interface.
+                </p>
+              </div>
             </section>
           </CardContent>
         </Card>

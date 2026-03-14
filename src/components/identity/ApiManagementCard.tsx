@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Activity, CheckCircle2, Copy, KeyRound, Loader2, ShieldCheck, Trash2, WandSparkles, Cpu } from "lucide-react";
+import { Activity, CheckCircle2, Copy, KeyRound, Loader2, ShieldCheck, Trash2, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,6 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { useCachedJsonResource } from "@/hooks/useCachedJsonResource";
-import { updateAiApiKeys } from "@/actions/identity";
 
 type ApiKeyItem = {
   id: number;
@@ -50,9 +49,6 @@ export default function ApiManagementCard() {
   const [nameError, setNameError] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
 
-  const [aiKeys, setAiKeys] = useState({ openai: "", perplexity: "", gemini: "" });
-  const [isUpdatingAi, setIsUpdatingAi] = useState(false);
-
   const apiKeysFetchInit = useMemo(() => ({ cache: "no-store" } as RequestInit), []);
   const { data: apiKeysData, loading: isLoading, refresh } = useCachedJsonResource<{ keys?: ApiKeyItem[] }>({
     cacheKey: "cc:cached-json:api-keys",
@@ -84,21 +80,6 @@ export default function ApiManagementCard() {
   const showSaved = (message: string) => {
     setSaved(message);
     setTimeout(() => setSaved(null), 1800);
-  };
-
-  const handleUpdateAiKeys = async (provider: 'openai' | 'perplexity' | 'gemini') => {
-    const value = aiKeys[provider].trim();
-    if (!value) return;
-    setIsUpdatingAi(true);
-    try {
-      await updateAiApiKeys({ [provider]: value });
-      setAiKeys(prev => ({ ...prev, [provider]: "" }));
-      showSaved(`${provider.toUpperCase()} key updated.`);
-    } catch {
-      showSaved("Failed to update key.");
-    } finally {
-      setIsUpdatingAi(false);
-    }
   };
 
   const triggerShake = (id: number) => {
@@ -216,67 +197,6 @@ export default function ApiManagementCard() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-muted-foreground" />
-            <CardTitle>AI Infrastructure</CardTitle>
-          </div>
-          <CardDescription>
-            Configure your own AI API keys. These are stored securely and never exposed back to the UI.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <FieldLabel htmlFor="ai-openai">OpenAI Key</FieldLabel>
-              <div className="flex gap-2">
-                <Input
-                  id="ai-openai"
-                  type="password"
-                  placeholder="sk-..."
-                  value={aiKeys.openai}
-                  onChange={e => setAiKeys(prev => ({ ...prev, openai: e.target.value }))}
-                />
-                <Button size="icon" variant="outline" onClick={() => handleUpdateAiKeys('openai')} disabled={isUpdatingAi || !aiKeys.openai}>
-                  <CheckCircle2 className="size-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <FieldLabel htmlFor="ai-perplexity">Perplexity Key</FieldLabel>
-              <div className="flex gap-2">
-                <Input
-                  id="ai-perplexity"
-                  type="password"
-                  placeholder="pplx-..."
-                  value={aiKeys.perplexity}
-                  onChange={e => setAiKeys(prev => ({ ...prev, perplexity: e.target.value }))}
-                />
-                <Button size="icon" variant="outline" onClick={() => handleUpdateAiKeys('perplexity')} disabled={isUpdatingAi || !aiKeys.perplexity}>
-                  <CheckCircle2 className="size-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <FieldLabel htmlFor="ai-gemini">Gemini Key</FieldLabel>
-              <div className="flex gap-2">
-                <Input
-                  id="ai-gemini"
-                  type="password"
-                  placeholder="AIza..."
-                  value={aiKeys.gemini}
-                  onChange={e => setAiKeys(prev => ({ ...prev, gemini: e.target.value }))}
-                />
-                <Button size="icon" variant="outline" onClick={() => handleUpdateAiKeys('gemini')} disabled={isUpdatingAi || !aiKeys.gemini}>
-                  <CheckCircle2 className="size-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="overflow-x-auto pb-1" data-testid="api-stats-row">
         <div className="flex min-w-max gap-2.5 sm:gap-3">
           {renderStatCard({ label: "Total Keys", value: items.length, icon: <KeyRound className="h-4 w-4" />, iconTestId: "api-total-keys-icon" })}

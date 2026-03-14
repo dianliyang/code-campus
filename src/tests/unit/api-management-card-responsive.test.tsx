@@ -1,6 +1,8 @@
 import React from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import fs from "node:fs";
+import path from "node:path";
 import { resetCachedJsonResourceCache } from "@/hooks/useCachedJsonResource";
 
 const fetchMock = vi.fn();
@@ -34,17 +36,12 @@ describe("ApiManagementCard responsive layout", () => {
     });
   });
 
-  test("uses mobile cards for API keys and keeps summary stats on one row", async () => {
+  test("keeps generated API keys visible on mobile while preserving the compact stats row", async () => {
     const { default: ApiManagementCard } = await import("@/components/identity/ApiManagementCard");
 
     render(<ApiManagementCard />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId("api-keys-mobile-cards")).toBeDefined();
-    });
-
-    expect(screen.getByTestId("api-key-card-1")).toBeDefined();
-    expect(screen.queryByText("API Key")).toBeNull();
+    expect(screen.getByText("API Keys")).toBeDefined();
     expect(screen.getAllByTestId("api-stats-row").at(-1)?.className).toContain("overflow-x-auto");
   });
 
@@ -94,5 +91,28 @@ describe("ApiManagementCard responsive layout", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/settings/api-key", { cache: "no-store" });
     });
+  });
+});
+
+describe("AI provider key placement", () => {
+  test("removes the AI Infrastructure card from API Control", () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), "src/components/identity/ApiManagementCard.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toContain("AI Infrastructure");
+    expect(source).not.toContain("Configure your own AI API keys");
+  });
+
+  test("adds provider-scoped API key controls to Engine", () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), "src/components/identity/EngineSettingsPanel.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("Provider API Key");
+    expect(source).toContain("Delete API Key");
+    expect(source).toContain("never returned to this interface");
   });
 });

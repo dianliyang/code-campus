@@ -19,7 +19,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
   const dict = await getDictionary(lang);
 
   return (
-    <main className="min-h-full w-full px-4 py-4">
+    <main className="flex min-h-full w-full flex-col gap-4 px-4 pb-4">
       <div className={getDashboardPageHeaderClassName()}>
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">

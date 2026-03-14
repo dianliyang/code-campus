@@ -1,6 +1,8 @@
 import React from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import fs from "node:fs";
+import path from "node:path";
 
 const signInWithOAuth = vi.fn();
 
@@ -29,7 +31,7 @@ describe("SecurityIdentitySection GitHub profile", () => {
 
     render(<SecurityIdentitySection view="identity" provider="email" githubProfile={null} />);
 
-    expect(screen.getByText("GitHub Profile")).toBeDefined();
+    expect(screen.getByText("Developer Node")).toBeDefined();
     expect(screen.getByRole("button", { name: "Connect GitHub" })).toBeDefined();
   });
 
@@ -53,11 +55,10 @@ describe("SecurityIdentitySection GitHub profile", () => {
       />,
     );
 
-    expect(screen.getByText("octocat")).toBeDefined();
     expect(screen.getByText("The Octocat")).toBeDefined();
-    expect(screen.getByText("Mascot")).toBeDefined();
-    expect(screen.getByText("@github")).toBeDefined();
-    expect(screen.getByRole("link", { name: "View GitHub Profile" }).getAttribute("href")).toBe(
+    expect(screen.getByText("@octocat")).toBeDefined();
+    expect(screen.getByText(/Mascot/)).toBeDefined();
+    expect(screen.getByRole("link", { name: /view profile/i }).getAttribute("href")).toBe(
       "https://github.com/octocat",
     );
   });
@@ -79,5 +80,27 @@ describe("SecurityIdentitySection GitHub profile", () => {
         }),
       );
     });
+  });
+
+  test("removes the decorative danger-zone access panel", async () => {
+    const { default: SecurityIdentitySection } = await import("@/components/identity/SecurityIdentitySection");
+
+    render(<SecurityIdentitySection view="account" provider="email" />);
+
+    expect(screen.getByText("Danger Zone")).toBeDefined();
+    expect(screen.queryByText("Authorized Access Only")).toBeNull();
+  });
+});
+
+describe("SecurityIdentitySection source contract", () => {
+  test("removes the nested bordered wrappers from the identity and danger-zone cards", () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), "src/components/identity/SecurityIdentitySection.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toContain("p-3 rounded-lg border bg-slate-50/50");
+    expect(source).not.toContain("border border-rose-100 bg-rose-50/30");
+    expect(source).not.toContain("Authorized Access Only");
   });
 });

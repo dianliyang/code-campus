@@ -249,6 +249,24 @@ describe("syncCauStudyPlansForCourses", () => {
 });
 
 describe("resolveSingletonUserId", () => {
+  test("calls listUsers with the admin client context intact", async () => {
+    const userId = await resolveSingletonUserId({
+      auth: {
+        admin: {
+          fetch: async () => undefined,
+          async listUsers(this: { fetch?: () => Promise<unknown> }) {
+            if (typeof this.fetch !== "function") {
+              throw new TypeError("Cannot read properties of undefined (reading 'fetch')");
+            }
+            return { data: { users: [{ id: "user-1" }] }, error: null };
+          },
+        },
+      },
+    });
+
+    expect(userId).toBe("user-1");
+  });
+
   test("returns the only user id when exactly one user exists", async () => {
     const userId = await resolveSingletonUserId({
       auth: {

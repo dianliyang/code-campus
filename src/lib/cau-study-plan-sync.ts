@@ -147,10 +147,10 @@ export async function resolveSingletonUserId(supabase: {
     };
   };
 }): Promise<string | null> {
-  const listUsers = supabase.auth?.admin?.listUsers;
-  if (typeof listUsers !== "function") return null;
+  const adminClient = supabase.auth?.admin;
+  if (!adminClient || typeof adminClient.listUsers !== "function") return null;
 
-  const { data, error } = await listUsers({ page: 1, perPage: 2 });
+  const { data, error } = await adminClient.listUsers({ page: 1, perPage: 2 });
   if (error) {
     throw new Error(error.message || "Failed to resolve singleton user");
   }

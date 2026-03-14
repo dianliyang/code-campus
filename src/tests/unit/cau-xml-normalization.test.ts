@@ -19,7 +19,7 @@ describe("CAU XML normalization", () => {
         units: "V 2 UE 2",
         credit: 6,
         workload: 4,
-        department: "Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres",
+        department: "Algorithmic Optimal Control - Ocean CO2 Uptake",
         category: "Compulsory elective modules in Computer Science",
         description: expect.stringContaining("Weitere Informationen"),
         instructors: ["Prof. Dr. Thomas Slawig"],

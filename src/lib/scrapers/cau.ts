@@ -96,6 +96,27 @@ type DescriptionSection = {
   sourceLabel: string;
 };
 
+const CAU_DEPARTMENT_TRANSLATIONS: Record<string, string> = {
+  "Echtzeitsysteme / Eingebettete Systeme": "Real-Time Systems / Embedded Systems",
+  "Algorithmen und Komplexität": "Algorithms and Complexity",
+  "Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres":
+    "Algorithmic Optimal Control - Ocean CO2 Uptake",
+  "Archäoinformatik - Data Science": "Archaeoinformatics - Data Science",
+  "Didaktik der Informatik": "Computer Science Education",
+  "Datenbanksysteme und Data Mining": "Database Systems and Data Mining",
+  "Intelligente Systeme": "Intelligent Systems",
+  "Programmiersprachen und Übersetzerkonstruktion":
+    "Programming Languages and Compiler Construction",
+  "Verteilte Systeme": "Distributed Systems",
+  "Theoretische Informatik": "Theoretical Computer Science",
+  "Visual Computing und Artificial Intelligence":
+    "Visual Computing and Artificial Intelligence",
+  "Zuverlässige Systeme": "Reliable Systems",
+  "Institut für Informatik": "Institute of Computer Science",
+  "Geschäftszimmer der Informatik": "Computer Science Office",
+  "Referat Liegenschaften und Services": "Facilities and Services Office",
+};
+
 export class CAU extends BaseScraper {
   private modulDbCache = new Map<string, Promise<ModulDbModule | null>>();
 
@@ -403,6 +424,12 @@ export class CAU extends BaseScraper {
       .trim();
   }
 
+  private normalizeDepartmentName(value: string | null | undefined): string | undefined {
+    const trimmed = value?.trim();
+    if (!trimmed) return undefined;
+    return CAU_DEPARTMENT_TRANSLATIONS[trimmed] || trimmed;
+  }
+
   private normalizeCourseType(type: string): string {
     const normalized = type.trim().toUpperCase();
     if (normalized === "V") return "Lecture";
@@ -574,7 +601,7 @@ export class CAU extends BaseScraper {
       units: lecture.sws ? `${lecture.type} ${lecture.sws}` : undefined,
       credit: lecture.ectsCred ? Number(lecture.ectsCred) : undefined,
       description: this.normalizeDescription(lecture.summary, lecture.timeDescription),
-      department: lecture.orgname || undefined,
+      department: this.normalizeDepartmentName(lecture.orgname),
       prerequisites: lecture.organizational || undefined,
       instructors,
       resources: resourceUrls.length > 0 ? resourceUrls : undefined,
@@ -1200,9 +1227,9 @@ export class CAU extends BaseScraper {
           const detailHtml = await this.fetchPage(detailUrl);
           const department = this.extractDepartmentFromDetailHtml(detailHtml);
           if (!department) return;
-          item.department = department;
+          item.department = this.normalizeDepartmentName(department);
           if (!item.details || typeof item.details !== "object") item.details = {};
-          (item.details as Record<string, unknown>).department = department;
+          (item.details as Record<string, unknown>).department = this.normalizeDepartmentName(department);
         }),
       );
     }

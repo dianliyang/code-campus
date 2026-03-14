@@ -15,9 +15,13 @@ describe("CAU XML request builder", () => {
     });
 
     expect(result.url).toContain("https://univis.uni-kiel.de/form");
-    expect(result.body.get("dsc")).toBe("anew/xml");
+    expect(result.body.get("dsc")).toBe("anew/unihd");
+    expect(result.body.get("donedef")).toBe("1");
+    expect(result.body.get("setsem_jump")).toBe("anew/xml");
     expect(result.body.get("level")).toBe("3");
     expect(result.body.get("option")).toBe("orgname");
+    expect(result.body.get("done-anew/xml:doit")).toBe("to XML");
+    expect(result.body.get("anonymous")).toBe("1");
     expect(result.body.get("db")).toBe("Lecture");
   });
 });

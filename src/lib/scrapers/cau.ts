@@ -179,9 +179,12 @@ export class CAU extends BaseScraper {
   private buildXmlExportRequest(params: XmlExportParams): { url: string; body: URLSearchParams } {
     const body = new URLSearchParams({
       __s: "1",
-      dsc: "anew/xml",
+      dsc: "anew/unihd",
+      donedef: "1",
+      setsem_jump: "anew/xml",
       db: params.db,
       keys: params.keys,
+      anonymous: "1",
       lang: "en",
       ref: params.ref,
       sem: params.sem,
@@ -189,6 +192,7 @@ export class CAU extends BaseScraper {
       __e: params.token,
       level: "3",
       option: "orgname",
+      "done-anew/xml:doit": "to XML",
     });
 
     return {
@@ -912,6 +916,7 @@ export class CAU extends BaseScraper {
       method: "POST",
       headers: {
         "content-type": "application/x-www-form-urlencoded",
+        accept: "application/xml,text/xml,text/html;q=0.9,*/*;q=0.8",
       },
       body: request.body.toString(),
     });

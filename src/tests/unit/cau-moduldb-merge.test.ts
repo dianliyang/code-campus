@@ -25,6 +25,7 @@ describe("CAU ModulDB merge", () => {
       ]),
     );
     expect(enriched.semesters?.[0]).toEqual({ term: "Winter", year: 2025 });
+    expect(enriched.semesters?.[0]).not.toEqual({ term: "Spring", year: 2026 });
     expect(enriched.resources).toEqual(
       expect.arrayContaining([
         "https://moduldb.informatik.uni-kiel.de/show.cgi?mod=Inf-EntEinSys",

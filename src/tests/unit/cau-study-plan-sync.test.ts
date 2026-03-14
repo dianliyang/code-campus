@@ -87,7 +87,7 @@ describe("buildCauStudyPlanRows", () => {
     expect(buildCauStudyPlanRows({ userId: "user-1", courseId: 42, course })).toEqual([]);
   });
 
-  test("skips entries with unsupported exclusion rules", () => {
+  test("keeps recurring rows even when UnivIS includes exclusion metadata", () => {
     const course: Course = {
       university: "CAU Kiel",
       courseCode: "infExcluded-01a",
@@ -108,7 +108,57 @@ describe("buildCauStudyPlanRows", () => {
       },
     };
 
-    expect(buildCauStudyPlanRows({ userId: "user-1", courseId: 42, course })).toEqual([]);
+    expect(buildCauStudyPlanRows({ userId: "user-1", courseId: 42, course })).toEqual([
+      {
+        user_id: "user-1",
+        course_id: 42,
+        start_date: "2026-04-12",
+        end_date: "2026-07-12",
+        days_of_week: [4],
+        start_time: "12:15:00",
+        end_time: "13:45:00",
+        location: "CAP3 - Horsaal 1",
+        kind: "Lecture",
+        timezone: "Europe/Berlin",
+      },
+    ]);
+  });
+
+  test("keeps CAU rows even when UnivIS marks vacation exclusions", () => {
+    const course: Course = {
+      university: "CAU Kiel",
+      courseCode: "infGAI-01a",
+      title: "Generative AI",
+      details: {
+        scheduleEntries: [
+          {
+            kind: "Lecture",
+            dayOfWeek: 1,
+            startTime: "10:15",
+            endTime: "11:45",
+            startDate: "2026-04-12",
+            endDate: "2026-07-12",
+            location: "CAP3 - Horsaal 1",
+            exclude: "vac",
+          },
+        ],
+      },
+    };
+
+    expect(buildCauStudyPlanRows({ userId: "user-1", courseId: 42, course })).toEqual([
+      {
+        user_id: "user-1",
+        course_id: 42,
+        start_date: "2026-04-12",
+        end_date: "2026-07-12",
+        days_of_week: [1],
+        start_time: "10:15:00",
+        end_time: "11:45:00",
+        location: "CAP3 - Horsaal 1",
+        kind: "Lecture",
+        timezone: "Europe/Berlin",
+      },
+    ]);
   });
 });
 
@@ -186,7 +236,7 @@ describe("syncCauStudyPlansForCourses", () => {
     ]);
   });
 
-  test("does not delete plans for courses without fresh usable rows", async () => {
+  test("replaces plans for courses with vacation-marked rows", async () => {
     const deleted: Array<{ userId?: string; courseIds?: number[] }> = [];
     const inserted: unknown[] = [];
     const supabase = {
@@ -242,9 +292,22 @@ describe("syncCauStudyPlansForCourses", () => {
       courseCodeToId: new Map([["infEOR-01a", 42]]),
     });
 
-    expect(result).toEqual({ deletedCourseIds: [], insertedCount: 0 });
-    expect(deleted).toEqual([]);
-    expect(inserted).toEqual([]);
+    expect(result).toEqual({ deletedCourseIds: [42], insertedCount: 1 });
+    expect(deleted).toEqual([{ userId: "user-1", courseIds: [42] }]);
+    expect(inserted).toEqual([
+      {
+        user_id: "user-1",
+        course_id: 42,
+        start_date: "2026-04-12",
+        end_date: "2026-07-12",
+        days_of_week: [4],
+        start_time: "12:15:00",
+        end_time: "13:45:00",
+        location: "CAP3 - Horsaal 1",
+        kind: "Lecture",
+        timezone: "Europe/Berlin",
+      },
+    ]);
   });
 });
 

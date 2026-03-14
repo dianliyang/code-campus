@@ -30,6 +30,7 @@ type XmlLectureRecord = {
   parentLectureKey: string | null;
   startdate: string | null;
   enddate: string | null;
+  isEnglish: boolean;
   name: string;
   short: string;
   titleEn: string | null;
@@ -292,6 +293,7 @@ export class CAU extends BaseScraper {
         parentLectureKey: lecture.find("parent-lv > UnivISRef[type='Lecture']").first().attr("key")?.trim() || null,
         startdate: readText(lecture, "startdate"),
         enddate: readText(lecture, "enddate"),
+        isEnglish: readText(lecture, "englisch")?.toLowerCase() === "ja",
         name: readText(lecture, "name") || "",
         short: readText(lecture, "short") || "",
         titleEn: readText(lecture, "title_en"),
@@ -465,6 +467,26 @@ export class CAU extends BaseScraper {
     if (!lecture.short.trim()) return false;
     if (this.isLayoutOnlyLecture(lecture)) return false;
     return true;
+  }
+
+  private shouldKeepAfterLanguageMerge(course: Course): boolean {
+    const details = course.details && typeof course.details === "object"
+      ? course.details as Record<string, unknown>
+      : {};
+    const modulDbTeachingLanguage =
+      typeof details.modulDbTeachingLanguage === "string"
+        ? details.modulDbTeachingLanguage.trim().toLowerCase()
+        : "";
+
+    if (modulDbTeachingLanguage.includes("deutsch") || modulDbTeachingLanguage.includes("german")) {
+      return false;
+    }
+
+    return true;
+  }
+
+  shouldKeepAfterLanguageMergeForTests(course: Course): boolean {
+    return this.shouldKeepAfterLanguageMerge(course);
   }
 
   private normalizeDescription(summary: string | null, timeDescription: string | null): string | undefined {
@@ -826,6 +848,7 @@ export class CAU extends BaseScraper {
     if (!next.credit && modul.ects) next.credit = modul.ects;
 
     details.modulDbWorkloadText = modul.workloadText;
+    details.modulDbTeachingLanguage = modul.teachingLanguage;
     details.descriptionSections = this.buildDescriptionSections(modul);
     details.modulDbLearningGoals = modul.learningGoals;
     details.modulDbContents = modul.contents;
@@ -1281,7 +1304,9 @@ export class CAU extends BaseScraper {
     const merged = xmlItems.length > 0 && htmlItems.length === 0
       ? xmlItems
       : [...xmlItems, ...this.mergeCourses(htmlItems)];
-    const enriched = await this.enrichCoursesWithModulDb(merged);
+    const enriched = (await this.enrichCoursesWithModulDb(merged)).filter((course) =>
+      this.shouldKeepAfterLanguageMerge(course),
+    );
     const projectTableCategories = new Set([
       "Seminar",
       "Advanced Project",

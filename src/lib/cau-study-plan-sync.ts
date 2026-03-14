@@ -48,7 +48,6 @@ export function buildCauStudyPlanRows({
     const endDate = typeof entry.endDate === "string" ? entry.endDate.trim() : "";
     const location = typeof entry.location === "string" ? entry.location.trim() : "";
     const kind = typeof entry.kind === "string" ? entry.kind.trim() : "";
-    const exclude = typeof entry.exclude === "string" ? entry.exclude.trim().toLowerCase() : "";
 
     if (
       !Number.isInteger(dayOfWeek) ||
@@ -57,8 +56,7 @@ export function buildCauStudyPlanRows({
       !startTime ||
       !endTime ||
       !startDate ||
-      !endDate ||
-      (exclude !== "" && exclude !== "no")
+      !endDate
     ) {
       return [];
     }

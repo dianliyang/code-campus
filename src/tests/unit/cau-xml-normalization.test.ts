@@ -8,22 +8,22 @@ describe("CAU XML normalization", () => {
     const scraper = new CAU();
 
     const courses = await scraper.parseXmlCoursesForTests(xml);
-    const course = courses.find((entry) => entry.courseCode === "infEOR-01a");
+    const course = courses.find((entry) => entry.courseCode === "Inf-EntEinSys");
 
     expect(courses.length).toBeGreaterThan(0);
     expect(course).toEqual(
       expect.objectContaining({
         university: "CAU Kiel",
-        courseCode: "infEOR-01a",
-        title: "Einf\u00fchrung in Operations Research",
-        units: "V 2 UE 2",
-        credit: 6,
-        workload: 4,
-        department: "Algorithmic Optimal Control - Ocean CO2 Uptake",
+        courseCode: "Inf-EntEinSys",
+        title: "Embedded Real-Time Systems",
+        units: "V 4 UE 2",
+        credit: 8,
+        workload: 6,
+        department: "Real-Time Systems / Embedded Systems",
         category: "Compulsory elective modules in Computer Science",
-        description: expect.stringContaining("Weitere Informationen"),
-        instructors: ["Prof. Dr. Thomas Slawig"],
-        prerequisites: undefined,
+        description: undefined,
+        instructors: ["Prof. Dr. Reinhard von Hanxleden"],
+        prerequisites: expect.stringContaining("Please register for the course in the StudiDB."),
       }),
     );
 
@@ -31,8 +31,8 @@ describe("CAU XML normalization", () => {
       expect.objectContaining({
         type: "V",
         normalizedType: "Lecture",
-        internalId: "22632461",
-        internalNumber: "080034",
+        internalId: "21176528",
+        internalNumber: "080011",
         dataSources: [
           {
             id: "univis",
@@ -46,8 +46,11 @@ describe("CAU XML normalization", () => {
     expect(course?.details).toEqual(
       expect.objectContaining({
         schedule: {
-          Lecture: ["Thursday 12:15-13:45 in CAP3 - Hörsaal 1, Christian-Albrechts-Platz 3"],
-          Exercise: ["Monday 12:15-13:45 in CAP3 - Hörsaal 1, Christian-Albrechts-Platz 3"],
+          Lecture: [
+            expect.stringContaining("Monday 14:15-15:45"),
+            expect.stringContaining("Wednesday 10:15-11:45"),
+          ],
+          Exercise: [expect.stringContaining("12:15-13:45")],
         },
       }),
     );
@@ -97,6 +100,27 @@ describe("CAU XML normalization", () => {
     expect(courses.some((entry) => entry.courseCode === "")).toBe(false);
   });
 
+  test("drops courses when merged ModulDB language is German", async () => {
+    const xml = readFileSync("src/tests/fixtures/cau/data.xml", "utf8");
+    const modulDbXml = readFileSync("src/tests/fixtures/cau/moduldb-inf-enteinsys.xml", "utf8");
+    const scraper = new CAU();
+
+    const courses = await scraper.parseXmlCoursesForTests(xml);
+    const englishCourse = courses.find((entry) => entry.courseCode === "Inf-EntEinSys");
+
+    const englishEnriched = scraper.enrichCourseWithModulDbForTests(englishCourse!, modulDbXml);
+    const germanMerged = {
+      ...englishEnriched,
+      details: {
+        ...(englishEnriched.details || {}),
+        modulDbTeachingLanguage: "Deutsch",
+      },
+    };
+
+    expect(scraper.shouldKeepAfterLanguageMergeForTests(englishEnriched)).toBe(true);
+    expect(scraper.shouldKeepAfterLanguageMergeForTests(germanMerged)).toBe(false);
+  });
+
   test("keeps XML resource links at the top level", async () => {
     const xml = readFileSync("src/tests/fixtures/cau/data.xml", "utf8");
     const scraper = new CAU();
@@ -115,20 +139,23 @@ describe("CAU XML normalization", () => {
     const scraper = new CAU();
 
     const courses = await scraper.parseXmlCoursesForTests(xml);
-    const course = courses.find((entry) => entry.courseCode === "infEOR-01a");
+    const course = courses.find((entry) => entry.courseCode === "Inf-EntEinSys");
 
     expect(course?.details).toMatchObject({
       schedule: {
-        Lecture: [expect.stringContaining("Thursday 12:15-13:45")],
+        Lecture: expect.arrayContaining([
+          expect.stringContaining("Monday 14:15-15:45"),
+          expect.stringContaining("Wednesday 10:15-11:45"),
+        ]),
       },
       scheduleEntries: expect.arrayContaining([
         expect.objectContaining({
           kind: "Lecture",
-          dayOfWeek: 4,
-          startTime: "12:15",
-          endTime: "13:45",
+          dayOfWeek: 1,
+          startTime: "14:15",
+          endTime: "15:45",
           startDate: "2026-04-12",
-          endDate: "2026-07-12",
+          endDate: "2026-04-12",
         }),
       ]),
     });

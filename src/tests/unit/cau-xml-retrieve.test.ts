@@ -48,6 +48,6 @@ describe("CAU retrieve XML flow", () => {
       }),
     ).toBe(true);
     expect(courses.length).toBeGreaterThan(0);
-    expect(courses.some((course) => course.courseCode === "infEOR-01a")).toBe(true);
+    expect(courses.some((course) => course.courseCode === "Inf-EntEinSys")).toBe(true);
   });
 });

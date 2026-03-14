@@ -862,6 +862,7 @@ export default function CourseDetailContent({
   };
 
   const handleDeleteSinglePlan = async (index: number) => {
+    if (course.isInternal) return;
     const plan = editablePlans[index];
     if (!plan) return;
     if (!plan.id) return;
@@ -886,6 +887,7 @@ export default function CourseDetailContent({
   };
 
   const handleSaveSinglePlan = async (index: number) => {
+    if (course.isInternal) return;
     const plan = editablePlans[index];
     if (!plan) return;
     setSavingPlanIndex(index);
@@ -924,6 +926,7 @@ export default function CourseDetailContent({
   };
 
   const handleStartEditPlan = (index: number) => {
+    if (course.isInternal) return;
     const target = editablePlans[index];
     const normalizedTarget = target
       ? {
@@ -1475,31 +1478,33 @@ export default function CourseDetailContent({
                                           </span>
                                         </div>
                                       </div>
-                                      <div className="inline-flex items-center gap-1">
-                                        <Button
-                                          variant="outline"
-                                          size="icon-sm"
-                                          type="button"
-                                          onClick={() => handleStartEditPlan(idx)}
-                                          title="Edit plan"
-                                        >
-                                          <PenSquare />
-                                        </Button>
-                                        <Button
-                                          variant="outline"
-                                          size="icon-sm"
-                                          type="button"
-                                          onClick={() => handleDeleteSinglePlan(idx)}
-                                          disabled={deletingPlanIndex === idx}
-                                          title="Delete plan"
-                                        >
-                                          {deletingPlanIndex === idx ? (
-                                            <Loader2 className="animate-spin" />
-                                          ) : (
-                                            <Trash2 />
-                                          )}
-                                        </Button>
-                                      </div>
+                                      {!course.isInternal ? (
+                                        <div className="inline-flex items-center gap-1">
+                                          <Button
+                                            variant="outline"
+                                            size="icon-sm"
+                                            type="button"
+                                            onClick={() => handleStartEditPlan(idx)}
+                                            title="Edit plan"
+                                          >
+                                            <PenSquare />
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="icon-sm"
+                                            type="button"
+                                            onClick={() => handleDeleteSinglePlan(idx)}
+                                            disabled={deletingPlanIndex === idx}
+                                            title="Delete plan"
+                                          >
+                                            {deletingPlanIndex === idx ? (
+                                              <Loader2 className="animate-spin" />
+                                            ) : (
+                                              <Trash2 />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      ) : null}
                                     </div>
                                   </div>
                                 ) : (

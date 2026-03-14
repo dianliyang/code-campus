@@ -1,7 +1,13 @@
 import React from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ActiveCourseTrack from "@/components/home/ActiveCourseTrack";
+
+const refreshMock = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: refreshMock }),
+}));
 
 vi.mock("next/link", () => ({
   default: ({
@@ -51,6 +57,8 @@ const courseWithCredit = {
 describe("ActiveCourseTrack", () => {
   afterEach(() => {
     cleanup();
+    refreshMock.mockReset();
+    vi.unstubAllGlobals();
   });
 
   test("shows schedule times, date range, day count, and credits in separate footer columns", () => {
@@ -126,7 +134,7 @@ describe("ActiveCourseTrack", () => {
     expect(creditSummary.textContent).toBe("No credit");
   });
 
-  test("disables detail prefetch for course links", () => {
+  test("disables detail prefetch for the title link and exposes a mark-completed action", () => {
     render(
       <ActiveCourseTrack
         course={course}
@@ -137,8 +145,47 @@ describe("ActiveCourseTrack", () => {
 
     const titleLink = screen.getByRole("link", { name: "Algorithms in Practice" });
     expect(titleLink.getAttribute("data-prefetch")).toBe("false");
+    expect(screen.getByRole("button", { name: "Mark completed" })).toBeDefined();
+  });
 
-    const openCourseLinks = screen.getAllByRole("link");
-    expect(openCourseLinks.some((link) => link.getAttribute("data-prefetch") === "false")).toBe(true);
+  test("marks the roadmap course completed through the enrollment API", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ActiveCourseTrack
+        course={course}
+        initialProgress={0}
+        plan={null}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark completed" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/courses/enroll",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      );
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/courses/enroll",
+      expect.objectContaining({
+        body: JSON.stringify({
+          courseId: 42,
+          action: "update_progress",
+          progress: 100,
+          gpa: 0,
+          score: 0,
+        }),
+      }),
+    );
+    expect(refreshMock).toHaveBeenCalled();
   });
 });

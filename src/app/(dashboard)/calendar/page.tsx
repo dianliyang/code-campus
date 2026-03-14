@@ -66,7 +66,7 @@ async function StudyScheduleContent({
   const coursesRes = await supabase
       .from('courses')
       .select(`
-        id, university, course_code, title, units, credit, url, details,
+        id, university, course_code, title, units, credit, url, details, is_internal,
         user_courses!inner(status)
       `)
       .eq('user_courses.user_id', userId)

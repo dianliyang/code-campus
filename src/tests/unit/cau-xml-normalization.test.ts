@@ -118,6 +118,68 @@ describe("CAU XML normalization", () => {
     expect(courses.map((entry) => entry.courseCode)).toEqual(["Inf-KEEP"]);
   });
 
+  test("merges auxiliary XML exercise rows into an explicit-English parent lecture even when the child row has no englisch flag", async () => {
+    const xml = `<?xml version="1.0"?>
+      <UnivIS version="1.6" semester="2025w" organisation="CAU Kiel">
+        <Room key="Room.one">
+          <short>CAP</short>
+        </Room>
+        <Room key="Room.two">
+          <short>OS</short>
+        </Room>
+        <Lecture key="Lecture.parent">
+          <classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+          <dozs></dozs>
+          <englisch>ja</englisch>
+          <id>1</id>
+          <name>infIntCry-01a: Introduction to Cryptography</name>
+          <short>infIntCry-01a</short>
+          <startdate>2025-10-19</startdate>
+          <enddate>2026-02-08</enddate>
+          <sws>2</sws>
+          <terms>
+            <term>
+              <repeat>w1 3</repeat>
+              <starttime>8:15</starttime>
+              <endtime>9:45</endtime>
+              <room><UnivISRef type="Room" key="Room.one" /></room>
+            </term>
+          </terms>
+          <type>V</type>
+        </Lecture>
+        <Lecture key="Lecture.child">
+          <dozs></dozs>
+          <id>2</id>
+          <name>Exercise: Introduction to Cryptography</name>
+          <parent-lv><UnivISRef type="Lecture" key="Lecture.parent" /></parent-lv>
+          <startdate>2025-10-19</startdate>
+          <enddate>2026-02-08</enddate>
+          <sws>2</sws>
+          <terms>
+            <term>
+              <repeat>w1 2</repeat>
+              <starttime>12:15</starttime>
+              <endtime>13:45</endtime>
+              <room><UnivISRef type="Room" key="Room.two" /></room>
+            </term>
+          </terms>
+          <type>UE</type>
+        </Lecture>
+      </UnivIS>`;
+    const scraper = new CAU();
+
+    const courses = await scraper.parseXmlCoursesForTests(xml);
+    const course = courses.find((entry) => entry.courseCode === "infIntCry-01a");
+
+    expect(course?.units).toBe("V 2 UE 2");
+    expect(course?.details).toMatchObject({
+      schedule: {
+        Lecture: [expect.stringContaining("Wednesday 8:15-9:45")],
+        Exercise: [expect.stringContaining("Tuesday 12:15-13:45")],
+      },
+    });
+  });
+
   test("drops courses when merged ModulDB language is German", async () => {
     const xml = readFileSync("src/tests/fixtures/cau/data.xml", "utf8");
     const modulDbXml = readFileSync("src/tests/fixtures/cau/moduldb-inf-enteinsys.xml", "utf8");

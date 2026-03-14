@@ -57,6 +57,7 @@ interface EnrolledCourse {
   university: string;
   title: string;
   credit?: number;
+  isInternal?: boolean;
 }
 
 interface StudyCalendarProps {
@@ -165,6 +166,87 @@ function formatMinutesAsTime(totalMinutes: number) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
 }
 
+function parseDateUtc(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, (month || 1) - 1, day || 1));
+}
+
+function formatDateUtc(date: Date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    date.getUTCDate(),
+  ).padStart(2, "0")}`;
+}
+
+function addDaysUtc(date: Date, days: number) {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+function buildOptimisticStudyPlanRows(input: {
+  plan: CalendarStudyPlanRecord;
+  scheduleRows: DatabaseScheduleRow[];
+}) {
+  const existingPlanRows = input.scheduleRows.filter(
+    (row) =>
+      row.plan_id === input.plan.id &&
+      row.source_type === "study_plan" &&
+      row.schedule_id == null &&
+      row.assignment_id == null,
+  );
+  const templateRow = existingPlanRows[0];
+  if (!templateRow) {
+    return input.scheduleRows;
+  }
+
+  const unaffectedRows = input.scheduleRows.filter(
+    (row) =>
+      !(
+        row.plan_id === input.plan.id &&
+        row.source_type === "study_plan" &&
+        row.schedule_id == null &&
+        row.assignment_id == null
+      ),
+  );
+
+  const allDates = input.scheduleRows.map((row) => row.event_date);
+  if (allDates.length === 0) {
+    return unaffectedRows;
+  }
+
+  const visibleStart = allDates.reduce((min, value) => (value < min ? value : min), allDates[0]);
+  const visibleEnd = allDates.reduce((max, value) => (value > max ? value : max), allDates[0]);
+  const effectiveStart = input.plan.start_date > visibleStart ? input.plan.start_date : visibleStart;
+  const effectiveEnd = input.plan.end_date < visibleEnd ? input.plan.end_date : visibleEnd;
+  if (effectiveStart > effectiveEnd) {
+    return unaffectedRows;
+  }
+
+  const daySet = new Set(input.plan.days_of_week);
+  const nextRows: DatabaseScheduleRow[] = [];
+  for (
+    let current = parseDateUtc(effectiveStart);
+    formatDateUtc(current) <= effectiveEnd;
+    current = addDaysUtc(current, 1)
+  ) {
+    const currentKey = formatDateUtc(current);
+    if (!daySet.has(current.getUTCDay())) continue;
+    nextRows.push({
+      ...templateRow,
+      event_date: currentKey,
+      start_time: input.plan.start_time,
+      end_time: input.plan.end_time,
+      location: input.plan.location,
+      kind: input.plan.kind || templateRow.kind,
+    });
+  }
+
+  return [...unaffectedRows, ...nextRows].sort((a, b) => {
+    if (a.event_date !== b.event_date) return a.event_date.localeCompare(b.event_date);
+    return (a.start_time || "").localeCompare(b.start_time || "");
+  });
+}
+
 export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], dict, initialDate }: StudyCalendarProps) {
   const router = useRouter();
   const anchorToday = useMemo(() => initialDate ?? new Date(), [initialDate]);
@@ -179,7 +261,17 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [localScheduleRows, setLocalScheduleRows] = useState<DatabaseScheduleRow[]>(scheduleRows);
+  const [localStudyPlans, setLocalStudyPlans] = useState<CalendarStudyPlanRecord[]>(studyPlans);
   const suppressPopoverKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    setLocalScheduleRows(scheduleRows);
+  }, [scheduleRows]);
+
+  useEffect(() => {
+    setLocalStudyPlans(studyPlans);
+  }, [studyPlans]);
 
   useEffect(() => {
     const updateViewport = () => setIsMobileViewport(window.innerWidth < 768);
@@ -202,12 +294,12 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
     [courses]
   );
   const studyPlanMap = useMemo(
-    () => new Map(studyPlans.map((plan) => [plan.id, plan])),
-    [studyPlans],
+    () => new Map(localStudyPlans.map((plan) => [plan.id, plan])),
+    [localStudyPlans],
   );
 
   const allEvents = useMemo(() => {
-    return scheduleRows.map((row) => {
+    return localScheduleRows.map((row) => {
       const startMinutes = parseMinutes(row.start_time);
       const endMinutes = parseMinutes(row.end_time);
       
@@ -238,7 +330,35 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
         sourceType: uiSourceType,
       } as CalendarEvent;
     });
-  }, [scheduleRows, courseMap]);
+  }, [localScheduleRows, courseMap]);
+
+  const applyOptimisticStudyPlanUpdate = (nextPlan: CalendarStudyPlanRecord) => {
+    const previousStudyPlans = localStudyPlans;
+    const previousScheduleRows = localScheduleRows;
+
+    setLocalStudyPlans((current) =>
+      current.map((plan) => (plan.id === nextPlan.id ? nextPlan : plan)),
+    );
+    setLocalScheduleRows((current) =>
+      buildOptimisticStudyPlanRows({
+        plan: nextPlan,
+        scheduleRows: current,
+      }),
+    );
+
+    return {
+      previousStudyPlans,
+      previousScheduleRows,
+    };
+  };
+
+  const rollbackOptimisticStudyPlanUpdate = (snapshot: {
+    previousStudyPlans: CalendarStudyPlanRecord[];
+    previousScheduleRows: DatabaseScheduleRow[];
+  }) => {
+    setLocalStudyPlans(snapshot.previousStudyPlans);
+    setLocalScheduleRows(snapshot.previousScheduleRows);
+  };
 
   const weekCalendarEvents = useMemo(
     () => allEvents.filter((event) => shouldIncludeWeekCalendarRow({
@@ -417,6 +537,7 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
   const isDraggableStudyPlan = (event: CalendarEvent) =>
     event.sourceType === "study_plan" &&
     event.planId != null &&
+    !courseMap.get(event.courseId || -1)?.isInternal &&
     event.scheduleId == null &&
     event.assignmentId == null &&
     studyPlanMap.has(event.planId);
@@ -496,16 +617,27 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
       }, 0);
 
       setPendingEventKeys((prev) => ({ ...prev, [currentDrag.eventKey]: true }));
+      const nextPlan: CalendarStudyPlanRecord = {
+        ...plan,
+        days_of_week: payload.daysOfWeek,
+        start_time: payload.startTime,
+        end_time: payload.endTime,
+        location: payload.location,
+        kind: payload.kind || null,
+        timezone: payload.timezone,
+      };
+      const snapshot = applyOptimisticStudyPlanUpdate(nextPlan);
       try {
         const res = await fetch("/api/study-plans/update", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        if (res.ok) {
-          router.refresh();
+        if (!res.ok) {
+          rollbackOptimisticStudyPlanUpdate(snapshot);
         }
       } catch (error) {
+        rollbackOptimisticStudyPlanUpdate(snapshot);
         console.error("Failed to update study plan from drag:", error);
       } finally {
         setPendingEventKeys((prev) => ({ ...prev, [currentDrag.eventKey]: false }));
@@ -592,16 +724,27 @@ export default function StudyCalendar({ courses, scheduleRows, studyPlans = [], 
       }, 0);
 
       setPendingEventKeys((prev) => ({ ...prev, [currentResize.eventKey]: true }));
+      const nextPlan: CalendarStudyPlanRecord = {
+        ...plan,
+        days_of_week: payload.daysOfWeek,
+        start_time: payload.startTime,
+        end_time: payload.endTime,
+        location: payload.location,
+        kind: payload.kind || null,
+        timezone: payload.timezone,
+      };
+      const snapshot = applyOptimisticStudyPlanUpdate(nextPlan);
       try {
         const res = await fetch("/api/study-plans/update", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        if (res.ok) {
-          router.refresh();
+        if (!res.ok) {
+          rollbackOptimisticStudyPlanUpdate(snapshot);
         }
       } catch (error) {
+        rollbackOptimisticStudyPlanUpdate(snapshot);
         console.error("Failed to resize study plan from calendar:", error);
       } finally {
         setPendingEventKeys((prev) => ({ ...prev, [currentResize.eventKey]: false }));

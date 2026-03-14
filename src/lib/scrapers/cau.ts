@@ -1018,7 +1018,6 @@ export class CAU extends BaseScraper {
     ]));
 
     for (const record of records) {
-      if (!record.isEnglish) continue;
       if (!this.isAuxiliaryType(record.type)) continue;
       const parentKey = record.parentLectureKey;
       if (!parentKey) continue;

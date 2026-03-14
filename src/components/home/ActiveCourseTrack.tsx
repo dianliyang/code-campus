@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { Course } from "@/types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import UniversityIcon from "@/components/common/UniversityIcon";
 import { Dictionary } from "@/lib/dictionary";
 import AddPlanModal from "./AddPlanModal";
@@ -33,7 +34,6 @@ import {
   HoverCardTrigger
 } from "@/components/ui/hover-card";
 import {
-  ExternalLink,
   CalendarCheck,
   CalendarPlus,
   Check,
@@ -65,9 +65,11 @@ export default function ActiveCourseTrack({
   initialProgress,
   plan
 }: Omit<ActiveCourseTrackProps, "dict">) {
+  const router = useRouter();
   const [showAddPlanModal, setShowAddPlanModal] = useState(false);
   const [localPlan, setLocalPlan] = useState(plan);
   const [isAiUpdating, setIsAiUpdating] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [aiSourceMode, setAiSourceMode] = useState<AiSyncSourceMode>("auto");
   const { showToast } = useAppToast();
 
@@ -179,6 +181,42 @@ export default function ActiveCourseTrack({
   const progressSegments = 10;
   const filledSegments = Math.max(0, Math.min(progressSegments, Math.round(progress / (100 / progressSegments))));
 
+  const handleMarkCompleted = async () => {
+    setIsCompleting(true);
+    try {
+      const res = await fetch("/api/courses/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: course.id,
+          action: "update_progress",
+          progress: 100,
+          gpa: 0,
+          score: 0,
+        }),
+      });
+
+      if (!res.ok) {
+        let message = "Failed to mark course completed.";
+        try {
+          const payload = await res.json();
+          if (payload?.error) message = payload.error;
+        } catch {
+          // Ignore malformed payloads.
+        }
+        showToast({ type: "error", message });
+        return;
+      }
+
+      showToast({ type: "success", message: "Course marked completed." });
+      router.refresh();
+    } catch {
+      showToast({ type: "error", message: "Network error while marking course completed." });
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
   return (
     <Card className="h-full flex flex-col overflow-hidden bg-white text-[#1f1f1f] shadow-sm">
       <CardHeader className="p-3 pb-1.5">
@@ -260,10 +298,17 @@ export default function ActiveCourseTrack({
                 </PopoverContent>
               </Popover>
 
-              <Button variant="outline" size="icon-sm" className="h-7 w-7 shadow-none" asChild>
-                <Link href={detailHref} prefetch={false} title="Open course">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Link>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="h-7 w-7 shadow-none"
+                type="button"
+                title="Mark completed"
+                aria-label="Mark completed"
+                onClick={handleMarkCompleted}
+                disabled={isCompleting}
+              >
+                {isCompleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
               </Button>
             </ButtonGroup>
           </div>

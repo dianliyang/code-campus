@@ -563,4 +563,38 @@ describe("CourseDetailContent tabs", () => {
     expect(screen.getAllByTitle("Edit plan").length).toBeGreaterThanOrEqual(3);
     expect(screen.getAllByTitle("Delete plan").length).toBeGreaterThanOrEqual(3);
   });
+
+  test("does not expose study plan edit or delete controls for internal courses", async () => {
+    const { default: CourseDetailContent } = await import("@/components/courses/CourseDetailContent");
+    mockSearchParams = new URLSearchParams();
+
+    const { container } = render(
+      <CourseDetailContent
+        course={{
+          ...baseCourse,
+          isInternal: true,
+        }}
+        isEnrolled={true}
+        descriptionEmptyText="No description"
+        availableTopics={[]}
+        availableSemesters={[]}
+        studyPlans={[
+          {
+            id: 1,
+            daysOfWeek: [1],
+            startTime: "10:00:00",
+            endTime: "11:00:00",
+            location: "Library",
+            kind: "Study",
+            startDate: "2026-03-01",
+            endDate: "2026-03-31",
+            timezone: "UTC",
+          },
+        ]}
+      />,
+    );
+
+    expect(container.querySelector('[title="Edit plan"]')).toBeNull();
+    expect(container.querySelector('[title="Delete plan"]')).toBeNull();
+  });
 });

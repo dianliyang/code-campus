@@ -309,7 +309,7 @@ export class SupabaseDatabase {
       const courseCodes = coursesForUpsert.map((c) => c.courseCode);
       const { data: existingRows, error: existingFetchError } = await supabase
         .from("courses")
-        .select("id, course_code, details, credit, latest_semester")
+        .select("id, course_code, details, credit, latest_semester, is_internal")
         .eq("university", university)
         .in("course_code", courseCodes);
 
@@ -359,9 +359,11 @@ export class SupabaseDatabase {
         const creditChanged =
           typeof course.credit === "number" &&
           course.credit !== existing.credit;
+        const nextInternal = defaultImportedCourseInternalValue(course);
+        const internalChanged = Boolean(existing.is_internal) !== nextInternal;
 
         if (!nextSchedule && !nextScheduleEntries) {
-          if (!latestSemesterChanged && !creditChanged) {
+          if (!latestSemesterChanged && !creditChanged && !internalChanged) {
             continue;
           }
 
@@ -370,6 +372,7 @@ export class SupabaseDatabase {
             .update({
               ...(typeof course.credit === "number" ? { credit: course.credit } : {}),
               ...(latestSemester ? { latest_semester: latestSemester as Json } : {}),
+              is_internal: defaultImportedCourseInternalValue(course),
             })
             .eq("id", existing.id);
 
@@ -394,7 +397,7 @@ export class SupabaseDatabase {
           stableStringify(currentSchedule || {}) !== stableStringify(nextSchedule || {}) ||
           stableStringify(currentScheduleEntries || []) !== stableStringify(nextScheduleEntries || []);
 
-        if (!scheduleChanged && !latestSemesterChanged && !creditChanged) {
+        if (!scheduleChanged && !latestSemesterChanged && !creditChanged && !internalChanged) {
           continue;
         }
 
@@ -409,6 +412,7 @@ export class SupabaseDatabase {
             ...(typeof course.credit === "number" ? { credit: course.credit } : {}),
             details: mergedDetails as Json,
             ...(latestSemester ? { latest_semester: latestSemester as Json } : {}),
+            is_internal: defaultImportedCourseInternalValue(course),
           })
           .eq("id", existing.id);
 
@@ -543,12 +547,16 @@ export class SupabaseDatabase {
           subdomain: c.subdomain,
           resources: Array.isArray(c.resources) ? c.resources : [],
           category: c.category,
-          // Never overwrite user-managed fields on force update;
-          // only set them on initial insert (new courses have no existing row).
-          ...(forceUpdate ? {} : {
-            is_hidden: c.isHidden || false,
-            is_internal: defaultImportedCourseInternalValue(c),
-          }),
+          ...(forceUpdate
+            ? {
+                ...(university === "CAU Kiel"
+                  ? { is_internal: defaultImportedCourseInternalValue(c) }
+                  : {}),
+              }
+            : {
+                is_hidden: c.isHidden || false,
+                is_internal: defaultImportedCourseInternalValue(c),
+              }),
         };
 
         if (mergedRelatedLinks.length > 0) {

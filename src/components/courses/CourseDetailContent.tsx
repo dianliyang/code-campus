@@ -11,11 +11,8 @@ import WeeklyScheduleCard from "@/components/courses/WeeklyScheduleCard";
 import CourseDetailHeader from "@/components/courses/CourseDetailHeader";
 import AddPlanModal from "@/components/home/AddPlanModal";
 import {
-  confirmGeneratedStudyPlans,
-  previewStudyPlansFromCourseSchedule,
   toggleCourseEnrollmentAction,
   updateCourseResources,
-  type SchedulePlanPreview,
 } from "@/actions/courses";
 import {
   CalendarPlus,
@@ -36,12 +33,9 @@ import {
   Tag,
   Trash2,
   Users,
-  WandSparkles,
   X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -240,6 +234,34 @@ function calculateInclusiveDays(
   return diff >= 0 ? diff + 1 : null;
 }
 
+type GroupedStudyPlan = {
+  key: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  kind: string;
+  timezone: string;
+  daysOfWeek: number[];
+  items: Array<{
+    index: number;
+    plan: EditableStudyPlan;
+  }>;
+};
+
+function buildStudyPlanGroupKey(plan: EditableStudyPlan): string {
+  return [
+    plan.startDate,
+    plan.endDate,
+    plan.startTime,
+    plan.endTime,
+    plan.location || "",
+    plan.kind || "",
+    plan.timezone || "UTC",
+  ].join("::");
+}
+
 function getPreviewableUrl(url: string): string | null {
   const trimmed = String(url || "").trim();
   if (!trimmed) return null;
@@ -409,8 +431,6 @@ export default function CourseDetailContent({
   const [enrolled, setEnrolled] = useState(isEnrolled);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [isGeneratingPlans, setIsGeneratingPlans] = useState(false);
-  const [isConfirmingPlans, setIsConfirmingPlans] = useState(false);
   const [editablePlans, setEditablePlans] =
     useState<EditableStudyPlan[]>(studyPlans);
   const [editingPlanIndex, setEditingPlanIndex] = useState<number | null>(null);
@@ -423,11 +443,6 @@ export default function CourseDetailContent({
   const [locatingPlanIndex, setLocatingPlanIndex] = useState<number | null>(
     null,
   );
-  const [planPreview, setPlanPreview] = useState<{
-    originalSchedule: Array<{ type: string; line: string }>;
-    generatedPlans: SchedulePlanPreview[];
-  } | null>(null);
-  const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([]);
   const [localResources, setLocalResources] = useState<string[]>(
     course.resources || [],
   );
@@ -458,6 +473,38 @@ export default function CourseDetailContent({
   const hasStudyPlans = editablePlans.length > 0;
   const normalizeTime = (value: string) =>
     value.length === 5 ? `${value}:00` : value || "09:00:00";
+  const groupedStudyPlans = useMemo<GroupedStudyPlan[]>(() => {
+    const groups = new Map<string, GroupedStudyPlan>();
+    editablePlans.forEach((plan, index) => {
+      const key = buildStudyPlanGroupKey(plan);
+      const existing = groups.get(key);
+      if (existing) {
+        existing.items.push({ index, plan });
+        existing.daysOfWeek = Array.from(
+          new Set([...(existing.daysOfWeek || []), ...(plan.daysOfWeek || [])]),
+        ).sort((a, b) => a - b);
+        return;
+      }
+      groups.set(key, {
+        key,
+        startDate: plan.startDate,
+        endDate: plan.endDate,
+        startTime: plan.startTime,
+        endTime: plan.endTime,
+        location: plan.location,
+        kind: plan.kind,
+        timezone: plan.timezone || "UTC",
+        daysOfWeek: [...(plan.daysOfWeek || [])].sort((a, b) => a - b),
+        items: [{ index, plan }],
+      });
+    });
+
+    return Array.from(groups.values()).sort((a, b) => {
+      const aStart = `${a.startDate}-${a.startTime}`;
+      const bStart = `${b.startDate}-${b.startTime}`;
+      return aStart.localeCompare(bStart);
+    });
+  }, [editablePlans]);
   const unitInfo = useMemo(
     () => getUniversityUnitInfo(course.university, course.units),
     [course.university, course.units],
@@ -727,69 +774,6 @@ export default function CourseDetailContent({
     return isSelected ? theme.tint : theme.solid;
   };
 
-  const handleGeneratePlans = async () => {
-    setIsGeneratingPlans(true);
-    try {
-      const preview = await previewStudyPlansFromCourseSchedule(course.id);
-      const selectableIds = preview.generatedPlans.map((_, idx) => String(idx));
-      setPlanPreview(preview);
-      setSelectedPlanIds(selectableIds);
-    } catch (error) {
-      console.error(error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to generate study plans from schedule",
-        { position: "bottom-right" },
-      );
-    } finally {
-      setIsGeneratingPlans(false);
-    }
-  };
-
-  const handleConfirmPlans = async () => {
-    if (!planPreview) return;
-    setIsConfirmingPlans(true);
-    try {
-      const selected = planPreview.generatedPlans
-        .map((plan, idx) => ({ plan, idx: String(idx) }))
-        .filter(({ idx }) => selectedPlanIds.includes(idx))
-        .map(({ plan }) => ({
-          daysOfWeek: plan.daysOfWeek,
-          startTime: plan.startTime,
-          endTime: plan.endTime,
-          location: plan.location,
-          kind: plan.kind,
-          startDate: plan.startDate,
-          endDate: plan.endDate,
-        }));
-      const result = await confirmGeneratedStudyPlans(course.id, selected, {
-        replaceExisting: true,
-      });
-      toast.success(`Updated Weekly Schedule with ${result.created} plan(s).`, {
-        position: "bottom-right",
-      });
-      setPlanPreview(null);
-      setSelectedPlanIds([]);
-      startTransition(() => router.refresh());
-    } catch (error) {
-      console.error(error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to save generated study plans",
-        { position: "bottom-right" },
-      );
-    } finally {
-      setIsConfirmingPlans(false);
-    }
-  };
-
-  const handleDiscardPlans = () => {
-    setPlanPreview(null);
-    setSelectedPlanIds([]);
-  };
-
   const handleEnrollToggle = async () => {
     setIsEnrolling(true);
     try {
@@ -1040,6 +1024,219 @@ export default function CourseDetailContent({
     });
   };
 
+  const renderPlanEditor = (idx: number, plan: EditableStudyPlan) => (
+    <div className="mt-2">
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <Field className="md:col-span-2">
+            <FieldLabel>Date Range</FieldLabel>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  type="button"
+                  className="w-full justify-between font-normal"
+                >
+                  {plan.startDate && plan.endDate
+                    ? `${format(parseISO(plan.startDate), "LLL dd, y")} - ${format(parseISO(plan.endDate), "LLL dd, y")}`
+                    : "Pick a date range"}
+                  <ChevronDownIcon />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="range"
+                  numberOfMonths={2}
+                  selected={
+                    {
+                      from: plan.startDate ? parseISO(plan.startDate) : undefined,
+                      to: plan.endDate ? parseISO(plan.endDate) : undefined,
+                    } as DateRange
+                  }
+                  onSelect={(range) => {
+                    const from = range?.from;
+                    const to = range?.to || range?.from;
+                    if (!from) return;
+                    updateEditablePlan(idx, (p) => ({
+                      ...p,
+                      startDate: format(from, "yyyy-MM-dd"),
+                      endDate: format(to!, "yyyy-MM-dd"),
+                    }));
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <Field>
+            <FieldLabel>Start Time</FieldLabel>
+            <Input
+              type="time"
+              step="1"
+              value={plan.startTime.slice(0, 5)}
+              onChange={(e) =>
+                updateEditablePlan(idx, (p) => ({
+                  ...p,
+                  startTime: normalizeTime(e.target.value),
+                }))
+              }
+              className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+            />
+          </Field>
+          <Field>
+            <FieldLabel>End Time</FieldLabel>
+            <Input
+              type="time"
+              step="1"
+              value={plan.endTime.slice(0, 5)}
+              onChange={(e) =>
+                updateEditablePlan(idx, (p) => ({
+                  ...p,
+                  endTime: normalizeTime(e.target.value),
+                }))
+              }
+              className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+            />
+          </Field>
+        </div>
+
+        <Field>
+          <FieldLabel>Days of Week</FieldLabel>
+          <div className="grid grid-cols-7 gap-1">
+            {dayLabels.map((day, dayIdx) => {
+              const selected = (plan.daysOfWeek || []).includes(dayIdx);
+              return (
+                <Toggle
+                  key={`edit-day-${idx}-${day}`}
+                  pressed={selected}
+                  onPressedChange={() => toggleEditDay(idx, dayIdx)}
+                  variant="outline"
+                  size="sm"
+                  className="text-[11px] font-semibold data-[state=on]:border-black data-[state=on]:bg-black data-[state=on]:text-white"
+                >
+                  {day}
+                </Toggle>
+              );
+            })}
+          </div>
+        </Field>
+
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <Field>
+            <FieldLabel>Kind</FieldLabel>
+            <Input
+              value={plan.kind || ""}
+              onChange={(e) =>
+                updateEditablePlan(idx, (p) => ({
+                  ...p,
+                  kind: e.target.value,
+                }))
+              }
+              placeholder="Type"
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Location</FieldLabel>
+            <InputGroup>
+              <InputGroupInput
+                value={plan.location}
+                onChange={(e) =>
+                  updateEditablePlan(idx, (p) => ({
+                    ...p,
+                    location: e.target.value,
+                  }))
+                }
+                placeholder="Location"
+              />
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  size="icon-xs"
+                  type="button"
+                  onClick={() => handleUseCurrentLocationForPlan(idx)}
+                  title="Use current location"
+                  aria-label="Use current location"
+                >
+                  {locatingPlanIndex === idx ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <LocateFixed />
+                  )}
+                </InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
+          </Field>
+          <Field>
+            <FieldLabel>Timezone</FieldLabel>
+            {(() => {
+              const timeZoneGroups = getTimeZoneGroups(plan.timezone || currentTimeZone);
+              return (
+                <Combobox
+                  items={timeZoneGroups}
+                  value={plan.timezone || currentTimeZone}
+                  onValueChange={(next) => {
+                    updateEditablePlan(idx, (p) => ({
+                      ...p,
+                      timezone: String(next || currentTimeZone),
+                    }));
+                  }}
+                >
+                  <ComboboxInput placeholder="Select timezone" />
+                  <ComboboxContent>
+                    <ComboboxEmpty>No timezones found.</ComboboxEmpty>
+                    <ComboboxList>
+                      {(group, groupIndex) => (
+                        <ComboboxGroup key={`${idx}-${group.value}`} items={group.items}>
+                          <ComboboxLabel>{group.value}</ComboboxLabel>
+                          <ComboboxCollection>
+                            {(item) => (
+                              <ComboboxItem key={`${idx}-${item}`} value={item}>
+                                {item}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxCollection>
+                          {groupIndex < timeZoneGroups.length - 1 ? (
+                            <ComboboxSeparator />
+                          ) : null}
+                        </ComboboxGroup>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              );
+            })()}
+          </Field>
+        </div>
+      </div>
+      <div className="mt-3 flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          type="button"
+          onClick={() => handleSaveSinglePlan(idx)}
+          disabled={savingPlanIndex === idx}
+          title="Confirm"
+        >
+          {savingPlanIndex === idx ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <Check />
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          type="button"
+          onClick={handleCancelEditPlan}
+          title="Cancel"
+        >
+          <X />
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="px-4 lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div
@@ -1159,155 +1356,8 @@ export default function CourseDetailContent({
                         />
                       </PopoverContent>
                     </Popover>
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      type="button"
-                      onClick={handleGeneratePlans}
-                      disabled={isGeneratingPlans}
-                      title="Generate study plan preview"
-                    >
-                      {isGeneratingPlans ? (
-                        <Loader2 className="animate-spin" />
-                      ) : (
-                        <WandSparkles />
-                      )}
-                    </Button>
                   </div>
                 </div>
-                {planPreview && (
-                  <div className="mb-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                    <Card className="border-primary/20 bg-primary/5">
-                      <CardContent className="p-6">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                          <div className="space-y-1">
-                            <h3 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
-                              <WandSparkles className="w-5 h-5 text-primary" />
-                              Study Plan Preview
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              Generated from course schedule. Select plans to save into your roadmap.
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="default"
-                              type="button"
-                              onClick={handleConfirmPlans}
-                              disabled={isConfirmingPlans || selectedPlanIds.length === 0}
-                              className="h-9 font-semibold"
-                            >
-                              {isConfirmingPlans ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              ) : (
-                                <Check className="mr-2 h-4 w-4" />
-                              )}
-                              Save Selected Plans
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={handleDiscardPlans}
-                              disabled={isConfirmingPlans}
-                              className="h-9"
-                            >
-                              <X className="mr-2 h-4 w-4" />
-                              Discard
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                          <div className="lg:col-span-2 space-y-4">
-                            <div className="space-y-3">
-                              <h4 className="text-sm font-semibold text-muted-foreground">Original Schedule</h4>
-                              <div className="rounded-xl border border-border bg-background/50 p-4">
-                                <ul className="space-y-2.5">
-                                  {planPreview.originalSchedule.map((item, idx) => (
-                                    <li key={`${item.type}-${idx}`} className="text-sm flex flex-col gap-0.5">
-                                      <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground">{item.type}</span>
-                                      <span className="text-foreground/90 font-medium leading-relaxed">{item.line}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="hidden lg:flex items-center justify-center">
-                            <Separator orientation="vertical" className="h-full bg-border/50" />
-                          </div>
-
-                          <div className="lg:col-span-2 space-y-4">
-                            <div className="space-y-3">
-                              <h4 className="text-sm font-semibold text-muted-foreground">AI Generated Plans</h4>
-                              <div className="space-y-2.5">
-                                {planPreview.generatedPlans.map((plan, idx) => {
-                                  const id = String(idx);
-                                  const daysText = plan.daysOfWeek
-                                    .map((d) => dayLabels[d] || String(d))
-                                    .join(", ");
-                                  return (
-                                    <div
-                                      key={id}
-                                      data-testid={`generated-plan-card-${id}`}
-                                      className="relative flex items-start gap-4 rounded-xl border border-border bg-muted/30 p-4"
-                                    >
-                                      <div className="pt-0.5">
-                                        <Checkbox
-                                          id={`plan-${id}`}
-                                          checked={selectedPlanIds.includes(id)}
-                                          onCheckedChange={(checked) => {
-                                            setSelectedPlanIds((prev) =>
-                                              checked
-                                                ? [...prev, id]
-                                                : prev.filter((v) => v !== id),
-                                            );
-                                          }}
-                                          disabled={isConfirmingPlans}
-                                        />
-                                      </div>
-                                      <label
-                                        htmlFor={`plan-${id}`}
-                                        className="flex-1 cursor-pointer select-none space-y-1.5"
-                                      >
-                                        <div className="flex items-center justify-between gap-2">
-                                          <span className="font-bold text-sm tracking-tight text-foreground">
-                                            {daysText} • {plan.startTime.slice(0, 5)}-{plan.endTime.slice(0, 5)}
-                                          </span>
-                                          <Badge variant="secondary" className="bg-background border font-bold text-[10px] h-5 px-1.5">
-                                            {plan.kind || "Session"}
-                                          </Badge>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                          <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                                            <MapPin className="w-3 h-3" />
-                                            {plan.location}
-                                            {plan.alreadyExists && (
-                                              <span className="text-amber-600 font-bold ml-1">(Replaces existing)</span>
-                                            )}
-                                          </span>
-                                          {plan.startDate && plan.endDate && (
-                                            <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1.5 font-medium">
-                                              <Clock className="w-3 h-3" />
-                                              {formatDateForUser(plan.startDate, { month: "short", day: "numeric" })}
-                                              {" - "}
-                                              {formatDateForUser(plan.endDate, { month: "short", day: "numeric", year: "numeric" })}
-                                            </span>
-                                          )}
-                                        </div>
-                                      </label>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
                 <div
                   className={
                     hasStudyPlans
@@ -1316,386 +1366,150 @@ export default function CourseDetailContent({
                   }
                 >
                   {hasStudyPlans ? (
-                    editablePlans.map((plan, idx) => (
+                    groupedStudyPlans.map((group) => (
                       <WeeklyScheduleCard
-                        key={plan.id ?? idx}
+                        key={group.key}
                         size="small"
                         title={
-                          editingPlanIndex !== idx ? (
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2 text-sm font-semibold text-[#111111] leading-snug">
-                                <span>
-                                  {plan.startTime.slice(0, 5)} -{" "}
-                                  {plan.endTime.slice(0, 5)}
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-[#111111] leading-snug">
+                              <span>
+                                {group.startTime.slice(0, 5)} -{" "}
+                                {group.endTime.slice(0, 5)}
+                              </span>
+                              <span className="rounded-sm bg-[#f3f3f3] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">
+                                {group.timezone || "UTC"}
+                              </span>
+                              {group.items.length > 1 ? (
+                                <span className="rounded-sm bg-[#f8f8f8] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">
+                                  {group.items.length} days
                                 </span>
-                                <span className="rounded-sm bg-[#f3f3f3] px-1.5 py-0.5 text-[10px] font-medium text-[#666]">
-                                  {plan.timezone || "UTC"}
-                                </span>
-                              </div>
-                              <div
-                                className="flex items-center gap-1 py-1"
-                                aria-label="Study days"
-                              >
-                                {Array.from({ length: 7 }).map((_, dayIdx) => (
-                                  <span
-                                    key={`study-day-dot-${plan.id ?? idx}-${dayIdx}`}
-                                    className={`h-2 w-2 rounded-full ${
-                                      (plan.daysOfWeek || []).includes(dayIdx)
-                                        ? "bg-black"
-                                        : "bg-muted"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
+                              ) : null}
                             </div>
-                          ) : (
-                            <div className="flex flex-wrap items-center gap-2 text-xs">
-                              <Badge className="items-center gap-1 border-[#e3e3e3] bg-[#f8f8f8] px-2 py-0.5 text-[#666]">
-                                <span className="font-semibold text-[#111111]">
-                                  {(plan.daysOfWeek || []).length}
-                                </span>
-                                days/week
-                              </Badge>
-                              <Badge className="items-center gap-1 border-[#e3e3e3] bg-[#f8f8f8] px-2 py-0.5 text-[#666]">
-                                <span className="font-semibold text-[#111111]">
-                                  {calculateInclusiveDays(
-                                    plan.startDate,
-                                    plan.endDate,
-                                  ) ?? 0}
-                                </span>
-                                days
-                              </Badge>
+                            <div
+                              className="flex items-center gap-1 py-1"
+                              aria-label={`Study days ${group.daysOfWeek.map((day) => dayLabels[day] || String(day)).join(", ")}`}
+                            >
+                              {Array.from({ length: 7 }).map((_, dayIdx) => (
+                                <span
+                                  key={`study-day-dot-${group.key}-${dayIdx}`}
+                                  className={`h-2 w-2 rounded-full ${
+                                    group.daysOfWeek.includes(dayIdx)
+                                      ? "bg-black"
+                                      : "bg-muted"
+                                  }`}
+                                />
+                              ))}
                             </div>
-                          )
-                        }
-                        headerRight={
-                          <>
-                            {editingPlanIndex === idx ? null : (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="icon-sm"
-                                  type="button"
-                                  onClick={() => handleStartEditPlan(idx)}
-                                  title="Edit plan"
-                                >
-                                  <PenSquare />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="icon-sm"
-                                  type="button"
-                                  onClick={() => handleDeleteSinglePlan(idx)}
-                                  disabled={deletingPlanIndex === idx}
-                                  title="Delete plan"
-                                >
-                                  {deletingPlanIndex === idx ? (
-                                    <Loader2 className="animate-spin" />
-                                  ) : (
-                                    <Trash2 />
-                                  )}
-                                </Button>
-                              </>
-                            )}
-                          </>
+                          </div>
                         }
                         footer={
-                          editingPlanIndex === idx ? null : (
-                            <div className="space-y-0.5">
-                              <p>
-                                {formatDateForUser(plan.startDate, {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                })}
-                                {" - "}
-                                {formatDateForUser(plan.endDate, {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                })}
+                          <div className="space-y-0.5">
+                            <p>
+                              {formatDateForUser(group.startDate, {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                              {" - "}
+                              {formatDateForUser(group.endDate, {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </p>
+                            {calculateInclusiveDays(group.startDate, group.endDate) !== null && (
+                              <p className="text-[#666]">
+                                <span className="font-semibold text-[#111]">
+                                  {calculateInclusiveDays(group.startDate, group.endDate)}
+                                </span>{" "}
+                                days
                               </p>
-                              {calculateInclusiveDays(
-                                plan.startDate,
-                                plan.endDate,
-                              ) !== null && (
-                                <p className="text-[#666]">
-                                  <span className="font-semibold text-[#111]">
-                                    {calculateInclusiveDays(
-                                      plan.startDate,
-                                      plan.endDate,
-                                    )}
-                                  </span>{" "}
-                                  days
-                                </p>
-                              )}
-                            </div>
-                          )
+                            )}
+                          </div>
                         }
                       >
-                        {editingPlanIndex === idx ? (
-                          <div className="mt-2">
-                            <div className="space-y-3">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <Field className="md:col-span-2">
-                                  <FieldLabel>Date Range</FieldLabel>
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        type="button"
-                                        className="w-full justify-between font-normal"
-                                      >
-                                        {plan.startDate && plan.endDate
-                                          ? `${format(parseISO(plan.startDate), "LLL dd, y")} - ${format(parseISO(plan.endDate), "LLL dd, y")}`
-                                          : "Pick a date range"}
-                                        <ChevronDownIcon />
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent
-                                      className="w-auto p-0"
-                                      align="start"
-                                    >
-                                      <Calendar
-                                        mode="range"
-                                        numberOfMonths={2}
-                                        selected={
-                                          {
-                                            from: plan.startDate
-                                              ? parseISO(plan.startDate)
-                                              : undefined,
-                                            to: plan.endDate
-                                              ? parseISO(plan.endDate)
-                                              : undefined,
-                                          } as DateRange
-                                        }
-                                        onSelect={(range) => {
-                                          const from = range?.from;
-                                          const to = range?.to || range?.from;
-                                          if (!from) return;
-                                          updateEditablePlan(idx, (p) => ({
-                                            ...p,
-                                            startDate: format(
-                                              from,
-                                              "yyyy-MM-dd",
-                                            ),
-                                            endDate: format(to!, "yyyy-MM-dd"),
-                                          }));
-                                        }}
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                                </Field>
-                              </div>
+                        <div className="space-y-3">
+                          {group.items.map(({ index: idx, plan }) => {
+                            const isEditingCurrent = editingPlanIndex === idx;
+                            const dayText = (plan.daysOfWeek || [])
+                              .map((day) => dayLabels[day] || String(day))
+                              .join(", ");
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <Field>
-                                  <FieldLabel>Start Time</FieldLabel>
-                                  <Input
-                                    type="time"
-                                    step="1"
-                                    value={plan.startTime.slice(0, 5)}
-                                    onChange={(e) =>
-                                      updateEditablePlan(idx, (p) => ({
-                                        ...p,
-                                        startTime: normalizeTime(
-                                          e.target.value,
-                                        ),
-                                      }))
-                                    }
-                                    className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                                  />
-                                </Field>
-                                <Field>
-                                  <FieldLabel>End Time</FieldLabel>
-                                  <Input
-                                    type="time"
-                                    step="1"
-                                    value={plan.endTime.slice(0, 5)}
-                                    onChange={(e) =>
-                                      updateEditablePlan(idx, (p) => ({
-                                        ...p,
-                                        endTime: normalizeTime(e.target.value),
-                                      }))
-                                    }
-                                    className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                                  />
-                                </Field>
-                              </div>
-
-                              <Field>
-                                <FieldLabel>Days of Week</FieldLabel>
-                                <div className="grid grid-cols-7 gap-1">
-                                  {dayLabels.map((day, dayIdx) => {
-                                    const selected = (
-                                      plan.daysOfWeek || []
-                                    ).includes(dayIdx);
-                                    return (
-                                      <Toggle
-                                        key={`edit-day-${idx}-${day}`}
-                                        pressed={selected}
-                                        onPressedChange={() =>
-                                          toggleEditDay(idx, dayIdx)
-                                        }
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-[11px] font-semibold data-[state=on]:border-black data-[state=on]:bg-black data-[state=on]:text-white"
-                                      >
-                                        {day}
-                                      </Toggle>
-                                    );
-                                  })}
-                                </div>
-                              </Field>
-
-                              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                                <Field>
-                                  <FieldLabel>Kind</FieldLabel>
-                                  <Input
-                                    value={plan.kind || ""}
-                                    onChange={(e) =>
-                                      updateEditablePlan(idx, (p) => ({
-                                        ...p,
-                                        kind: e.target.value,
-                                      }))
-                                    }
-                                    placeholder="Type"
-                                  />
-                                </Field>
-                                <Field>
-                                  <FieldLabel>Location</FieldLabel>
-                                  <InputGroup>
-                                    <InputGroupInput
-                                      value={plan.location}
-                                      onChange={(e) =>
-                                        updateEditablePlan(idx, (p) => ({
-                                          ...p,
-                                          location: e.target.value,
-                                        }))
-                                      }
-                                      placeholder="Location"
-                                    />
-                                    <InputGroupAddon align="inline-end">
-                                      <InputGroupButton
-                                        size="icon-xs"
-                                        type="button"
-                                        onClick={() =>
-                                          handleUseCurrentLocationForPlan(idx)
-                                        }
-                                        title="Use current location"
-                                        aria-label="Use current location"
-                                      >
-                                        {locatingPlanIndex === idx ? (
-                                          <Loader2 className="animate-spin" />
-                                        ) : (
-                                          <LocateFixed />
-                                        )}
-                                      </InputGroupButton>
-                                    </InputGroupAddon>
-                                  </InputGroup>
-                                </Field>
-                                <Field>
-                                  <FieldLabel>Timezone</FieldLabel>
-                                  {(() => {
-                                    const timeZoneGroups = getTimeZoneGroups(
-                                      plan.timezone || currentTimeZone,
-                                    );
-                                    return (
-                                      <Combobox
-                                        items={timeZoneGroups}
-                                        value={plan.timezone || currentTimeZone}
-                                        onValueChange={(next) => {
-                                          updateEditablePlan(idx, (p) => ({
-                                            ...p,
-                                            timezone: String(
-                                              next || currentTimeZone,
-                                            ),
-                                          }));
-                                        }}
-                                      >
-                                        <ComboboxInput placeholder="Select timezone" />
-                                        <ComboboxContent>
-                                          <ComboboxEmpty>
-                                            No timezones found.
-                                          </ComboboxEmpty>
-                                          <ComboboxList>
-                                            {(group, groupIndex) => (
-                                              <ComboboxGroup
-                                                key={`${idx}-${group.value}`}
-                                                items={group.items}
-                                              >
-                                                <ComboboxLabel>
-                                                  {group.value}
-                                                </ComboboxLabel>
-                                                <ComboboxCollection>
-                                                  {(item) => (
-                                                    <ComboboxItem
-                                                      key={`${idx}-${item}`}
-                                                      value={item}
-                                                    >
-                                                      {item}
-                                                    </ComboboxItem>
-                                                  )}
-                                                </ComboboxCollection>
-                                                {groupIndex <
-                                                timeZoneGroups.length - 1 ? (
-                                                  <ComboboxSeparator />
-                                                ) : null}
-                                              </ComboboxGroup>
-                                            )}
-                                          </ComboboxList>
-                                        </ComboboxContent>
-                                      </Combobox>
-                                    );
-                                  })()}
-                                </Field>
-                              </div>
-                            </div>
-                            <div className="mt-3 flex justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                type="button"
-                                onClick={() => handleSaveSinglePlan(idx)}
-                                disabled={savingPlanIndex === idx}
-                                title="Confirm"
+                            return (
+                              <div
+                                key={plan.id ?? `${group.key}-${idx}`}
+                                className={
+                                  group.items.length > 1
+                                    ? "rounded-lg border border-[#f0f0f0] px-3 py-2"
+                                    : ""
+                                }
                               >
-                                {savingPlanIndex === idx ? (
-                                  <Loader2 className="animate-spin" />
+                                {!isEditingCurrent ? (
+                                  <div className="space-y-2">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="min-w-0 space-y-1">
+                                        {group.items.length > 1 ? (
+                                          <p className="text-xs font-medium text-[#666]">
+                                            {dayText}
+                                          </p>
+                                        ) : null}
+                                        <div className="text-sm text-[#444] space-y-1">
+                                          <span className="flex items-start gap-1.5 min-w-0 leading-tight">
+                                            <Tag className="w-3 h-3 mt-0.5 shrink-0" />
+                                            <span className="line-clamp-2 break-words">
+                                              {plan.kind || "Session"}
+                                            </span>
+                                          </span>
+                                          <span className="flex items-start gap-1.5 min-w-0 leading-tight">
+                                            <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
+                                            <span className="line-clamp-2 break-words">
+                                              {plan.location || "TBD"}
+                                            </span>
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="inline-flex items-center gap-1">
+                                        <Button
+                                          variant="outline"
+                                          size="icon-sm"
+                                          type="button"
+                                          onClick={() => handleStartEditPlan(idx)}
+                                          title="Edit plan"
+                                        >
+                                          <PenSquare />
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="icon-sm"
+                                          type="button"
+                                          onClick={() => handleDeleteSinglePlan(idx)}
+                                          disabled={deletingPlanIndex === idx}
+                                          title="Delete plan"
+                                        >
+                                          {deletingPlanIndex === idx ? (
+                                            <Loader2 className="animate-spin" />
+                                          ) : (
+                                            <Trash2 />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
                                 ) : (
-                                  <Check />
+                                  <>
+                                    {group.items.length > 1 ? (
+                                      <p className="mb-2 text-xs font-medium text-[#666]">
+                                        Editing {dayText}
+                                      </p>
+                                    ) : null}
+                                    {renderPlanEditor(idx, plan)}
+                                  </>
                                 )}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                type="button"
-                                onClick={handleCancelEditPlan}
-                                title="Cancel"
-                              >
-                                <X />
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>
-                            <div className="text-sm text-[#444] space-y-1">
-                              <span className="flex items-start gap-1.5 min-w-0 leading-tight">
-                                <Tag className="w-3 h-3 mt-0.5 shrink-0" />
-                                <span className="line-clamp-2 break-words">
-                                  {plan.kind || "Session"}
-                                </span>
-                              </span>
-                              <span className="flex items-start gap-1.5 min-w-0 leading-tight">
-                                <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
-                                <span className="line-clamp-2 break-words">
-                                  {plan.location || "TBD"}
-                                </span>
-                              </span>
-
-                            </div>
-                          </div>
-                        )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </WeeklyScheduleCard>
                     ))
                   ) : course.details?.schedule &&

@@ -27,8 +27,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Separator } from "@/components/ui/separator";
+import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Combobox,
   ComboboxContent,
@@ -295,23 +294,19 @@ export default function AddPlanModal({
   };
 
   const content = (
-    <div className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-4">
-          <FieldGroup>
-            <FieldLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-              Schedule Window
-            </FieldLabel>
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        <Field className="md:col-span-2">
+          <FieldLabel>Date Range</FieldLabel>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal h-10 px-3 border-border/60 hover:border-primary/30 hover:bg-primary/[0.02] transition-colors",
+                    "w-full justify-between font-normal",
                     !dateRange && "text-muted-foreground"
                   )}
                 >
-                  <Clock className="mr-2 h-4 w-4 opacity-50" />
                   {dateRange?.from ? (
                     dateRange.to ? (
                       <>
@@ -324,6 +319,7 @@ export default function AddPlanModal({
                   ) : (
                     <span>Pick a date range</span>
                   )}
+                  <Clock className="h-4 w-4 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -337,14 +333,35 @@ export default function AddPlanModal({
                 />
               </PopoverContent>
             </Popover>
-          </FieldGroup>
+        </Field>
 
-          <FieldGroup>
-            <FieldLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-              Weekdays
-            </FieldLabel>
-            <div className="flex flex-wrap gap-1.5">
-              {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
+        <Field>
+          <FieldLabel>Start Time</FieldLabel>
+          <Input
+            type="time"
+            value={formData.startTime}
+            onChange={(e) =>
+              setFormData((p) => ({ ...p, startTime: e.target.value }))
+            }
+            className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+          />
+        </Field>
+        <Field>
+          <FieldLabel>End Time</FieldLabel>
+          <Input
+            type="time"
+            value={formData.endTime}
+            onChange={(e) =>
+              setFormData((p) => ({ ...p, endTime: e.target.value }))
+            }
+            className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+          />
+        </Field>
+
+        <Field className="md:col-span-2">
+          <FieldLabel>Days of Week</FieldLabel>
+            <div className="grid grid-cols-7 gap-1">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => (
                 <Toggle
                   key={i}
                   size="sm"
@@ -357,94 +374,22 @@ export default function AddPlanModal({
                         : p.days.filter((d) => d !== i)
                     }));
                   }}
-                  className="h-8 w-8 p-0 text-[10px] font-bold border border-border/40 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all"
+                  variant="outline"
+                  className="text-[11px] font-semibold data-[state=on]:border-black data-[state=on]:bg-black data-[state=on]:text-white"
                 >
                   {day}
                 </Toggle>
               ))}
             </div>
-          </FieldGroup>
-        </div>
+        </Field>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <FieldGroup>
-              <FieldLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                Start
-              </FieldLabel>
-              <Input
-                type="time"
-                value={formData.startTime}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, startTime: e.target.value }))
-                }
-                className="h-10 border-border/60 focus-visible:ring-primary/20"
-              />
-            </FieldGroup>
-            <FieldGroup>
-              <FieldLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                End
-              </FieldLabel>
-              <Input
-                type="time"
-                value={formData.endTime}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, endTime: e.target.value }))
-                }
-                className="h-10 border-border/60 focus-visible:ring-primary/20"
-              />
-            </FieldGroup>
-          </div>
-
-          <FieldGroup>
-            <FieldLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-              Location
-            </FieldLabel>
-            <InputGroup>
-              <InputGroupInput
-                placeholder="Where will you study?"
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, location: e.target.value }))
-                }
-                className="h-10 border-border/60 focus-visible:ring-primary/20"
-              />
-              <InputGroupAddon className="p-0 border-border/60">
-                <InputGroupButton
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={locating}
-                  onClick={handleLocateMe}
-                  className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {locating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <LocateFixed className="h-4 w-4" />
-                  )}
-                </InputGroupButton>
-              </InputGroupAddon>
-            </InputGroup>
-          </FieldGroup>
-        </div>
-      </div>
-
-      <Separator className="bg-border/40" />
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <FieldGroup>
-          <FieldLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-            Session Type
-          </FieldLabel>
+        <Field>
+          <FieldLabel>Kind</FieldLabel>
           <Combobox
             value={formData.kind}
             onValueChange={(val) => setFormData((p) => ({ ...p, kind: val || "" }))}
           >
-            <ComboboxInput
-              placeholder="Select type..."
-              className="h-10 border-border/60 focus-visible:ring-primary/20"
-            />
+            <ComboboxInput placeholder="Select type..." />
             <ComboboxContent>
               <ComboboxEmpty>No type found.</ComboboxEmpty>
               <ComboboxGroup>
@@ -463,25 +408,52 @@ export default function AddPlanModal({
               </ComboboxGroup>
             </ComboboxContent>
           </Combobox>
-        </FieldGroup>
+        </Field>
 
-        <FieldGroup>
-          <FieldLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-            Timezone
-          </FieldLabel>
+        <Field>
+          <FieldLabel>Location</FieldLabel>
+            <InputGroup>
+              <InputGroupInput
+                placeholder="Location"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, location: e.target.value }))
+                }
+              />
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  type="button"
+                  size="icon-xs"
+                  disabled={locating}
+                  onClick={handleLocateMe}
+                  title="Use current location"
+                  aria-label="Use current location"
+                >
+                  {locating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <LocateFixed className="h-4 w-4" />
+                  )}
+                </InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
+        </Field>
+
+        <Field className="md:col-span-2">
+          <FieldLabel>Timezone</FieldLabel>
           <Combobox
             value={formData.timezone || ""}
             onValueChange={(val) => setFormData((p) => ({ ...p, timezone: val || "" }))}
           >
             <ComboboxInput
               placeholder="Search timezone..."
-              className="h-10 border-border/60 focus-visible:ring-primary/20 font-mono text-[11px]"
+              className="font-mono text-[11px]"
             />
             <ComboboxContent className="max-h-[300px] overflow-auto">
               <ComboboxEmpty>No timezone found.</ComboboxEmpty>
               {timeZoneGroups.map(([group, zones]) => (
                 <div key={group}>
-                  <ComboboxLabel className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 py-2 px-3">
+                  <ComboboxLabel className="py-2 px-3 text-[10px] font-medium text-muted-foreground">
                     {group}
                   </ComboboxLabel>
                   <ComboboxGroup>
@@ -500,21 +472,21 @@ export default function AddPlanModal({
               ))}
             </ComboboxContent>
           </Combobox>
-        </FieldGroup>
+        </Field>
       </div>
 
-      <div className="flex items-center justify-end gap-3 pt-4">
+      <div className="flex items-center justify-end gap-2 pt-2">
         <Button
-          variant="ghost"
+          variant="outline"
           onClick={onClose}
-          className="text-xs font-bold uppercase tracking-wider"
+          className="h-9"
         >
           Cancel
         </Button>
         <Button
           onClick={handleSave}
           disabled={loading || formData.days.length === 0}
-          className="px-8 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="h-9"
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {existingPlan ? "Update Plan" : "Create Plan"}
@@ -525,9 +497,9 @@ export default function AddPlanModal({
 
   if (mode === "inline") {
     return (
-      <Card className="border-border/60 shadow-md">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold tracking-tight">
+      <Card className="border-border/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold">
             {existingPlan ? "Edit Study Plan" : "Add Study Plan"}
           </CardTitle>
           <CardDescription className="text-xs">
@@ -543,18 +515,18 @@ export default function AddPlanModal({
   return (
     <Popover open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <PopoverContent
-        className="w-[95vw] max-w-2xl p-6 shadow-2xl border-border/40 sm:rounded-2xl"
+        className="w-[95vw] max-w-2xl p-5 shadow-xl border-border/60 sm:rounded-xl"
         align="center"
         sideOffset={8}
       >
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-4 flex items-start justify-between">
           <div className="space-y-1">
-            <h2 className="text-xl font-bold tracking-tight text-foreground">
+            <h2 className="text-base font-semibold text-foreground">
               {existingPlan ? "Adjust Study Plan" : "New Study Plan"}
             </h2>
-            <p className="text-xs text-muted-foreground font-medium">
+            <p className="text-xs text-muted-foreground">
               {course.courseCode ? (
-                <span className="text-primary/80 font-bold">{course.courseCode}</span>
+                <span className="font-medium">{course.courseCode}</span>
               ) : null}
               {course.courseCode ? " · " : ""}
               {course.title}

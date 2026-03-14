@@ -8,6 +8,11 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+  configurable: true,
+  value: vi.fn(),
+});
+
 describe("CourseListHeader", () => {
   test("renders toolbar controls without embedding the page title block", () => {
     render(
@@ -27,7 +32,7 @@ describe("CourseListHeader", () => {
     expect(within(leading).getByLabelText(/list view/i)).toBeDefined();
     expect(within(leading).getByPlaceholderText(/search courses/i)).toBeDefined();
     expect(within(trailing).queryByRole("link", { name: /new course/i })).toBeNull();
-    expect(within(trailing).getByRole("button", { name: /filter/i })).toBeDefined();
+    expect(within(trailing).getAllByRole("combobox").length).toBeGreaterThan(0);
   });
 
   test("shows a persistent mobile search input and removes the extra new-course action", async () => {
@@ -57,13 +62,13 @@ describe("CourseListHeader", () => {
     const mobileSearch = within(leading).getByTestId("course-mobile-search");
     expect(mobileSearch).toBeDefined();
     expect(within(mobileSearch).getByPlaceholderText(/search courses/i)).toBeDefined();
-    expect(within(trailing).getByLabelText(/sort/i)).toBeDefined();
+    expect(within(trailing).getAllByRole("combobox").length).toBeGreaterThan(0);
     expect(within(leading).queryByLabelText(/search courses/i)).toBeNull();
     expect(within(trailing).queryByRole("link", { name: /new course/i })).toBeNull();
-    expect(within(trailing).getByRole("button", { name: /filter/i })).toBeDefined();
+    expect(within(trailing).queryByRole("button", { name: /filter/i })).toBeNull();
   });
 
-  test("opens the mobile filter drawer from the bottom", async () => {
+  test("does not render the old mobile filter drawer trigger", async () => {
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
       writable: true,
@@ -95,13 +100,8 @@ describe("CourseListHeader", () => {
     );
 
     const trailing = screen.getAllByTestId("course-toolbar-trailing").at(-1)!;
-    fireEvent.click(within(trailing).getByRole("button", { name: /filter/i }));
-
-    await waitFor(() => {
-      expect(document.querySelector('[data-slot="drawer-content"]')).not.toBeNull();
-    });
-
-    expect(document.querySelector('[data-slot="drawer-content"]')?.getAttribute("data-vaul-drawer-direction")).toBe("bottom");
+    expect(within(trailing).queryByRole("button", { name: /filter/i })).toBeNull();
+    expect(document.querySelector('[data-slot="drawer-content"]')).toBeNull();
   });
 
   test("keeps the desktop sort trigger text-only apart from the select chevron", () => {
@@ -122,8 +122,33 @@ describe("CourseListHeader", () => {
     );
 
     const trailing = screen.getAllByTestId("course-toolbar-trailing").at(-1)!;
-    const desktopSortTrigger = within(trailing).getByRole("combobox");
+    const desktopSortTrigger = within(trailing).getAllByRole("combobox").at(-1)!;
 
     expect(desktopSortTrigger.querySelectorAll("svg")).toHaveLength(1);
+  });
+
+  test("offers credit and semester sorting, without popularity", () => {
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+
+    render(
+      <CourseListHeader
+        viewMode="list"
+        setViewMode={vi.fn()}
+        dict={{} as never}
+        filterUniversities={[]}
+        filterSemesters={[]}
+      />,
+    );
+
+    const trailing = screen.getAllByTestId("course-toolbar-trailing").at(-1)!;
+    fireEvent.click(within(trailing).getAllByRole("combobox").at(-1)!);
+
+    expect(screen.getByText("Credit")).toBeDefined();
+    expect(screen.getByText("Latest Semester")).toBeDefined();
+    expect(screen.queryByText("Popularity")).toBeNull();
   });
 });

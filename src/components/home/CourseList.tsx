@@ -466,12 +466,16 @@ export default function CourseList({
         {/* Sentinel for infinite scroll */}
         <div ref={loadMoreRef} className="h-20 w-full" aria-hidden="true" />
         
-        <div className="py-6 flex justify-center">
+        <div className="py-8 flex justify-center">
           {isLoading && <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />}
           {!isLoading && page >= totalPages && courses.length > 0 && (
-            <span className="text-sm font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-full border">
-              End of catalog
-            </span>
+            <div className="flex w-full max-w-md items-center gap-3 px-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-slate-300" />
+              <span className="shrink-0 rounded-full border border-slate-200/80 bg-white px-3 py-1 text-slate-500 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+                End of catalog
+              </span>
+              <div className="h-px flex-1 bg-gradient-to-r from-slate-300 via-slate-200 to-transparent" />
+            </div>
           )}
         </div>
       </div>

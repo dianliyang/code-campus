@@ -7,6 +7,37 @@ import type { WorkoutCourse } from "../scrapers/cau-sport";
 import type { Course as AppCourse, Workout } from "@/types";
 import { Database, Json } from "./database.types";
 
+const CAU_PROJECT_SEMINAR_CATEGORIES = new Set([
+  "Seminar",
+  "Advanced Project",
+  "Involvement in a working group",
+  "Open Elective",
+  "Colloquia and study groups",
+  "Master Thesis Supervision Seminar",
+]);
+
+export function isCauProjectSeminarCourse(item: ScrapedCourse): boolean {
+  if (item.university !== "CAU Kiel") return false;
+  const category =
+    item.details && typeof item.details === "object" && typeof (item.details as Record<string, unknown>).category === "string"
+      ? ((item.details as Record<string, unknown>).category as string)
+      : item.category || "";
+  const normalizedType =
+    item.details && typeof item.details === "object" && typeof (item.details as Record<string, unknown>).normalizedType === "string"
+      ? ((item.details as Record<string, unknown>).normalizedType as string)
+      : "";
+  return (
+    CAU_PROJECT_SEMINAR_CATEGORIES.has(category) ||
+    normalizedType === "Seminar" ||
+    normalizedType === "Advanced Seminar"
+  );
+}
+
+export function defaultImportedCourseInternalValue(item: ScrapedCourse): boolean {
+  if (item.university === "CAU Kiel") return true;
+  return item.isInternal || false;
+}
+
 export async function getBaseUrl() {
   const envUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (envUrl) {
@@ -210,17 +241,21 @@ export class SupabaseDatabase {
     const { forceUpdate = false } = options;
 
     const university = formatUniversityName(courses[0].university);
+    let coursesForUpsert = courses.filter((course) => !isCauProjectSeminarCourse(course));
+    if (coursesForUpsert.length === 0) {
+      console.log(`[Supabase] No ${university} course rows eligible for course upsert.`);
+      return;
+    }
     console.log(
-      `[Supabase] Saving ${courses.length} courses for ${university}...`
+      `[Supabase] Saving ${coursesForUpsert.length} courses for ${university}...`
     );
 
     const supabase = createAdminClient();
-    let coursesForUpsert = courses;
 
     // CAU special handling:
     // Without force update, existing CAU rows only refresh details.schedule.
     if (university === "CAU Kiel" && !forceUpdate) {
-      const courseCodes = courses.map((c) => c.courseCode);
+      const courseCodes = coursesForUpsert.map((c) => c.courseCode);
       const { data: existingRows, error: existingFetchError } = await supabase
         .from("courses")
         .select("id, course_code, details")
@@ -236,8 +271,8 @@ export class SupabaseDatabase {
         (existingRows || []).map((row) => [row.course_code, row]),
       );
 
-      const existingCourses = courses.filter((c) => existingByCode.has(c.courseCode));
-      coursesForUpsert = courses.filter((c) => !existingByCode.has(c.courseCode));
+      const existingCourses = coursesForUpsert.filter((c) => existingByCode.has(c.courseCode));
+      coursesForUpsert = coursesForUpsert.filter((c) => !existingByCode.has(c.courseCode));
 
       for (const course of existingCourses) {
         const existing = existingByCode.get(course.courseCode);
@@ -403,7 +438,7 @@ export class SupabaseDatabase {
         // only set them on initial insert (new courses have no existing row).
         ...(forceUpdate ? {} : {
           is_hidden: c.isHidden || false,
-          is_internal: c.isInternal || false,
+          is_internal: defaultImportedCourseInternalValue(c),
         }),
       };
 

@@ -127,6 +127,7 @@ semesters: string[],
 userId?: string | null)
 {
   const supabase = await createClient();
+  const usesLocalSort = sort === "credit" || sort === "semester";
 
   const modernSelectString = `
     id, university, course_code, title, units, credit, url, details, instructors, prerequisites, resources, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, subdomain, is_hidden, is_internal, created_at, latest_semester,
@@ -204,12 +205,13 @@ userId?: string | null)
   }
 
   // Sorting
-  if (sort === 'popularity') supabaseQuery = supabaseQuery.order('popularity', { ascending: false });else
   if (sort === 'newest') supabaseQuery = supabaseQuery.order('created_at', { ascending: false });else
   if (sort === 'title') supabaseQuery = supabaseQuery.order('title', { ascending: true });else
   supabaseQuery = supabaseQuery.order('id', { ascending: false });
 
-  let { data, count, error } = await supabaseQuery.range(offset, offset + size - 1);
+  let { data, count, error } = usesLocalSort
+    ? await supabaseQuery
+    : await supabaseQuery.range(offset, offset + size - 1);
 
   const errorMessage = `${error?.message || ""} ${error?.details || ""}`.toLowerCase();
   const shouldFallbackToLegacy =
@@ -243,12 +245,13 @@ userId?: string | null)
     if (levels.length > 0) {
       fallbackQuery = fallbackQuery.in('level', levels);
     }
-    if (sort === 'popularity') fallbackQuery = fallbackQuery.order('popularity', { ascending: false });else
     if (sort === 'newest') fallbackQuery = fallbackQuery.order('created_at', { ascending: false });else
     if (sort === 'title') fallbackQuery = fallbackQuery.order('title', { ascending: true });else
     fallbackQuery = fallbackQuery.order('id', { ascending: false });
 
-    const fallbackResult = await fallbackQuery.range(offset, offset + size - 1);
+    const fallbackResult = usesLocalSort
+      ? await fallbackQuery
+      : await fallbackQuery.range(offset, offset + size - 1);
     data = fallbackResult.data;
     count = fallbackResult.count;
     error = fallbackResult.error;
@@ -281,8 +284,49 @@ userId?: string | null)
     } as Course;
   });
 
-  const total = count || 0;
+  const parseSemesterLabel = (value: string): { year: number; weight: number } | null => {
+    const match = value.trim().match(/^([A-Za-z]+)\s+(\d{4})$/);
+    if (!match) return null;
+    const term = match[1].toLowerCase();
+    const year = Number(match[2]);
+    const weightMap: Record<string, number> = { spring: 1, summer: 2, fall: 3, winter: 4 };
+    return { year, weight: weightMap[term] || 0 };
+  };
+
+  const getLatestSemesterScore = (course: Course): number => {
+    const parsed = (course.semesters || [])
+      .map(parseSemesterLabel)
+      .filter((value): value is { year: number; weight: number } => value !== null)
+      .sort((left, right) => {
+        if (left.year !== right.year) return right.year - left.year;
+        return right.weight - left.weight;
+      })[0];
+    if (!parsed) return -1;
+    return parsed.year * 10 + parsed.weight;
+  };
+
+  const sortedItems = usesLocalSort
+    ? [...items].sort((left, right) => {
+        if (sort === "credit") {
+          const leftCredit = typeof left.credit === "number" ? left.credit : -1;
+          const rightCredit = typeof right.credit === "number" ? right.credit : -1;
+          if (leftCredit !== rightCredit) return rightCredit - leftCredit;
+          return left.title.localeCompare(right.title);
+        }
+
+        const leftScore = getLatestSemesterScore(left);
+        const rightScore = getLatestSemesterScore(right);
+        if (leftScore !== rightScore) return rightScore - leftScore;
+        return left.title.localeCompare(right.title);
+      })
+    : items;
+
+  const total = usesLocalSort ? sortedItems.length : (count || 0);
   const pages = Math.max(1, Math.ceil(total / size));
 
-  return { items, total, pages };
+  return {
+    items: usesLocalSort ? sortedItems.slice(offset, offset + size) : sortedItems,
+    total,
+    pages,
+  };
 }

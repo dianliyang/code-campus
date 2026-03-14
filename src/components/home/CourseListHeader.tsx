@@ -44,6 +44,7 @@ export default function CourseListHeader({
   filterUniversities,
   filterSemesters,
 }: CourseListHeaderProps) {
+  const dictLabels = dict as Record<string, string | undefined>;
   const router = useRouter();
   const searchParams = useSearchParams();
   const sortBy = searchParams.get("sort") || "title";
@@ -351,8 +352,11 @@ export default function CourseListHeader({
                   <SelectItem value="title">
                     {dict?.sort_title || "Title (A-Z)"}
                   </SelectItem>
-                  <SelectItem value="popularity">
-                    {dict?.sort_popularity || "Popularity"}
+                  <SelectItem value="credit">
+                    {dictLabels.sort_credit || "Credit"}
+                  </SelectItem>
+                  <SelectItem value="semester">
+                    {dictLabels.sort_semester || "Latest Semester"}
                   </SelectItem>
                   <SelectItem value="newest">
                     {dict?.sort_newest || "Newest"}

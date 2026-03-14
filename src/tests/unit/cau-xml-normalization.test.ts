@@ -57,22 +57,13 @@ describe("CAU XML normalization", () => {
     expect(course?.details).not.toHaveProperty("auxiliarySchedules");
   });
 
-  test("normalizes seminar, advanced seminar, and language course types from XML", async () => {
+  test("keeps explicitly English XML rows and preserves their normalized types", async () => {
     const xml = readFileSync("src/tests/fixtures/cau/data.xml", "utf8");
     const scraper = new CAU();
 
     const courses = await scraper.parseXmlCoursesForTests(xml);
-    const advancedSeminar = courses.find((entry) => entry.courseCode === "AlgOptSteu-Meeresforsch");
     const seminar = courses.find((entry) => entry.courseCode === "infSemDaSci-01a");
-    const languageCourse = courses.find((entry) => entry.courseCode === "infFPInS");
-
-    expect(advancedSeminar?.details).toEqual(
-      expect.objectContaining({
-        type: "OS",
-        normalizedType: "Advanced Seminar",
-      }),
-    );
-    expect(advancedSeminar?.category).toBe("Master Thesis Supervision Seminar");
+    const lecture = courses.find((entry) => entry.courseCode === "infAuLearn-01a");
 
     expect(seminar?.details).toEqual(
       expect.objectContaining({
@@ -82,12 +73,13 @@ describe("CAU XML normalization", () => {
     );
     expect(seminar?.category).toBe("Seminar");
 
-    expect(languageCourse?.details).toEqual(
+    expect(lecture?.details).toEqual(
       expect.objectContaining({
-        type: "SPR",
-        normalizedType: "Language Course",
+        type: "V",
+        normalizedType: "Lecture",
       }),
     );
+    expect(lecture?.category).toBe("Compulsory elective modules in Computer Science");
   });
 
   test("filters layout lectures and empty-short exercises from XML results", async () => {
@@ -98,6 +90,32 @@ describe("CAU XML normalization", () => {
 
     expect(courses.some((entry) => entry.title.includes("(Layout)"))).toBe(false);
     expect(courses.some((entry) => entry.courseCode === "")).toBe(false);
+  });
+
+  test("drops XML lectures without explicit englisch=ja", async () => {
+    const xml = `<?xml version="1.0"?>
+      <UnivIS version="1.6" semester="2026s" organisation="CAU Kiel">
+        <Lecture key="Lecture.keep">
+          <dozs></dozs>
+          <englisch>ja</englisch>
+          <id>1</id>
+          <name>Inf-KEEP: Keep Me</name>
+          <short>Inf-KEEP</short>
+          <type>V</type>
+        </Lecture>
+        <Lecture key="Lecture.drop">
+          <dozs></dozs>
+          <id>2</id>
+          <name>Inf-DROP: Drop Me</name>
+          <short>Inf-DROP</short>
+          <type>V</type>
+        </Lecture>
+      </UnivIS>`;
+    const scraper = new CAU();
+
+    const courses = await scraper.parseXmlCoursesForTests(xml);
+
+    expect(courses.map((entry) => entry.courseCode)).toEqual(["Inf-KEEP"]);
   });
 
   test("drops courses when merged ModulDB language is German", async () => {
@@ -155,9 +173,18 @@ describe("CAU XML normalization", () => {
           startTime: "14:15",
           endTime: "15:45",
           startDate: "2026-04-12",
-          endDate: "2026-04-12",
+          endDate: "2026-07-12",
         }),
       ]),
     });
+  });
+
+  test("drops XML lectures without explicit englisch=ja even when they have recurring schedule data", async () => {
+    const xml = readFileSync("src/tests/fixtures/cau/data.xml", "utf8");
+    const scraper = new CAU();
+
+    const courses = await scraper.parseXmlCoursesForTests(xml);
+
+    expect(courses.some((entry) => entry.courseCode === "infTML-01a")).toBe(false);
   });
 });

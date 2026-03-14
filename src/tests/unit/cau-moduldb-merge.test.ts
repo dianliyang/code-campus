@@ -64,4 +64,36 @@ describe("CAU ModulDB merge", () => {
       }),
     );
   });
+
+  test("keeps the scraped semester as latest when ModulDB adds a newer-looking but non-current history entry", () => {
+    const scraper = new CAU();
+
+    const baseCourse = {
+      university: "CAU Kiel",
+      courseCode: "infMobRob-01a",
+      title: "Mobile Robotics",
+      semesters: [{ term: "Winter", year: 2025 }],
+    };
+
+    const enriched = scraper.enrichCourseWithModulDbForTests(baseCourse, `<?xml version="1.0" standalone="yes"?>
+<modul>
+  <modulcode>infMobRob-01a</modulcode>
+  <modulname>
+    <englisch>Mobile Robotics</englisch>
+  </modulname>
+  <durchfuehrung>
+    <veranstaltung>
+      <semester>WS26/27</semester>
+    </veranstaltung>
+  </durchfuehrung>
+</modul>`);
+
+    expect(enriched.semesters?.[0]).toEqual({ term: "Winter", year: 2025 });
+    expect(enriched.semesters).toEqual(
+      expect.arrayContaining([
+        { term: "Winter", year: 2025 },
+        { term: "Winter", year: 2026 },
+      ]),
+    );
+  });
 });

@@ -133,6 +133,10 @@ const CAU_DEPARTMENT_TRANSLATIONS: Record<string, string> = {
   "Referat Liegenschaften und Services": "Facilities and Services Office",
 };
 
+const CAU_EXCLUDED_COURSE_CODES = new Set([
+  "inf-hpc",
+]);
+
 export class CAU extends BaseScraper {
   private modulDbCache = new Map<string, Promise<ModulDbModule | null>>();
   forceUpdate = false;
@@ -465,6 +469,7 @@ export class CAU extends BaseScraper {
   }
 
   private shouldPersistPrimaryLecture(lecture: XmlLectureRecord): boolean {
+    if (!lecture.isEnglish) return false;
     if (this.isAuxiliaryType(lecture.type)) return false;
     if (!lecture.short.trim()) return false;
     if (this.isLayoutOnlyLecture(lecture)) return false;
@@ -472,6 +477,10 @@ export class CAU extends BaseScraper {
   }
 
   private shouldKeepAfterLanguageMerge(course: Course): boolean {
+    if (this.isExcludedCourseCode(course.courseCode)) {
+      return false;
+    }
+
     const details = course.details && typeof course.details === "object"
       ? course.details as Record<string, unknown>
       : {};
@@ -489,6 +498,11 @@ export class CAU extends BaseScraper {
 
   shouldKeepAfterLanguageMergeForTests(course: Course): boolean {
     return this.shouldKeepAfterLanguageMerge(course);
+  }
+
+  private isExcludedCourseCode(courseCode: string | null | undefined): boolean {
+    const normalized = (courseCode || "").trim().toLowerCase();
+    return CAU_EXCLUDED_COURSE_CODES.has(normalized);
   }
 
   private normalizeDescription(summary: string | null, timeDescription: string | null): string | undefined {
@@ -525,6 +539,7 @@ export class CAU extends BaseScraper {
   private buildScheduleEntries(
     lecture: XmlLectureRecord,
     resolvedRefs?: { roomMap: Map<string, string> },
+    recurringEndDateFallback?: string | null,
   ): CauScheduleEntry[] {
     const kind = this.normalizeCourseType(lecture.type);
     const defaultLocation = this.resolveLectureLocation(lecture.roomKeys, resolvedRefs);
@@ -534,7 +549,11 @@ export class CAU extends BaseScraper {
       const startTime = term.starttime?.trim() || "";
       const endTime = term.endtime?.trim() || "";
       const startDate = term.startdate || lecture.startdate || "";
-      const endDate = term.enddate || lecture.enddate || startDate;
+      const endDate =
+        term.enddate ||
+        lecture.enddate ||
+        (term.repeat ? recurringEndDateFallback || "" : "") ||
+        startDate;
       if (dayOfWeek === null || !startTime || !endTime || !startDate || !endDate) {
         return [];
       }
@@ -677,6 +696,31 @@ export class CAU extends BaseScraper {
     return this.parseModulDbXml(xml);
   }
 
+  private inferRecurringLectureEndDate(xml: string): string | null {
+    const $ = cheerio.load(xml, { xmlMode: true });
+    const counts = new Map<string, number>();
+
+    $("Lecture").each((_, node) => {
+      const lecture = $(node);
+      const hasRecurringTerm = lecture.find("terms > term > repeat").toArray().some((termNode) => {
+        const repeat = $(termNode).text().trim();
+        return repeat.length > 0;
+      });
+      if (!hasRecurringTerm) return;
+
+      const endDate = lecture.children("enddate").first().text().trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) return;
+
+      counts.set(endDate, (counts.get(endDate) || 0) + 1);
+    });
+
+    return Array.from(counts.entries())
+      .sort((left, right) => {
+        if (right[1] !== left[1]) return right[1] - left[1];
+        return left[0].localeCompare(right[0]);
+      })[0]?.[0] || null;
+  }
+
   private toSemesterInfo(): { term: string; year: number } {
     const semParam = this.getSemesterParam();
     return {
@@ -696,6 +740,7 @@ export class CAU extends BaseScraper {
   private courseFromLectureRecord(
     lecture: XmlLectureRecord,
     resolvedRefs?: { roomMap: Map<string, string>; personMap: Map<string, string>; titleMap: Map<string, string> },
+    recurringEndDateFallback?: string | null,
   ): Course {
     const semesterInfo = this.toSemesterInfo();
     const instructors = lecture.personKeys.map((key) => resolvedRefs?.personMap.get(key) || key);
@@ -706,7 +751,7 @@ export class CAU extends BaseScraper {
         this.buildLectureResourceUrl(lecture.key),
       ].filter((value): value is string => Boolean(value))),
     );
-    const scheduleEntries = this.buildScheduleEntries(lecture, resolvedRefs);
+    const scheduleEntries = this.buildScheduleEntries(lecture, resolvedRefs, recurringEndDateFallback);
     return {
       university: "CAU Kiel",
       courseCode: lecture.short,
@@ -964,11 +1009,16 @@ export class CAU extends BaseScraper {
   private mergeLectureChildren(
     records: XmlLectureRecord[],
     resolvedRefs?: { roomMap: Map<string, string>; personMap: Map<string, string>; titleMap: Map<string, string> },
+    recurringEndDateFallback?: string | null,
   ): Course[] {
     const primaryRecords = records.filter((lecture) => this.shouldPersistPrimaryLecture(lecture));
-    const primaryCourses = new Map(primaryRecords.map((lecture) => [lecture.key, this.courseFromLectureRecord(lecture, resolvedRefs)]));
+    const primaryCourses = new Map(primaryRecords.map((lecture) => [
+      lecture.key,
+      this.courseFromLectureRecord(lecture, resolvedRefs, recurringEndDateFallback),
+    ]));
 
     for (const record of records) {
+      if (!record.isEnglish) continue;
       if (!this.isAuxiliaryType(record.type)) continue;
       const parentKey = record.parentLectureKey;
       if (!parentKey) continue;
@@ -984,7 +1034,7 @@ export class CAU extends BaseScraper {
       const existingScheduleEntries = Array.isArray(details.scheduleEntries)
         ? [...details.scheduleEntries as CauScheduleEntry[]]
         : [];
-      const nextScheduleEntries = this.buildScheduleEntries(record, resolvedRefs);
+      const nextScheduleEntries = this.buildScheduleEntries(record, resolvedRefs, recurringEndDateFallback);
       const mergedScheduleEntries = Array.from(
         new Map(
           [...existingScheduleEntries, ...nextScheduleEntries].map((entry) => [
@@ -1012,10 +1062,11 @@ export class CAU extends BaseScraper {
 
   private async normalizeXmlCourses(xml: string, options?: { resolveRefs?: boolean }): Promise<Course[]> {
     const records = this.parseXmlLectures(xml);
+    const recurringEndDateFallback = this.inferRecurringLectureEndDate(xml);
     const resolvedRefs = options?.resolveRefs === false
       ? { roomMap: new Map<string, string>(), personMap: new Map<string, string>(), titleMap: new Map<string, string>() }
       : this.buildResolvedReferenceMaps(xml);
-    return this.mergeLectureChildren(records, resolvedRefs);
+    return this.mergeLectureChildren(records, resolvedRefs, recurringEndDateFallback);
   }
 
   async parseXmlCoursesForTests(xml: string): Promise<Course[]> {
@@ -1210,6 +1261,7 @@ export class CAU extends BaseScraper {
           title = title.replace(/^[a-zA-Z0-9._-]+[:\s]+/, "").replace(/^[-–—]\s*/, "").trim();
           const isLayoutOnlyEntry = /\(\s*layout\s*\)/i.test(title);
           if (isLayoutOnlyEntry) return;
+          if (this.isExcludedCourseCode(courseCode)) return;
 
           if (existingCodes.has(courseCode)) {
             courses.push({

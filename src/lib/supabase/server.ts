@@ -367,10 +367,17 @@ export class SupabaseDatabase {
           ...(nextSchedule ? { schedule: nextSchedule } : {}),
           ...(nextScheduleEntries ? { scheduleEntries: nextScheduleEntries } : {}),
         };
+        const latestSemester =
+          Array.isArray(course.semesters) && course.semesters[0]
+            ? { term: course.semesters[0].term, year: course.semesters[0].year }
+            : undefined;
 
         const { error: updateScheduleError } = await supabase
           .from("courses")
-          .update({ details: mergedDetails as Json })
+          .update({
+            details: mergedDetails as Json,
+            ...(latestSemester ? { latest_semester: latestSemester as Json } : {}),
+          })
           .eq("id", existing.id);
 
         if (updateScheduleError) {

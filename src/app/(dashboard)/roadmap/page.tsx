@@ -10,7 +10,6 @@ import { getDictionary, Dictionary } from "@/lib/dictionary";
 import { getDashboardPageHeaderClassName } from "@/lib/dashboard-layout";
 import { calculateAttendance } from "@/lib/attendance";
 import { groupRoadmapCoursesByPlan } from "@/lib/roadmap-groups";
-import { partitionRoadmapItemsByStatus } from "@/lib/roadmap-status";
 import { ExternalLink, Ghost } from "lucide-react";
 import CourseIntelSyncWindow from "@/components/home/CourseIntelSyncWindow";
 import { Button } from "@/components/ui/button";
@@ -95,6 +94,7 @@ async function StudyPlanContent({
       `).
   eq('user_courses.user_id', userId).
   neq('user_courses.status', 'hidden').
+  neq('user_courses.status', 'completed').
   order('updated_at', { foreignTable: 'user_courses', ascending: false }),
 
   supabase.
@@ -125,6 +125,7 @@ async function StudyPlanContent({
         ups:user_projects_seminars!inner(status, progress, updated_at)
       `).
   eq('user_projects_seminars.user_id', userId).
+  neq('user_projects_seminars.status', 'completed').
   order('updated_at', { foreignTable: 'user_projects_seminars', ascending: false })]
   );
 
@@ -256,20 +257,13 @@ async function StudyPlanContent({
     };
   });
 
-  const {
-    inProgress,
-    completed: completedCourses,
-  } = partitionRoadmapItemsByStatus(enrolledWithAttendance);
-  const {
-    inProgress: inProgressProjectsSeminars,
-    completed: completedProjectsSeminars,
-  } = partitionRoadmapItemsByStatus(enrolledProjectsSeminars);
+  const inProgress = enrolledWithAttendance.filter((c) => c.status === 'in_progress');
+  const inProgressProjectsSeminars = enrolledProjectsSeminars.filter((item) => item.status === 'in_progress');
   
   const { active: activeCourses, planning: planningCourses } =
     groupRoadmapCoursesByPlan(inProgress, plans, todayIso);
   const hasActiveItems = activeCourses.length > 0 || inProgressProjectsSeminars.length > 0;
   const hasPlanningItems = planningCourses.length > 0;
-  const hasCompletedItems = completedCourses.length > 0 || completedProjectsSeminars.length > 0;
 
   return (
     <div className="min-h-full w-full flex flex-col gap-2 pb-4">
@@ -324,35 +318,6 @@ async function StudyPlanContent({
         {!hasPlanningItems ? (
           <p className="text-sm text-muted-foreground mt-4">
             No planning items right now.
-          </p>
-        ) : null}
-      </section>
-
-      <section>
-        <div className="mb-5 space-y-2 py-2">
-          <h2 className="text-lg font-semibold tracking-tight text-[#1f1f1f]">
-            Completed
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Finished courses and project work, grouped at the bottom.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {completedCourses.map(({ id, progress, ...course }) => (
-            <ActiveCourseTrack
-              key={`completed-course-${id}`}
-              course={{ ...course, id }}
-              initialProgress={100}
-              plan={null}
-            />
-          ))}
-          {completedProjectsSeminars.map((item) => (
-            <ActiveProjectSeminarTrack key={`completed-project-seminar-${item.id}`} item={item} />
-          ))}
-        </div>
-        {!hasCompletedItems ? (
-          <p className="text-sm text-muted-foreground mt-4">
-            No completed items yet.
           </p>
         ) : null}
       </section>

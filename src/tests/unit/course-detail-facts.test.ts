@@ -18,6 +18,21 @@ describe("formatCourseTermLabels", () => {
     expect(formatCourseTermLabels([], { term: "Spring", year: 2026 })).toEqual(["Spring 2026"]);
   });
 
+  test("infers the term from schedule entry dates when joins and latest_semester are missing", () => {
+    expect(
+      formatCourseTermLabels(
+        [],
+        null,
+        {
+          scheduleEntries: [
+            { startDate: "2025-10-19" },
+            { startDate: "2025-10-20" },
+          ],
+        },
+      ),
+    ).toEqual(["Winter 2025"]);
+  });
+
   test("returns an empty list when no semester data is available", () => {
     expect(formatCourseTermLabels([], null)).toEqual([]);
   });

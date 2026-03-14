@@ -2,6 +2,63 @@ import * as cheerio from "cheerio";
 import { BaseScraper } from "./BaseScraper";
 import { Course } from "./types";
 
+type XmlExportParams = {
+  token: string;
+  db: string;
+  keys: string;
+  ref: string;
+  sem: string;
+  tdir: string;
+};
+
+type XmlLectureTerm = {
+  startdate: string | null;
+  enddate: string | null;
+  starttime: string | null;
+  endtime: string | null;
+  repeat: string | null;
+  exclude: string | null;
+  roomKeys: string[];
+};
+
+type XmlLectureRecord = {
+  key: string;
+  id: string;
+  number: string | null;
+  importParentId: string | null;
+  parentLectureKey: string | null;
+  name: string;
+  short: string;
+  titleEn: string | null;
+  type: string;
+  orgname: string | null;
+  summary: string | null;
+  timeDescription: string | null;
+  literature: string | null;
+  organizational: string | null;
+  ectsCred: string | null;
+  sws: string | null;
+  resourceUrls: string[];
+  classificationKeys: string[];
+  personKeys: string[];
+  roomKeys: string[];
+  terms: XmlLectureTerm[];
+};
+
+type ResolvedRoom = {
+  name: string | null;
+  short: string | null;
+  building: string | null;
+  address: string | null;
+  label: string | null;
+};
+
+type ResolvedPerson = {
+  name: string | null;
+  email: string | null;
+  office: string | null;
+};
+
 export class CAU extends BaseScraper {
   constructor() {
     super("cau");
@@ -32,6 +89,407 @@ export class CAU extends BaseScraper {
     const u = new URL(url);
     u.searchParams.set("__e", token);
     return u.toString();
+  }
+
+  private extractXmlExportParams(html: string): XmlExportParams {
+    const $ = cheerio.load(html);
+    const hiddenFieldsPresent = ["__e", "db", "keys", "ref", "sem", "tdir"]
+      .every((name) => $(`input[name="${name}"]`).length > 0);
+
+    if (!hiddenFieldsPresent) {
+      const href = $("a[href*='dsc=anew/xml']").first().attr("href")?.trim();
+      if (href) {
+        const url = new URL(this.toAbsoluteUrl(href));
+        return {
+          token: url.searchParams.get("__e") || "",
+          db: url.searchParams.get("db") || "",
+          keys: url.searchParams.get("keys") || "",
+          ref: url.searchParams.get("ref") || "tlecture",
+          sem: url.searchParams.get("sem") || this.getSemesterParam(),
+          tdir: url.searchParams.get("tdir") || "techn/infora/master",
+        };
+      }
+    }
+
+    const readRequiredField = (name: string): string => {
+      const value = $(`input[name="${name}"]`).first().attr("value")?.trim();
+      if (!value) throw new Error(`Missing CAU XML export field: ${name}`);
+      return value;
+    };
+
+    return {
+      token: readRequiredField("__e"),
+      db: readRequiredField("db"),
+      keys: readRequiredField("keys"),
+      ref: readRequiredField("ref"),
+      sem: readRequiredField("sem"),
+      tdir: readRequiredField("tdir"),
+    };
+  }
+
+  extractXmlExportParamsForTests(html: string): XmlExportParams {
+    return this.extractXmlExportParams(html);
+  }
+
+  private buildXmlExportRequest(params: XmlExportParams): { url: string; body: URLSearchParams } {
+    const body = new URLSearchParams({
+      __s: "1",
+      dsc: "anew/xml",
+      db: params.db,
+      keys: params.keys,
+      lang: "en",
+      ref: params.ref,
+      sem: params.sem,
+      tdir: params.tdir,
+      __e: params.token,
+      level: "3",
+      option: "orgname",
+    });
+
+    return {
+      url: "https://univis.uni-kiel.de/form",
+      body,
+    };
+  }
+
+  buildXmlExportRequestForTests(params: XmlExportParams): { url: string; body: URLSearchParams } {
+    return this.buildXmlExportRequest(params);
+  }
+
+  private parseXmlLectures(xml: string): XmlLectureRecord[] {
+    const $ = cheerio.load(xml, { xmlMode: true });
+    const readText = (element: cheerio.Cheerio<any>, selector: string): string | null => {
+      const value = element.children(selector).first().text().trim();
+      return value || null;
+    };
+    const readRefKeys = (element: cheerio.Cheerio<any>, selector: string, type?: string): string[] => {
+      const refs = element.find(selector).toArray()
+        .map((node) => {
+          const refType = node.attribs?.type?.trim();
+          if (type && refType !== type) return null;
+          return node.attribs?.key?.trim() || null;
+        })
+        .filter((value): value is string => Boolean(value));
+      return Array.from(new Set(refs));
+    };
+    const readUrls = (element: cheerio.Cheerio<any>, selector: string): string[] => {
+      return Array.from(new Set(
+        element.children(selector).toArray()
+          .map((node) => cheerio.load(node, { xmlMode: true }).root().text().trim())
+          .filter(Boolean),
+      ));
+    };
+
+    return $("Lecture").toArray().map((node) => {
+      const lecture = $(node);
+      const terms = lecture.find("terms > term").toArray().map((termNode) => {
+        const term = $(termNode);
+        return {
+          startdate: readText(term, "startdate"),
+          enddate: readText(term, "enddate"),
+          starttime: readText(term, "starttime"),
+          endtime: readText(term, "endtime"),
+          repeat: readText(term, "repeat"),
+          exclude: readText(term, "exclude"),
+          roomKeys: readRefKeys(term, "room > UnivISRef", "Room"),
+        };
+      });
+
+      const roomKeys = Array.from(new Set([
+        ...readRefKeys(lecture, "room > UnivISRef", "Room"),
+        ...terms.flatMap((term) => term.roomKeys),
+      ]));
+
+      return {
+        key: lecture.attr("key")?.trim() || "",
+        id: readText(lecture, "id") || "",
+        number: readText(lecture, "number"),
+        importParentId: readText(lecture, "import_parent_id"),
+        parentLectureKey: lecture.find("parent-lv > UnivISRef[type='Lecture']").first().attr("key")?.trim() || null,
+        name: readText(lecture, "name") || "",
+        short: readText(lecture, "short") || "",
+        titleEn: readText(lecture, "title_en"),
+        type: readText(lecture, "type") || "",
+        orgname: readText(lecture, "orgname"),
+        summary: readText(lecture, "summary"),
+        timeDescription: readText(lecture, "time_description"),
+        literature: readText(lecture, "literature"),
+        organizational: readText(lecture, "organizational"),
+        ectsCred: readText(lecture, "ects_cred"),
+        sws: readText(lecture, "sws"),
+        resourceUrls: Array.from(new Set([
+          ...readUrls(lecture, "url"),
+          ...readUrls(lecture, "url_description"),
+        ])),
+        classificationKeys: readRefKeys(lecture, "classification > UnivISRef", "Title"),
+        personKeys: readRefKeys(lecture, "doz > UnivISRef", "Person"),
+        roomKeys,
+        terms,
+      };
+    });
+  }
+
+  parseXmlLecturesForTests(xml: string): XmlLectureRecord[] {
+    return this.parseXmlLectures(xml);
+  }
+
+  private deriveCategory(classificationKeys: string[], titleMap?: Map<string, string>): string {
+    const xmlCategory = classificationKeys
+      .map((key) => titleMap?.get(key)?.trim())
+      .find(Boolean);
+    if (xmlCategory) return xmlCategory;
+
+    const key = classificationKeys[0]?.toLowerCase() || "";
+    if (key.includes(".theore")) return "Theoretical Computer Science";
+    if (key.includes(".wahlpf")) return "Compulsory elective modules in Computer Science";
+    if (key.includes(".master_1")) return "Seminar";
+    if (key.includes(".master_2")) return "Advanced Project";
+    if (key.includes(".master_3")) return "Involvement in a working group";
+    if (key.includes(".frei") || key.includes(".open")) return "Open Elective";
+    return "General";
+  }
+
+  deriveCategoryForTests(classificationKeys: string[], titleMap?: Map<string, string>): string {
+    return this.deriveCategory(classificationKeys, titleMap);
+  }
+
+  private isAuxiliaryType(type: string): boolean {
+    return ["ue", "ex", "exercise", "tutorial", "tut"].includes(type.trim().toLowerCase());
+  }
+
+  isAuxiliaryTypeForTests(type: string): boolean {
+    return this.isAuxiliaryType(type);
+  }
+
+  private parseDefinitionList(html: string): Map<string, string> {
+    const $ = cheerio.load(html);
+    const values = new Map<string, string>();
+
+    $("dt").each((_, node) => {
+      const label = $(node).text().replace(/\s+/g, " ").trim().toLowerCase();
+      const value = $(node).next("dd").text().replace(/\s+/g, " ").trim();
+      if (label && value) values.set(label, value);
+    });
+
+    return values;
+  }
+
+  private parseRoomView(html: string): ResolvedRoom {
+    const values = this.parseDefinitionList(html);
+    const name = values.get("room") || null;
+    const building = values.get("building") || null;
+    const address = values.get("address") || null;
+    const label = [name, building, address].filter(Boolean).join(", ") || null;
+    return { name, short: name, building, address, label };
+  }
+
+  parseRoomViewForTests(html: string): ResolvedRoom {
+    return this.parseRoomView(html);
+  }
+
+  private parsePersonView(html: string): ResolvedPerson {
+    const values = this.parseDefinitionList(html);
+    return {
+      name: values.get("name") || null,
+      email: values.get("email") || null,
+      office: values.get("office") || null,
+    };
+  }
+
+  parsePersonViewForTests(html: string): ResolvedPerson {
+    return this.parsePersonView(html);
+  }
+
+  private buildResolvedReferenceMaps(xml: string): {
+    roomMap: Map<string, string>;
+    personMap: Map<string, string>;
+    titleMap: Map<string, string>;
+  } {
+    const $ = cheerio.load(xml, { xmlMode: true });
+    const roomMap = new Map<string, string>();
+    const personMap = new Map<string, string>();
+    const titleMap = new Map<string, string>();
+
+    $("Person").each((_, node) => {
+      const person = $(node);
+      const key = person.attr("key")?.trim();
+      if (!key) return;
+      const prefix = person.children("title").first().text().trim();
+      const firstname = person.children("firstname").first().text().trim();
+      const lastname = person.children("lastname").first().text().trim();
+      const suffix = person.children("atitle").first().text().trim();
+      const fullName = [prefix, [firstname, lastname].filter(Boolean).join(" ").trim(), suffix]
+        .filter(Boolean)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (fullName) personMap.set(key, fullName);
+    });
+
+    $("Room").each((_, node) => {
+      const room = $(node);
+      const key = room.attr("key")?.trim();
+      if (!key) return;
+      const short = room.children("short").first().text().trim();
+      const name = room.children("name").first().text().trim();
+      const address = room.children("address").first().text().trim();
+      const label = [short || name, address].filter(Boolean).join(", ").trim();
+      if (label) roomMap.set(key, label);
+    });
+
+    $("Title").each((_, node) => {
+      const title = $(node);
+      const key = title.attr("key")?.trim();
+      if (!key) return;
+      const label = title.children("title_en").first().text().trim() || title.children("title").first().text().trim();
+      if (label) titleMap.set(key, label);
+    });
+
+    return { roomMap, personMap, titleMap };
+  }
+
+  private normalizeLectureName(name: string, short: string): string {
+    return name
+      .replace(new RegExp(`^${short.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*:\\s*`, "i"), "")
+      .trim();
+  }
+
+  private normalizeCourseType(type: string): string {
+    const normalized = type.trim().toUpperCase();
+    if (normalized === "V") return "Lecture";
+    if (normalized === "UE") return "Exercise";
+    if (normalized === "S") return "Seminar";
+    if (normalized === "OS") return "Advanced Seminar";
+    if (normalized === "SPR") return "Language Course";
+    return normalized || "Unknown";
+  }
+
+  private isLayoutOnlyLecture(lecture: XmlLectureRecord): boolean {
+    return /\(\s*layout\s*\)/i.test(lecture.name) || /\(\s*layout\s*\)/i.test(lecture.titleEn || "");
+  }
+
+  private shouldPersistPrimaryLecture(lecture: XmlLectureRecord): boolean {
+    if (this.isAuxiliaryType(lecture.type)) return false;
+    if (!lecture.short.trim()) return false;
+    if (this.isLayoutOnlyLecture(lecture)) return false;
+    return true;
+  }
+
+  private normalizeDescription(summary: string | null, timeDescription: string | null): string | undefined {
+    const parts = [summary, timeDescription]
+      .map((value) => value?.replace(/\s+/g, " ").trim() || "")
+      .filter(Boolean);
+    return parts.length > 0 ? parts.join("\n\n") : undefined;
+  }
+
+  private toSemesterInfo(): { term: string; year: number } {
+    const semParam = this.getSemesterParam();
+    return {
+      year: parseInt(semParam.substring(0, 4)),
+      term: semParam.endsWith("w") ? "Winter" : "Spring",
+    };
+  }
+
+  private buildLectureResourceUrl(lectureKey: string): string | null {
+    const trimmed = lectureKey.trim();
+    if (!trimmed.startsWith("Lecture.")) return null;
+    const lvs = trimmed.replace(/^Lecture\./, "").replace(/\./g, "/");
+    const sem = this.getSemesterParam();
+    return `https://univis.uni-kiel.de/form?dsc=anew/lecture_view&lvs=${lvs}&anonymous=1&lang=en&sem=${sem}&tdir=techn/infora/master`;
+  }
+
+  private courseFromLectureRecord(
+    lecture: XmlLectureRecord,
+    resolvedRefs?: { roomMap: Map<string, string>; personMap: Map<string, string>; titleMap: Map<string, string> },
+  ): Course {
+    const semesterInfo = this.toSemesterInfo();
+    const instructors = lecture.personKeys.map((key) => resolvedRefs?.personMap.get(key) || key);
+    const ownWorkload = lecture.sws ? Number(lecture.sws) || 0 : 0;
+    const resourceUrls = Array.from(
+      new Set([
+        ...(lecture.resourceUrls || []),
+        this.buildLectureResourceUrl(lecture.key),
+      ].filter((value): value is string => Boolean(value))),
+    );
+    return {
+      university: "CAU Kiel",
+      courseCode: lecture.short,
+      title: this.normalizeLectureName(lecture.name, lecture.short),
+      units: lecture.sws ? `${lecture.type} ${lecture.sws}` : undefined,
+      credit: lecture.ectsCred ? Number(lecture.ectsCred) : undefined,
+      description: this.normalizeDescription(lecture.summary, lecture.timeDescription),
+      department: lecture.orgname || undefined,
+      prerequisites: lecture.organizational || undefined,
+      instructors,
+      resources: resourceUrls.length > 0 ? resourceUrls : undefined,
+      level: "graduate",
+      workload: ownWorkload || undefined,
+      category: this.deriveCategory(lecture.classificationKeys, resolvedRefs?.titleMap),
+      semesters: [semesterInfo],
+      details: {
+        type: lecture.type,
+        normalizedType: this.normalizeCourseType(lecture.type),
+        internalId: lecture.id,
+        internalNumber: lecture.number,
+        classificationKeys: lecture.classificationKeys,
+        literature: lecture.literature,
+        organizational: lecture.organizational,
+        unitsBreakdown: lecture.sws ? [{ type: lecture.type, sws: ownWorkload }] : [],
+      },
+    };
+  }
+
+  private formatUnitsBreakdown(entries: Array<{ type: string; sws: number }>): string | undefined {
+    if (entries.length === 0) return undefined;
+    return entries
+      .filter((entry) => entry.sws > 0)
+      .map((entry) => `${entry.type} ${entry.sws}`)
+      .join(" ");
+  }
+
+  private mergeLectureChildren(
+    records: XmlLectureRecord[],
+    resolvedRefs?: { roomMap: Map<string, string>; personMap: Map<string, string>; titleMap: Map<string, string> },
+  ): Course[] {
+    const primaryRecords = records.filter((lecture) => this.shouldPersistPrimaryLecture(lecture));
+    const primaryCourses = new Map(primaryRecords.map((lecture) => [lecture.key, this.courseFromLectureRecord(lecture, resolvedRefs)]));
+
+    for (const record of records) {
+      if (!this.isAuxiliaryType(record.type)) continue;
+      const parentKey = record.parentLectureKey;
+      if (!parentKey) continue;
+      const parentCourse = primaryCourses.get(parentKey);
+      if (!parentCourse) continue;
+      const details = (parentCourse.details || {}) as Record<string, unknown>;
+      const breakdown = Array.isArray(details.unitsBreakdown)
+        ? [...details.unitsBreakdown as Array<{ type: string; sws: number }>]
+        : [];
+      const sws = record.sws ? Number(record.sws) || 0 : 0;
+      if (sws > 0) breakdown.push({ type: record.type, sws });
+      details.unitsBreakdown = breakdown;
+      parentCourse.details = details;
+      parentCourse.units = this.formatUnitsBreakdown(breakdown) || parentCourse.units;
+      const totalWorkload = breakdown.reduce((sum, entry) => sum + entry.sws, 0);
+      parentCourse.workload = totalWorkload || parentCourse.workload;
+    }
+
+    return Array.from(primaryCourses.values());
+  }
+
+  async mergeLectureChildrenForTests(records: XmlLectureRecord[]): Promise<Course[]> {
+    return this.mergeLectureChildren(records);
+  }
+
+  private async normalizeXmlCourses(xml: string, options?: { resolveRefs?: boolean }): Promise<Course[]> {
+    const records = this.parseXmlLectures(xml);
+    const resolvedRefs = options?.resolveRefs === false
+      ? { roomMap: new Map<string, string>(), personMap: new Map<string, string>(), titleMap: new Map<string, string>() }
+      : this.buildResolvedReferenceMaps(xml);
+    return this.mergeLectureChildren(records, resolvedRefs);
+  }
+
+  async parseXmlCoursesForTests(xml: string): Promise<Course[]> {
+    return this.normalizeXmlCourses(xml);
   }
 
   private sanitizeCourseUrl(rawUrl: string): string {
@@ -150,6 +608,20 @@ export class CAU extends BaseScraper {
       }
     }
     return "";
+  }
+
+  private async fetchXmlExport(params: XmlExportParams): Promise<string> {
+    const request = this.buildXmlExportRequest(params);
+    const response = await fetch(request.url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: request.body.toString(),
+    });
+    if (!response.ok) return "";
+    const buffer = await response.arrayBuffer();
+    return new TextDecoder("windows-1252").decode(buffer);
   }
 
   async parser(html: string, existingCodes: Set<string> = new Set()): Promise<Course[]> {
@@ -335,15 +807,31 @@ export class CAU extends BaseScraper {
   async retrieve(): Promise<Course[]> {
     const links = await this.links();
     console.log(`[${this.name}] Scraping English courses from ${links.length} departments...`);
-    const allItems: Course[] = [];
+    const xmlItems: Course[] = [];
+    const htmlItems: Course[] = [];
     for (const link of links) {
-      const html = await this.fetchPage(link);
-      if (html) {
-        const batch = await this.parser(html, new Set());
-        allItems.push(...batch);
+      const page = await this.fetchPage(link);
+      if (!page) continue;
+
+      try {
+        const params = this.extractXmlExportParams(page);
+        const xml = await this.fetchXmlExport(params);
+        if (xml) {
+          xmlItems.push(...await this.normalizeXmlCourses(xml));
+          continue;
+        }
+      } catch {
+        // Fall back to the legacy HTML parser until the XML path fully covers every case.
+      }
+
+      if (page) {
+        const batch = await this.parser(page, new Set());
+        htmlItems.push(...batch);
       }
     }
-    const merged = this.mergeCourses(allItems);
+    const merged = xmlItems.length > 0 && htmlItems.length === 0
+      ? xmlItems
+      : [...xmlItems, ...this.mergeCourses(htmlItems)];
     const projectTableCategories = new Set([
       "Seminar",
       "Advanced Project",

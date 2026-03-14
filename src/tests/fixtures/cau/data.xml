@@ -1,0 +1,3623 @@
+<?xml version="1.0"?>
+<!DOCTYPE UnivIS SYSTEM "http://univis.uni-kiel.de/univis.dtd">
+<UnivIS version="1.6" semester="2026s" organisation="CAU Kiel">
+<Event key="Event.current.techn.infor.inform.echtze.semech_4">
+<contact><UnivISRef type="Person" key="Person.techn.infor.inform.echtze.vonhan" /></contact>
+<dbref><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.echtze.semech" /></dbref>
+<enddate>2026-04-13</enddate>
+<id>99994217</id>
+<orgname>Echtzeitsysteme / Eingebettete Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Echtzeitsysteme / Eingebettete Systeme</orgunit>
+</orgunits>
+<startdate>2026-04-13</startdate>
+<terms>
+<term>
+<enddate>2026-04-13</enddate>
+<endtime>11:00</endtime>
+<startdate>2026-04-13</startdate>
+<starttime>10:00</starttime>
+</term>
+</terms>
+<title>Vorbesprechung zu Inf-MS-EES: Master Seminar Real-Time/Embedded Systems (Layout)</title>
+</Event>
+<Event key="Event.current.techn.infor.inform.theori.semina_4">
+<contact><UnivISRef type="Person" key="Person.techn.infor.inform.theori.jansen" /></contact>
+<dbref><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.theori.semina" /></dbref>
+<enddate>2026-03-05</enddate>
+<id>99700300</id>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<startdate>2026-03-05</startdate>
+<terms>
+<term>
+<enddate>2026-03-05</enddate>
+<startdate>2026-03-05</startdate>
+</term>
+</terms>
+<title>Sondertermin zu Inf-MS-TIAktF: Masterseminar - Theoretische Informatik (Aktuelle Forschungsfragen)</title>
+</Event>
+<Event key="Event.current.techn.infor.inform.theori.semina_1">
+<contact><UnivISRef type="Person" key="Person.techn.infor.inform.theori.jansen" /></contact>
+<dbref><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.theori.semina" /></dbref>
+<enddate>2026-03-06</enddate>
+<id>90697149</id>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<startdate>2026-03-06</startdate>
+<terms>
+<term>
+<enddate>2026-03-06</enddate>
+<startdate>2026-03-06</startdate>
+</term>
+</terms>
+<title>Sondertermin zu Inf-MS-TIAktF: Masterseminar - Theoretische Informatik (Aktuelle Forschungsfragen)</title>
+</Event>
+<Lecture key="Lecture.techn.infor.inform.algori._bungz_0">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.algori.slawig" /></doz>
+</dozs>
+<enddate>2026-07-12</enddate>
+<id>22661285</id>
+<import_parent_id>41594682</import_parent_id>
+<name>&#xDC;bung zu: Einf&#xFC;hrung in Operations Research</name>
+<number>080031</number>
+<orgname>Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.algori._infeo_6" /></parent-lv>
+<short>&#xDC;infEOR-01a</short>
+<startdate>2026-04-12</startdate>
+<summary>*Weitere Informationen finden Sie im elearn [Link folgt]*</summary>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>13:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.cap3i" /></room>
+<starttime>12:15</starttime>
+</term>
+</terms>
+<time_description>&#xDC;bungen beginnen nach der ersten VL (20.04.2026)</time_description>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.algori._infeo_6">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.algori.slawig" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<enddate>2026-07-12</enddate>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>22632461</id>
+<import_parent_id>41554674</import_parent_id>
+<name>infEOR-01a: Einf&#xFC;hrung in Operations Research</name>
+<number>080034</number>
+<ordernr>3</ordernr>
+<orgname>Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres</orgunit>
+</orgunits>
+<short>infEOR-01a</short>
+<startdate>2026-04-12</startdate>
+<summary> &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Sie k&#xF6;nnen sich bis zum *17.05.2026* zu diesem Modul in der StudiDB anmelden, nur dort Angemeldete k&#xF6;nnen auch an der Pr&#xFC;fung teilnehmen.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Weitere Informationen zu den Inhalten: [[Moduldatenbank]] https://moduldb.informatik.uni-kiel.de/show.cgi?mod=infEOR%2D01a&#x0D;&#x0A;&#x0D;&#x0A;Informationen und Einschreiben: [Olat] https://lms.uni-kiel.de/url/RepositoryEntry/2964029454 &#x0D;&#x0A; &#x0D;&#x0A;&#x0D;&#x0A;</summary>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>13:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.cap3i" /></room>
+<starttime>12:15</starttime>
+</term>
+</terms>
+<time_description>&#xDC;bungen beginnen nach der ersten VL (20.04.2026)</time_description>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.algori.algopt">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_3" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.algori.slawig" /></doz>
+</dozs>
+<ects>ja</ects>
+<evaluation>ja</evaluation>
+<id>41120583</id>
+<name>Oberseminar Algorithmische Optimale Steuerung - Informatik in der Meeresforschung</name>
+<number>080076</number>
+<ordernr>1</ordernr>
+<orgname>Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres</orgunit>
+</orgunits>
+<short>AlgOptSteu-Meeresforsch</short>
+<summary>Seminar f&#xFC;r Mitglieder der Arbeitgruppe und Studierende, die ihre Abschlussarbeit schreiben. &#x0D;&#x0A;&#x0D;&#x0A;Seminar for members of the working group and students writing their thesis.</summary>
+<sws>2</sws>
+<turnout>12</turnout>
+<type>OS</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.algori.prakop">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.algori.slawig" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<id>40919587</id>
+<keywords>Klimasimulation Klimamodelle Optimierung Steuerung</keywords>
+<name>Inf-MP-AOS: Master Project - Algorithmic Optimal Control / Climate Simulation</name>
+<number>080143</number>
+<ordernr>2</ordernr>
+<orgname>Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres</orgunit>
+</orgunits>
+<short>Inf-MP-AOS</short>
+<summary>For more information: [ModuleDB]https://mdb.ps.informatik.uni-kiel.de/show.cgi?mod=Inf%2DMP%2DAOS&#x0D;&#x0A;or [Olat]https://lms.uni-kiel.de/auth/RepositoryEntry/5303173305&#x0D;&#x0A;&#x0D;&#x0A;</summary>
+<sws>4</sws>
+<turnout>10</turnout>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.archoi.infmpa">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.archoi.renzma" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.archoi.dietze" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.archoi.lptien" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.archoi.bethch" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.archoi.amannn" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<englisch>ja</englisch>
+<id>42068149</id>
+<literature>Literature and resources will be provided in the first meeting.</literature>
+<name>infMPAIDS-01a: Master Project - Data Science and Data Mining</name>
+<number>080129</number>
+<ordernr>3</ordernr>
+<organizational>Students will work in small teams and gain hands-on experience implementing and applying Data Science and Machine Learning methods with emphasis on: large-scale data handling, high-performance computing, numerical modelling, scientific ML, and surrogate modelling. Projects are embedded in an interdisciplinary environment such as climate science, physical oceanography, archaeology and biogeochemistry. Students should bring:&#x0D;&#x0A;&#x0D;&#x0A;- good programming skills, preferably in Python&#x0D;&#x0A;- knowledge of basic data structures and algorithms (search, sort, &#x85;)&#x0D;&#x0A;- prior knowledge in one or more of the following topics: data mining, machine learning, deep learning, similarity search, knowledge discovery - ideally from corresponding lectures&#x0D;&#x0A;- successful participation in Data Science and/or Knowledge Discovery and Data Mining is required.&#x0D;&#x0A;&#x0D;&#x0A;Students must sign up for the course via StudiDB. Further details will be discussed in the first meeting.&#x0D;&#x0A;&#x0D;&#x0A;*Contact*:&#x0D;&#x0A;[ulrike.loeptien@informatik.uni-kiel.de&#x0D;&#x0A;]mailto:ulrike.loeptien@informatik.uni-kiel.de&#x0D;&#x0A;&#x0D;&#x0A;or&#x0D;&#x0A;&#x0D;&#x0A;[ag-renz-lehre@lists.uni-kiel.de]mailto:ag-renz-lehre@lists.uni-kiel.de                &#x0D;&#x0A;</organizational>
+<orgname>Arch&#xE4;oinformatik - Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Arch&#xE4;oinformatik - Data Science</orgunit>
+</orgunits>
+<short>infMPAIDS-01a</short>
+<startdate>2026-04-12</startdate>
+<summary>In this project-based course, students will develop a machine-learning&#x96;based emulator for components of a coupled ocean-circulation biogeochemical model&#x97;the type of model used in state-of-the-art Earth System simulations that are employed to project into our warming future. Traditional ocean&#x96;biogeochemistry models are built on systems of partial differential equations (PDEs) and require massive computational resources. This project explores data-driven alternatives using existing terabyte-scale simulation archives, which will be processed and trained on a high-performance computing (HPC) environment. Finally, the students will implement a demonstrator to showcase their results.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Course Structure*&#x0D;&#x0A;&#x0D;&#x0A;The project is divided into four main components:&#x0D;&#x0A;&#x0D;&#x0A;1. Data Access, Preprocessing, and Feature Engineering for TB-Scale Simulation Archives&#x0D;&#x0A;- handle multi-dimensional ocean model outputs (3D/4D fields: temperature, salinity, nutrients, tracers, &#x85;)&#x0D;&#x0A;- manage large datasets on an HPC system (parallel I/O, chunking, efficient data loaders)&#x0D;&#x0A;- explore data-reduction strategies (e.g., PCA, autoencoders, domain-informed feature extraction).&#x0D;&#x0A;&#x0D;&#x0A;2. Machine-Learning and Deep-Learning Approaches for Model Emulation&#x0D;&#x0A;&#x0D;&#x0A;- develop ML surrogates that approximate the dynamics of the coupled circulation&#x96;biogeochemical system&#x0D;&#x0A;- evaluate methods such as: Neural networks (CNNs, U-Nets, RNNs, Transformers), Operator-learning approaches (Fourier Neural Operators, DeepONets), Hybrid physics-ML architectures&#x0D;&#x0A;- explore trade-offs between accuracy, interpretability, and computational efficiency&#x0D;&#x0A;- integrate physical constraints where possible (mass conservation, positivity, stability considerations).&#x0D;&#x0A;&#x0D;&#x0A;3. Emulator Validation, Skill Assessment, and Generalization Analysis&#x0D;&#x0A;&#x0D;&#x0A;- conduct systematic benchmarking against the full PDE-based model&#x0D;&#x0A;- evaluate predictive skill under different temporal and spatial regimes (including visualization, animation)&#x0D;&#x0A;- assess uncertainty, robustness, and sensitivity to training data&#x0D;&#x0A;- investigate extrapolation challenges, especially regarding future climate warming scenarios.&#x0D;&#x0A;&#x0D;&#x0A;4. Deployment, Performance Optimization, and HPC Integration&#x0D;&#x0A;&#x0D;&#x0A;- implement scalable training pipelines on HPC systems&#x0D;&#x0A;- optimize inference speed and memory usage for large-scale operational use&#x0D;&#x0A;- sevelop workflows for rapid application of the emulator within Earth System Model experiments&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Challenges*&#x0D;&#x0A;- efficiently handling TB-scale scientific datasets&#x0D;&#x0A;- ensuring ML models remain physically meaningful and numerically stable&#x0D;&#x0A;- capturing complex, nonlinear couplings between ocean circulation and biogeochemistry&#x0D;&#x0A;- achieving substantial speed-ups compared to PDE-based models while retaining accuracy&#x0D;&#x0A;- integrating ML workflows into an HPC environment.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Learning Outcomes*&#x0D;&#x0A;&#x0D;&#x0A;By the end of this course, students will have:&#x0D;&#x0A;&#x0D;&#x0A;- built and evaluated a machine-learning emulator for a state-of-the-art ocean biogeochemical model&#x0D;&#x0A;- gained experience with HPC workflows, big-data processing, and scientific ML&#x0D;&#x0A;- learned to design, train, validate, and deploy surrogate models for complex dynamical systems&#x0D;&#x0A;- developed interdisciplinary insight into ocean modelling and climate science applications.&#x0D;&#x0A;&#x0D;&#x0A; &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A; &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;</summary>
+<sws>4</sws>
+<turnout>10</turnout>
+<terms>
+<term>
+<endtime>12:00</endtime>
+<exclude>vac</exclude>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.inform.progra.cap4r7" /></room>
+<starttime>10:00</starttime>
+</term>
+</terms>
+<time_description>Kick Off am 16. April 2026, 10 - 11 Uhr in CAP4-Raum 715</time_description>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.archoi.infsem">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_1" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.archoi.renzma" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.archoi.amannn" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.archoi.thorst" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.archoi.bethch" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>5</ects_cred>
+<englisch>ja</englisch>
+<id>21916797</id>
+<name>infSemDaSci-01a: Master Seminar - Data Science</name>
+<number>080080</number>
+<ordernr>2</ordernr>
+<organizational>Eine vorige Anmeldung &#xFC;ber die StudiDB ist erforderlich.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Kontaktaufnahme* unter mailto:ag-renz-lehre@lists.uni-kiel.de</organizational>
+<orgname>Arch&#xE4;oinformatik - Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Arch&#xE4;oinformatik - Data Science</orgunit>
+</orgunits>
+<short>infSemDaSci-01a</short>
+<summary>IIn this seminar, you will read, research, interpret, and present research papers on networked and spatio-temporal data. This semester, the emphasis will be on heterogeneous information networks, spatial indexing, and routing algorithms. Introductory materials and presentations will be provided to ensure a smooth introduction to the seminar topic.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;The seminar will follow a conference-style format, where students will submit their reports prior to their presentations. Additionally, each participant will be required to review other submissions, fostering a deeper engagement with the structure and style of reports. The presentations will take place alongside the Bachelor seminar on February 25th and 26st. The kickoff session on October 20th will provide an overview of the seminar structure, including key deadlines, topic areas, and guidelines for writing a strong report. It will also include an introduction to the Conference Management Toolkit (CMT) to facilitate the submission and review process.</summary>
+<sws>2</sws>
+<turnout>10</turnout>
+<terms>
+<term>
+<endtime>15:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.inform.progra.cap4r7" /></room>
+<starttime>14:15</starttime>
+</term>
+</terms>
+<type>S</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.echtze.embedd">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.echtze.vonhan" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.echtze.kasper" /></doz>
+</dozs>
+<englisch>ja</englisch>
+<id>21136160</id>
+<name>Exercise: Embedded Real-Time Systems</name>
+<number>080252</number>
+<organizational>Bitte melden Sie sich f&#xFC;r die Veranstaltung in der StudiDB an. Weitere Informationen wird es in einem Moodle geben, zu dem Sie zu Semesterbeginn nach Anmeldung in der StudiDB Zugang bekommen werden.</organizational>
+<orgname>Echtzeitsysteme / Eingebettete Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Echtzeitsysteme / Eingebettete Systeme</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.echtze.infent" /></parent-lv>
+<short>EInf-EntEinSys</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>35</turnout>
+<terms>
+<term>
+<endtime>13:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 3</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_9" /></room>
+<starttime>12:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.echtze.infent">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.echtze.vonhan" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>8</ects_cred>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>21176528</id>
+<name>Inf-EntEinSys: Embedded Real-Time Systems</name>
+<number>080011</number>
+<ordernr>6</ordernr>
+<organizational>Please register for the course in the StudiDB.&#x0D;&#x0A;https://studidb.informatik.uni-kiel.de:8484/studierende/login&#x0D;&#x0A;&#x0D;&#x0A;Further information is provided via Moodle. You can login with you LDAP &#x0D;&#x0A;credentials and self enroll in the Embedded Real-Time Systems course.&#x0D;&#x0A;https://elearn.informatik.uni-kiel.de/course/view.php?id=256</organizational>
+<orgname>Echtzeitsysteme / Eingebettete Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Echtzeitsysteme / Eingebettete Systeme</orgunit>
+</orgunits>
+<short>Inf-EntEinSys</short>
+<startdate>2026-04-12</startdate>
+<sws>4</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>15:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_9" /></room>
+<starttime>14:15</starttime>
+</term>
+<term>
+<endtime>11:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 3</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_9" /></room>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>V</type>
+<url_description>https://elearn.informatik.uni-kiel.de/course/view.php?id=256</url_description>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.echtze.semech">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_1" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.echtze.vonhan" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.echtze.domrss" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.echtze.kasper" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>5</ects_cred>
+<enddate>2026-07-12</enddate>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<id>21291098</id>
+<name>Inf-MS-EES: Master Seminar Real-Time/Embedded Systems (Layout)</name>
+<number>080087</number>
+<ordernr>3</ordernr>
+<orgname>Echtzeitsysteme / Eingebettete Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Echtzeitsysteme / Eingebettete Systeme</orgunit>
+</orgunits>
+<short>Inf-MS-EES</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>5</turnout>
+<time_description_en>Vorbesprechung im Raum CAP4 R.1114/1115</time_description_en>
+<type>S</type>
+<url_description>https://wiki.rtsys.informatik.uni-kiel.de/bin/view/Seminars/2026%20Layout/#</url_description>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.fachdi._bungz">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.fachdi.esquiv" /></doz>
+</dozs>
+<id>22624988</id>
+<import_parent_id>22031933</import_parent_id>
+<name>&#xDC;bung zu: Algorithmische Methoden in der Praxis</name>
+<number>080048</number>
+<orgname>Didaktik der Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Didaktik der Informatik</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.fachdi._infal" /></parent-lv>
+<short>&#xDC;infAlgMetP-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>15:45</endtime>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>14:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.fachdi._bungz_4">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.fachdi.groebl" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.fachdi.fleisc" /></doz>
+</dozs>
+<id>22689928</id>
+<import_parent_id>42440743</import_parent_id>
+<name>&#xDC;bung zu: Ethik in der Informatik</name>
+<number>080029</number>
+<orgname>Didaktik der Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Didaktik der Informatik</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.fachdi._infet_1" /></parent-lv>
+<praesenz>ja</praesenz>
+<startdate>2026-04-12</startdate>
+<sws>1</sws>
+<turnout>30</turnout>
+<terms>
+<term>
+<endtime>13:15</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_1" /></room>
+<starttime>12:15</starttime>
+</term>
+<term>
+<endtime>13:15</endtime>
+<exclude>vac</exclude>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>12:15</starttime>
+</term>
+<term>
+<endtime>11:15</endtime>
+<exclude>vac</exclude>
+<repeat>w1 5</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_9" /></room>
+<starttime>10:15</starttime>
+</term>
+<term>
+<endtime>13:15</endtime>
+<exclude>vac</exclude>
+<repeat>w1 3</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>12:15</starttime>
+</term>
+<term>
+<endtime>13:15</endtime>
+<exclude>vac</exclude>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>12:15</starttime>
+</term>
+<term>
+<endtime>11:15</endtime>
+<exclude>vac</exclude>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>10:15</starttime>
+</term>
+<term>
+<endtime>11:15</endtime>
+<exclude>vac</exclude>
+<repeat>w1 5</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.fachdi._infal">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<comment>Eigener Rechner wird f&#xFC;r die &#xDC;bungen ben&#xF6;tigt</comment>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.fachdi.esquiv" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<evaluation>ja</evaluation>
+<id>22632178</id>
+<import_parent_id>22058326</import_parent_id>
+<name>infAlgMetP-01a: Algorithmische Methoden in der Praxis</name>
+<number>080047</number>
+<ordernr>4</ordernr>
+<orgname>Didaktik der Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Didaktik der Informatik</orgunit>
+</orgunits>
+<short>infAlgMetP-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>13:45</endtime>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>12:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.fachdi._infet_1">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.fachdi.groebl" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>2</ects_cred>
+<evaluation>ja</evaluation>
+<id>22648370</id>
+<import_parent_id>42416095</import_parent_id>
+<name>infEthik-01a: Ethik in der Informatik</name>
+<number>080028</number>
+<ordernr>5</ordernr>
+<organizational>*Die Vorlesung wird in Form von Videos &#xFC;ber das Moodle zur Verf&#xFC;gung gestellt. Die &#xDC;bung findet in Pr&#xE4;senz statt, die Termine k&#xF6;nnen Sie dem entsprechenden Eintrag im UnivIS entnehmen.*&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Melden Sie sich bitte - wie &#xFC;blich - in der [StudiDB]https://studidb.informatik.uni-kiel.de:8484/studierende/login f&#xFC;r dieses Modul an.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;</organizational>
+<orgname>Didaktik der Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Didaktik der Informatik</orgunit>
+</orgunits>
+<short>infEthik-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>1</sws>
+<turnout>150</turnout>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.inform.master">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.inform.kazemp" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.inform.mohant" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.inform.krgerp" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.inform.zelenk_2" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<englisch>ja</englisch>
+<id>22455633</id>
+<name>infMPMaL-01a: Master Project - Machine Learning</name>
+<number>080293</number>
+<ordernr>4</ordernr>
+<orgname>Datenbanksysteme und Data Mining</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Datenbanksysteme und Data Mining</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infMPMaL-01a</short>
+<summary>Master Project: Machine Learning&#x0D;&#x0A;&#x0D;&#x0A;In today's digitalized life, the amount of generated data reaches new dimensions year by year. The enormous value gained from analysing this data plays an essential role for numerous operations of various domains, such as Health, Manufacturing, Mobility and so on. Consequently, the discovery process to gain such insights is becoming increasingly critical for everyone aiming at a career in the job area or research field of Data Science, Big Data and Advanced Analytics or Machine Learning.&#x0D;&#x0A;&#x0D;&#x0A;In this practical course, you will learn how to approach (real life) questions and tasks in the greater area of Machine Learning and Big Data applications. You will work in small groups of three to five students while being guided to coordinate yourself and divide your workload, aiming to give you a small insight of how project work can be handled as well as deepen your skills in communication and time management. By working with state-of-the-art ML tools and libraries you will broaden your knowledge and get hands-on experience of many phases included in an actual Machine Learning process, starting from raw data, up to the extraction and interpretation of patterns and their visualization as knowledge and insights.&#x0D;&#x0A;&#x0D;&#x0A;The topics this year include (note, these might still be subject to change):&#x0D;&#x0A;&#x0D;&#x0A;    Reinforcement Learning in Boardgames (How can I teach a Machine to win a game?)&#x0D;&#x0A;    Incorporating Knowledge Graphs to build and optimize a food recommendation system (How can we tell which food is healthy and good?)&#x0D;&#x0A;    Timeseries prediction with ANNs on non-linear and non-stationary timeseries (How could we predict stock price movements?)&#x0D;&#x0A;    Natural disaster control using image data (Can we use satellite images to identify wildfires?)&#x0D;&#x0A;    "What's between 'em" - On the discovery of inter-class instances (What should we do with data points in between multiple clusters?)&#x0D;&#x0A;    Quantum Machine Learning (QML) for Anomaly Detection (AD) (How can QML embeddings optimize the performance and explainability for Unsupervised and Semisupervised AD?)&#x0D;&#x0A;    and more &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Requirements are a basic familiarity with Python or the commitment to pick up on that, very basic knowledge in Machine Learning and Big Data (i.e. you have attended the lectures "Knowledge Discovery and Data Mining", "Big Data Management and Analytics" or similar) and an open mind to work as a team!&#x0D;&#x0A;&#x0D;&#x0A;If you are interested to join, please send us an e-mail to miba@informatik.uni-kiel.de with the Subject "Master Project 2023". Please also include a short informal statement which topics you are most interested in and why - what background knowledge (i.e. lectures, libraries or tools) you already have - and, if you are applying in groups, with whom you would like to work as a team.</summary>
+<sws>2</sws>
+<turnout>15</turnout>
+<terms>
+<term>
+<room><UnivISRef type="Room" key="Room.zentr.zentr.zentr.online" /></room>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.intell._exerc_9">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.intell.wisysv" /></doz>
+</dozs>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<id>22643623</id>
+<import_parent_id>22073310</import_parent_id>
+<name>Exercise: Autonomous Learning</name>
+<number>080003</number>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.intell._infau_7" /></parent-lv>
+<praesenz>ja</praesenz>
+<short>EinfAuLearn-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>25</turnout>
+<terms>
+<term>
+<endtime>15:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>14:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.intell._infau_7">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.intell.tomfor" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>8</ects_cred>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>22607329</id>
+<import_parent_id>22033212</import_parent_id>
+<literature>    Thomas Mitchell: Machine Learning, The McGraw-Hill Companies, 1997, ISBN 978-0071154673&#x0D;&#x0A;    Ethem Alpaydin: Introduction to Machine Learning (Adaptive Computation and Machine Learning). The Mit Press, 3rd revised edition, 2014. ISBN: 978-0262028189&#x0D;&#x0A;    C. M&#xFC;ller-Schloer, S. Tomforde: Organic Computing - Technical Systems for Survival in the real World&#x0D;&#x0A;    B. Settles: Active Learning&#x0D;&#x0A;    M. Yamada, Jianhuii Chen, Yi Chang: Transfer Learning: Algorithms and Applications&#x0D;&#x0A;    C. Bishop: Pattern Recognition and Machine Learning (Information Science and Statistics)&#x0D;&#x0A;    Sutton, Richard S., and Andrew G. Barto. Introduction to reinforcement learning. Vol. 135. Cambridge: MIT press, 1998.&#x0D;&#x0A;    S. Russell and P. Norvig: K&#xFC;nstliche Intelligenz. Ein moderner Ansatz. 3. Aufl. PEARSON&#x0D;&#x0A;</literature>
+<name>infAuLearn-01a: Autonomous Learning</name>
+<number>080037</number>
+<ordernr>7</ordernr>
+<organizational>Autonomous Learning research aims at understanding how autonomous systems can efficiently learn from the interaction with the environment, especially by having an integrated approach to decision making and learning, allowing systems to autonomously decide on actions, representations, hyper-parameters and model structures for the purpose of efficient learning. The term "autonomous" refers to the ability of the system to learn without or with only very limited external support, which includes manual intervention of humans, availability of pre-defined models or expert knowledge, and availability of large sets of sample data. Specific research topics are: Adaptation of the learning models / techniques based on observations, learning from interaction with the environment, re-using knowledge from one domain in another domain, detection of behaviour that deviates from 'usual' or expected behaviour, and learning from and with other systems of the same kind. The lecture gives an introduction to the field of autonomous learning with a particular focus on a utilisation of the different techniques within intelligent systems. Autonomous Learning is cutting edge research, which means that parts of the lecture are based on current research articles rather than on textbooks. Furthermore, a practitioner's perspective is combined with theoretical understanding of the concepts: the lecture units are combined with traditional exercises but also with practical tasks that have to be solved by making use of techniques discussed in the lecture. &#x0D;&#x0A; The overall goal of the course is to derive a basic understanding of the motivation, the general concept, and particularly important methods covering the most prominent parts of the field of autonomous learning. This includes techniques for the following aspects of machine learning:&#x0D;&#x0A;&#x0D;&#x0A;    Fully autonomous learning behaviour: hyper-parameter optimisation, transfer learning, (self-)evaluation,&#x0D;&#x0A;    self-awareness or environment-awareness with a major focus on anomaly/novelty detection&#x0D;&#x0A;    By interaction with the environment via sensors and actuators: reinforcement learning&#x0D;&#x0A;    By efficiently integrating humans into the learning process: active learning&#x0D;&#x0A;    By interacting with other intelligent systems: collaborative learning&#x0D;&#x0A;    By using all the above: meta-learning&#x0D;&#x0A;&#x0D;&#x0A;Particular goals are:&#x0D;&#x0A;&#x0D;&#x0A;a) Knowledge / Skills:&#x0D;&#x0A;&#x0D;&#x0A;Understanding of methods for achieving "intelligence" in technical systems, control of learning behaviour with minimal user interaction, continuous self-improvement of system behaviour, cooperation in learning between distributed technical systems&#x0D;&#x0A;&#x0D;&#x0A;b) Abilities:&#x0D;&#x0A;&#x0D;&#x0A;Selection and application of techniques of machine learning in technical systems under real-world conditions to control autonomous system behaviour&#x0D;&#x0A;&#x0D;&#x0A;c) Competencies:&#x0D;&#x0A;&#x0D;&#x0A;Ability to analyse autonomous learning processes and their behaviour, to determine and interpret relevant assessment parameters / Competence to plan, design and develop intelligent technical systems with the ability to learn autonomously &#x0D;&#x0A;&#x0D;&#x0A;Other requirements: &#x0D;&#x0A;No mandatory modules. However, basic modules such as mathematics 1 to 3 are considered to be common knowledge. We recommend to visit the "Intelligent Systems" module before. &#x0D;&#x0A;&#x0D;&#x0A;Exam Performance: &#x0D;&#x0A;Oral exam (duration: 25 minutes) or written exam (90 minutes) - depending on COVID19 developments and number of participants. Successful completion of all practical tasks (i.e., second part / practical part of the exercises) plus quizzes is mandatory for participation in the exam. Practical tasks and quizzes are not graded, only passed/not passed.</organizational>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infAuLearn-01a</short>
+<startdate>2026-04-12</startdate>
+<summary> a) Introduction and organisation&#x0D;&#x0A;&#x0D;&#x0A;b) Recapitulation of basic machine learning terms and techniques&#x0D;&#x0A;&#x0D;&#x0A;c) Model selection (hyper-parameter optimisation and evaluation)&#x0D;&#x0A;&#x0D;&#x0A;d) Transfer Learning&#x0D;&#x0A;&#x0D;&#x0A;e) Self-Awareness&#x0D;&#x0A;&#x0D;&#x0A;f) Reinforcement Learning&#x0D;&#x0A;&#x0D;&#x0A;g) Active Learning&#x0D;&#x0A;&#x0D;&#x0A;h) Collaborative Learning&#x0D;&#x0A;&#x0D;&#x0A;i) Summary and outlook (incl. meta-learning)&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Teaching and Learning Methods: &#x0D;&#x0A;The lecture is accompanied by an exercise that requires active participation of the students. Task sheets and presence work will be discussed in small groups of students. In addition, a second type of exercise is used where&#x0D;&#x0A;&#x0D;&#x0A;a) The lecture is based on the use of the following teaching methods:&#x0D;&#x0A;&#x0D;&#x0A;    Explanatory lecture with slide sets&#x0D;&#x0A;    Blackboard with illustrating examples&#x0D;&#x0A;    Use of video sequences for illustration purposes&#x0D;&#x0A;    Interactive elements (questions, tasks)&#x0D;&#x0A;    Internet-based quiz&#x0D;&#x0A;&#x0D;&#x0A;b) The exercise uses the following building blocks:&#x0D;&#x0A;&#x0D;&#x0A;    Exercise sheets with written tasks (e.g. calculations)&#x0D;&#x0A;    Implementation of individual tasks (mostly in Python using Jupyter Notebooks)&#x0D;&#x0A;    Reading and assessing scientific publications (i.e. journal articles or conference papers)&#x0D;&#x0A;    Presentation of the results by participants&#x0D;&#x0A;    Discussions&#x0D;&#x0A;&#x0D;&#x0A;c) The practical exercise tasks use the following building blocks: - Practical tasks (e.g., given in Jupyter Notebooks) need to be solved by actually applying, testing, and analysing the behaviour of techniques from the field of autonomous learning - In particular, 4 to 6 assignments allowing for an increasing complexity in '0self-learning systems' have to be solved by the students.</summary>
+<sws>2</sws>
+<turnout>25</turnout>
+<terms>
+<term>
+<endtime>11:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 3</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.intell._pract_2">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.intell.schnbe" /></doz>
+</dozs>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<id>22621024</id>
+<import_parent_id>22072537</import_parent_id>
+<name>Practical Exercise: Autonomous Learning</name>
+<number>080045</number>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.intell._infau_7" /></parent-lv>
+<praesenz>ja</praesenz>
+<short>PEinfAuLearn-01a</short>
+<sws>2</sws>
+<turnout>25</turnout>
+<terms>
+<term>
+<endtime>13:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 3</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>12:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.intell.inffoi">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.mitarb" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.intell.tomfor" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.intell.schwin" /></doz>
+</dozs>
+<ects_organizational>As part of the research project within the Department of Computer Science, students have the opportunity to actively participate in an ongoing research project of the research group. This project not only serves to deepen subject-specific knowledge but also offers practical insights into everyday scientific work. Students work hand in hand with research staff and thus gain direct experience with the research process. Along the way, they learn how to develop scientific questions, formulate hypotheses, and systematically test them. In addition, students practice presenting their research findings clearly and convincingly, both in writing and orally.&#x0D;&#x0A;The following goals are to be achieved in particular:&#x0D;&#x0A;&#x0D;&#x0A;    Specification of the research project&#x92;s objectives in the form of a research proposal&#x0D;&#x0A;    Literature review on the selected research topic&#x0D;&#x0A;    Design of scientific experiments using standard data science libraries such as PyTorch, Pandas, etc.&#x0D;&#x0A;    (Self-)organization in a team, process management, deadline monitoring &#x0D;&#x0A;&#x0D;&#x0A;-Preparation of a scientific paper&#x0D;&#x0A;The work can also be carried out in student groups, in close collaboration with the supervising instructor.</ects_organizational>
+<id>42303673</id>
+<name>Forschungsprojekt - Intelligente Systeme</name>
+<number>080338</number>
+<ordernr>1</ordernr>
+<organizational>Im Rahmen des Forschungsprojekts im Fachbereich Informatik erhalten die Studierenden die Gelegenheit, aktiv an einem laufenden Forschungsprojekt der Arbeitsgruppe teilzunehmen. Dieses Projekt dient nicht nur der Vertiefung des fachlichen Wissens, sondern bietet auch einen praxisnahen Einblick in den wissenschaftlichen Alltag. Die Studierenden arbeiten Hand in Hand mit wissenschaftlichen Mitarbeitern und erhalten so einen direkten Einblick in den Forschungsprozess. Dabei lernen sie, wie wissenschaftliche Fragestellungen entwickelt, Hypothesen aufgestellt und diese systematisch &#xFC;berpr&#xFC;ft werden. Au&#xDF;erdem lernen die Studierenden, ihre Forschungsergebnisse sowohl schriftlich als auch m&#xFC;ndlich klar und &#xFC;berzeugend zu pr&#xE4;sentieren.&#x0D;&#x0A;Insbesondere sind folgende Ziele zu erreichen:&#x0D;&#x0A;Spezifikation der Ziele des Forschungsvorhabens in Form eines Research Proposals Literaturanalyse zum ausgew&#xE4;hlten Forschungsthemas Aufbau von wissenschaftlichen Experimenten unter Verwendung von Standard-Data-Science-Bibliotheken wie  PyTorch, Pandas, ... (Selbst-)Organisation im Team, Management des Prozesses, Termin&#xFC;berwachung Anfertigung einer wissenschaftlichen Ausarbeitung&#x0D;&#x0A;Die Arbeit kann dabei auch in einer studentischen Gruppe erfolgen, mit ihrem Betreuer arbeiten Sie dabei eng zusammen.</organizational>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infFPInS</short>
+<summary>Lerninhalte&#x0D;&#x0A;Sommersemester 2025: Es ist m&#xF6;glich an dem Forschungsprojekt &#x93;Sample Efficient Model-Based Reinforcement Learning&#x94; mitzuarbeiten. Ein zentrales Ziel moderner Reinforcement Learning (RL) Forschung ist es, die Anzahl an Interaktionen mit der Umgebung zu reduzieren, die ein Agent zum erfolgreichen Lernen ben&#xF6;tigt. Model-Based Ans&#xE4;tze verfolgen dabei die Strategie, ein dynamisches Modell der Umgebung zu lernen, das genutzt wird, um zuk&#xFC;nftige Zust&#xE4;nde und Belohnungen vorherzusagen. Dieses Modell erm&#xF6;glicht es dem Agenten, viele Lernschritte rein simulativ durchzuf&#xFC;hren, ohne teure Interaktionen mit der echten Umgebung. Ein besonderer Fokus des Projekts liegt auf der Kombination von Model-Based Methoden mit Self-Sueprvised Learning, dem Lernen von Repr&#xE4;sentationen aus nicht annotierten Datens&#xE4;tzen. Ziel ist es, die Daten-Effizienz weiter zu steigern und den Einsatz solcher Algorithmen in realweltlichen Szenarien, wie Robotik oder autonomes Fahren, zu erm&#xF6;glichen.&#x0D;&#x0A;&#x0D;&#x0A;Weitere Voraussetzungen:&#x0D;&#x0A;Keine zwingenden Voraussetzungen. Allerdings sind Vorkenntnisse im Bereich Machine Learning und Deep Learning mehr als hilfreich, die idealerweise durch den Besuch der entsprechenden Vorlesungen erworben werden.&#x0D;&#x0A;Pr&#xFC;fungsleistungen:&#x0D;&#x0A;Pr&#xE4;sentationen, Bericht und wissenschaftliche Arbeit.&#x0D;&#x0A;Teilnahme:&#x0D;&#x0A;Bitte senden Sie eine Mail an Raphael Schwinger, um teilzunehmen oder weitere Informationen zu erhalten.</summary>
+<sws>10</sws>
+<turnout>6</turnout>
+<type>SPR</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.intell.infmpi">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<comment>Vorbesprechung am 22. Oktober 2025, 16:00 - 16:30 Uhr in HRS 3, Raum 309b</comment>
+<comment_en>Kick-off meeting on October 22, 2025, 4:00 p.m. - 4:30 p.m. in HRS 3, Room 309b</comment_en>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.intell.tomfor" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.intell.bischo" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<englisch>ja</englisch>
+<id>22108168</id>
+<name>infMPInS-01a: Master Project - Intelligent Systems</name>
+<number>080092</number>
+<ordernr>5</ordernr>
+<organizational>Scope&#x0D;&#x0A;This project is offered as a master project (If you are interested in a Bachelor/Master Thesis within the scope of this project, please contact Nils Bischoff nib@informatik.uni-kiel.de for more information)&#x0D;&#x0A;&#x0D;&#x0A;Group&#x0D;&#x0A;This project is offered as a group task; a team of 3 to 6 students is required (deliverables are adjusted based on the number of participants)</organizational>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infMPInS-01a</short>
+<summary>Explicit long-term memory in the human brain is generally distinguished into semantic and episodic memory. To some extent, semantic memory is akin to artificial neural networks in that both store statistical regularities of the world / their training data. They both require repeated exposure to experiences to consolidate the knowledge. Episodic memory, on the other hand, stores single experiences in great detail and can inform decision-making by recalling these events. While there are a few approaches that incorporate episodic memory into machine learning, it is not a common technique (yet) and still an active area of research.&#x0D;&#x0A;&#x0D;&#x0A;The goal of this project is to extend an approach from the model-based reinforcement learning group of world models (e.g. DreamerV3) by adding episodic memory. World models can be considered learned simulations of an environment that enable the prediction of future states and rewards given a series of actions, which enables agent training "inside of their own dreams". This reduces the need for actually experienced state transitions and is useful in settings where the collection of real environment interactions (with a partially trained agent) is dangerous or expensive (e.g. robotics). The addition of episodic memory should improve the prediction accuracy of the world model, especially in environments with rare events or sparse rewards, which is beneficial for the training of the reinforcement learning agent in turn. &#x0D;&#x0A;&#x0D;&#x0A;Registration&#x0D;&#x0A;Interested students may contact the group (i.e., Nils Bischoff nib@informatik.uni-kiel.de) for more details.&#x0D;&#x0A;</summary>
+<sws>4</sws>
+<turnout>6</turnout>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.intell.nfmsvm">
+<benschein>ja</benschein>
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_1" /></classification>
+<comment>unregelm&#xE4;&#xDF;ig im Semester, Blockveranstaltung f&#xFC;r die Pr&#xE4;sentationen zum ersten Pr&#xFC;fungszeitraum</comment>
+<comment_en>irregularly in the semester, block event for the presentations for the first examination period</comment_en>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.intell.tomfor" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.intell.alfalo" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>5</ects_cred>
+<englisch>ja</englisch>
+<id>42169877</id>
+<literature>The students will be given specific literature to work on in the seminar (changes from term to term).</literature>
+<name>infSemDeLea-01a: Master Seminar - Deep Learning</name>
+<number>080065</number>
+<ordernr>4</ordernr>
+<organizational>Ideally, students have already a background in machine learning, maybe even in deep learning. No programming skills are required as concepts are investigated by reading and analysing scientific contributions.</organizational>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infSemDeLea-01a</short>
+<summary>Deep learning is a method of machine learning (and thus a subfield of artificial intelligence) that uses artificial neural networks (KNNs) with numerous hidden layers between the input layer and the output layer, thereby forming an extensive internal structure. In recent years, Deep Learning has established itself as a standard method for solving a wide variety of learning problems. In this seminar, current developments in the field of Deep Learning are discussed.  The seminar imitates a scientific conference and provides an introduction to scientific publishing. &#x0D;&#x0A;&#x0D;&#x0A;Workload:     30 h attendance, 120 h self-study&#x0D;&#x0A;&#x0D;&#x0A;Important: You may register in advance and select a topic. Please contact Sven Tomforde (st@informatik.uni-kiel.de) via email.</summary>
+<sws>2</sws>
+<turnout>8</turnout>
+<time_description>Kick-off meeting via zoom:  https://uni-kiel.zoom-x.de/j/61845376431?pwd=EEvZ0NcRhkb4LzGTUvL6WsWE0sN4JW.1 (Meeting ID: 618 4537 6431, Passcode: 472992)</time_description>
+<time_description_en>Kick-off meeting via zoom:  https://uni-kiel.zoom-x.de/j/61845376431?pwd=EEvZ0NcRhkb4LzGTUvL6WsWE0sN4JW.1 (Meeting ID: 618 4537 6431, Passcode: 472992)</time_description_en>
+<type>S</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.marine.infcv3">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.marine.kserke" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>8</ects_cred>
+<englisch>ja</englisch>
+<evaluation>ja</evaluation>
+<id>22316577</id>
+<name>infCV3D-01a: 3D Computer Vision</name>
+<number>080054</number>
+<ordernr>8</ordernr>
+<organizational>Basic mathematical knowledge from bachelor courses (linear equations and matrix-vector notation). You are requested to register at both OLAT and StudiDB. 1. Please register for this course at StudiDB https://studidb.informatik.uni-kiel.de:8484/studierende/login 2. Please register for course materials at the OLAT course https://lms.uni-kiel.de Due to large thematic overlap, students cannot combine the ECTS points of this module with points of the module "Image-based 3D Scene Reconstruction" of previous semesters.</organizational>
+<orgname>Marine Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Marine Data Science</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infCV3D-01a</short>
+<startdate>2026-04-12</startdate>
+<summary>Using the two different perspectives of our eyes, the human brain is able to obtain a 3D perception of the surrounding scene, and our eyes are probably our most important sense to act in a complex world. Even when moving with only one eye open we can avoid obstacles, estimate distances and understand the 3D layout of our environment, capabilities that are becoming increasingly important also for self-driving cars, service robots or in industry. This lecture will introduce the basic principles of 3D computer vision, which are nowadays also used in augmented reality, smartphones, for terrain mapping such as for the deep ocean floor, or to create models for 3D printing, archaeology or computer games. In order to treat machine vision in a principled way, the mathematical pinhole camera model is introduced, and students will learn the representations of points, lines and other entities in images and in space using projective geometry. Afterwards, multiple view relations will be discussed and how camera motion and scene geometry can be inferred from common observations in images, called correspondences. This involves linear algebra, optimization and robust estimation, since we have to deal with mismatches and outliers when automatically finding correspondences. Finally, we will look into how to integrate the different concepts into a complete approach for 3D vision from images, how to obtain dense surface models and see current applications and open problems in 3D vision. The lecture will be complemented by programming exercises.</summary>
+<sws>4</sws>
+<turnout>20</turnout>
+<terms>
+<term>
+<endtime>13:45</endtime>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>12:15</starttime>
+</term>
+<term>
+<endtime>9:45</endtime>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>8:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.marine.infcv3_6">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.marine.kserke" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.marine.wendte" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.marine.janens" /></doz>
+</dozs>
+<ects>ja</ects>
+<englisch>ja</englisch>
+<id>22360782</id>
+<name>&#xDC;bung: 3D Computer Vision</name>
+<number>080058</number>
+<orgname>Marine Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Marine Data Science</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.marine.infcv3" /></parent-lv>
+<praesenz>ja</praesenz>
+<short>infCV3D-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>20</turnout>
+<terms>
+<term>
+<endtime>17:45</endtime>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_1" /></room>
+<starttime>16:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.marine.infmpc">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.marine.kserke" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<englisch>ja</englisch>
+<id>22514243</id>
+<name>infMPCvRp: Master Project - Computer Vision and Robot Perception</name>
+<number>080086</number>
+<ordernr>6</ordernr>
+<orgname>Marine Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Marine Data Science</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infMPCvRp</short>
+<summary>[ModulDB]https://moduldb.informatik.uni-kiel.de/show.cgi?ModData/show/ModData747</summary>
+<sws>4</sws>
+<turnout>6</turnout>
+<time_description>nach Vereinabrung</time_description>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.marine.infsem">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_1" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.marine.kserke" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>5</ects_cred>
+<englisch>ja</englisch>
+<id>42305630</id>
+<name>infSemViMa: Master Seminar - Visual Mapping</name>
+<number>080169</number>
+<ordernr>5</ordernr>
+<orgname>Marine Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Marine Data Science</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infSemViMa</short>
+<summary>*Papers to be discussed*:&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;- Osmosis: RGBD Diffusion Prior for Underwater Image Restoration, [Link]https://arxiv.org/abs/2403.14837&#x0D;&#x0A;- Mamba: Linear-Time Sequence Modeling with Selective State Spaces, [Link]https://arxiv.org/abs/2312.00752&#x0D;&#x0A;- Free-SurGS: SfM-Free 3D Gaussian Splatting for Surgical Scene Reconstruction, [Link]https://arxiv.org/pdf/2407.02918&#x0D;&#x0A;- Efficient Position-Based Deformable Colon Modeling for Endoscopic Procedures Simulation, [Link]https://dl.acm.org/doi/pdf/10.1145/3641519.3657454&#x0D;&#x0A;- Affine Equivariant Networks Based on Differential Invariants, [Link]https://openaccess.thecvf.com/content/CVPR2024/papers/Li_Affine_Equivariant_Networks_Based_on_Differential_Invariants_CVPR_2024_paper.pdf&#x0D;&#x0A;- Neural Lens Modeling, [Link]https://arxiv.org/abs/2304.04848&#x0D;&#x0A;- NeuS: Learning Neural Implicit Surfaces by Volume Rendering for Multi-view Reconstruction, [Link]https://arxiv.org/abs/2106.10689&#x0D;&#x0A;- Gaussian Splatting SLAM, [Link]https://arxiv.org/abs/2312.06741&#x0D;&#x0A;- FoundationStereo: Zero-Shot Stereo Matching, [Link]https://arxiv.org/abs/2501.09898&#x0D;&#x0A;- MASt3R-SLAM: Real-Time Dense SLAM with 3D Reconstruction Priors, [Link]https://arxiv.org/abs/2412.12392&#x0D;&#x0A;- A low-cost digital 3D insect scanner, [Link]https://www.sciencedirect.com/science/article/pii/S2214317323000471&#x0D;&#x0A;&#x0D;&#x0A;If you are interested in any of the papers or topics, please contact [Kevin K&#xF6;ser] mailto:kk@informatik.uni-kiel.de / [Silja Jan&#xDF;en] mailto:sja@informatik.uni-kiel.de) &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;[ModulDB]https://moduldb.informatik.uni-kiel.de/show.cgi?mod=infSemViMa</summary>
+<sws>2</sws>
+<turnout>12</turnout>
+<time_description>nach Vereinbarung</time_description>
+<type>S</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.progra._bungz">
+<englisch>ja</englisch>
+<id>22654090</id>
+<import_parent_id>41706057</import_parent_id>
+<name>&#xDC;bung zu: Concurrent and distributed Programming</name>
+<number>080064</number>
+<orgname>Programmiersprachen und &#xDC;bersetzerkonstruktion</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Programmiersprachen und &#xDC;bersetzerkonstruktion</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.progra._infcd" /></parent-lv>
+<short>EinfCDP-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>50</turnout>
+<terms>
+<term>
+<endtime>18:00</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<starttime>16:00</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.progra._infcd">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<comment_en>Course is taught in English</comment_en>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.zentr.huchfr" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>8</ects_cred>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>22628876</id>
+<import_parent_id>41725185</import_parent_id>
+<name>infCDP-01a: Concurrent and Distributed Programming</name>
+<number>080070</number>
+<ordernr>9</ordernr>
+<organizational>Basic programming knowledge in Java (concurrency) and Haskell. We will also use Python, so it is good to have a brief idea of Python.</organizational>
+<orgname>Programmiersprachen und &#xDC;bersetzerkonstruktion</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Programmiersprachen und &#xDC;bersetzerkonstruktion</orgunit>
+</orgunits>
+<short>infCDP-01a</short>
+<startdate>2026-04-12</startdate>
+<summary>This module gives a deeper insight into the problems, techniques and concepts of concurrent and distributed programming. Different approaches are presented and compared to each other.&#x0D;&#x0A;&#x0D;&#x0A;The execises will be organised using [iLearn]https://ilearn.informatik.uni-kiel.de . Registration is possible in the beginning of the semester.</summary>
+<sws>4</sws>
+<turnout>50</turnout>
+<terms>
+<term>
+<endtime>14:00</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<starttime>12:00</starttime>
+</term>
+<term>
+<endtime>10:00</endtime>
+<exclude>vac</exclude>
+<repeat>w1 2</repeat>
+<starttime>8:00</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.softwa.infmps">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.softwa.hassel" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.softwa.schnoo_5" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<id>21640774</id>
+<literature>Depends on the specific task and is given at the beginning of the project.</literature>
+<name>Inf-MPSE: Master Project - Software Engineering</name>
+<number>080359</number>
+<ordernr>7</ordernr>
+<organizational>Very good knowledge and experience in programming and software engineering are required for this course. Thus, a successful participation in the previous master modules infSA-01a and infSEPDS-01a is recommended. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Bitte bei Interesse direkt bei Henning Schnoor melden.</organizational>
+<orgname>Software Engineering</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Software Engineering</orgunit>
+</orgunits>
+<short>Inf-MPSE</short>
+<summary> The digital transformation brings challenges for new and existing software systems and their further development, such as e.g. decentralization of services, cloud systems, integration with other systems to support business processes.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Two key challenges are understanding software structures and their evaluation on the one hand and the improvement of the architecture on the other hand.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;This master project therefore deals with methods for&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;    - Architecture Recovery: Creation of an architecture model of a software system from the given implementation and its visualization.&#x0D;&#x0A;    - Evaluation of the recovered architecture model based on specific metrics.&#x0D;&#x0A;    - Optimization of the software structure with respect to these metrics.&#x0D;&#x0A;&#x0D;&#x0A;We will use genetic algorithms, neural networks and other machine learning techniques.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Examples of software to be analyzed will result from our collaboration with Geomar, as well as using repository mining to automatically analyze open source projects. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Lernziele:&#x0D;&#x0A;&#x0D;&#x0A;The students know and can apply advanced software engineering methods and techniques to understand, design, restructure, implement, deploy and evaluate complex software systems. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Lehrinhalte: &#x0D;&#x0A;&#x0D;&#x0A;For each edition of this master project, some concrete software development task will be specified to design, implement, deploy and evaluate a complex software system. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Pr&#xFC;fungsleistung: &#x0D;&#x0A;&#x0D;&#x0A;Presentations, report and the realized software system. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;</summary>
+<sws>4</sws>
+<turnout>10</turnout>
+<time_description>Die Vorbesprechung findet in CAP 4, Raum 1210 statt.</time_description>
+<type>UE</type>
+<url_description>http://se.informatik.uni-kiel.de</url_description>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.techni._exerc_5">
+<enddate>2026-07-12</enddate>
+<englisch>ja</englisch>
+<id>22677687</id>
+<import_parent_id>21925087</import_parent_id>
+<name>Exercise:  Internet of Things and Wireless Networks</name>
+<number>080016</number>
+<orgname>Verteilte Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Verteilte Systeme</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.techni._infio" /></parent-lv>
+<praesenz>ja</praesenz>
+<short>EinfIoT-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>15:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.cap3i" /></room>
+<starttime>14:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.techni._infio">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.techni.hailmo" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>8</ects_cred>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>22684734</id>
+<import_parent_id>21951349</import_parent_id>
+<literature>TBA in the course</literature>
+<name>infIoT-01a: Internet of Things and Wireless Networks</name>
+<number>080333</number>
+<ordernr>12</ordernr>
+<organizational>Weitere Voraussetzungen:&#x0D;&#x0A;&#x0D;&#x0A;A student should have taken courses on Operating Systems and Computer Networks such as the courses "Operating Systems", "Computer Networks", or "Betriebs- und Kommunikationsystems (BSKS)" at CAU. Moreover, C programming skills are expected.&#x0D;&#x0A;&#x0D;&#x0A;Alternatively, for students who did not complete their bachelor at CAU Kiel: a student should have taken a course in computer communication (or computer networks) including the TCP/IP protocol stack. In addition, a course in operating systems (or equivalent) is required. Moreover, C programming skills are expected.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Pr&#xFC;fungsleistung:&#x0D;&#x0A;&#x0D;&#x0A;The grade is determined by a final written exam. If the number of students registered for the course is less than 10, we might switch to an oral examination instead. A switch will be announced within the first two weeks of the course.&#x0D;&#x0A;&#x0D;&#x0A;Prerequisite for admission to the exam: received at least 50% of homework assignment points and 50% of the project points. Also, the exercises might include a Prelab that has to be passed before the actual homework exercises can be conducted. Exceptions, for example, due to sickness, have to requested in due time before the exams. Exam admissions stay valid also for future terms. Individual, passed homework series apply only for the current term and are not transferable to future terms.&#x0D;&#x0A;&#x0D;&#x0A;The final grade for the module is given by either 1) the exam grade or 2) 80% of the exam grade + 20% of the homework and project grade, whichever is the better of the two (as long as the exam is passed).&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Lehr- und Lernmethoden:&#x0D;&#x0A;&#x0D;&#x0A;Lectures, weekly exercises with software development, and a project.</organizational>
+<orgname>Verteilte Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Verteilte Systeme</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infIoT-01a</short>
+<startdate>2026-04-12</startdate>
+<summary>Kurzfassung:&#x0D;&#x0A;&#x0D;&#x0A;This course will introduce and discuss the underlying concepts and mechanisms that drive wireless networks and the Internet of Things (IoT). The lectures provide you with the required knowledge, and the labs give you a hands-on experience in developing networking and applications in the Internet of Things and exploring their real-world challenges.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Lernziele:&#x0D;&#x0A;&#x0D;&#x0A;    Knowledge and understanding: Show knowledge of basic concepts and challenges of wireless networking and the Internet of Things, low-power wireless communication, NFC, BLE and 802.15.4), IoT networking (RPL, TSCH, and Thread), Operating Systems for IoT, Security in IoT, and IoT Applications. Describe applications of the Internet of Things and the mechanisms these use to provide their services. Discuss and analyze the challenges and requirements that the different approaches have. Compare and summarize the strength and weaknesses associated with the individual mechanisms.&#x0D;&#x0A;    Skills and abilities: Develop and evaluate small-scale wireless networks and IoT systems &amp; applications using fundamental mechanisms introduced in the lectures. Demonstration of these software developments in advanced settings including unreliable wireless links and resource constraints (e.g., battery driven).&#x0D;&#x0A;    Judgment and approach: Describe and analyze existing and new methods for IoT systems and application design. In particular, the system's ability for low-power wireless networking and operation under strong resource constraints.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Lehrinhalte:&#x0D;&#x0A;&#x0D;&#x0A;Aim: What is the Internet of Things and its applications? How can we build reliable and resource efficient IoT systems and applications? How do its devices in the Internet of Things communicate? How do wireless networks work? These are a few questions that this course addresses. The goal of the courses is to understand the design of the Internet of Things and discuss the underlying principles and mechanisms. Our lectures provide you with the required fundamentals, and our labs give you a hands-on experience in developing IoT systems and applications and exploring their real-world challenges.&#x0D;&#x0A;&#x0D;&#x0A;Content: We begin the course with an introduction to basic concepts of IoT Systems and Applications and the challenges they pose. We continue with the main course content and focus on:&#x0D;&#x0A;&#x0D;&#x0A;    Wireless networking&#x0D;&#x0A;    low-power wireless communication (NFC, BLE and 802.15.4)&#x0D;&#x0A;    IoT networking (RPL, TSCH, and Thread)&#x0D;&#x0A;    web-technologies for IoT such as COAP&#x0D;&#x0A;    Operating Systems for IoT&#x0D;&#x0A;    Security in IoT&#x0D;&#x0A;    Selected IoT Applications&#x0D;&#x0A;&#x0D;&#x0A;Our lectures provide students with the required fundamentals, and exercise and projects give students a hands-on experience in developing IoT systems &amp; applications and exploring their real-world challenges. This course offers learning experiences that involve hands-on experimentation and analysis as they reinforce student understanding of concepts and their application to real-world problems. Overall, this course provides the students the ability to understand fundamental issues in the design of methods for IoT systems and applications.</summary>
+<sws>3</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>11:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 3</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>10:15</starttime>
+</term>
+<term>
+<enddate>2026-05-27</enddate>
+<endtime>13:45</endtime>
+<exclude>vac</exclude>
+<repeat>bd 3</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<startdate>2026-04-15</startdate>
+<starttime>12:15</starttime>
+</term>
+</terms>
+<time_description>&#x95;&#x09;Note: in the first half of the semester, we will teach two lecture a week, and in the second half we teach one lecture a week (to give you time to work on your projects).</time_description>
+<time_description_en>&#x95;&#x09;Note: in the first half of the semester, we will teach two lecture a week, and in the second half we teach one lecture a week (to give you time to work on your projects).</time_description_en>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.techni._pract">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.techni.hailmo" /></doz>
+</dozs>
+<enddate>2026-07-15</enddate>
+<englisch>ja</englisch>
+<id>22635286</id>
+<import_parent_id>22455793</import_parent_id>
+<name>Practical Exercise: Internet of Things and Wireless Neworks</name>
+<number>080335</number>
+<orgname>Verteilte Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Verteilte Systeme</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.techni._infio" /></parent-lv>
+<praesenz>ja</praesenz>
+<short>PEinfIoT-01a</short>
+<startdate>2026-06-03</startdate>
+<sws>1</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<enddate>2026-07-15</enddate>
+<endtime>13:45</endtime>
+<exclude>vac</exclude>
+<repeat>bd 3</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<startdate>2026-06-03</startdate>
+<starttime>12:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.techni.inffpv">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.mitarb" /></classification>
+<comment_en>Please contact us at the begging of the semester, if you want to participate. Also, please do not enroll in the StudiDB until you met with us and have been assigned a topic.</comment_en>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.techni.hailmo" /></doz>
+</dozs>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>42312499</id>
+<name>Research Project - Distributed Systems</name>
+<number>080276</number>
+<ordernr>3</ordernr>
+<organizational>Prior knowledge in the field of Networked and Distributed systems, ideally achieved by taking the corresponding elective lectures by our group. The exact prerequisites will depend on the topics of the lab and may vary between editions of the lab. Good programming skills, commonly in Python and/or C/C++. Team Work and Problem-Solving skills.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Pr&#xFC;fungsleistung:&#x0D;&#x0A;Presentations including demonstration, report and the completed software system (incl. documentation).&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Lehr- und Lernmethoden:&#x0D;&#x0A;Project work.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Lernziele&#x0D;&#x0A;The exact topic and task changes from year to year. Typical topics are usually in the intersection of networked, distributed, and smart systems. Usually, the lab requires certain module(s) as prerequisite and/or to be taken in parallel.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;IMPORTANT: Please contact us at the begging of the semester, if you want to participate. Also, please do not enroll in the StudiDB until you met with us and have been assigned a topic.&#x0D;&#x0A;</organizational>
+<orgname>Verteilte Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Verteilte Systeme</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infFPVS</short>
+<startdate>2026-04-12</startdate>
+<summary>Within the module "research project" (Forschungsprojekt / Studienprojekt) students in the department have the opportunity to actively participate in an ongoing research project. The goals of the project include the specification of research objectives, literature analysis, the design of scientific experiments, and teamwork.</summary>
+<sws>10</sws>
+<turnout>6</turnout>
+<type>SPR</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.techni.infmpv">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.techni.hailmo" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>42013934</id>
+<name>infMPVVS-01a: Master Project - Networked and Distributed Systems</name>
+<number>080033</number>
+<ordernr>9</ordernr>
+<organizational>Weitere Voraussetzungen:&#x0D;&#x0A;&#x0D;&#x0A;Prior knowledge in the field of Networked and Distributed systems, ideally achieved by taking the corresponding lectures from our research group. The exact prerequisites will depend on the topics of the lab and may vary between editions of the lab.&#x0D;&#x0A;&#x0D;&#x0A;Good programming skills, commonly in Python and/or C/C++. Team Work and Problem-Solving skills.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Pr&#xFC;fungsleistung:&#x0D;&#x0A;&#x0D;&#x0A;Presentations including demonstration, report and the completed software system (incl. documentation).&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Lehr- und Lernmethoden:&#x0D;&#x0A;&#x0D;&#x0A;Project work.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;IMPORTANT: Participation at the kickoff event is mandatory. Please contact us before hand if you cannot participate. Also, please do not enroll in the StudiDB until you participated in the kickoff event and been assigned a topic. In the unlikely case we have more applications than seats in the course, we will devise a fair scheme to select participants.</organizational>
+<orgname>Verteilte Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Verteilte Systeme</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infMPVVS-01a</short>
+<startdate>2026-04-12</startdate>
+<summary>Kurzfassung:&#x0D;&#x0A;&#x0D;&#x0A;This is our hands-on lab in the area of Networked and Distributed Systems. The exact topic and task changes from year to year. Typical topics are usually in the intersection of networked, distributed, and smart systems. Usually, the lab requires certain module(s) as prerequisite and/or to be taken in parallel.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Lernziele:&#x0D;&#x0A;&#x0D;&#x0A;The participants will learn to complete on a larger, cohesive group project within a limited time. Thus, independent project management and group work becomes an additional learning goal beyond learning new techniques and systems.&#x0D;&#x0A;&#x0D;&#x0A;The overall goal of the course is to derive practical understanding and experiences on how networked and distributed are designed and developed. Besides the actual development of the system architecture and software, the module aims at practical experiences in a team of developers.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Lehrinhalte:&#x0D;&#x0A;&#x0D;&#x0A;The actual teaching content changes according to the topic. Check the group website for details.</summary>
+<sws>4</sws>
+<turnout>8</turnout>
+<terms>
+<term>
+<repeat>w1 3</repeat>
+</term>
+</terms>
+<time_description>Times and rooms for the master project will be announced during kick-off event.</time_description>
+<time_description_en>Times and rooms for the master project will be announced during kick-off event.</time_description_en>
+<type>UE</type>
+<url_description>https://www.uni-kiel.de/en/tf/research/institute-computer-science/distributed-systems/theses-and-projects#c223828</url_description>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore._exerc">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<englisch>ja</englisch>
+<id>22481130</id>
+<import_parent_id>22432492</import_parent_id>
+<name>Exercise: Quantum Computing</name>
+<number>080021</number>
+<organizational>Please find all the necessary information at Moodle.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Exact dates of lectures and tutorials are to be found in the moodle calendar. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Contact person for organisational or technical questions regarding this module is the first person named in the exercises.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.theore._infqc" /></parent-lv>
+<praesenz>ja</praesenz>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>15:30</endtime>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_1" /></room>
+<starttime>14:30</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore._exerc_8">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<englisch>ja</englisch>
+<id>22699799</id>
+<import_parent_id>22695315</import_parent_id>
+<name>Exercise: Advanced Cryptography</name>
+<number>080008</number>
+<organizational>Please find all the necessary information at Moodle.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Contact person for organisational or technical questions regarding this module is the first person named in the exercises.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.theore._infad_7" /></parent-lv>
+<praesenz>ja</praesenz>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>15:45</endtime>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>14:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore._exerc_9">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<englisch>ja</englisch>
+<id>22626894</id>
+<import_parent_id>22432492</import_parent_id>
+<name>Exercise: Quantum Computing</name>
+<number>080021</number>
+<organizational>Please find all the necessary information at Moodle.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Exact dates of lectures and tutorials are to be found in the moodle calendar. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Contact person for organisational or technical questions regarding this module is the first person named in the exercises.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.theore._infqc_16" /></parent-lv>
+<praesenz>ja</praesenz>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>15:30</endtime>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_1" /></room>
+<starttime>14:30</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore._infad_7">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.theore" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<englisch>ja</englisch>
+<evaluation>ja</evaluation>
+<id>22603105</id>
+<import_parent_id>22642220</import_parent_id>
+<name>infAdvCry-01a: Advanced Cryptography</name>
+<number>080009</number>
+<ordernr>2</ordernr>
+<organizational>Please find all the necessary information at Moodle.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Contact person for organisational or technical questions regarding this module is the first person named in the exercises.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infAdvCry-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>11:45</endtime>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore._infqc">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<englisch>ja</englisch>
+<evaluation>ja</evaluation>
+<id>22495193</id>
+<import_parent_id>22418166</import_parent_id>
+<name>infQComp-01a: Quantum Computing</name>
+<number>080022</number>
+<ordernr>11</ordernr>
+<organizational>Please find all the necessary information at Moodle.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Exact dates of lectures and tutorials are to be found in the moodle calendar. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Contact person for organisational or technical questions regarding this module is the first person named in the exercises.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infQComp-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>14:00</endtime>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_1" /></room>
+<starttime>12:00</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore._infqc_16">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.theore" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<englisch>ja</englisch>
+<evaluation>ja</evaluation>
+<id>22659467</id>
+<import_parent_id>22418166</import_parent_id>
+<name>infQComp-01a: Quantum Computing</name>
+<number>080022</number>
+<ordernr>3</ordernr>
+<organizational>Please find all the necessary information at Moodle.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Exact dates of lectures and tutorials are to be found in the moodle calendar. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Contact person for organisational or technical questions regarding this module is the first person named in the exercises.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infQComp-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>14:00</endtime>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_1" /></room>
+<starttime>12:00</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore.exerci">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<englisch>ja</englisch>
+<id>22432492</id>
+<name>Exercise: Quantum Computing</name>
+<number>080021</number>
+<organizational>Please find all the necessary information at Moodle.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Exact dates of lectures and tutorials are to be found in the moodle calendar. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Contact person for organisational or technical questions regarding this module is the first person named in the exercises.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.theore.infqco" /></parent-lv>
+<praesenz>ja</praesenz>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>15:30</endtime>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_1" /></room>
+<starttime>14:30</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore.exerci_3">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<englisch>ja</englisch>
+<id>22695315</id>
+<name>Exercise: Advanced Cryptography</name>
+<number>080008</number>
+<organizational>Please find all the necessary information at Moodle.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Contact person for organisational or technical questions regarding this module is the first person named in the exercises.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.theore.infadv" /></parent-lv>
+<praesenz>ja</praesenz>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>15:45</endtime>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>14:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore.forsch">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.mitarb" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.depper" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.reuter" /></doz>
+</dozs>
+<ects>ja</ects>
+<id>42469378</id>
+<name>Forschungsprojekt - Theoretische Informatik</name>
+<number>080035</number>
+<ordernr>2</ordernr>
+<organizational>Es k&#xF6;nnen individuelle Projekte mit einem Umfang von 5 bis 10 ECTS absolviert werden.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Bei Interesse wenden Sie sich bitte an Max Deppert.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<startdate>2026-04-12</startdate>
+<type>SPR</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore.infadv">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<englisch>ja</englisch>
+<evaluation>ja</evaluation>
+<id>22642220</id>
+<name>infAdvCry-01a: Advanced Cryptography</name>
+<number>080009</number>
+<ordernr>10</ordernr>
+<organizational>Please find all the necessary information at Moodle.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Contact person for organisational or technical questions regarding this module is the first person named in the exercises.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infAdvCry-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>11:45</endtime>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5" /></room>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore.infmpk">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<id>42501918</id>
+<name>infMPKryp-01a: Masterprojekt - Kryptographie</name>
+<number>080219</number>
+<ordernr>8</ordernr>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infMPKryp-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>4</sws>
+<terms>
+<term>
+<endtime>11:15</endtime>
+<exclude>vac</exclude>
+<repeat>w1 3</repeat>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore.infmse">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_1" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>5</ects_cred>
+<ects_name>Master Seminar - Cryptography, Automata Theory, Logic</ects_name>
+<ects_organizational>An advanced course (8 LP) on automata theory, logic in computer science, or cryptography.</ects_organizational>
+<englisch>ja</englisch>
+<id>42294881</id>
+<name>infMSemCAL-01a: Master Seminar - Cryptography, Automata Theory, Logic, Quantum Computing</name>
+<number>080041</number>
+<ordernr>6</ordernr>
+<organizational>An advanced course (8 LP) on automata theory, logic in computer science, or cryptography.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;If you are interested, please contact Max Deppert.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<short>infMSemCAL-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>5</turnout>
+<type>S</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theore.infqco">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.theore" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theore.wilket" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<englisch>ja</englisch>
+<evaluation>ja</evaluation>
+<id>22418166</id>
+<name>infQComp-01a: Quantum Computing</name>
+<number>080022</number>
+<ordernr>4</ordernr>
+<organizational>Please find all the necessary information at Moodle.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Exact dates of lectures and tutorials are to be found in the moodle calendar. &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Contact person for organisational or technical questions regarding this module is the first person named in the exercises.</organizational>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infQComp-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>14:00</endtime>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_1" /></room>
+<starttime>12:00</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theori._bungz_34">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theori.jansen" /></doz>
+</dozs>
+<ects_organizational>The module can be selected if students have completed and successfully passed beforehand at least one of the modules&#x0D;&#x0A;Algorithms and Data Structures, Introduction to Algorithms, or Analysis of Algorithms.</ects_organizational>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<id>22684752</id>
+<import_parent_id>22217894</import_parent_id>
+<kinsis>ja</kinsis>
+<name>&#xDC;bung zu: Fine Grained Algorithms</name>
+<number>080046</number>
+<organizational>Das Modul ist w&#xE4;hlbar, wenn Studierende mindestens eins der Module&#x0D;&#x0A;Algorithmen und Datenstrukturen, Einf&#xFC;hrung in Algorithmen oder Analyse von Algorithmen&#x0D;&#x0A;und Komplexit&#xE4;t vorher erfolgreich bestanden haben.</organizational>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.theori._inffg_4" /></parent-lv>
+<short>&#xDC; infFGA-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>17:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>16:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theori._bungz_4">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theori.jansen" /></doz>
+</dozs>
+<ects_organizational>The module can be selected if students have completed and successfully passed beforehand at least one of the modules&#x0D;&#x0A;Algorithms and Data Structures, Introduction to Algorithms, or Analysis of Algorithms.</ects_organizational>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<id>22621128</id>
+<import_parent_id>22217894</import_parent_id>
+<kinsis>ja</kinsis>
+<name>&#xDC;bung zu: Fine Grained Algorithms</name>
+<number>080046</number>
+<organizational>Das Modul ist w&#xE4;hlbar, wenn Studierende mindestens eins der Module&#x0D;&#x0A;Algorithmen und Datenstrukturen, Einf&#xFC;hrung in Algorithmen oder Analyse von Algorithmen&#x0D;&#x0A;und Komplexit&#xE4;t vorher erfolgreich bestanden haben.</organizational>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.theori._inffg_5" /></parent-lv>
+<short>&#xDC; infFGA-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>17:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>16:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theori._bungz_54">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theori.jansen" /></doz>
+</dozs>
+<id>22656119</id>
+<import_parent_id>22627483</import_parent_id>
+<name>&#xDC;bung zu: Algorithmen f&#xFC;r Scheduling</name>
+<number>080000</number>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.theori._infaf_9" /></parent-lv>
+<short>&#xDC;infAfS-01a</short>
+<startdate>2026-04-14</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>15:45</endtime>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>14:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theori._infaf_9">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theori.jansen" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<id>22691170</id>
+<import_parent_id>22612161</import_parent_id>
+<literature> Jan Karel Lenstra and David B. Shmoys: Elements of Scheduling, arXiv:2001.06005.&#x0D;&#x0A;&#x0D;&#x0A;Leslie Hall: Approximation Algorithms for Scheduling, Chapter 1, in: D. Hochbaum. Approximation algorithms for NP-hard problems, PWS Publishing Company.&#x0D;&#x0A;&#x0D;&#x0A;Michael Pinedo: Scheduling Theory, Algorithms and Systems, Prentice Hall.&#x0D;&#x0A;&#x0D;&#x0A;Florian Jaehn and Erwin Pesch: Ablaufplanung Einf&#xFC;hrung in Scheduling, Springer.</literature>
+<name>infAfS-01a: Algorithmen f&#xFC;r Scheduling</name>
+<number>080001</number>
+<ordernr>1</ordernr>
+<organizational>Einf&#xFC;hrung in Algorithmen, Mathematik A und B oder gleichwertige Kurse.&#x0D;&#x0A;&#x0D;&#x0A;Schriftliche Abschlusspr&#xFC;fung am Ende des Semesters. Bonuspunkte (z.B. durch Hausaufgaben oder Forschungsprojekte) k&#xF6;nnen bestandene Pr&#xFC;fungen verbessern.</organizational>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<short>infAfS-01a</short>
+<startdate>2026-04-12</startdate>
+<summary>Scheduling beinhaltet die zeitgerechte Zuweisung von Aufgaben an knappe Ressourcen mit dem Ziel, eine Kostenfunktion zu minimieren. Solche Probleme treten in verschiedenen Anwendungen auf, beispielsweise in der Produktionsplanung, der Logistik, dem Projektmanagement oder dem Betrieb von Computersystemen. Diese Grundlagenvorlesung behandelt: die Klassifizierung von Scheduling-Modellen, die Komplexit&#xE4;t von Scheduling-Problemen sowie den Entwurf und die Analyse exakter und approximativer Algorithmen f&#xFC;r die Einzel- und Parallelmaschinenplanung.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;- Einf&#xFC;hrung: 3-Feldnotation von Schedulingproblemen, EDD-Regel f&#xFC;r 1-Maschinenprobleme mit Deadlines f&#xFC;r Jobs.&#x0D;&#x0A;- Grundlegende Komplexit&#xE4;tsergebnisse von Schedulingproblemen: NP-Schwere von mehreren Schedulingproblemen.&#x0D;&#x0A;- polynomielle Algorithmen f&#xFC;r 1-Maschinenproblem, Smith-Regel, NP-Schwere f&#xFC;r Probleme mit zus&#xE4;tzlichen Release Zeiten.&#x0D;&#x0A;- Beziehung zwischen verschiedenen Schedulingproblemen mit unterschiedlichen Zielfunktionen, Moore-Hodgson Algorithmus f&#xFC;r 1-Maschinenproblem zur Minimierung der Anzahl der versp&#xE4;teten Jobs.&#x0D;&#x0A;- Strukturaussagen f&#xFC;r 1-Maschinenproblem mit gewichteter Anzahl von versp&#xE4;teten Jobs, Matroide, Greedy Algorithmen f&#xFC;r Problem mit Unit-Ausf&#xFC;hrungszeiten.&#x0D;&#x0A;- NP-Schwere und Inapproximierbarkeit von 1-Maschinenproblemen mit Release Zeiten und Deadlines, verschiedene Varianten des Problems, PTAS, dynamisches Programm sowie EPTAS.&#x0D;&#x0A;- Algorithmen f&#xFC;r 1-Maschinenproblem zur Minimierung der Summe der Fertigstellungszeiten, SRPT-Regel, alpha-Punkt Methode, PTAS.&#x0D;&#x0A;- Exakte und approximative Algorithmen f&#xFC;r Scheduling auf identischen Maschinen: dynamisches Programm, List Scheduling, LPT Regel, PTAS und EPTAS.&#x0D;&#x0A;- Algorithmen f&#xFC;r Scheduling auf uniformen und unrelated Maschinen.</summary>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>11:45</endtime>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theori._inffg_4">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.theore" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theori.jansen" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>8</ects_cred>
+<ects_organizational>The module can be selected if students have completed and successfully passed beforehand at least one of the modules&#x0D;&#x0A;Algorithms and Data Structures, Introduction to Algorithms, or Analysis of Algorithms.</ects_organizational>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>22672533</id>
+<import_parent_id>22287857</import_parent_id>
+<kinsis>ja</kinsis>
+<literature>M. Cygan, F.V. Fomin, L. Kowalik, D. Lokshtanov, D. Marx, M. Pilipczuk, M. Pilipczuk, S. Saurabh: Parameterized Algorithms, Springer Verlag.</literature>
+<name>infFGA-01a: Fine Grained Algorithms</name>
+<number>080007</number>
+<ordernr>1</ordernr>
+<organizational>Das Modul ist w&#xE4;hlbar, wenn Studierende mindestens eins der Module&#x0D;&#x0A;Algorithmen und Datenstrukturen, Einf&#xFC;hrung in Algorithmen oder Analyse von Algorithmen und Komplexit&#xE4;t vorher erfolgreich bestanden haben.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Successful participation in the following courses: Introduction to Algorithms, Mathematics A and B, or equivalent courses.</organizational>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<short>infFGA-01a</short>
+<startdate>2026-04-15</startdate>
+<summary>We discuss basic tools, advanced algorithmic techniques and lower bounds for parameterized algorithms.&#x0D;&#x0A;&#x0D;&#x0A; &#x0D;&#x0A;&#x0D;&#x0A;Participants of this course will learn new algorithmic techniques to solve graph theoretical problems in the context of parameterization where the goal is to achieve a running time f(k) poly(n) for graphs with n vertices and function f which depends on a parameter k of the problem (e.g. the treewidth of the graph) or to show that this is impossible under some natural complexity assumptions.&#x0D;&#x0A;&#x0D;&#x0A; &#x0D;&#x0A;&#x0D;&#x0A;Course content:&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;- Kernelization&#x0D;&#x0A;- Bounded search trees&#x0D;&#x0A;- Iterative compression&#x0D;&#x0A;- Randomized methods&#x0D;&#x0A;- Dynamic Programming and Integer Programming&#x0D;&#x0A;- Treewidth&#x0D;&#x0A;- Advanced algorithmic techniques&#x0D;&#x0A;- Lower bounds (W(1), W(2), ETH, kernelization)&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;</summary>
+<sws>4</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>11:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>10:15</starttime>
+</term>
+<term>
+<endtime>11:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theori._inffg_5">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theori.jansen" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>8</ects_cred>
+<ects_organizational>The module can be selected if students have completed and successfully passed beforehand at least one of the modules&#x0D;&#x0A;Algorithms and Data Structures, Introduction to Algorithms, or Analysis of Algorithms.</ects_organizational>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>22668756</id>
+<import_parent_id>22287857</import_parent_id>
+<kinsis>ja</kinsis>
+<literature>M. Cygan, F.V. Fomin, L. Kowalik, D. Lokshtanov, D. Marx, M. Pilipczuk, M. Pilipczuk, S. Saurabh: Parameterized Algorithms, Springer Verlag.</literature>
+<name>infFGA-01a: Fine Grained Algorithms</name>
+<number>080007</number>
+<ordernr>2</ordernr>
+<organizational>Das Modul ist w&#xE4;hlbar, wenn Studierende mindestens eins der Module&#x0D;&#x0A;Algorithmen und Datenstrukturen, Einf&#xFC;hrung in Algorithmen oder Analyse von Algorithmen und Komplexit&#xE4;t vorher erfolgreich bestanden haben.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Successful participation in the following courses: Introduction to Algorithms, Mathematics A and B, or equivalent courses.</organizational>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<short>infFGA-01a</short>
+<startdate>2026-04-15</startdate>
+<summary>We discuss basic tools, advanced algorithmic techniques and lower bounds for parameterized algorithms.&#x0D;&#x0A;&#x0D;&#x0A; &#x0D;&#x0A;&#x0D;&#x0A;Participants of this course will learn new algorithmic techniques to solve graph theoretical problems in the context of parameterization where the goal is to achieve a running time f(k) poly(n) for graphs with n vertices and function f which depends on a parameter k of the problem (e.g. the treewidth of the graph) or to show that this is impossible under some natural complexity assumptions.&#x0D;&#x0A;&#x0D;&#x0A; &#x0D;&#x0A;&#x0D;&#x0A;Course content:&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;- Kernelization&#x0D;&#x0A;- Bounded search trees&#x0D;&#x0A;- Iterative compression&#x0D;&#x0A;- Randomized methods&#x0D;&#x0A;- Dynamic Programming and Integer Programming&#x0D;&#x0A;- Treewidth&#x0D;&#x0A;- Advanced algorithmic techniques&#x0D;&#x0A;- Lower bounds (W(1), W(2), ETH, kernelization)&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;</summary>
+<sws>4</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>11:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>10:15</starttime>
+</term>
+<term>
+<endtime>11:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8" /></room>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theori.prakti">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theori.jansen" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theori.pirott" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<id>20335248</id>
+<kinsis>ja</kinsis>
+<name>Inf-MP-AlgEng: Masterprojekt - Algorithm Engineering</name>
+<number>080176</number>
+<ordernr>1</ordernr>
+<organizational>|*Zielgruppe:*| Masterstudenten der Mathematik, Wirtschaftsinformatik oder Informatik.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Voraussetzungen f&#xFC;r die Teilnahme sind&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;- Programmierkenntnisse in Java oder C&#x0D;&#x0A;- Interesse an Optimierungsproblemen&#x0D;&#x0A;&#x0D;&#x0A;Bitte bei Interesse bei Lis Pirotton (lpi@informatik.uni-kiel.de) oder direkt bei Prof. Jansen (kj@informatik.uni-kiel.de) melden.&#x0D;&#x0A;&#x0D;&#x0A;Das Modul ist w&#xE4;hlbar, wenn Studierende mindestens eins der Module&#x0D;&#x0A;Algorithmen und Datenstrukturen, Einf&#xFC;hrung in Algorithmen oder Analyse von Algorithmen&#x0D;&#x0A;und Komplexit&#xE4;t vorher erfolgreich bestanden haben.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;</organizational>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<short>MP Alg.</short>
+<sws>4</sws>
+<time_description>Termine werden bei der Vorbesprechung festgelegt.</time_description>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.theori.semina">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_1" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theori.jansen" /></doz>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.theori.ohneso" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>5</ects_cred>
+<id>20337891</id>
+<name>Inf-MS-TIAktF: Masterseminar - Theoretische Informatik (Aktuelle Forschungsfragen)</name>
+<number>080017</number>
+<ordernr>1</ordernr>
+<organizational>*|Zielgruppe:|* Studierende der Informatik und Mathematik mit Studienziel Master und Diplom</organizational>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<short>Sem.Theo.Inf.</short>
+<summary>Bin Packing, 2D-Packungsproblemen und Scheduling&#x0D;&#x0A;&#x0D;&#x0A;Die Seminarthemen sind aktuelle Forschungsthemen aus den folgenden Bereichen: parametrisierte Rucksackprobleme, Scheduling Probleme, Strukturaussagen von ganzzahligen linearen Programmen, fine-grained complexity und Approximationen.&#x0D;&#x0A;&#x0D;&#x0A;Bitte bei Interesse bei Felix Ohnesorge (foh@informatik.uni-kiel.de) oder direkt bei Prof. Jansen (kj@informatik.uni-kiel.de) melden.</summary>
+<sws>2</sws>
+<time_description>Termine werden bei der Vorbesprechung festgelegt.</time_description>
+<type>S</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.visual.einfga">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.visual.pirksr" /></doz>
+</dozs>
+<enddate>2026-07-12</enddate>
+<englisch>ja</englisch>
+<id>22494576</id>
+<name>Exercise: Generative AI</name>
+<number>080010</number>
+<orgname>Visual Computing und Artificial Intelligence</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Visual Computing und Artificial Intelligence</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.visual.infgai" /></parent-lv>
+<short>EinfGAI-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>70</turnout>
+<terms>
+<term>
+<endtime>17:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.cap3i" /></room>
+<starttime>16:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.visual.infgai">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.visual.pirksr" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>8</ects_cred>
+<enddate>2026-07-12</enddate>
+<englisch>ja</englisch>
+<evaluation>ja</evaluation>
+<id>22486626</id>
+<name>infGAI-01a: Generative AI</name>
+<number>080036</number>
+<ordernr>13</ordernr>
+<orgname>Visual Computing und Artificial Intelligence</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Visual Computing und Artificial Intelligence</orgunit>
+</orgunits>
+<short>infGAI-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>4</sws>
+<turnout>70</turnout>
+<terms>
+<term>
+<endtime>11:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 1</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.cap3i" /></room>
+<starttime>10:15</starttime>
+</term>
+<term>
+<endtime>11:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.cap3i" /></room>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.visual.infmpc">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.visual.pirksr" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<id>22496346</id>
+<name>infMPCG-01a: Master Project - Computer Graphics</name>
+<number>080164</number>
+<ordernr>10</ordernr>
+<orgname>Visual Computing und Artificial Intelligence</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Visual Computing und Artificial Intelligence</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infMPCG-01a</short>
+<summary>[ModulDB]https://moduldb.informatik.uni-kiel.de/show.cgi?ModData/show/ModData731</summary>
+<sws>4</sws>
+<turnout>10</turnout>
+<time_description_en>The first meeting for the project will be announced at the beginning of the semester.</time_description_en>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.visual.infmpg">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.master_2" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.visual.pirksr" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>10</ects_cred>
+<englisch>ja</englisch>
+<id>42407576</id>
+<name>infMPGAI-01a: Master Project - Generative AI</name>
+<number>080170</number>
+<ordernr>11</ordernr>
+<orgname>Visual Computing und Artificial Intelligence</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Visual Computing und Artificial Intelligence</orgunit>
+</orgunits>
+<praesenz>ja</praesenz>
+<short>infMPGAI-01a</short>
+<summary>[ModulDB]https://moduldb.informatik.uni-kiel.de/show.cgi?ModData/show/ModData737</summary>
+<sws>4</sws>
+<turnout>10</turnout>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.zuverl._bungz">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.zuverl.nowotk" /></doz>
+</dozs>
+<id>22634611</id>
+<import_parent_id>41456012</import_parent_id>
+<name>&#xDC;bung zu: Theory of Machine Learning</name>
+<number>080303</number>
+<orgname>Zuverl&#xE4;ssige Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Zuverl&#xE4;ssige Systeme</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.zuverl._inftm" /></parent-lv>
+<short>&#xDC;infTML-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>25</turnout>
+<terms>
+<term>
+<endtime>15:30</endtime>
+<exclude>no</exclude>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<starttime>14:00</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.zuverl._exerc">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.fachdi.fleisc" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_summary>Link to OLAT: https://lms.uni-kiel.de/auth/RepositoryEntry/3016753181/CourseNode/100600388070994</ects_summary>
+<englisch>ja</englisch>
+<id>22674041</id>
+<import_parent_id>41381219</import_parent_id>
+<name>Exercise: Algorithms on Sequences</name>
+<number>080228</number>
+<organizational>Veranstaltung ist als Hybrid-Veranstaltung geplant - Raum folgt. &#x0D;&#x0A;&#x0D;&#x0A;https://uni-kiel.zoom.us/j/85901292410?pwd=OXZkdSs4b1hGbW82QnBFOEFVeCtwUT09%0A%0AMeeting%20ID:%20859%200129%202410%0APasscode:%20686873</organizational>
+<orgname>Zuverl&#xE4;ssige Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Zuverl&#xE4;ssige Systeme</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.zuverl._infal" /></parent-lv>
+<short>E Inf-AlgSeq</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>13:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<starttime>12:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.zuverl._exerc_0">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.zuverl.nowotk" /></doz>
+</dozs>
+<englisch>ja</englisch>
+<id>22645896</id>
+<import_parent_id>21338880</import_parent_id>
+<name>Exercise: Introduction to Formal Software Analysis</name>
+<number>080012</number>
+<orgname>Zuverl&#xE4;ssige Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Zuverl&#xE4;ssige Systeme</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.zuverl._infgs" /></parent-lv>
+<short>&#xDC; Inf-GSoZu</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>25</turnout>
+<terms>
+<term>
+<endtime>9:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 3</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<starttime>8:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.zuverl._infal">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.theore" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.fachdi.fleisc" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>22658432</id>
+<import_parent_id>41388016</import_parent_id>
+<name>Inf-AlgSeq: Algorithms on Sequences</name>
+<number>080194</number>
+<ordernr>5</ordernr>
+<organizational>Veranstaltung ist als Hybrid-Veranstaltung geplant - Raum folgt.</organizational>
+<orgname>Zuverl&#xE4;ssige Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Zuverl&#xE4;ssige Systeme</orgunit>
+</orgunits>
+<short>Inf-AlgSeq</short>
+<startdate>2026-04-12</startdate>
+<summary>This course is an introduction into the theory of stringology, or algorithms on sequences of symbols (also called words or strings). Our main intention is to present a series of basic algorithmic and combinatorial results, which can be used to develop efficient word-processing tools. While the emphasis of the course is on the theoretical side of stringology, we also present a series of applications of the presented concepts in areas like data-compression or computational biology. We expect that the participants to this course will gain an understanding of classical string-processing tools. They are supposed to understand and be able to use in various situations: classical text algorithms (e.g., pattern matching algorithms, edit distance), classical text indexing data structures (e.g., suffix arrays / trees), and classical combinatorial results that are useful in this context (e.g., periodicity lemmas).&#x0D;&#x0A;The main topics our course will cover are: basic combinatorics on words, pattern matching algorithms, data structures for text indexing (suffix arrays, suffix trees), text compression (Huffman encoding, Lempel-Ziv method), detection of regularities in words, algorithms for words with don't care symbols (partial words), word distance algorithms, longest common subsequence algorithms, approximate pattern matching. The presentation of each theoretical topic from the above will be accompanied by a brief discussion on its possible applications.</summary>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>9:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<starttime>8:15</starttime>
+</term>
+</terms>
+<time_description>https://uni-kiel.zoom.us/j/85901292410?pwd=OXZkdSs4b1hGbW82QnBFOEFVeCtwUT09%0A%0AMeeting%20ID:%20859%200129%202410%0APasscode:%20686873</time_description>
+<type>V</type>
+<url_description>https://elearn.informatik.uni-kiel.de/course/view.php?id=245</url_description>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.zuverl._infgs">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.zuverl.nowotk" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>8</ects_cred>
+<englisch>ja</englisch>
+<evaluation>ja</evaluation>
+<id>22690038</id>
+<import_parent_id>21369074</import_parent_id>
+<literature>Glenford J. Myers: Methodisches Testen von Programmen. R. Oldenbourg Verlag, 7. Auflage 2001 (Englische Originalfassung: The Art of Software Testing. John Wiley and Sons, 1979)&#x0D;&#x0A;&#x0D;&#x0A;Gerard J. Holzmann: Design and Validation of Communication Protocols. Prentice Hall Software Series, 1991.&#x0D;&#x0A;&#x0D;&#x0A;Edmund C. Clarke, Orna Grumberg und Doron A. Peled: Model Checking. MIT Press, 2000.&#x0D;&#x0A;&#x0D;&#x0A;Flemming Nielson, Hanne Riis Nielson und Chris Hankin: Principles of Program Analysis. Springer Verlag, 1999.</literature>
+<name>infAutLog-01a: Automata and Logics (infAutLog-01a)</name>
+<number>080040</number>
+<ordernr>15</ordernr>
+<orgname>Zuverl&#xE4;ssige Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Zuverl&#xE4;ssige Systeme</orgunit>
+</orgunits>
+<short>Inf-GSoZu</short>
+<startdate>2026-04-12</startdate>
+<summary>Kurzfassung:&#x0D;&#x0A;In this course we consider basic principles and techniques for the detection of errors and the certification of the absence of certain errors in software systems. The covered areas include testing, model-checking, and abstract interpretation.&#x0D;&#x0A;&#x0D;&#x0A;Lernziele:&#x0D;&#x0A;A successful attendant of this course will gain an understanding in techniques and formal methods for error finding and proving of program properties. He or she will be able to evaluate different analysis methods and to employ them.&#x0D;&#x0A;&#x0D;&#x0A;Lehrinhalte:&#x0D;&#x0A;The course breaks down into three parts.&#x0D;&#x0A;&#x0D;&#x0A;Part one: Testing. A systematic approach to various aspects of testing is presented: code inspections and walk throughs, control-flow coverage, data-flow coverage, black-box and white-box testing, test suites, conformance testing.&#x0D;&#x0A;&#x0D;&#x0A;Part two: Model-checking. The issue of modelling a program is considered. The temporal logic CTL is introduced as a formalism to express program properties. CTL model-checking algorithms are presented.&#x0D;&#x0A;&#x0D;&#x0A;Part three: Abstract interpretation. The underlying theory is introduced and applications in the area of static code analysis are presented.&#x0D;&#x0A;Basic knowledge in logic and theoretical foundations of computer science&#x0D;&#x0A;&#x0D;&#x0A;Pr&#xFC;fungsleistung:&#x0D;&#x0A;Oral exam over 30 minutes&#x0D;&#x0A;&#x0D;&#x0A;Lehr- und Lernmethoden:&#x0D;&#x0A;Lecture with beamer and white-board presentation; exercises for the application of theoretical concepts and self-assessment</summary>
+<sws>4</sws>
+<turnout>25</turnout>
+<terms>
+<term>
+<endtime>11:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<starttime>10:15</starttime>
+</term>
+<term>
+<endtime>15:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<starttime>14:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.zuverl._inftm">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.zuverl.nowotk" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<evaluation>ja</evaluation>
+<id>22618194</id>
+<import_parent_id>41411812</import_parent_id>
+<name>infTML-01a: Theory of Machine Learning</name>
+<number>080268</number>
+<ordernr>16</ordernr>
+<orgname>Zuverl&#xE4;ssige Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Zuverl&#xE4;ssige Systeme</orgunit>
+</orgunits>
+<short>infTML-01a</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>25</turnout>
+<terms>
+<term>
+<endtime>11:45</endtime>
+<exclude>no</exclude>
+<repeat>w1 3</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<starttime>10:15</starttime>
+</term>
+</terms>
+<type>V</type>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.zuverl.infalg">
+<classification><UnivISRef type="Title" key="Title.techn.infora.master.wahlpf" /></classification>
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.fachdi.fleisc" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_cred>6</ects_cred>
+<englisch>ja</englisch>
+<erasmus>ja</erasmus>
+<evaluation>ja</evaluation>
+<id>41388016</id>
+<name>Inf-AlgSeq: Algorithms on Sequences</name>
+<number>080194</number>
+<ordernr>14</ordernr>
+<organizational>Veranstaltung ist als Hybrid-Veranstaltung geplant - Raum folgt.</organizational>
+<orgname>Zuverl&#xE4;ssige Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Zuverl&#xE4;ssige Systeme</orgunit>
+</orgunits>
+<short>Inf-AlgSeq</short>
+<startdate>2026-04-12</startdate>
+<summary>This course is an introduction into the theory of stringology, or algorithms on sequences of symbols (also called words or strings). Our main intention is to present a series of basic algorithmic and combinatorial results, which can be used to develop efficient word-processing tools. While the emphasis of the course is on the theoretical side of stringology, we also present a series of applications of the presented concepts in areas like data-compression or computational biology. We expect that the participants to this course will gain an understanding of classical string-processing tools. They are supposed to understand and be able to use in various situations: classical text algorithms (e.g., pattern matching algorithms, edit distance), classical text indexing data structures (e.g., suffix arrays / trees), and classical combinatorial results that are useful in this context (e.g., periodicity lemmas).&#x0D;&#x0A;The main topics our course will cover are: basic combinatorics on words, pattern matching algorithms, data structures for text indexing (suffix arrays, suffix trees), text compression (Huffman encoding, Lempel-Ziv method), detection of regularities in words, algorithms for words with don't care symbols (partial words), word distance algorithms, longest common subsequence algorithms, approximate pattern matching. The presentation of each theoretical topic from the above will be accompanied by a brief discussion on its possible applications.</summary>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>9:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 4</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<starttime>8:15</starttime>
+</term>
+</terms>
+<time_description>https://uni-kiel.zoom.us/j/85901292410?pwd=OXZkdSs4b1hGbW82QnBFOEFVeCtwUT09%0A%0AMeeting%20ID:%20859%200129%202410%0APasscode:%20686873</time_description>
+<type>V</type>
+<url_description>https://elearn.informatik.uni-kiel.de/course/view.php?id=245</url_description>
+</Lecture>
+<Lecture key="Lecture.techn.infor.inform.zuverl.infalg_7">
+<dozs>
+<doz><UnivISRef type="Person" key="Person.techn.infor.inform.fachdi.fleisc" /></doz>
+</dozs>
+<ects>ja</ects>
+<ects_summary>Link to OLAT: https://lms.uni-kiel.de/auth/RepositoryEntry/3016753181/CourseNode/100600388070994</ects_summary>
+<englisch>ja</englisch>
+<id>41381219</id>
+<name>Exercise: Algorithms on Sequences</name>
+<number>080228</number>
+<organizational>Veranstaltung ist als Hybrid-Veranstaltung geplant - Raum folgt. &#x0D;&#x0A;&#x0D;&#x0A;https://uni-kiel.zoom.us/j/85901292410?pwd=OXZkdSs4b1hGbW82QnBFOEFVeCtwUT09%0A%0AMeeting%20ID:%20859%200129%202410%0APasscode:%20686873</organizational>
+<orgname>Zuverl&#xE4;ssige Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Zuverl&#xE4;ssige Systeme</orgunit>
+</orgunits>
+<parent-lv><UnivISRef type="Lecture" key="Lecture.techn.infor.inform.zuverl.infalg" /></parent-lv>
+<short>E Inf-AlgSeq</short>
+<startdate>2026-04-12</startdate>
+<sws>2</sws>
+<turnout>40</turnout>
+<terms>
+<term>
+<endtime>13:45</endtime>
+<exclude>vac</exclude>
+<repeat>w1 2</repeat>
+<room><UnivISRef type="Room" key="Room.techn.infor.zentr.cap4r1" /></room>
+<starttime>12:15</starttime>
+</term>
+</terms>
+<type>UE</type>
+</Lecture>
+<Person key="Person.techn.infor.inform.algori.slawig">
+<firstname>Thomas</firstname>
+<id>40758925</id>
+<lastname>Slawig</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>thomas.slawig@informatik.uni-kiel.de</email>
+<fax>+49 431 880-7618</fax>
+<ort>24118 Kiel</ort>
+<office>1201 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-4490</tel>
+<url>http://www.algopt.informatik.uni-kiel.de/de/team</url>
+</location>
+</locations>
+<officehours>
+<officehour>
+<comment>Nach Vereinbarung per E-Mail</comment>
+<office>1201 (CAP4)</office>
+</officehour>
+</officehours>
+<orgname>Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmische Optimale Steuerung - CO2-Aufnahme des Meeres</orgunit>
+</orgunits>
+<title>Prof. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.archoi.renzma">
+<firstname>Matthias</firstname>
+<id>21814474</id>
+<lastname>Renz</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Matthias.Renz@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>708 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7272</tel>
+<url>https://www.ai.informatik.uni-kiel.de/ai/team/prof-dr-matthias-renz</url>
+</location>
+</locations>
+<officehours>
+<officehour>
+<comment>(f&#xFC;r Studierende)</comment>
+<endtime>15:00</endtime>
+<repeat>w1 2</repeat>
+<office>708</office>
+<starttime>14:00</starttime>
+</officehour>
+</officehours>
+<orgname>Arch&#xE4;oinformatik - Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Arch&#xE4;oinformatik - Data Science</orgunit>
+</orgunits>
+<title>Prof. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.archoi.dietze">
+<firstname>Heiner</firstname>
+<id>22164756</id>
+<lastname>Dietze</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Heiner.Dietze@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>703 (CAP4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7264</tel>
+<url>https://www.ai.informatik.uni-kiel.de/de/team/dr-heiner-dietze</url>
+</location>
+</locations>
+<orgname>Arch&#xE4;oinformatik - Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Arch&#xE4;oinformatik - Data Science</orgunit>
+</orgunits>
+<title>Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.archoi.lptien">
+<firstname>Ulrike</firstname>
+<id>42275958</id>
+<lastname>L&#xF6;ptien</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Ulrike.Loeptien@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>703 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7264</tel>
+<url>https://www.ai.informatik.uni-kiel.de/de/team/ulrike-loeptien-dr</url>
+</location>
+</locations>
+<orgname>Arch&#xE4;oinformatik - Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Arch&#xE4;oinformatik - Data Science</orgunit>
+</orgunits>
+<title>Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.archoi.bethch">
+<atitle>M.Sc.</atitle>
+<firstname>Christian</firstname>
+<id>22066607</id>
+<lastname>Beth</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Christian.Beth@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>709 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7278</tel>
+<url>https://www.ai.informatik.uni-kiel.de/ai/team/b-sc-christian-beth</url>
+</location>
+</locations>
+<orgname>Arch&#xE4;oinformatik - Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Arch&#xE4;oinformatik - Data Science</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.archoi.amannn">
+<atitle>M.Sc.</atitle>
+<firstname>Niko</firstname>
+<id>42063970</id>
+<lastname>Preu&#xDF;</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Niko.Preuss@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>709 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7278</tel>
+<url>https://www.ai.informatik.uni-kiel.de/ai/team/niko-amann-m-sc</url>
+</location>
+</locations>
+<orgname>Arch&#xE4;oinformatik - Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Arch&#xE4;oinformatik - Data Science</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.archoi.thorst">
+<atitle>M.Sc.</atitle>
+<firstname>Mattis</firstname>
+<id>42300889</id>
+<lastname>thor Straten</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Mattis.thorStraten@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>702 (CAP4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7263</tel>
+<url>https://www.ai.informatik.uni-kiel.de/de/team/mattis-thor-straten</url>
+</location>
+</locations>
+<orgname>Arch&#xE4;oinformatik - Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Arch&#xE4;oinformatik - Data Science</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.echtze.vonhan">
+<firstname>Reinhard</firstname>
+<id>20120218</id>
+<lastname>von Hanxleden</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>reinhard.vonhanxleden@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1117 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7281</tel>
+<url>http://www.informatik.uni-kiel.de/rtsys/contact/rvh/</url>
+</location>
+</locations>
+<orgname>Echtzeitsysteme / Eingebettete Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Echtzeitsysteme / Eingebettete Systeme</orgunit>
+</orgunits>
+<title>Prof. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.echtze.kasper">
+<firstname>Maximilian</firstname>
+<id>42145167</id>
+<lastname>Kasperowski</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>maximilian.kasperowski@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1118 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7525</tel>
+<url>https://www.rtsys.informatik.uni-kiel.de/</url>
+</location>
+</locations>
+<officehours>
+<officehour>
+<office>CAP 4 R. 1118</office>
+</officehour>
+</officehours>
+<orgname>Echtzeitsysteme / Eingebettete Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Echtzeitsysteme / Eingebettete Systeme</orgunit>
+</orgunits>
+<title>M. Sc.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.echtze.domrss">
+<firstname>S&#xF6;ren</firstname>
+<id>41830382</id>
+<lastname>Domr&#xF6;s</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>soeren.domroes@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1112 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7297</tel>
+<url>https://www.rtsys.informatik.uni-kiel.de/</url>
+</location>
+</locations>
+<orgname>Echtzeitsysteme / Eingebettete Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Echtzeitsysteme / Eingebettete Systeme</orgunit>
+</orgunits>
+<title>Dr.-Ing.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.fachdi.esquiv">
+<firstname>Sandro</firstname>
+<id>40791879</id>
+<lastname>Esquivel</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>sandro.esquivel@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>714 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7275</tel>
+</location>
+</locations>
+<orgname>Didaktik der Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Didaktik der Informatik</orgunit>
+</orgunits>
+<title>Dr.-Ing.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.fachdi.groebl">
+<firstname>Gregor</firstname>
+<id>22113982</id>
+<lastname>Gro&#xDF;e-B&#xF6;lting</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>gregor.grosse-boelting@email.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1314 (CAP4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-5970</tel>
+</location>
+</locations>
+<orgname>Didaktik der Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Didaktik der Informatik</orgunit>
+</orgunits>
+<title>Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.fachdi.fleisc">
+<firstname>Pamela</firstname>
+<id>41758530</id>
+<lastname>Fleischmann</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>pamela.fleischmann@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1012 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7549</tel>
+<url>http://www.inf.uni-kiel.de</url>
+</location>
+</locations>
+<officehours>
+<officehour>
+<comment>Anfragen bitte per Email oder Mattermost.</comment>
+</officehour>
+</officehours>
+<orgname>Didaktik der Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Didaktik der Informatik</orgunit>
+</orgunits>
+<title>Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.inform.kazemp">
+<firstname>Daniyal</firstname>
+<id>22179726</id>
+<lastname>Kazempour</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>daniyal.kazempour@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1105 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-6744</tel>
+</location>
+</locations>
+<orgname>Datenbanksysteme und Data Mining</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Datenbanksysteme und Data Mining</orgunit>
+</orgunits>
+<title>Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.inform.mohant">
+<atitle>M.Sc.</atitle>
+<firstname>Sweety</firstname>
+<id>22278696</id>
+<lastname>Mohanty</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>smo@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1104 (CAP4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+</location>
+</locations>
+<orgname>Datenbanksysteme und Data Mining</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Datenbanksysteme und Data Mining</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.inform.krgerp">
+<firstname>Peer</firstname>
+<id>42002726</id>
+<lastname>Kr&#xF6;ger</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>peer.kroeger@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1101 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7291</tel>
+</location>
+</locations>
+<orgname>Datenbanksysteme und Data Mining</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Datenbanksysteme und Data Mining</orgunit>
+</orgunits>
+<title>Prof. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.inform.zelenk_2">
+<firstname>Claudius</firstname>
+<id>21446473</id>
+<lastname>Zelenka</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>claudius.zelenka@informatik.uni-kiel.de</email>
+<ort>D-24118 Kiel</ort>
+<office>1106 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7287</tel>
+</location>
+</locations>
+<orgname>Datenbanksysteme und Data Mining</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Datenbanksysteme und Data Mining</orgunit>
+</orgunits>
+<title>Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.intell.wisysv">
+<firstname>Svea</firstname>
+<id>42482673</id>
+<lastname>Wisy</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Svea.Wisy@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>308 (HRS 3)</office>
+<street>Herrmann-Rodewald-Str. 3</street>
+<tel>+49 431 880-4470</tel>
+</location>
+</locations>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<title>M.Sc.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.intell.tomfor">
+<firstname>Sven</firstname>
+<id>41901253</id>
+<lastname>Tomforde</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Sven.Tomforde@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>307a (HRS 3)</office>
+<street>Hermann-Rodewald-Stra&#xDF;e 3</street>
+<tel>+49 431 880-4844</tel>
+<url>http://www.inf.uni-kiel.de/</url>
+</location>
+</locations>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<title>Prof. Dr.-Ing.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.intell.schnbe">
+<atitle>M.Sc.</atitle>
+<firstname>Connor</firstname>
+<id>42250753</id>
+<lastname>Sch&#xF6;nberner</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Connor.Schoenberner@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>308 (HRS 3)</office>
+<street>Herrmann-Rodewald-Str. 3</street>
+<tel>+49 431 880-4470</tel>
+<url>https://www.ins.informatik.uni-kiel.de/en</url>
+</location>
+</locations>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.intell.schwin">
+<atitle>M.Sc.</atitle>
+<firstname>Raphael</firstname>
+<id>42279856</id>
+<lastname>Schwinger</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Raphael.Schwinger@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>310 (HRS 3)</office>
+<street>Herrmann-Rodewald-Str. 3</street>
+<tel>+49 431 880-4841</tel>
+<url>http://www.inf.uni-kiel.de/</url>
+</location>
+</locations>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.intell.bischo">
+<atitle>M.Sc.</atitle>
+<firstname>Nils</firstname>
+<id>42253080</id>
+<lastname>Bischoff</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Nils.Bischoff@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>311  (HRS 3)</office>
+<street>Hermann-Rodewald-Stra&#xDF;e 3</street>
+<tel>+49 431 880-4448</tel>
+<url>http://www.inf.uni-kiel.de/</url>
+</location>
+</locations>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.intell.alfalo">
+<atitle>M.Eng.</atitle>
+<firstname>Ghassan</firstname>
+<id>42119228</id>
+<lastname>al Falouji</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>ghassan.al-falouji@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>410 (HRS 3)</office>
+<street>Herrmann-Rodewald-Str. 3</street>
+<tel>+49 431 880-4482</tel>
+<url>http://www.inf.uni-kiel.de/</url>
+</location>
+</locations>
+<orgname>Intelligente Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Intelligente Systeme</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.marine.kserke">
+<firstname>Kevin</firstname>
+<id>42268219</id>
+<lastname>K&#xF6;ser</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>kevin.koeser@informatik.uni-kiel.de</email>
+<ort>24148 Kiel</ort>
+<office>EG.011 (NFS6)</office>
+<street>Neufeldtstra&#xDF;e 6</street>
+<tel>+49 431 880-7065</tel>
+</location>
+</locations>
+<orgname>Marine Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Marine Data Science</orgunit>
+</orgunits>
+<title>Prof. Dr.-Ing.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.marine.wendte">
+<atitle>M.Sc.</atitle>
+<firstname>Elisa</firstname>
+<id>42346073</id>
+<lastname>Wendt</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>elisa.wendt@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>EG.001 (NFS6)</office>
+<street>Neufeldtstra&#xDF;e 6</street>
+<tel>+49 431 880-7068</tel>
+</location>
+</locations>
+<orgname>Marine Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Marine Data Science</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.marine.janens">
+<atitle>M.Sc.</atitle>
+<firstname>Silja</firstname>
+<id>22448398</id>
+<lastname>Jan&#xDF;en</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>silja.janssen@informatik.uni-kiel.de</email>
+<office>EG.010 (NFS6)</office>
+<street>Neufeldtstra&#xDF;e 6</street>
+</location>
+</locations>
+<orgname>Marine Data Science</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Marine Data Science</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.zentr.huchfr">
+<firstname>Frank</firstname>
+<id>20171665</id>
+<lastname>Huch</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>Frank.Huch@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>704 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7277</tel>
+<url>http://www.informatik.uni-kiel.de/~fhu</url>
+</location>
+</locations>
+<officehours>
+<officehour>
+<comment>und nach Vereinbarung</comment>
+<endtime>12:00</endtime>
+<repeat>w1 3</repeat>
+<office>zur Zeit online &#xFC;ber BBB. Link ist &#xFC;ber Mattermost ver&#xF6;ffentlicht.</office>
+<starttime>10:00</starttime>
+</officehour>
+</officehours>
+<orgname>Institut f&#xFC;r Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+</orgunits>
+<title>Priv.-Doz. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.softwa.hassel">
+<firstname>Wilhelm</firstname>
+<id>20880606</id>
+<lastname>Hasselbring</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>hasselbring@email.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1217 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-4664</tel>
+<url>https://www.uni-kiel.de/de/person/hasselbring-wilhelm-46807</url>
+</location>
+</locations>
+<officehours>
+<officehour>
+<endtime>15:00</endtime>
+<repeat>w1 2</repeat>
+<office>1217</office>
+<starttime>14:00</starttime>
+</officehour>
+</officehours>
+<orgname>Software Engineering</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Software Engineering</orgunit>
+</orgunits>
+<title>Prof. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.softwa.schnoo_5">
+<firstname>Henning</firstname>
+<id>40746552</id>
+<lastname>Schnoor</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>henning.schnoor@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1215 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-4467</tel>
+<url>http://www.se.uni-kiel.de</url>
+</location>
+</locations>
+<orgname>Software Engineering</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Software Engineering</orgunit>
+</orgunits>
+<title>Priv.-Doz. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.techni.hailmo">
+<firstname>Mohamed</firstname>
+<id>22599680</id>
+<lastname>Hail</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>mohamed.hail@informatik.uni-kiel.de</email>
+<fax>+49 431 880-4612</fax>
+<ort>24118 Kiel</ort>
+<office>507a (HRS 3)</office>
+<street>Hermann-Rodewald-Str. 3</street>
+<tel>+49 431 880-4480</tel>
+</location>
+</locations>
+<orgname>Verteilte Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Verteilte Systeme</orgunit>
+</orgunits>
+<title>Dr.-Ing.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.theore.wilket">
+<firstname>Thomas</firstname>
+<id>20069235</id>
+<lastname>Wilke</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>thomas.wilke@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1013 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7511</tel>
+<url>https://www.uni-kiel.de/de/tf/forschen/institut-informatik/theoretische-informatik</url>
+</location>
+</locations>
+<officehours>
+<officehour>
+<comment>Terminvereinbarung im OLAT</comment>
+</officehour>
+</officehours>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<title>Prof. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.theore.depper">
+<firstname>Max</firstname>
+<id>22376885</id>
+<lastname>Deppert</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>max.deppert@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1016 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7513</tel>
+<url>http://www.theorie.informatik.uni-kiel.de/</url>
+</location>
+</locations>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<title>Dr.-Ing.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.theore.reuter">
+<atitle>M.Sc.</atitle>
+<firstname>Janina</firstname>
+<id>22171095</id>
+<lastname>Reuter</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>janina.reuter@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1015 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7508</tel>
+</location>
+</locations>
+<orgname>Theoretische Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Theoretische Informatik</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.theori.jansen">
+<firstname>Klaus</firstname>
+<id>20043381</id>
+<lastname>Jansen</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>klaus.jansen@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1007 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7501</tel>
+<url>http://www.algo.informatik.uni-kiel.de/de/team/klaus-jansen</url>
+</location>
+</locations>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<title>Prof. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.theori.pirott">
+<firstname>Lis</firstname>
+<id>22445769</id>
+<lastname>Pirotton</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>lis.pirotton@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1010 (CAP4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-7298</tel>
+<url>http://www.algo.informatik.uni-kiel.de/de</url>
+</location>
+</locations>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.theori.ohneso">
+<firstname>Felix</firstname>
+<id>42421481</id>
+<lastname>Ohnesorge</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>felix.ohnesorge@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1002 (CAP4)</office>
+<street>Christian-Albechts-Platz 4</street>
+<tel>+49 431 880-7506</tel>
+<url>http://www.algo.informatik.uni-kiel.de/de</url>
+</location>
+</locations>
+<orgname>Algorithmen und Komplexit&#xE4;t</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Algorithmen und Komplexit&#xE4;t</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.visual.pirksr">
+<firstname>S&#xF6;ren</firstname>
+<id>22326323</id>
+<lastname>Pirk</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>soeren.pirk@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>EG.013 (NFS6)</office>
+<street>Neufeldtstra&#xDF;e 6</street>
+<tel>+49 431 880-7064</tel>
+</location>
+</locations>
+<orgname>Visual Computing und Artificial Intelligence</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Visual Computing und Artificial Intelligence</orgunit>
+</orgunits>
+<title>Prof. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.inform.zuverl.nowotk">
+<firstname>Dirk</firstname>
+<id>41125536</id>
+<lastname>Nowotka</lastname>
+<lehr>ja</lehr>
+<locations>
+<location>
+<email>dirk.nowotka@informatik.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>1308 (CAP 4)</office>
+<street>Christian-Albrechts-Platz 4</street>
+<tel>+49 431 880-4199</tel>
+<url>http://www.zs.informatik.uni-kiel.de</url>
+</location>
+</locations>
+<orgname>Zuverl&#xE4;ssige Systeme</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Zuverl&#xE4;ssige Systeme</orgunit>
+</orgunits>
+<title>Prof. Dr.</title>
+<visible>ja</visible>
+</Person>
+<Person key="Person.zentra_1.servic.ressou.gebude.dezern_1.refera.spring">
+<firstname>Stefanie</firstname>
+<id>42164288</id>
+<lastname>Springborn</lastname>
+<lehr>nein</lehr>
+<locations>
+<location>
+<email>veranstaltungsmanagement@uv.uni-kiel.de</email>
+<ort>24118 Kiel</ort>
+<office>02.012</office>
+<street>Neufeldtstra&#xDF;e 10</street>
+<tel>+49 431 880-6534</tel>
+<url>http://www.abt6.uv.uni-kiel.de/de</url>
+</location>
+</locations>
+<orgname>Referat Liegenschaften und Services</orgname>
+<orgunits>
+<orgunit>Zentrale Verwaltung</orgunit>
+<orgunit>Servicezentren</orgunit>
+<orgunit>Ressourcen</orgunit>
+<orgunit>Geb&#xE4;udemanagement</orgunit>
+<orgunit>Dezernat Technisches und Infrastrukturelles Management</orgunit>
+<orgunit>Referat Liegenschaften und Services</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Person key="Person.techn.infor.servic.geschf.inform">
+<id>41363481</id>
+<lastname>Informatik, R&#xE4;ume</lastname>
+<lehr>nein</lehr>
+<locations>
+<location>
+<email>raeume@informatik.uni-kiel.de</email>
+</location>
+</locations>
+<orgname>Gesch&#xE4;ftszimmer der Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Servicestellen</orgunit>
+<orgunit>Gesch&#xE4;ftszimmer der Informatik</orgunit>
+</orgunits>
+<visible>ja</visible>
+</Person>
+<Room key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.cap3i">
+<address>Christian-Albrechts-Platz 3</address>
+<alspr>ja</alspr>
+<anst>ja</anst>
+<av2>ja</av2>
+<beam16zu9>ja</beam16zu9>
+<beamhdmi>ja</beamhdmi>
+<beamvga>ja</beamvga>
+<contacts>
+<contact><UnivISRef type="Person" key="Person.zentra_1.servic.ressou.gebude.dezern_1.refera.spring" /></contact>
+</contacts>
+<dark>ja</dark>
+<description>Eine Anleitung zur Nutzung der Kamera finden Sie hier: https://cloud.rz.uni-kiel.de/index.php/s/y42QJtKq96CG6mb?dir=undefined&amp;openfile=410576992 &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Bei technischen Fragen oder Problemen wenden Sie sich bitte an den Hausmeister, Herrn Woitschach -2063!*&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;74,96 qm&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Bestuhlungsplan: https://www.uni-kiel.de/fm/de/veranstaltungsmanagement/veranstaltungsorte/bestuhlungsplaene/sitzplan-cap3-audimax-horsaal1.pdf/at_download/file&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Der Raum ist von Montag bis Freitag zwischen 07:30 Uhr und 19:30 Uhr offen. Au&#xDF;erhalb dieser Zeiten ben&#xF6;tigen Sie eine Schlie&#xDF;berechtigung, die Sie &#xFC;ber schliesssysteme@uv.uni-kiel.de erhalten. Sollten Sie einen Salto-Chip (blau) haben, geben Sie in der E-Mail die Nummer Ihres blauen Salto-Chips und Ihre RZ-Kennung an, damit dieser freigeschaltet werden kann. Berechtigte Studierende stimmen &#xFC;ber die selbe Mail einen Termin mit dem Team Schlie&#xDF;systeme ab, um die Zugangsberechtigung auf dem Studentenausweis zu erhalten.&#x0D;&#x0A;&#x0D;&#x0A;In der Hauptpforte erhalten Dozierende jederzeit f&#xFC;r die Veranstaltung einen Zugangschip.*&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Das Podium ist f&#xFC;r Rollstuhlfahrer/innen nicht erreichbar! &#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Im Geb&#xE4;ude kann das FunkLAN Notebooknetz (VPN) empfangen werden. Studenten erhalten mit ihrer stu-Kennung automatisch Zugang. Mitarbeiter ben&#xF6;tigen eine Benutzerkennung des Rechenzentrums sowie den "Einwahl-Dienst". Dieser Dienst wird auch f&#xFC;r die VPN Nutzung ben&#xF6;tigt. Informationen zu den Funknetzen der CAU und zu deren Konfiguration finden Sie auf den Web-Seiten des Rechenzentrums: http://www.rz.uni-kiel.de/wlan/</description>
+<fest>ja</fest>
+<id>20057812</id>
+<inet>ja</inet>
+<laptopton>ja</laptopton>
+<name>H&#xF6;rsaal 1</name>
+<ohpfr>ja</ohpfr>
+<orgname>Referat Liegenschaften und Services</orgname>
+<orgunits>
+<orgunit>Zentrale Verwaltung</orgunit>
+<orgunit>Servicezentren</orgunit>
+<orgunit>Ressourcen</orgunit>
+<orgunit>Geb&#xE4;udemanagement</orgunit>
+<orgunit>Dezernat Technisches und Infrastrukturelles Management</orgunit>
+<orgunit>Referat Liegenschaften und Services</orgunit>
+</orgunits>
+<rolli>ja</rolli>
+<short>CAP3 - H&#xF6;rsaal 1</short>
+<size>64</size>
+<tafel>ja</tafel>
+<tel>Bei Havarie bitte Hausmeister unter 2063 informieren!</tel>
+<url>https://www.uni-kiel.de/de/universitaet/baumassnahmen-campusentwicklung/lageplaene-und-anfahrt</url>
+<wlan>ja</wlan>
+</Room>
+<Room key="Room.techn.infor.inform.progra.cap4r7">
+<address>Christian-Albrechts-Platz 4</address>
+<beam>ja</beam>
+<description>PC- und SUN-Arbeitsplatz&#x0D;&#x0A;&#x0D;&#x0A;*38,75 qm*</description>
+<id>40785590</id>
+<inet>ja</inet>
+<lose>ja</lose>
+<name>Seminarraum/Medienarbeitsraum</name>
+<ohead>ja</ohead>
+<orgname>Programmiersprachen und &#xDC;bersetzerkonstruktion</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+<orgunit>Arbeitsgruppen</orgunit>
+<orgunit>Programmiersprachen und &#xDC;bersetzerkonstruktion</orgunit>
+</orgunits>
+<short>CAP4 - R.715</short>
+<size>15</size>
+<tel>+49 431 8807268</tel>
+<url>http://univis.uni-kiel.de/prg?search=rooms&amp;name=CAP4+-+R\.715</url>
+<whitebd>ja</whitebd>
+</Room>
+<Room key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_9">
+<address>Ludewig-Meyn-Stra&#xDF;e 8</address>
+<alspr>ja</alspr>
+<av2>ja</av2>
+<beam16zu9>ja</beam16zu9>
+<beamhdmi>ja</beamhdmi>
+<chtab>ja</chtab>
+<contacts>
+<contact><UnivISRef type="Person" key="Person.zentra_1.servic.ressou.gebude.dezern_1.refera.spring" /></contact>
+</contacts>
+<dark>ja</dark>
+<description>Bei technischen Fragen oder Problemen wenden Sie sich bitte an den Hausmeister, Herrn Malz (-5027 oder -2063).&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Waschbecken&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Raumgr&#xF6;&#xDF;e 77,34 m&#xB2;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Vorbelegungsrecht Informatik*&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Der Raum ist von Montag bis Freitag zwischen 07:30 Uhr und 19:30 Uhr offen. Au&#xDF;erhalb dieser Zeiten ben&#xF6;tigen Sie eine Schlie&#xDF;berechtigung, die Sie &#xFC;ber schliesssysteme@uv.uni-kiel.de erhalten. Sollten Sie einen Salto-Chip (blau) haben, geben Sie in der E-Mail die Nummer Ihres blauen Salto-Chips und Ihre RZ-Kennung an, damit dieser freigeschaltet werden kann. Berechtigte Studierende stimmen &#xFC;ber die selbe Mail einen Termin mit dem Team Schlie&#xDF;systeme ab, um die Zugangsberechtigung auf dem Studentenausweis zu erhalten.&#x0D;&#x0A;In der Hauptpforte erhalten Dozierende jederzeit f&#xFC;r die Veranstaltung einen Zugangschip.*</description>
+<id>42036294</id>
+<inet>ja</inet>
+<lose>ja</lose>
+<name>Seminarraum R.EG.017 (40)</name>
+<orgname>Referat Liegenschaften und Services</orgname>
+<orgunits>
+<orgunit>Zentrale Verwaltung</orgunit>
+<orgunit>Servicezentren</orgunit>
+<orgunit>Ressourcen</orgunit>
+<orgunit>Geb&#xE4;udemanagement</orgunit>
+<orgunit>Dezernat Technisches und Infrastrukturelles Management</orgunit>
+<orgunit>Referat Liegenschaften und Services</orgunit>
+</orgunits>
+<rolli>ja</rolli>
+<short>LMS8 - R.EG.017 (40)</short>
+<size>40</size>
+<tafel>ja</tafel>
+<url>https://www.uni-kiel.de/de/universitaet/baumassnahmen-campusentwicklung/lageplaene-und-anfahrt</url>
+<wlan>ja</wlan>
+</Room>
+<Room key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_5">
+<address>Ludewig-Meyn-Stra&#xDF;e 8</address>
+<beam>ja</beam>
+<chtab>ja</chtab>
+<contacts>
+<contact><UnivISRef type="Person" key="Person.zentra_1.servic.ressou.gebude.dezern_1.refera.spring" /></contact>
+</contacts>
+<description>Bei technischen Fragen oder Problemen wenden Sie sich bitte an den Hausmeister, Herrn Malz (-5027 oder -2063).&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Raumgr&#xF6;&#xDF;e 77,34 m&#xB2;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Vorbelegungsrecht Informatik*&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Der Raum ist von Montag bis Freitag zwischen 07:30 Uhr und 19:30 Uhr offen. Au&#xDF;erhalb dieser Zeiten ben&#xF6;tigen Sie eine Schlie&#xDF;berechtigung, die Sie &#xFC;ber schliesssysteme@uv.uni-kiel.de erhalten. Sollten Sie einen Salto-Chip (blau) haben, geben Sie in der E-Mail die Nummer Ihres blauen Salto-Chips und Ihre RZ-Kennung an, damit dieser freigeschaltet werden kann. Berechtigte Studierende stimmen &#xFC;ber die selbe Mail einen Termin mit dem Team Schlie&#xDF;systeme ab, um die Zugangsberechtigung auf dem Studentenausweis zu erhalten.&#x0D;&#x0A;In der Hauptpforte erhalten Dozierende jederzeit f&#xFC;r die Veranstaltung einen Zugangschip.*</description>
+<id>42077649</id>
+<inet>ja</inet>
+<lose>ja</lose>
+<name>Seminarraum R.EG.016 (40)</name>
+<orgname>Referat Liegenschaften und Services</orgname>
+<orgunits>
+<orgunit>Zentrale Verwaltung</orgunit>
+<orgunit>Servicezentren</orgunit>
+<orgunit>Ressourcen</orgunit>
+<orgunit>Geb&#xE4;udemanagement</orgunit>
+<orgunit>Dezernat Technisches und Infrastrukturelles Management</orgunit>
+<orgunit>Referat Liegenschaften und Services</orgunit>
+</orgunits>
+<rolli>ja</rolli>
+<short>LMS8 - R.EG.016 (40)</short>
+<size>40</size>
+<url>https://www.uni-kiel.de/de/universitaet/baumassnahmen-campusentwicklung/lageplaene-und-anfahrt</url>
+<whitebd>ja</whitebd>
+<wlan>ja</wlan>
+</Room>
+<Room key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_1">
+<address>Ludewig-Meyn-Stra&#xDF;e 8</address>
+<beam>ja</beam>
+<chtab>ja</chtab>
+<contacts>
+<contact><UnivISRef type="Person" key="Person.zentra_1.servic.ressou.gebude.dezern_1.refera.spring" /></contact>
+</contacts>
+<description>Bei technischen Fragen oder Problemen wenden Sie sich bitte an den Hausmeister, Herrn Malz (-5027 oder -2063).&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Waschbecken&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Raumgr&#xF6;&#xDF;e 56,92 m&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Vorbelegungsrecht Informatik*&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Der Raum ist von Montag bis Freitag zwischen 07:30 Uhr und 19:30 Uhr offen. Au&#xDF;erhalb dieser Zeiten ben&#xF6;tigen Sie eine Schlie&#xDF;berechtigung, die Sie &#xFC;ber schliesssysteme@uv.uni-kiel.de erhalten. Sollten Sie einen Salto-Chip (blau) haben, geben Sie in der E-Mail die Nummer Ihres blauen Salto-Chips und Ihre RZ-Kennung an, damit dieser freigeschaltet werden kann. Berechtigte Studierende stimmen &#xFC;ber die selbe Mail einen Termin mit dem Team Schlie&#xDF;systeme ab, um die Zugangsberechtigung auf dem Studentenausweis zu erhalten.&#x0D;&#x0A;In der Hauptpforte erhalten Dozierende jederzeit f&#xFC;r die Veranstaltung einen Zugangschip.*</description>
+<flip>ja</flip>
+<id>42059058</id>
+<inet>ja</inet>
+<lose>ja</lose>
+<name>Seminarraum R.EG.010 (26)</name>
+<orgname>Referat Liegenschaften und Services</orgname>
+<orgunits>
+<orgunit>Zentrale Verwaltung</orgunit>
+<orgunit>Servicezentren</orgunit>
+<orgunit>Ressourcen</orgunit>
+<orgunit>Geb&#xE4;udemanagement</orgunit>
+<orgunit>Dezernat Technisches und Infrastrukturelles Management</orgunit>
+<orgunit>Referat Liegenschaften und Services</orgunit>
+</orgunits>
+<rolli>ja</rolli>
+<short>LMS8 - R.EG.010 (26)</short>
+<size>26</size>
+<tafel>ja</tafel>
+<url>https://www.uni-kiel.de/de/universitaet/baumassnahmen-campusentwicklung/lageplaene-und-anfahrt</url>
+<wlan>ja</wlan>
+</Room>
+<Room key="Room.zentra_1.servic.ressou.gebude.dezern_1.refera.lms8re_8">
+<address>Ludewig-Meyn-Stra&#xDF;e 8</address>
+<beam>ja</beam>
+<chtab>ja</chtab>
+<contacts>
+<contact><UnivISRef type="Person" key="Person.zentra_1.servic.ressou.gebude.dezern_1.refera.spring" /></contact>
+</contacts>
+<description>Bei technischen Fragen oder Problemen wenden Sie sich bitte an den Hausmeister, Herrn Malz (-5027 oder -2063).&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Raumgr&#xF6;&#xDF;e 56,43 m&#xB2;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Vorbelegungsrecht Informatik*&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Der Raum ist von Montag bis Freitag zwischen 07:30 Uhr und 19:30 Uhr offen. Au&#xDF;erhalb dieser Zeiten ben&#xF6;tigen Sie eine Schlie&#xDF;berechtigung, die Sie &#xFC;ber schliesssysteme@uv.uni-kiel.de erhalten. Sollten Sie einen Salto-Chip (blau) haben, geben Sie in der E-Mail die Nummer Ihres blauen Salto-Chips und Ihre RZ-Kennung an, damit dieser freigeschaltet werden kann. Berechtigte Studierende stimmen &#xFC;ber die selbe Mail einen Termin mit dem Team Schlie&#xDF;systeme ab, um die Zugangsberechtigung auf dem Studentenausweis zu erhalten.&#x0D;&#x0A;In der Hauptpforte erhalten Dozierende jederzeit f&#xFC;r die Veranstaltung einen Zugangschip.*</description>
+<flip>ja</flip>
+<id>42009425</id>
+<inet>ja</inet>
+<lose>ja</lose>
+<name>Seminarraum R.EG.009 (24)</name>
+<orgname>Referat Liegenschaften und Services</orgname>
+<orgunits>
+<orgunit>Zentrale Verwaltung</orgunit>
+<orgunit>Servicezentren</orgunit>
+<orgunit>Ressourcen</orgunit>
+<orgunit>Geb&#xE4;udemanagement</orgunit>
+<orgunit>Dezernat Technisches und Infrastrukturelles Management</orgunit>
+<orgunit>Referat Liegenschaften und Services</orgunit>
+</orgunits>
+<rolli>ja</rolli>
+<short>LMS8 - R.EG.009 (24)</short>
+<size>24</size>
+<url>https://www.uni-kiel.de/de/universitaet/baumassnahmen-campusentwicklung/lageplaene-und-anfahrt</url>
+<whitebd>ja</whitebd>
+<wlan>ja</wlan>
+</Room>
+<Room key="Room.zentr.zentr.zentr.online">
+<description>Raumeintrag f&#xFC;r Veranstaltungen, die online z.B. per Videokonferenzsoftware durchgef&#xFC;hrt werden.</description>
+<id>42043984</id>
+<name>Online-Veranstaltung</name>
+<orgname>Eintr&#xE4;ge auf dieser Ebene</orgname>
+<orgunits>
+<orgunit>Eintr&#xE4;ge auf dieser Ebene</orgunit>
+</orgunits>
+<short>Online-Veranstaltung</short>
+</Room>
+<Room key="Room.techn.infor.zentr.cap4r1">
+<address>Christian-Albrechts-Platz 4, 24118 Kiel</address>
+<beam>ja</beam>
+<chtab>ja</chtab>
+<contacts>
+<contact><UnivISRef type="Person" key="Person.techn.infor.servic.geschf.inform" /></contact>
+</contacts>
+<description>Tische mit Strom- und Netzwerkanschl&#xFC;ssen (Netz des Instituts)&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*63,28 qm*&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;*Der Raum ist verschlossen. Ein Transponder ist an der Hauptpforte erh&#xE4;ltlich.*</description>
+<flip>ja</flip>
+<id>41113535</id>
+<name>Seminarraum 1304a</name>
+<orgname>Institut f&#xFC;r Informatik</orgname>
+<orgunits>
+<orgunit>Technische Fakult&#xE4;t</orgunit>
+<orgunit>Institut f&#xFC;r Informatik</orgunit>
+</orgunits>
+<rolli>ja</rolli>
+<short>CAP4 - R.13.1304 a</short>
+<size>25</size>
+<url>http://www.uni-kiel.de/lageplan</url>
+<whitebd>ja</whitebd>
+<wlan>ja</wlan>
+</Room>
+<Room key="Room.">
+</Room>
+<Title key="Title.techn.infora.master.wahlpf">
+<ordernr>2</ordernr>
+<parent-title><UnivISRef type="Title" key="Title.techn.infora.master" /></parent-title>
+<title>Wahlpflicht Informatik</title>
+<title_en>Compulsory elective modules in Computer Science</title_en>
+</Title>
+<Title key="Title.techn.infora.master.master_3">
+<ordernr>6</ordernr>
+<parent-title><UnivISRef type="Title" key="Title.techn.infora.master" /></parent-title>
+<title>Masterabschlussseminare</title>
+<title_en>Master Thesis Supervision Seminar</title_en>
+</Title>
+<Title key="Title.techn.infora.master.master_2">
+<ordernr>4</ordernr>
+<parent-title><UnivISRef type="Title" key="Title.techn.infora.master" /></parent-title>
+<title>Masterprojekt</title>
+<title_en>Advanced Project</title_en>
+</Title>
+<Title key="Title.techn.infora.master.master_1">
+<ordernr>3</ordernr>
+<parent-title><UnivISRef type="Title" key="Title.techn.infora.master" /></parent-title>
+<title>Masterseminare</title>
+<title_en>Seminar</title_en>
+</Title>
+<Title key="Title.techn.infora.master.mitarb">
+<ordernr>5</ordernr>
+<parent-title><UnivISRef type="Title" key="Title.techn.infora.master" /></parent-title>
+<text>Unter dieser &#xDC;berschrift finden Sie Angebote f&#xFC;r das die in &#xA7; 11 Abs. 2 Punkt 1.e. der [[Fachpr&#xFC;fungsordnung]]https://www.studservice.uni-kiel.de/sta/fachpruefungsordnung-informatik-master-1-fach-m.sc..pdf genannte M&#xF6;glichkeit im Wahlpflichtbereich Informatik (MSc-Inf-WP) als zus&#xE4;tzliche Wahl ein Forschungsprojekt (Mitarbeit in einer Arbeitsgruppe) im Umfang von bis zu 10 LP einzubringen.&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Unabh&#xE4;ngig von diesen Ank&#xFC;ndigungen k&#xF6;nnen Sie gerne die [Arbeitsgruppen]https://www.uni-kiel.de/de/tf/forschen/institut-informatik , in deren Forschungsbereich Sie mitarbeiten m&#xF6;chten, in Bezug auf dieses Wahlangebot ansprechen. &#x0D;&#x0A;</text>
+<text_en>Under this heading, you will find offers for the option specified in &#xA7; 11 (2) point 1.e. of the [[specialized examination regulations]] https://www.studservice.uni-kiel.de/sta/fachpruefungsordnung-informatik-master-1-fach-m.sc.-englisch.pdf as an additional elective in the compulsory elective area of computer science (MSc-Inf-WP).&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;Regardless of these announcements, you are welcome to contact the [working groups]https://www.uni-kiel.de/de/tf/forschen/institut-informatik in whose research area you would like to participate with regard to this elective option. </text_en>
+<title>Mitarbeit in einer Forschungsgruppe</title>
+<title_en>Involvement in a working group</title_en>
+</Title>
+<Title key="Title.techn.infora.master.theore">
+<ordernr>1</ordernr>
+<parent-title><UnivISRef type="Title" key="Title.techn.infora.master" /></parent-title>
+<title>Theoretische Informatik</title>
+<title_en>Theoretical Computer Science</title_en>
+</Title>
+<Title key="Title.techn.infora.master">
+<ordernr>5</ordernr>
+<parent-title><UnivISRef type="Title" key="Title.techn.infora" /></parent-title>
+<text>[Informationen zum Studiengang und zur Pr&#xFC;fungsordnung]https://www.uni-kiel.de/de/tf/studieren/ma-informatik/studierende&#x0D;&#x0A;&#x0D;&#x0A;</text>
+<text_en>[Degree-Specific Examination Regulations (FPO) for Computer Science (1-subject, Master)]http://www.studservice.uni-kiel.de/sta/fachpruefungsordnung-informatik-master-1-fach-englisch.pdf&#x0D;&#x0A;&#x0D;&#x0A;[Examination Procedure Regulations at Kiel University for Students of Bachelors's and Master's Degree Programmes]http://www.studservice.uni-kiel.de/sta/pruefungsverfahrensordnung-bachelor-master-englisch.pdf&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;</text_en>
+<title>Masterstudiengang Informatik</title>
+<title_en>Master's degree program in computer science</title_en>
+</Title>
+<Title key="Title.techn.infora">
+<ordernr>2</ordernr>
+<parent-title><UnivISRef type="Title" key="Title.techn" /></parent-title>
+<title>Institut f&#xFC;r Informatik</title>
+<title_en>Department of Computer Science</title_en>
+</Title>
+<Title key="Title.techn">
+<ordernr>8</ordernr>
+<title>Technische Fakult&#xE4;t</title>
+<title_en>Faculty of Engineering </title_en>
+</Title>
+</UnivIS>
+

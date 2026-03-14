@@ -7,6 +7,8 @@ export interface Course {
   description?: string;
   url?: string;
   department?: string;
+  prerequisites?: string;
+  instructors?: string[];
   corequisites?: string;
   level?: string;
   difficulty?: number;

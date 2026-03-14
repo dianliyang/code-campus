@@ -382,6 +382,7 @@ export class SupabaseDatabase {
         details?: Json;
         latest_semester?: Json;
         instructors?: string[];
+        prerequisites?: string;
       } = {
         university: university,
         course_code: c.courseCode,
@@ -411,9 +412,17 @@ export class SupabaseDatabase {
       }
 
       // Extract instructors from details into top-level column
-      const detailsInstructors = (c.details as Record<string, unknown>)?.instructors;
-      if (Array.isArray(detailsInstructors) && detailsInstructors.length > 0) {
-        payload.instructors = detailsInstructors as string[];
+      if (Array.isArray(c.instructors) && c.instructors.length > 0) {
+        payload.instructors = c.instructors;
+      } else {
+        const detailsInstructors = (c.details as Record<string, unknown>)?.instructors;
+        if (Array.isArray(detailsInstructors) && detailsInstructors.length > 0) {
+          payload.instructors = detailsInstructors as string[];
+        }
+      }
+
+      if (typeof c.prerequisites === "string" && c.prerequisites.trim().length > 0) {
+        payload.prerequisites = c.prerequisites.trim();
       }
 
       // For force update, always apply incoming description/details/latest semester.

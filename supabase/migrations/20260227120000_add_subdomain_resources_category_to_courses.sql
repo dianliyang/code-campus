@@ -1,6 +1,5 @@
 -- Add new fields to courses table
 ALTER TABLE courses ADD COLUMN subdomain TEXT;
-ALTER TABLE courses ADD COLUMN resources TEXT[] DEFAULT '{}'::text[];
 ALTER TABLE courses ADD COLUMN category TEXT;
 
 -- Add indexes for better filtering

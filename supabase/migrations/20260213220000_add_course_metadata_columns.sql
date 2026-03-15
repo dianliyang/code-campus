@@ -2,7 +2,7 @@
 
 ALTER TABLE courses
 ADD COLUMN IF NOT EXISTS prerequisites TEXT,
-ADD COLUMN IF NOT EXISTS related_urls TEXT[] DEFAULT '{}'::text[],
+ADD COLUMN IF NOT EXISTS resources TEXT[] DEFAULT '{}'::text[],
 ADD COLUMN IF NOT EXISTS cross_listed_courses TEXT;
 
 -- Backfill prerequisites from details JSON.
@@ -10,16 +10,19 @@ UPDATE courses
 SET prerequisites = NULLIF(TRIM(COALESCE(details->>'prerequisites', '')), '')
 WHERE details ? 'prerequisites';
 
--- Backfill related URLs from details JSON.
+-- Backfill resources from legacy details JSON keys.
 UPDATE courses
-SET related_urls = COALESCE(
+SET resources = COALESCE(
   (
     SELECT array_agg(value)
-    FROM jsonb_array_elements_text(COALESCE(details->'relatedUrls', '[]'::jsonb)) AS t(value)
+    FROM jsonb_array_elements_text(
+      COALESCE(details->'resources', details->'relatedUrls', '[]'::jsonb)
+    ) AS t(value)
   ),
   '{}'::text[]
 )
-WHERE details ? 'relatedUrls';
+WHERE details ? 'resources'
+   OR details ? 'relatedUrls';
 
 -- Backfill cross listed courses from details JSON.
 UPDATE courses

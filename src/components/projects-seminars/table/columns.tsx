@@ -91,7 +91,8 @@ export const projectSeminarColumns: ColumnDef<ProjectSeminarTableRow>[] = [
   {
     accessorKey: "category",
     header: "Category",
-    cell: ({ row }) => <span className="text-[12px] text-[#555]">{row.original.category}</span>,
+    size: 120,
+    cell: ({ row }) => <span className="inline-block max-w-full truncate whitespace-nowrap text-[12px] text-[#555]">{row.original.category}</span>,
   },
   {
     accessorKey: "department",
@@ -101,17 +102,20 @@ export const projectSeminarColumns: ColumnDef<ProjectSeminarTableRow>[] = [
   {
     accessorKey: "credit",
     header: "Credit",
-    cell: ({ row }) => <span className="text-[12px] text-[#555]">{row.original.credit ?? "-"}</span>,
+    size: 76,
+    cell: ({ row }) => <span className="inline-block whitespace-nowrap text-[12px] text-[#555]">{row.original.credit ?? "-"}</span>,
   },
   {
     accessorKey: "semesterLabel",
     header: "Semester",
-    cell: ({ row }) => <span className="text-[12px] text-[#555]">{row.original.semesterLabel}</span>,
+    size: 120,
+    cell: ({ row }) => <span className="inline-block whitespace-nowrap text-[12px] text-[#555]">{row.original.semesterLabel}</span>,
   },
   {
     id: "actions",
     header: () => <div className="text-right">Action</div>,
     cell: ({ row }) => <ProjectSeminarRowActions row={row.original} />,
+    size: 96,
     enableSorting: false,
     enableHiding: false,
   },

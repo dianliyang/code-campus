@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
         resources,
         cross_listed_courses,
         department,
-        corequisites,
         level,
         difficulty,
         popularity,

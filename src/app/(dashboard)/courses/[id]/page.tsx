@@ -52,8 +52,8 @@ async function CourseDetailData({ id, dict }: {id: string;dict: Dictionary['dash
   const coursePromise = supabase.
   from("courses").
   select(
-    `
-      id, university, course_code, title, units, credit, url, description, details, instructors, prerequisites, resources, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, category, is_hidden, is_internal, created_at,
+      `
+      id, university, course_code, title, units, credit, url, description, details, instructors, prerequisites, resources, cross_listed_courses, department, level, difficulty, popularity, workload, category, is_hidden, is_internal, created_at,
       latest_semester,
       fields:course_fields(fields(name)),
       semesters:course_semesters(semesters(term, year))

@@ -31,20 +31,23 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
 
   return (
     <div className="min-w-[760px]">
-    <Table className="table-fixed">
+    <Table className="table-auto">
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) =>
         <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) =>
+            {headerGroup.headers.map((header) => {
+          const width = header.column.columnDef.size;
+          return (
           <TableHead
             key={header.id}
-            style={{ width: header.getSize() }}
+            style={width != null ? { width } : undefined}
           >
                 {header.isPlaceholder ?
             null :
             flexRender(header.column.columnDef.header, header.getContext())}
               </TableHead>
-          )}
+          );
+        })}
           </TableRow>
         )}
       </TableHeader>
@@ -55,14 +58,17 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
           key={row.id}>
 
           
-              {row.getVisibleCells().map((cell) =>
+              {row.getVisibleCells().map((cell) => {
+          const width = cell.column.columnDef.size;
+          return (
           <TableCell
             key={cell.id}
-            style={{ width: cell.column.getSize() }}
+            style={width != null ? { width } : undefined}
           >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
-          )}
+          );
+        })}
             </TableRow>
         ) :
 

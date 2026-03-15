@@ -97,7 +97,7 @@ export const projectSeminarColumns: ColumnDef<ProjectSeminarTableRow>[] = [
   {
     accessorKey: "department",
     header: "Department",
-    cell: ({ row }) => <span className="text-[12px] text-[#555] truncate">{row.original.department}</span>,
+    cell: ({ row }) => <span className="block w-full truncate text-[12px] text-[#555]">{row.original.department}</span>,
   },
   {
     accessorKey: "credit",

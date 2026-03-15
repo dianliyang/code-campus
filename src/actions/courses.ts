@@ -22,7 +22,6 @@ export async function updateCourse(courseId: number, data: {
   description: string;
   url: string;
   department: string;
-  corequisites: string;
   level: string;
   difficulty: number;
   popularity: number;
@@ -79,7 +78,6 @@ export async function updateCourse(courseId: number, data: {
       description: data.description,
       url: data.url,
       department: data.department,
-      corequisites: data.corequisites,
       level: data.level,
       difficulty: data.difficulty,
       popularity: data.popularity,
@@ -773,7 +771,7 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
     supabase
       .from("courses")
       .select(
-        "id, university, course_code, title, units, credit, description, url, department, corequisites, level, difficulty, popularity, workload, subdomain, resources, category, is_hidden, is_internal, prerequisites, cross_listed_courses, details, instructors",
+        "id, university, course_code, title, units, credit, description, url, department, level, difficulty, popularity, workload, subdomain, resources, category, is_hidden, is_internal, prerequisites, cross_listed_courses, details, instructors",
       )
       .eq("id", courseId)
       .single(),
@@ -820,7 +818,6 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
     description: input.description,
     url: input.url,
     department: input.department,
-    corequisites: input.corequisites,
     level: input.level,
     difficulty: input.difficulty,
     popularity: input.popularity,
@@ -847,7 +844,6 @@ export async function updateCourseFull(courseId: number, input: UpdateCourseFull
     description: existingCourse.description || "",
     url: existingCourse.url || "",
     department: existingCourse.department || "",
-    corequisites: existingCourse.corequisites || "",
     level: existingCourse.level || "",
     difficulty: Number(existingCourse.difficulty || 0),
     popularity: Number(existingCourse.popularity || 0),
@@ -1128,7 +1124,7 @@ export async function regenerateCourseDescription(courseId: number) {
   const supabase = createAdminClient();
   const { data: row, error } = await supabase
     .from("courses")
-    .select("title, course_code, university, level, prerequisites, corequisites, description")
+    .select("title, course_code, university, level, prerequisites, description")
     .eq("id", courseId)
     .single();
 
@@ -1154,7 +1150,7 @@ export async function regenerateCourseDescription(courseId: number) {
     university: row.university || "",
     level: row.level || "",
     prerequisites: row.prerequisites || "",
-    corequisites: row.corequisites || "",
+    corequisites: "",
     description: row.description || "",
   });
   const constrainedPrompt = `${prompt}
@@ -1863,7 +1859,7 @@ export async function fetchCoursesAction({
   const offset = (page - 1) * size;
   
   const modernSelectString = `
-    id, university, course_code, title, units, url, details, instructors, prerequisites, resources, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, subdomain, resources, category, is_hidden, is_internal, created_at,
+    id, university, course_code, title, units, url, details, instructors, prerequisites, resources, cross_listed_courses, department, level, difficulty, popularity, workload, subdomain, resources, category, is_hidden, is_internal, created_at,
     fields:course_fields(fields(name)),
     semesters:course_semesters(semesters(term, year))
   `;

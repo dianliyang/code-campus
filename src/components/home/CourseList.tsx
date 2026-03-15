@@ -298,25 +298,35 @@ export default function CourseList({
             <div className="">
               <Table>
                 <TableHeader>
-                  <TableRow className="flex items-center h-12 hover:bg-transparent border-b">
-                    <TableHead className={`${COLUMNS[0].width} flex items-center justify-center`}>
-                      <Checkbox
-                        checked={
-                          allVisibleSelected ||
-                          (hasPartialSelection ? "indeterminate" : false)
-                        }
-                        onCheckedChange={(checked) =>
-                          toggleSelectAll(checked === true)
-                        }
-                        aria-label="Select all courses"
-                      />
+                  <TableRow className="flex h-12 items-center border-b hover:bg-transparent">
+                    <TableHead className={`${COLUMNS[0].width} py-0 text-center align-middle`}>
+                      <div className="flex h-10 items-center justify-center">
+                        <Checkbox
+                          checked={
+                            allVisibleSelected ||
+                            (hasPartialSelection ? "indeterminate" : false)
+                          }
+                          onCheckedChange={(checked) =>
+                            toggleSelectAll(checked === true)
+                          }
+                          aria-label="Select all courses"
+                        />
+                      </div>
                     </TableHead>
-                    <TableHead className={cn(COLUMNS[1].width, "flex items-center")}>Course</TableHead>
-                    <TableHead className={cn(COLUMNS[2].width, COLUMNS[2].className, "flex items-center")}>Subdomain</TableHead>
-                    <TableHead className={cn(COLUMNS[3].width, COLUMNS[3].className, "flex items-center")}>Credit</TableHead>
-                    <TableHead className={cn(COLUMNS[4].width, COLUMNS[4].className, "flex items-center")}>Semester</TableHead>
-                    <TableHead className={cn(COLUMNS[5].width, "text-right flex items-center justify-end pr-4")}>
-                      <div className="flex items-center gap-2">
+                    <TableHead className={cn(COLUMNS[1].width, "py-0 align-middle")}>
+                      <div className="flex h-10 items-center">Course</div>
+                    </TableHead>
+                    <TableHead className={cn(COLUMNS[2].width, COLUMNS[2].className, "py-0 align-middle")}>
+                      <div className="flex h-10 items-center whitespace-nowrap">Subdomain</div>
+                    </TableHead>
+                    <TableHead className={cn(COLUMNS[3].width, COLUMNS[3].className, "py-0 align-middle")}>
+                      <div className="flex h-10 items-center whitespace-nowrap">Credit</div>
+                    </TableHead>
+                    <TableHead className={cn(COLUMNS[4].width, COLUMNS[4].className, "py-0 align-middle")}>
+                      <div className="flex h-10 items-center whitespace-nowrap">Semester</div>
+                    </TableHead>
+                    <TableHead className={cn(COLUMNS[5].width, "py-0 pr-4 text-right align-middle")}>
+                      <div className="flex h-10 items-center justify-end gap-2">
                         <span>Actions</span>
                         {selectedCourseIds.length >= 2 ? (
                           <Button
@@ -361,16 +371,19 @@ export default function CourseList({
                         }}
                         className="flex items-center hover:bg-muted/50"
                       >
-                        <TableCell className={`${COLUMNS[0].width} flex items-center justify-center`}>
-                          <Checkbox
-                            checked={selectedCourseIds.includes(course.id)}
-                            onCheckedChange={(checked) =>
-                              toggleSelectOne(course.id, checked === true)
-                            }
-                          />
+                        <TableCell className={`${COLUMNS[0].width} py-0 align-middle`}>
+                          <div className="flex h-10 items-center justify-center">
+                            <Checkbox
+                              checked={selectedCourseIds.includes(course.id)}
+                              onCheckedChange={(checked) =>
+                                toggleSelectOne(course.id, checked === true)
+                              }
+                            />
+                          </div>
                         </TableCell>
-                        <TableCell className={cn(COLUMNS[1].width, "flex items-center")}>
-                          <Link href={detailHref} prefetch={false} className="block group w-full">
+                        <TableCell className={cn(COLUMNS[1].width, "py-0 align-middle")}>
+                          <div className="flex h-10 items-center">
+                            <Link href={detailHref} prefetch={false} className="block group w-full">
                             <div className="min-w-0 flex items-start gap-3">
                               <UniversityIcon
                                 name={course.university}
@@ -386,27 +399,38 @@ export default function CourseList({
                                 </p>
                               </div>
                             </div>
-                          </Link>
+                            </Link>
+                          </div>
                         </TableCell>
-                        <TableCell className={cn(COLUMNS[2].width, COLUMNS[2].className, "flex items-center truncate")}>
-                          {course.subdomain || "-"}
+                        <TableCell className={cn(COLUMNS[2].width, COLUMNS[2].className, "py-0 align-middle")}>
+                          <div className="flex h-10 items-center">
+                            <span className="block truncate whitespace-nowrap text-[13px] text-[#444]">
+                              {course.subdomain || "-"}
+                            </span>
+                          </div>
                         </TableCell>
-                        <TableCell className={cn(COLUMNS[3].width, COLUMNS[3].className, "flex items-center")}>
-                          {course.credit ?? "-"}
+                        <TableCell className={cn(COLUMNS[3].width, COLUMNS[3].className, "py-0 align-middle")}>
+                          <div className="flex h-10 items-center">
+                            <span className="whitespace-nowrap text-sm text-[#484848]">{course.credit ?? "-"}</span>
+                          </div>
                         </TableCell>
-                        <TableCell className={cn(COLUMNS[4].width, COLUMNS[4].className, "flex items-center")}>
-                          {latestSemester ?? "-"}
+                        <TableCell className={cn(COLUMNS[4].width, COLUMNS[4].className, "py-0 align-middle")}>
+                          <div className="flex h-10 items-center">
+                            <span className="whitespace-nowrap text-sm text-[#484848]">{latestSemester ?? "-"}</span>
+                          </div>
                         </TableCell>
-                        <TableCell className={cn(COLUMNS[5].width, "text-right flex items-center justify-end pr-4")}>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="size-7"
-                            disabled={isRowLoading || isEnrolled}
-                            onClick={() => void runRowEnrollAction(course.id)}
-                          >
-                            {isRowLoading ? <Loader2 className="size-3.5 animate-spin" /> : isEnrolled ? <Check className="size-3.5" /> : <UserPlus className="size-3.5" />}
-                          </Button>
+                        <TableCell className={cn(COLUMNS[5].width, "py-0 pr-4 text-right align-middle")}>
+                          <div className="flex h-10 items-center justify-end">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="size-7"
+                              disabled={isRowLoading || isEnrolled}
+                              onClick={() => void runRowEnrollAction(course.id)}
+                            >
+                              {isRowLoading ? <Loader2 className="size-3.5 animate-spin" /> : isEnrolled ? <Check className="size-3.5" /> : <UserPlus className="size-3.5" />}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

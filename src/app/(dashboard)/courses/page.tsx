@@ -137,12 +137,12 @@ userId?: string | null)
     .filter((value): value is { term: string; year: number } => value !== null);
 
   const modernSelectString = `
-    id, university, course_code, title, units, credit, url, details, instructors, prerequisites, resources, cross_listed_courses, department, corequisites, level, difficulty, popularity, workload, subdomain, is_hidden, is_internal, created_at, latest_semester,
+    id, university, course_code, title, units, credit, url, details, instructors, prerequisites, resources, cross_listed_courses, department, level, difficulty, popularity, workload, subdomain, is_hidden, is_internal, created_at, latest_semester,
     fields:course_fields(fields(name)),
     semesters:course_semesters(semesters(term, year))
   `;
   const legacySelectString = `
-    id, university, course_code, title, units, credit, url, details, department, corequisites, level, difficulty, popularity, workload, subdomain, is_hidden, is_internal, created_at, latest_semester,
+    id, university, course_code, title, units, credit, url, details, department, level, difficulty, popularity, workload, subdomain, is_hidden, is_internal, created_at, latest_semester,
     fields:course_fields(fields(name)),
     semesters:course_semesters(semesters(term, year))
   `;

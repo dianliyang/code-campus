@@ -516,7 +516,6 @@ export class SupabaseDatabase {
           credit?: number;
           url?: string;
           department?: string;
-          corequisites?: string;
           level?: string;
           difficulty?: number;
           popularity: number;
@@ -539,7 +538,6 @@ export class SupabaseDatabase {
           credit: c.credit,
           url: c.url,
           department: c.department,
-          corequisites: c.corequisites,
           level: c.level,
           difficulty: c.difficulty,
           popularity: c.popularity || 0,

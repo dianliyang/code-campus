@@ -43,6 +43,7 @@ export default async function IdentityPage() {
       ? supabase
           .from("user_connected_profiles")
           .select("provider, login, name, profile_url, avatar_url, bio, company, updated_at")
+          .eq("user_id", user.id)
           .eq("provider", "github")
           .maybeSingle()
       : Promise.resolve({ data: null }),

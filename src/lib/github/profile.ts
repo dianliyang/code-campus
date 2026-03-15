@@ -20,8 +20,65 @@ type SessionLike = {
   provider_token?: string | null;
   user?: {
     id?: string | null;
+    user_metadata?: Record<string, unknown> | null;
+    identities?: Array<{
+      provider?: string | null;
+      id?: string | null;
+      identity_data?: Record<string, unknown> | null;
+    }> | null;
   } | null;
 };
+
+function deriveGitHubProfileFromSessionUser(
+  user: SessionLike["user"],
+): GitHubUserProfile | null {
+  const identities = Array.isArray(user?.identities) ? user.identities : [];
+  const githubIdentity = identities.find((identity) => identity?.provider === "github");
+  const identityData = githubIdentity?.identity_data || {};
+  const userMetadata = user?.user_metadata || {};
+
+  const providerUserId = String(
+    identityData.sub ||
+      identityData.id ||
+      githubIdentity?.id ||
+      "",
+  ).trim();
+  const login = String(
+    identityData.user_name ||
+      identityData.preferred_username ||
+      userMetadata.user_name ||
+      userMetadata.preferred_username ||
+      "",
+  ).trim();
+
+  if (!providerUserId || !login) {
+    return null;
+  }
+
+  return {
+    id: providerUserId,
+    login,
+    name: typeof identityData.full_name === "string"
+      ? identityData.full_name
+      : typeof userMetadata.full_name === "string"
+        ? userMetadata.full_name
+        : null,
+    avatar_url: typeof identityData.avatar_url === "string"
+      ? identityData.avatar_url
+      : typeof userMetadata.avatar_url === "string"
+        ? userMetadata.avatar_url
+        : null,
+    html_url: typeof identityData.profile_url === "string"
+      ? identityData.profile_url
+      : typeof identityData.user_name === "string"
+        ? `https://github.com/${identityData.user_name}`
+        : typeof userMetadata.user_name === "string"
+          ? `https://github.com/${userMetadata.user_name}`
+          : null,
+    bio: null,
+    company: null,
+  };
+}
 
 export function mapGitHubProfileSnapshot(
   userId: string,
@@ -85,10 +142,17 @@ export async function syncGitHubProfileFromSession(
   const accessToken = String(session?.provider_token || "").trim();
   const userId = String(session?.user?.id || "").trim();
 
-  if (!accessToken || !userId) {
+  if (!userId) {
     return;
   }
 
-  const profile = await fetchGitHubProfile(accessToken);
+  const profile = accessToken
+    ? await fetchGitHubProfile(accessToken)
+    : deriveGitHubProfileFromSessionUser(session?.user);
+
+  if (!profile) {
+    return;
+  }
+
   await upsertGitHubProfileSnapshot(userId, profile);
 }

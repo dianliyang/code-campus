@@ -72,7 +72,7 @@ export const projectSeminarColumns: ColumnDef<ProjectSeminarTableRow>[] = [
     accessorKey: "title",
     header: "S&P",
     cell: ({ row }) => (
-      <div className="flex min-h-10 min-w-0 max-w-full flex-col justify-center overflow-hidden">
+      <div className="flex min-h-10 min-w-0 max-w-[28rem] flex-col justify-center overflow-hidden">
         <h3 className="min-w-0 max-w-full overflow-hidden text-[14px] font-medium text-[#222]">
           <Link
             href={`/projects-seminars/${row.original.id}`}
@@ -97,7 +97,7 @@ export const projectSeminarColumns: ColumnDef<ProjectSeminarTableRow>[] = [
   {
     accessorKey: "department",
     header: "Department",
-    cell: ({ row }) => <span className="block w-full truncate text-[12px] text-[#555]">{row.original.department}</span>,
+    cell: ({ row }) => <span className="block max-w-[16rem] truncate text-[12px] text-[#555]">{row.original.department}</span>,
   },
   {
     accessorKey: "credit",

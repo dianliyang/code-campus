@@ -64,4 +64,26 @@ describe("GET /auth/callback GitHub sync", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost:3000/identity");
   });
+
+  test("still attempts GitHub sync when provider_token is missing but user session exists", async () => {
+    exchangeCodeForSession.mockResolvedValue({
+      error: null,
+      data: {
+        session: {
+          user: { id: "user-123" },
+        },
+      },
+    });
+
+    const { GET } = await import("@/app/auth/callback/route");
+    const response = await GET(new Request("http://localhost:3000/auth/callback?code=abc&next=/identity"));
+
+    expect(syncGitHubProfileFromSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user: expect.objectContaining({ id: "user-123" }),
+      }),
+    );
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost:3000/identity");
+  });
 });
